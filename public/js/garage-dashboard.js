@@ -64,7 +64,7 @@ function showErrorOverlay(message) {
             <i class="bi bi-exclamation-triangle" style="font-size: 48px; color: #dc2626; margin-bottom: 16px;"></i>
             <h2 style="font-size: 20px; font-weight: 600; margin-bottom: 8px;">Something went wrong</h2>
             <p style="color: #666; margin-bottom: 24px; font-size: 14px;">${escapeHtml(message)}</p>
-            <button class="btn btn-primary" onclick="location.reload()">
+            <button class="btn btn-primary" data-action="reload">
                 <i class="bi bi-arrow-clockwise"></i> Reload Dashboard
             </button>
         </div>
@@ -999,7 +999,7 @@ function createRequestCard(req, isNew = false) {
                     </button>`;
         } else if (['rejected', 'expired', 'withdrawn'].includes(bidInfo.status)) {
             // Rejected/Expired: Show Dismiss button
-            actionsBtn = `<button class="btn-dismiss" onclick="dismissRequest('${id}')">
+            actionsBtn = `<button class="btn-dismiss" data-action="dismissRequest" data-arg="${id}">
                         <i class="bi bi-x-lg"></i> Dismiss
                     </button>`;
         }
@@ -1015,10 +1015,10 @@ function createRequestCard(req, isNew = false) {
         const safeTitle = escapeJSString(title);
         const safeDesc = escapeJSString(desc);
         actionHtml = `<div class="request-actions">
-                    <button class="btn-ignore" onclick="ignoreRequest('${id}')" title="Skip this request">
+                    <button class="btn-ignore" data-action="ignoreRequest" data-arg="${id}" title="Skip this request">
                         <i class="bi bi-x-lg"></i> Skip
                     </button>
-                    <button class="btn-bid" onclick="openBidModal('${id}', '${safeTitle} - ${safeDesc}')">
+                    <button class="btn-bid" data-action="openBidModal" data-arg="${id}">
                         <i class="bi bi-tag-fill"></i> Bid Now
                     </button>
                 </div>`;
@@ -1051,7 +1051,7 @@ function createRequestCard(req, isNew = false) {
     if (allImages.length > 0) {
         imagesHtml = `<div class="request-thumbnails">
                     ${allImages.map((img, idx) => `
-                        <div class="thumb ${img.type === 'car' ? 'car-image' : ''}" onclick="openRequestLightbox('${id}', ${idx})" title="${img.label}">
+                        <div class="thumb ${img.type === 'car' ? 'car-image' : ''}" data-action="openRequestLightbox" data-arg="${id}" title="${img.label}">
                             <img src="${img.url}" onerror="this.src='https://placehold.co/100?text=No+Image'">
                             ${img.type === 'car' ? `<span class="car-badge"><i class="bi bi-car-front-fill"></i> ${img.label}</span>` : ''}
                         </div>
@@ -1476,7 +1476,7 @@ function createCounterOfferCard(co) {
             ` : ''}
             
             <div style="display: flex; gap: 12px;">
-                <button onclick="respondToCounterFromCard('${co.counter_offer_id}', 'accept')" style="
+                <button data-action="respondToCounterFromCard" data-arg="${co.counter_offer_id}" style="
                     flex: 1; padding: 12px; border: none; border-radius: 10px;
                     background: linear-gradient(135deg, #10b981 0%, #059669 100%);
                     color: white; font-weight: 600; cursor: pointer;
@@ -1486,7 +1486,7 @@ function createCounterOfferCard(co) {
                     <i class="bi bi-check-circle"></i> Accept
                 </button>
                 ${co.round_number < 3 ? `
-                <button onclick="openCounterInputForCard('${co.counter_offer_id}', ${co.proposed_amount})" style="
+                <button data-action="openCounterInputForCard" data-arg="${co.counter_offer_id}" style="
                     flex: 1; padding: 12px; border: 1px solid var(--accent); border-radius: 10px;
                     background: transparent; color: var(--accent); font-weight: 600; cursor: pointer;
                     display: flex; align-items: center; justify-content: center; gap: 6px;
@@ -1495,7 +1495,7 @@ function createCounterOfferCard(co) {
                     <i class="bi bi-arrow-repeat"></i> Counter
                 </button>
                 ` : ''}
-                <button onclick="respondToCounterFromCard('${co.counter_offer_id}', 'reject')" style="
+                <button data-action="respondToCounterFromCard" data-arg="${co.counter_offer_id}" style="
                     padding: 12px 16px; border: 1px solid var(--danger); border-radius: 10px;
                     background: transparent; color: var(--danger); font-weight: 600; cursor: pointer;
                     transition: all 0.2s;
@@ -1524,7 +1524,7 @@ function createDisputeActionCard(dispute) {
             </div>
             <div style="margin-bottom: 16px; color: var(--warning); font-weight: 600;">${escapeHTML(dispute.reason || 'Customer reported an issue')}</div>
             <div style="display: flex; gap: 12px;">
-                <button onclick="openDisputeModalFromCard('${dispute.dispute_id}', '${dispute.order_id}')" style="
+                <button data-action="openDisputeModalFromCard" data-arg="${dispute.dispute_id}" style="
                     flex: 1; padding: 12px; border: none; border-radius: 10px;
                     background: var(--warning); color: white; font-weight: 600; cursor: pointer;
                 ">
@@ -1743,7 +1743,7 @@ async function loadOrders() {
                 // Disputed orders - show Review Dispute button
                 actionsHtml = `
                             <div class="order-actions">
-                                <button class="btn-status dispute" onclick="reviewDisputeForOrder('${o.order_id}')" style="background: linear-gradient(135deg, #f59e0b 0%, #d97706 100%);">
+                                <button class="btn-status dispute" data-action="reviewDisputeForOrder" data-arg="${o.order_id}" style="background: linear-gradient(135deg, #f59e0b 0%, #d97706 100%);">
                                     <i class="bi bi-exclamation-triangle"></i> Review Dispute
                                 </button>
                             </div>
@@ -1756,13 +1756,13 @@ async function loadOrders() {
                 const transition = garageAllowedTransitions[o.order_status];
                 actionsHtml = `
                             <div class="order-actions">
-                                <button class="btn-cancel" onclick="openCancelOrderModal('${o.order_id}')" title="Cancel this order">
+                                <button class="btn-cancel" data-action="openCancelOrderModal" data-arg="${o.order_id}" title="Cancel this order">
                                     <i class="bi bi-x-circle"></i> Cancel
                                 </button>
                                 <button class="btn-outline-sm" onclick="event.stopPropagation(); printPackingSlip('${o.order_id}')" title="Print packing slip" style="padding: 6px 10px; font-size: 12px; border: 1px solid var(--text-muted); color: var(--text-secondary); background: transparent; border-radius: 6px; cursor: pointer; transition: all 0.2s;" onmouseover="this.style.background='var(--bg-tertiary)';" onmouseout="this.style.background='transparent';">
                                     <i class="bi bi-printer"></i> Print
                                 </button>
-                                <button class="btn-status next" onclick="updateOrderStatus('${o.order_id}', '${transition.next}')">
+                                <button class="btn-status next" data-action="updateOrderStatus" data-arg="${o.order_id}">
                                     <i class="bi bi-check-circle"></i> ${transition.label}
                                 </button>
                             </div>
@@ -1832,7 +1832,7 @@ async function loadOrders() {
             const thumbnail = images.length > 0 ? images[0] : null;
 
             return `
-                        <div class="order-card ${isCancelled ? 'cancelled' : ''} ${isDisputed ? 'disputed' : ''}" onclick="viewOrder('${o.order_id}')" style="cursor: pointer; transition: transform 0.2s, box-shadow 0.2s;" onmouseover="this.style.transform='translateY(-2px)'; this.style.boxShadow='0 4px 15px rgba(0,0,0,0.15)';" onmouseout="this.style.transform=''; this.style.boxShadow='';">
+                        <div class="order-card ${isCancelled ? 'cancelled' : ''} ${isDisputed ? 'disputed' : ''}" data-action="viewOrder" data-arg="${o.order_id}" style="cursor: pointer; transition: transform 0.2s, box-shadow 0.2s;" onmouseover="this.style.transform='translateY(-2px)'; this.style.boxShadow='0 4px 15px rgba(0,0,0,0.15)';" onmouseout="this.style.transform=''; this.style.boxShadow='';">
                             ${isCancelled ? '<div class="cancelled-overlay"></div>' : ''}
                             <div class="order-header">
                                 <div class="order-number">Order #${o.order_number || o.order_id.slice(0, 8)}</div>
@@ -1989,7 +1989,7 @@ function renderFilteredOrders(orders) {
         const thumbnail = images.length > 0 ? images[0] : null;
 
         return `
-            <div class="order-card ${isCancelled ? 'cancelled' : ''} ${isDisputed ? 'disputed' : ''}" onclick="viewOrder('${o.order_id}')" style="cursor: pointer; transition: transform 0.2s, box-shadow 0.2s;" onmouseover="this.style.transform='translateY(-2px)'; this.style.boxShadow='0 4px 15px rgba(0,0,0,0.15)';" onmouseout="this.style.transform=''; this.style.boxShadow='';">
+            <div class="order-card ${isCancelled ? 'cancelled' : ''} ${isDisputed ? 'disputed' : ''}" data-action="viewOrder" data-arg="${o.order_id}" style="cursor: pointer; transition: transform 0.2s, box-shadow 0.2s;" onmouseover="this.style.transform='translateY(-2px)'; this.style.boxShadow='0 4px 15px rgba(0,0,0,0.15)';" onmouseout="this.style.transform=''; this.style.boxShadow='';">
                 <div class="order-header">
                     <div class="order-number">Order #${o.order_number || o.order_id.slice(0, 8)}</div>
                     <span class="order-status ${statusClass}">${statusLabel}</span>
@@ -2027,7 +2027,7 @@ function renderRecentOrders() {
         const images = o.bid_images || o.request_images || [];
         const thumbnail = images.length > 0 ? images[0] : null;
         return `
-            <div class="order-card" onclick="viewOrder('${o.order_id}')" style="display: flex; gap: 12px; padding: 15px; background: var(--bg-secondary); border-radius: 12px; border: 1px solid var(--border-color); cursor: pointer; transition: transform 0.2s, box-shadow 0.2s;" onmouseover="this.style.transform='translateY(-2px)'; this.style.boxShadow='0 4px 12px rgba(0,0,0,0.15)';" onmouseout="this.style.transform=''; this.style.boxShadow='';">
+            <div class="order-card" data-action="viewOrder" data-arg="${o.order_id}" style="display: flex; gap: 12px; padding: 15px; background: var(--bg-secondary); border-radius: 12px; border: 1px solid var(--border-color); cursor: pointer; transition: transform 0.2s, box-shadow 0.2s;" onmouseover="this.style.transform='translateY(-2px)'; this.style.boxShadow='0 4px 12px rgba(0,0,0,0.15)';" onmouseout="this.style.transform=''; this.style.boxShadow='';">
                 ${thumbnail ? `<img src="${thumbnail}" alt="Part" style="width: 60px; height: 60px; object-fit: cover; border-radius: 8px; flex-shrink: 0;">` : '<div style="width: 60px; height: 60px; background: var(--bg-tertiary); border-radius: 8px; display: flex; align-items: center; justify-content: center; flex-shrink: 0;"><i class="bi bi-image" style="color: var(--text-muted);"></i></div>'}
                 <div style="flex: 1; min-width: 0;">
                     <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 6px;">
@@ -2167,10 +2167,10 @@ async function openCancelOrderModal(id) {
             </div>
             
             <div style="display: flex; gap: 10px; justify-content: flex-end;">
-                <button class="btn btn-ghost" onclick="closeCancelModal()" style="padding: 10px 20px; border-radius: 8px; font-size: 14px; cursor: pointer; background: transparent; border: 1px solid var(--border, #ddd);">
+                <button class="btn btn-ghost" data-action="closeCancelModal" style="padding: 10px 20px; border-radius: 8px; font-size: 14px; cursor: pointer; background: transparent; border: 1px solid var(--border, #ddd);">
                     Go Back
                 </button>
-                <button class="btn btn-danger" onclick="confirmCancelOrder()" style="padding: 10px 20px; border-radius: 8px; font-size: 14px; cursor: pointer; background: linear-gradient(135deg, #dc2626, #b91c1c); color: white; border: none;">
+                <button class="btn btn-danger" data-action="confirmCancelOrder" style="padding: 10px 20px; border-radius: 8px; font-size: 14px; cursor: pointer; background: linear-gradient(135deg, #dc2626, #b91c1c); color: white; border: none;">
                     <i class="bi bi-x-circle"></i> Confirm Cancellation
                 </button>
             </div>
@@ -2528,10 +2528,10 @@ async function loadProfile() {
                             value="${profile.address || ''}"
                             placeholder="Search for an address in Qatar...">
                     </div>
-                    <button type="button" class="gmap-btn gmap-btn-locate" onclick="useMyLocation()">
+                    <button type="button" class="gmap-btn gmap-btn-locate" data-action="useMyLocation">
                         <i class="bi bi-crosshairs"></i> Use My Location
                     </button>
-                    <button type="button" class="gmap-btn gmap-btn-save" onclick="saveGarageLocation()">
+                    <button type="button" class="gmap-btn gmap-btn-save" data-action="saveGarageLocation">
                         <i class="bi bi-check-lg"></i> Save Location
                     </button>
                 </div>
@@ -3208,7 +3208,7 @@ async function ignoreRequest(reqId) {
         toast.innerHTML = `
             <i class="bi bi-arrow-counterclockwise"></i>
             <span>Request skipped</span>
-            <button class="undo-btn" onclick="undoIgnoreRequest('${reqId}')">
+            <button class="undo-btn" data-action="undoIgnoreRequest" data-arg="${reqId}">
                 UNDO <span class="countdown">5</span>
             </button>
         `;
@@ -3382,7 +3382,7 @@ function renderBidPhotos() {
     grid.innerHTML = bidPhotos.map((img, i) => `
                 <div class="bid-photo-item">
                     <img src="${img.preview}" alt="Part photo">
-                    <button type="button" class="bid-photo-remove" onclick="removeBidPhoto(${i})">&times;</button>
+                    <button type="button" class="bid-photo-remove" data-action="removeBidPhoto" data-arg="${i}">&times;</button>
                 </div>
             `).join('');
 }
@@ -3985,7 +3985,7 @@ async function loadSubscription() {
                             <strong>${req.target_plan_name || 'New Plan'}</strong> 
                             is awaiting admin approval.
                         </div>
-                        <button class="btn btn-sm" onclick="cancelPendingRequest()" style="background: var(--danger); color: white; border: none; padding: 6px 12px; border-radius: 6px; cursor: pointer; font-size: 12px;">
+                        <button class="btn btn-sm" data-action="cancelPendingRequest" style="background: var(--danger); color: white; border: none; padding: 6px 12px; border-radius: 6px; cursor: pointer; font-size: 12px;">
                             <i class="bi bi-x-circle"></i> Cancel Request
                         </button>
                     </div>
@@ -4067,10 +4067,10 @@ async function showPlanOptions() {
                             isPending ?
                                 `<button class="btn" disabled title="You have a pending request"><i class="bi bi-lock"></i> Request Pending</button>` :
                                 parseFloat(plan.monthly_fee) > 0 ?
-                                    `<button class="btn btn-primary" onclick="changePlan('${plan.plan_id}', '${plan.plan_name}', ${plan.monthly_fee})">
+                                    `<button class="btn btn-primary" data-action="changePlan" data-arg="${plan.plan_id}">
                                         <i class="bi bi-credit-card"></i> Pay Now
                                     </button>` :
-                                    `<button class="btn btn-primary" onclick="changePlan('${plan.plan_id}', '${plan.plan_name}', 0)">
+                                    `<button class="btn btn-primary" data-action="changePlan" data-arg="${plan.plan_id}">
                                         Request Change
                                     </button>`
                         }
@@ -4759,10 +4759,10 @@ async function loadAwaitingConfirmation() {
                             <div style="font-size: 13px; color: var(--text-primary);">${escapeHTML(p.notes)}</div>
                         </div>` : ''}
                         <div style="display: flex; gap: 10px;">
-                            <button class="btn btn-success" onclick="confirmPaymentReceipt('${p.payout_id}')">
+                            <button class="btn btn-success" data-action="confirmPaymentReceipt" data-arg="${p.payout_id}">
                                 <i class="bi bi-check-lg"></i> I Received This Payment
                             </button>
-                            <button class="btn btn-outline" onclick="reportPaymentIssue('${p.payout_id}', ${p.net_amount})">
+                            <button class="btn btn-outline" data-action="reportPaymentIssue" data-arg="${p.payout_id}">
                                 <i class="bi bi-exclamation-triangle"></i> Report Issue
                             </button>
                         </div>
@@ -4978,7 +4978,7 @@ async function loadPayoutHistory(page = 1) {
                 // Invoice button for completed/confirmed payouts
                 const canDownload = ['completed', 'confirmed'].includes(p.payout_status) && p.order_id;
                 const invoiceBtn = canDownload
-                    ? `<button class="btn btn-sm" onclick="downloadGarageInvoice('${p.order_id}')" title="Download Invoice"><i class="bi bi-file-pdf"></i></button>`
+                    ? `<button class="btn btn-sm" data-action="downloadGarageInvoice" data-arg="${p.order_id}" title="Download Invoice"><i class="bi bi-file-pdf"></i></button>`
                     : '<span style="color: var(--text-muted);">-</span>';
 
                 return `
@@ -5103,7 +5103,7 @@ function renderNotificationsList() {
     }
 
     list.innerHTML = notifications.map(n => `
-        <div class="notification-item ${n.is_read ? '' : 'unread'}" onclick="markNotificationRead('${n.notification_id}')">
+        <div class="notification-item ${n.is_read ? '' : 'unread'}" data-action="markNotificationRead" data-arg="${n.notification_id}">
             <div class="icon">
                 ${getNotificationIcon(n.type)}
             </div>
@@ -5279,9 +5279,9 @@ function renderSearchResults(results) {
     if (results.orders && results.orders.length > 0) {
         html += `<div style="padding: 8px 12px; font-size: 11px; font-weight: 600; color: var(--text-muted); text-transform: uppercase;">Orders</div>`;
         html += results.orders.slice(0, 5).map(o => `
-            <div onclick="navigateToOrder('${o.order_id}', '${o.order_number}'); searchResultsDiv.style.display='none';" 
-                 style="padding: 10px 12px; cursor: pointer; display: flex; justify-content: space-between; align-items: center; border-bottom: 1px solid var(--border);"
-                 onmouseover="this.style.background='var(--bg-hover)'" onmouseout="this.style.background=''">
+            <div data-action="navigateToOrder" data-arg="${o.order_id}, '${o.order_number}'" data-prevent-default="false" 
+                 class="clickable-row"
+                 style="padding: 12px; border-bottom: 1px solid var(--border);">
                 <div>
                     <div style="font-weight: 600; color: var(--accent);">#${o.order_number}</div>
                     <div style="font-size: 12px; color: var(--text-secondary);">${o.car_make} ${o.car_model} - ${o.part_description?.slice(0, 25) || ''}</div>
@@ -5295,7 +5295,7 @@ function renderSearchResults(results) {
     if (results.requests && results.requests.length > 0) {
         html += `<div style="padding: 8px 12px; font-size: 11px; font-weight: 600; color: var(--text-muted); text-transform: uppercase; margin-top: 8px;">Requests</div>`;
         html += results.requests.slice(0, 5).map(r => `
-            <div onclick="switchSection('requests'); searchResultsDiv.style.display='none';"
+            <div data-action="switchSection" data-arg="requests" data-prevent-default="false" 
                  style="padding: 10px 12px; cursor: pointer; display: flex; justify-content: space-between; align-items: center; border-bottom: 1px solid var(--border);"
                  onmouseover="this.style.background='var(--bg-hover)'" onmouseout="this.style.background=''">
                 <div>
@@ -5369,7 +5369,7 @@ async function viewOrder(orderId) {
         const allImages = [...(order.bid_images || []), ...(order.request_images || [])];
         if (allImages.length > 0) {
             imagesContainer.innerHTML = allImages.map(url =>
-                `<img src="${url}" onclick="window.open('${url}', '_blank')" style="width: 80px; height: 80px; object-fit: cover; border-radius: 8px; cursor: pointer; border: 2px solid var(--border); transition: transform 0.2s;" onmouseover="this.style.transform='scale(1.05)'" onmouseout="this.style.transform=''">`
+                `<img src="${url}" data-action="openLink" data-arg="${url}" class="hover-scale" style="width: 80px; height: 80px; object-fit: cover; border-radius: 8px; cursor: pointer; border: 2px solid var(--border);">`
             ).join('');
         } else {
             imagesContainer.innerHTML = '<div style="color: var(--text-muted); font-size: 13px;"><i class="bi bi-image"></i> No photos uploaded</div>';
@@ -5415,7 +5415,7 @@ async function viewOrder(orderId) {
             const printableStatuses = ['confirmed', 'preparing', 'ready_for_pickup', 'collected', 'in_transit'];
             if (printableStatuses.includes(order.order_status)) {
                 printBtnContainer.innerHTML = `
-                    <button onclick="printPackingSlip('${orderId}')" style="display: inline-flex; align-items: center; gap: 6px; padding: 10px 20px; background: linear-gradient(135deg, var(--accent), var(--primary)); color: white; border: none; border-radius: 8px; font-size: 14px; font-weight: 600; cursor: pointer; transition: all 0.2s; box-shadow: 0 2px 8px rgba(0,0,0,0.15);" onmouseover="this.style.transform='translateY(-1px)'; this.style.boxShadow='0 4px 12px rgba(0,0,0,0.2)';" onmouseout="this.style.transform=''; this.style.boxShadow='0 2px 8px rgba(0,0,0,0.15)';">
+                    <button data-action="printPackingSlip" data-arg="${orderId}" style="display: inline-flex; align-items: center; gap: 6px; padding: 10px 20px; background: linear-gradient(135deg, var(--accent), var(--primary)); color: white; border: none; border-radius: 8px; font-size: 14px; font-weight: 600; cursor: pointer; transition: all 0.2s; box-shadow: 0 2px 8px rgba(0,0,0,0.15);" onmouseover="this.style.transform='translateY(-1px)'; this.style.boxShadow='0 4px 12px rgba(0,0,0,0.2)';" onmouseout="this.style.transform=''; this.style.boxShadow='0 2px 8px rgba(0,0,0,0.15)';">
                         <i class="bi bi-printer"></i> Print Packing Slip / طباعة بطاقة
                     </button>
                 `;
@@ -5908,7 +5908,7 @@ function renderPagination(containerId, pagination, onPageChange) {
     let html = '<div class="pagination">';
 
     // Previous button
-    html += `<button class="pagination-btn" ${page <= 1 ? 'disabled' : ''} onclick="${onPageChange}(${page - 1})">
+    html += `<button class="pagination-btn" ${page <= 1 ? 'disabled' : ''} data-action="${onPageChange}" data-arg="${page - 1}">
         <i class="bi bi-chevron-left"></i>
     </button>`;
 
@@ -5935,12 +5935,12 @@ function renderPagination(containerId, pagination, onPageChange) {
         if (lastRendered && p - lastRendered > 1) {
             html += '<span class="pagination-ellipsis">...</span>';
         }
-        html += `<button class="pagination-btn ${p === page ? 'active' : ''}" onclick="${onPageChange}(${p})">${p}</button>`;
+        html += `<button class="pagination-btn ${p === page ? 'active' : ''}" data-action="${onPageChange}" data-arg="${p}">${p}</button>`;
         lastRendered = p;
     });
 
     // Next button
-    html += `<button class="pagination-btn" ${page >= pages ? 'disabled' : ''} onclick="${onPageChange}(${page + 1})">
+    html += `<button class="pagination-btn" ${page >= pages ? 'disabled' : ''} data-action="${onPageChange}" data-arg="${page + 1}">
         <i class="bi bi-chevron-right"></i>
     </button>`;
 
@@ -6222,7 +6222,7 @@ function renderNotifications() {
     }
 
     list.innerHTML = notifications.map(n => `
-        <div class="notification-item" onclick="handleNotificationClick('${n.section || ''}')">
+        <div class="notification-item" data-action="handleNotificationClick" data-arg="${n.section || ''}">
             <div class="icon ${n.type}">
                 ${getNotificationIcon(n.type)}
             </div>
@@ -6490,7 +6490,7 @@ async function viewNegotiationHistory(bidId) {
                             <i class="bi bi-clock-history" style="color: var(--accent);"></i>
                             Negotiation History
                         </h3>
-                        <button onclick="closeNegotiationHistoryModal()" style="background: none; border: none; font-size: 24px; color: var(--text-secondary); cursor: pointer;">&times;</button>
+                        <button data-action="closeNegotiationHistoryModal" style="background: none; border: none; font-size: 24px; color: var(--text-secondary); cursor: pointer;">&times;</button>
                     </div>
                     <div class="modal-body" style="padding: 20px;">
                         <div style="background: var(--bg-secondary); padding: 12px; border-radius: 10px; margin-bottom: 20px;">
@@ -6655,16 +6655,16 @@ function renderShowcaseParts(parts) {
                         <span><i class="bi bi-cart-check"></i> ${part.order_count || 0} orders</span>
                     </div>
                     <div style="display: flex; gap: 8px;">
-                        <button class="btn btn-sm btn-outline" onclick="openPartPreviewModal('${part.part_id}')" title="Preview as customer" style="color: var(--accent);">
+                        <button class="btn btn-sm btn-outline" data-action="openPartPreviewModal" data-arg="${part.part_id}" title="Preview as customer" style="color: var(--accent);">
                             <i class="bi bi-phone"></i>
                         </button>
-                        <button class="btn btn-sm btn-outline" onclick="openEditPartModal('${part.part_id}')" title="Edit part">
+                        <button class="btn btn-sm btn-outline" data-action="openEditPartModal" data-arg="${part.part_id}" title="Edit part">
                             <i class="bi bi-pencil"></i>
                         </button>
-                        <button class="btn btn-sm btn-outline" onclick="togglePartStatus('${part.part_id}')" title="Toggle visibility">
+                        <button class="btn btn-sm btn-outline" data-action="togglePartStatus" data-arg="${part.part_id}" title="Toggle visibility">
                             <i class="bi bi-${part.status === 'active' ? 'eye-slash' : 'eye'}"></i>
                         </button>
-                        <button class="btn btn-sm btn-outline" style="color: var(--danger);" onclick="deleteShowcasePart('${part.part_id}')" title="Delete">
+                        <button class="btn btn-sm btn-outline" style="color: var(--danger);" data-action="deleteShowcasePart" data-arg="${part.part_id}" title="Delete">
                             <i class="bi bi-trash"></i>
                         </button>
                     </div>
@@ -6761,7 +6761,7 @@ function openEditPartModal(partId) {
                         <img src="${url}" alt="Part image ${idx + 1}" 
                              style="width: 70px; height: 70px; object-fit: cover; border-radius: 8px; border: 2px solid var(--border); transition: all 0.3s;"
                              onerror="this.parentElement.style.display='none';">
-                        <button type="button" class="remove-img-btn" onclick="markImageForRemoval('${url}', ${idx})"
+                        <button type="button" class="remove-img-btn" data-action="markImageForRemoval" data-arg="${url}"
                                 style="position: absolute; top: -6px; right: -6px; width: 22px; height: 22px; border-radius: 50%; background: var(--danger); color: white; border: 2px solid var(--bg-card); cursor: pointer; display: flex; align-items: center; justify-content: center; font-size: 12px; transition: all 0.2s;">
                             <i class="bi bi-x-circle"></i>
                         </button>
@@ -6962,7 +6962,7 @@ function openPartPreviewModal(partId) {
         <div class="preview-gallery" style="display: flex; gap: 8px; overflow-x: auto; padding-bottom: 10px;">
             ${images.map((url, idx) => `
                 <img src="${url}" alt="Part image ${idx + 1}" 
-                     onclick="previewFullImage('${url}')"
+                     data-action="previewFullImage" data-arg="${url}"
                      style="width: 100px; height: 100px; object-fit: cover; border-radius: 12px; cursor: zoom-in; border: 2px solid var(--border); transition: transform 0.2s;"
                      onmouseover="this.style.transform='scale(1.05)'"
                      onmouseout="this.style.transform='scale(1)'"
@@ -6981,7 +6981,7 @@ function openPartPreviewModal(partId) {
         <div style="position: relative; margin-bottom: 16px; border-radius: 16px; overflow: hidden; background: var(--bg-secondary);">
             <img src="${images[0]}" alt="${escapeHTML(part.title)}"
                  style="width: 100%; height: 220px; object-fit: cover; cursor: zoom-in;"
-                 onclick="previewFullImage('${images[0]}')"
+                 data-action="previewFullImage" data-arg="${images[0]}"
                  onerror="this.parentElement.innerHTML='<div style=\\'padding:60px; text-align:center; color:var(--text-muted);\\'><i class=\\'bi bi-image\\' style=\\'font-size:48px;\\'></i></div>'">
             ${images.length > 1 ? `<span style="position: absolute; bottom: 10px; right: 10px; background: rgba(0,0,0,0.7); color: white; padding: 4px 10px; border-radius: 20px; font-size: 12px;">+${images.length - 1} more</span>` : ''}
         </div>
@@ -6989,15 +6989,15 @@ function openPartPreviewModal(partId) {
 
     // Create modal
     const modalHtml = `
-        <div class="part-preview-overlay" id="partPreviewModal" onclick="closePartPreviewModal()" style="display: flex; align-items: center; justify-content: center; position: fixed; inset: 0; background: rgba(0,0,0,0.7); z-index: 10000; backdrop-filter: blur(4px);">
-            <div class="preview-modal" onclick="event.stopPropagation()" style="max-width: 420px; width: 95%; max-height: 90vh; overflow-y: auto; background: var(--bg-card); border-radius: 24px; box-shadow: 0 25px 80px rgba(0,0,0,0.4); animation: slideUp 0.3s ease;">
+        <div class="part-preview-overlay" id="partPreviewModal" data-action="closePartPreviewModal" style="display: flex; align-items: center; justify-content: center; position: fixed; inset: 0; background: rgba(0,0,0,0.7); z-index: 10000; backdrop-filter: blur(4px);">
+            <div class="preview-modal" data-action="stopEvent" style="max-width: 420px; width: 95%; max-height: 90vh; overflow-y: auto; background: var(--bg-card); border-radius: 24px; box-shadow: 0 25px 80px rgba(0,0,0,0.4); animation: slideUp 0.3s ease;">
                 <!-- Header -->
                 <div style="background: linear-gradient(135deg, var(--accent), #A82050); padding: 16px 20px; display: flex; justify-content: space-between; align-items: center; border-radius: 24px 24px 0 0;">
                     <div style="display: flex; align-items: center; gap: 10px; color: white;">
                         <i class="bi bi-phone" style="font-size: 20px;"></i>
                         <span style="font-weight: 600;">Customer Preview</span>
                     </div>
-                    <button onclick="closePartPreviewModal()" style="background: rgba(255,255,255,0.2); border: none; width: 32px; height: 32px; border-radius: 50%; color: white; cursor: pointer; display: flex; align-items: center; justify-content: center;">
+                    <button data-action="closePartPreviewModal" style="background: rgba(255,255,255,0.2); border: none; width: 32px; height: 32px; border-radius: 50%; color: white; cursor: pointer; display: flex; align-items: center; justify-content: center;">
                         <i class="bi bi-x-lg"></i>
                     </button>
                 </div>

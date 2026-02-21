@@ -49,7 +49,7 @@ function showErrorOverlay(message) {
             <i class="bi bi-exclamation-triangle" style="font-size: 48px; color: #dc2626; margin-bottom: 16px;"></i>
             <h2 style="font-size: 20px; font-weight: 600; margin-bottom: 8px;">Something went wrong</h2>
             <p style="color: #666; margin-bottom: 24px; font-size: 14px;">${escapeHtml(message)}</p>
-            <button class="btn btn-primary" onclick="location.reload()">
+            <button class="btn btn-primary" data-action="reload">
                 <i class="bi bi-arrow-clockwise"></i> Reload Dashboard
             </button>
         </div>
@@ -338,7 +338,7 @@ async function loadPendingGarages(page = 1) {
             <div class="empty-state">
                 <i class="bi bi-exclamation-triangle"></i>
                 <p>Failed to load garages</p>
-                <button class="btn btn-outline" onclick="loadPendingGarages(${page})">
+                <button class="btn btn-outline" data-action="loadPendingGarages" data-arg="${page}">
                     <i class="bi bi-arrow-clockwise"></i> Retry
                 </button>
             </div>
@@ -461,7 +461,7 @@ function renderGarageCard(garage, isPending) {
                         <i class="bi bi-x-circle"></i> Reject
                     </button>
                 ` : status === 'approved' || status === 'demo' ? `
-                    <button class="btn btn-outline" onclick="revokeAccess('${garage.garage_id}')">
+                    <button class="btn btn-outline" data-action="revokeAccess" data-arg="${garage.garage_id}">
                         <i class="bi bi-slash-circle"></i> Revoke
                     </button>
                 ` : status === 'rejected' ? `
@@ -845,7 +845,7 @@ async function loadAuditLog(page = 1) {
         if (data.logs && data.logs.length > 0) {
             container.innerHTML = data.logs.map((log, idx) => `
                 <div class="audit-item collapsed" data-idx="${idx}">
-                    <button class="audit-toggle" onclick="toggleAuditItem(${idx})" title="Expand details">
+                    <button class="audit-toggle" data-action="toggleAuditItem" data-arg="${idx}" title="Expand details">
                         <i class="bi bi-chevron-right"></i>
                     </button>
                     <div class="audit-icon ${getAuditIconClass(log.action_type)}">
@@ -889,7 +889,7 @@ async function loadAuditLog(page = 1) {
             <div class="empty-state">
                 <i class="bi bi-exclamation-triangle"></i>
                 <p>Failed to load audit log</p>
-                <button class="btn btn-outline" onclick="loadAuditLog(${page})">
+                <button class="btn btn-outline" data-action="loadAuditLog" data-arg="${page}">
                     <i class="bi bi-arrow-clockwise"></i> Retry
                 </button>
             </div>
@@ -1168,18 +1168,18 @@ function renderUserRow(user) {
             <td>${formatDate(user.created_at)}</td>
             <td>
                 <div class="action-buttons-row">
-                    <button class="btn-icon" onclick="viewUserDetails('${user.user_id}')" title="View Details">
+                    <button class="btn-icon" data-action="viewUserDetails" data-arg="${user.user_id}" title="View Details">
                         <i class="bi bi-eye"></i>
                     </button>
                     <button class="btn-icon" onclick="openEditUserModal('${user.user_id}', '${escapeHtml(user.full_name || '')}', '${escapeHtml(user.email) || ''}', '${escapeHtml(user.phone_number) || ''}')" title="Edit">
                         <i class="bi bi-pencil"></i>
                     </button>
                     ${user.is_suspended ? `
-                        <button class="btn-icon success" onclick="activateUser('${user.user_id}')" title="Activate">
+                        <button class="btn-icon success" data-action="activateUser" data-arg="${user.user_id}" title="Activate">
                             <i class="bi bi-check-circle"></i>
                         </button>
                     ` : `
-                        <button class="btn-icon danger" onclick="suspendUser('${user.user_id}')" title="Suspend">
+                        <button class="btn-icon danger" data-action="suspendUser" data-arg="${user.user_id}" title="Suspend">
                             <i class="bi bi-slash-circle"></i>
                         </button>
                     `}
@@ -1337,7 +1337,7 @@ function renderUserDetails(user, typeData, activity) {
     document.getElementById('userDetailContent').innerHTML = html;
 
     // Action buttons
-    let actions = `<button class="btn btn-outline" onclick="closeModal('userDetailModal')">Close</button>`;
+    let actions = `<button class="btn btn-outline" data-action="closeModal" data-arg="userDetailModal">Close</button>`;
 
     if (user.is_suspended) {
         actions += `<button class="btn btn-success" onclick="activateUser('${user.user_id}'); closeModal('userDetailModal');"><i class="bi bi-check-circle"></i> Activate</button>`;
@@ -1685,7 +1685,7 @@ function openCreateUserModal() {
     document.getElementById('createUserStep1').style.display = 'block';
     document.getElementById('createUserStep2').style.display = 'none';
     document.getElementById('createUserActions').innerHTML = `
-        <button class="btn btn-outline" onclick="closeModal('createUserModal')">Cancel</button>
+        <button class="btn btn-outline" data-action="closeModal" data-arg="createUserModal">Cancel</button>
     `;
 
     // Clear form
@@ -1725,8 +1725,8 @@ function selectUserType(type) {
 
     // Update action buttons
     document.getElementById('createUserActions').innerHTML = `
-        <button class="btn btn-outline" onclick="closeModal('createUserModal')">Cancel</button>
-        <button class="btn btn-success" onclick="submitCreateUser()">
+        <button class="btn btn-outline" data-action="closeModal" data-arg="createUserModal">Cancel</button>
+        <button class="btn btn-success" data-action="submitCreateUser">
             <i class="bi bi-person-plus"></i> Create ${typeLabels[type]}
         </button>
     `;
@@ -1737,7 +1737,7 @@ function backToTypeSelection() {
     document.getElementById('createUserStep1').style.display = 'block';
     document.getElementById('createUserStep2').style.display = 'none';
     document.getElementById('createUserActions').innerHTML = `
-        <button class="btn btn-outline" onclick="closeModal('createUserModal')">Cancel</button>
+        <button class="btn btn-outline" data-action="closeModal" data-arg="createUserModal">Cancel</button>
     `;
 }
 
@@ -1912,7 +1912,7 @@ async function loadStaff(page = 1) {
             <div class="empty-state">
                 <i class="bi bi-exclamation-triangle"></i>
                 <p>Failed to load staff</p>
-                <button class="btn btn-outline" onclick="loadStaff(${page})">
+                <button class="btn btn-outline" data-action="loadStaff" data-arg="${page}">
                     <i class="bi bi-arrow-clockwise"></i> Retry
                 </button>
             </div>
@@ -1949,7 +1949,7 @@ function renderStaffCard(staff) {
                 </div>
             </div>
             <div class="staff-actions">
-                <button class="btn btn-sm btn-outline" onclick="viewUserDetails('${staff.user_id}')">
+                <button class="btn btn-sm btn-outline" data-action="viewUserDetails" data-arg="${staff.user_id}">
                     <i class="bi bi-eye"></i> View
                 </button>
                 ${staff.is_suspended
@@ -2042,7 +2042,7 @@ function renderDriverRow(driver) {
             <td>${deliveryCount}</td>
             <td>${rating !== '-' ? `<i class="bi bi-star-fill" style="color: #f59e0b;"></i> ${rating}` : '<span style="color: var(--text-muted);">-</span>'}</td>
             <td>
-                <button class="btn btn-sm btn-outline" onclick="viewUserDetails('${driver.user_id}')">
+                <button class="btn btn-sm btn-outline" data-action="viewUserDetails" data-arg="${driver.user_id}">
                     <i class="bi bi-eye"></i>
                 </button>
                 ${driver.is_suspended
@@ -2192,7 +2192,7 @@ async function loadReports(page = 1) {
             <div class="empty-state">
                 <i class="bi bi-exclamation-triangle"></i>
                 <p>Failed to generate report</p>
-                <button class="btn btn-outline" onclick="loadReports(${page})">
+                <button class="btn btn-outline" data-action="loadReports" data-arg="${page}">
                     <i class="bi bi-arrow-clockwise"></i> Retry
                 </button>
             </div>
@@ -2601,7 +2601,7 @@ function renderNotifications(notifications) {
         dot.style.display = 'none';
     } else {
         list.innerHTML = notifications.map((n, i) => `
-            <div class="notification-item" onclick="handleNotificationClick(${i})">
+            <div class="notification-item" data-action="handleNotificationClick" data-arg="${i}">
                 <div class="icon ${n.type}">
                     <i class="bi ${n.icon}"></i>
                 </div>
@@ -2744,8 +2744,8 @@ function renderRequestCard(req) {
 
             <div class="garage-actions" style="margin-top: 20px;">
                 ${isPending ? `
-                <button class="btn btn-outline" onclick="rejectRequest('${req.request_id}')">Reject</button>
-                <button class="btn btn-primary" onclick="approveRequest('${req.request_id}')">Approve</button>
+                <button class="btn btn-outline" data-action="rejectRequest" data-arg="${req.request_id}">Reject</button>
+                <button class="btn btn-primary" data-action="approveRequest" data-arg="${req.request_id}">Approve</button>
                 ` : `
                 <div class="status-badge ${req.status}">${req.status.toUpperCase()}</div>
                 `}

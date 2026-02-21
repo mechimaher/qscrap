@@ -265,6 +265,23 @@
     justify-content: center !important;
 }
 
+.hover-scale {
+    transition: transform 0.2s cubic-bezier(0.4, 0, 0.2, 1) !important;
+}
+
+.hover-scale:hover {
+    transform: scale(1.05) !important;
+}
+
+.clickable-row {
+    transition: background 0.2s ease !important;
+    cursor: pointer !important;
+}
+
+.clickable-row:hover {
+    background-color: var(--bg-tertiary) !important;
+}
+
 .justify-between {
     justify-content: space-between !important;
 }

@@ -1,5 +1,5 @@
 const API_URL = '/api';
-let token = localStorage.getItem('opsToken');
+let currentUser = null; // Session stored in httpOnly cookie
 let socket = null;
 
 // ===== SECURITY UTILITIES =====
@@ -10,38 +10,14 @@ let socket = null;
 // escapeHTML: provided by shared/utils.js
 
 /**
- * Decode JWT token to extract payload (without verification - for frontend display only)
- * Security Note: Actual authorization is enforced by backend middleware
+ * Check if current user is authorized for operations
  */
-function decodeJWT(token) {
-    try {
-        if (!token) return null;
-        const parts = token.split('.');
-        if (parts.length !== 3) return null;
-        const payload = JSON.parse(atob(parts[1]));
-        return payload;
-    } catch (e) {
-        console.error('Failed to decode token:', e);
-        return null;
+function isAuthorizedUser(user) {
+    if (!user) return false;
+    if (user.userType === 'admin') return true;
+    if (user.userType === 'staff') {
+        return user.staffRole === 'operations';
     }
-}
-
-/**
- * Check if current token belongs to an authorized operations user
- * Allowed: admin, or staff with operations role
- */
-function isAuthorizedUser(token) {
-    const payload = decodeJWT(token);
-    if (!payload) return false;
-
-    // Admin always has access
-    if (payload.userType === 'admin') return true;
-
-    // Staff users need operations role for this dashboard
-    if (payload.userType === 'staff') {
-        return payload.staffRole === 'operations';
-    }
-
     return false;
 }
 
@@ -82,7 +58,7 @@ function showAccessDenied(userType) {
                         </p>
                     </div>
                     <div style="display: flex; flex-direction: column; gap: 12px;">
-                        <button onclick="logoutAndRetry()" style="background: linear-gradient(135deg, #8D1B3D 0%, #6B1530 100%); border: none; color: white; padding: 14px 24px; border-radius: 12px; font-size: 15px; font-weight: 600; cursor: pointer; transition: transform 0.2s, box-shadow 0.2s;">
+                        <button data-action="logoutAndRetry" style="background: linear-gradient(135deg, #8D1B3D 0%, #6B1530 100%); border: none; color: white; padding: 14px 24px; border-radius: 12px; font-size: 15px; font-weight: 600; cursor: pointer; transition: transform 0.2s, box-shadow 0.2s;">
                             <i class="bi bi-box-arrow-in-right"></i> Login with Different Account
                         </button>
                         <a href="/garage-dashboard.html" style="color: rgba(255,255,255,0.6); font-size: 13px; text-decoration: none;">
@@ -102,21 +78,18 @@ function showAccessDenied(userType) {
 }
 
 /**
- * Logout and show login screen for retry
+ * Logout and show login screen
  */
 function logoutAndRetry() {
-    localStorage.removeItem('opsToken');
-    token = null;
-
-    // Hide access denied screen
-    const accessDenied = document.getElementById('accessDeniedScreen');
-    if (accessDenied) accessDenied.style.display = 'none';
-
-    // Show login screen
-    document.getElementById('loginScreen').style.display = 'flex';
-    document.getElementById('app').style.display = 'none';
-
-    showToast('Please login with an authorized operations account', 'info');
+    // Session is invalidated by backend clearing the cookie
+    // But we still need to tell the backend to do it
+    fetch(`${API_URL}/auth/logout`, { method: 'POST', credentials: 'include' })
+        .finally(() => {
+            currentUser = null;
+            document.getElementById('accessDeniedScreen').style.display = 'none';
+            document.getElementById('loginScreen').style.display = 'flex';
+            document.getElementById('app').style.display = 'none';
+        });
 }
 
 let currentOrderStatus = 'all';
@@ -126,31 +99,24 @@ let currentUserType = 'customer';
 // Login
 document.getElementById('loginForm').addEventListener('submit', async (e) => {
     e.preventDefault();
-    const email = document.getElementById('loginEmail').value;
+    const phone = document.getElementById('loginEmail').value;
     const password = document.getElementById('loginPassword').value;
 
     try {
         const res = await fetch(`${API_URL}/auth/login`, {
             method: 'POST',
             headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({ phone_number: email, password })
+            body: JSON.stringify({ phone_number: phone, password }),
+            credentials: 'include'
         });
         const data = await res.json();
 
-        if (res.ok && data.token) {
-            // Validate user type before granting access
-            if (!isAuthorizedUser(data.token)) {
-                const userType = getUserTypeFromToken(data.token);
-                showToast(`Access denied: "${userType}" accounts cannot access Operations Dashboard`, 'error');
-                showAccessDenied(userType);
-                return;
+        if (res.ok) {
+            // Check auth again to set local currentUser and verify role
+            await checkAuth();
+            if (currentUser) {
+                showToast('Login successful', 'success');
             }
-
-            token = data.token;
-            localStorage.setItem('opsToken', token);
-            localStorage.setItem('opsUserName', data.fullName || 'Operator');
-            localStorage.setItem('opsUserPhone', data.phoneNumber || '');
-            showDashboard();
         } else {
             showToast(data.error || 'Login failed', 'error');
         }
@@ -159,15 +125,29 @@ document.getElementById('loginForm').addEventListener('submit', async (e) => {
     }
 });
 
-// Check auth on load - with user type validation
-if (token) {
-    if (isAuthorizedUser(token)) {
-        showDashboard();
-    } else {
-        const userType = getUserTypeFromToken(token);
-        showAccessDenied(userType);
+// Check auth on load
+async function checkAuth() {
+    try {
+        // Use v1/auth/me for consistency with Admin dashboard
+        const res = await fetch(`${API_URL}/v1/auth/me`, { credentials: 'include' });
+        if (res.ok) {
+            const user = await res.json();
+            if (isAuthorizedUser(user)) {
+                currentUser = user;
+                showDashboard();
+            } else {
+                showAccessDenied(user.userType || 'unknown');
+            }
+        } else {
+            document.getElementById('loginScreen').style.display = 'flex';
+        }
+    } catch (err) {
+        console.error('Auth verification failed:', err);
+        document.getElementById('loginScreen').style.display = 'flex';
     }
 }
+
+checkAuth();
 
 
 
@@ -188,7 +168,7 @@ async function showDashboard() {
     // Connect socket - only if not already connected
     if (!socket || !socket.connected) {
         socket = io({
-            auth: { token }
+            withCredentials: true
         });
 
         // Setup socket listeners (only once)
@@ -489,7 +469,7 @@ function switchSection(section) {
 async function loadStats() {
     try {
         const res = await fetch(`${API_URL}/operations/dashboard/stats`, {
-            headers: { 'Authorization': `Bearer ${token}` }
+            credentials: 'include'
         });
         const data = await res.json();
 
@@ -545,7 +525,7 @@ async function loadStats() {
 async function loadReviewBadge() {
     try {
         const res = await fetch(`${API_URL}/reviews/pending?limit=1`, {
-            headers: { 'Authorization': `Bearer ${token}` }
+            credentials: 'include'
         });
         const data = await res.json();
         if (data.pagination) {
@@ -559,7 +539,7 @@ async function loadReviewBadge() {
 async function loadFinanceBadge() {
     try {
         const res = await fetch(`${API_URL}/finance/payouts?status=pending&limit=100`, {
-            headers: { 'Authorization': `Bearer ${token}` }
+            credentials: 'include'
         });
         const data = await res.json();
         if (data.pagination) {
@@ -591,7 +571,7 @@ function getOrderActions(order) {
     switch (status) {
         case 'pending_payment':
             // Stuck orders - show cancel button
-            return `<button class="btn btn-danger btn-sm" onclick="cancelStuckOrder('${o.order_id}', '${o.order_number}')" title="Cancel stuck order"><i class="bi bi-x-circle"></i></button>`;
+            return `<button class="btn btn-danger btn-sm" data-action="cancelStuckOrder" data-arg="${o.order_id}" title="Cancel stuck order"><i class="bi bi-x-circle"></i></button>`;
         case 'confirmed':
         case 'preparing':
             return `<span class="text-muted" style="font-size: 12px;">Awaiting garage</span>`;
@@ -600,7 +580,7 @@ function getOrderActions(order) {
             if (o.driver_id) {
                 return `<span class="status-badge in-transit" style="font-size: 11px;"><i class="bi bi-person-check"></i> ${o.driver_name ? escapeHTML(o.driver_name) : 'Driver Assigned'}</span>`;
             }
-            return `<button class="btn btn-primary btn-sm" onclick="openUnifiedAssignmentModal('${o.order_id}', '${o.order_number}', 'collection')" title="Assign driver for collection"><i class="bi bi-truck"></i></button>`;
+            return `<button class="btn btn-primary btn-sm" data-action="openUnifiedAssignmentModal" data-arg="${o.order_id}" title="Assign driver for collection"><i class="bi bi-truck"></i></button>`;
         case 'collected':
             return `<span class="status-badge ready" style="font-size: 11px;">Part Collected</span>`;
         case 'qc_failed':
@@ -615,7 +595,7 @@ function getOrderActions(order) {
         case 'refunded':
             return `<span class="status-badge refunded" style="font-size: 11px;">Refunded</span>`;
         case 'disputed':
-            return `<button class="btn btn-warning btn-sm" onclick="switchSection('disputes')" title="View dispute"><i class="bi bi-exclamation-circle"></i></button>`;
+            return `<button class="btn btn-warning btn-sm" data-action="switchSection" data-arg="disputes" title="View dispute"><i class="bi bi-exclamation-circle"></i></button>`;
         default:
             if (status?.startsWith('cancelled')) {
                 return `<span class="status-badge cancelled" style="font-size: 11px;">Cancelled</span>`;
@@ -637,10 +617,11 @@ async function cancelStuckOrder(orderId, orderNumber) {
                 const res = await fetch(`${API_URL}/operations/orders/${orderId}/cancel`, {
                     method: 'POST',
                     headers: {
-                        'Authorization': `Bearer ${token}`,
-                        'Content-Type': 'application/json'
+                        'Content-Type': 'application/json',
+                        'x-csrf-token': getCookie('XSRF-TOKEN')
                     },
-                    body: JSON.stringify({ reason: 'Cancelled by operations - stuck payment' })
+                    body: JSON.stringify({ reason: 'Cancelled by operations - stuck payment' }),
+                    credentials: 'include'
                 });
                 const data = await res.json();
                 if (res.ok) {
@@ -714,7 +695,7 @@ function refreshOrders() {
 async function loadOrdersStats() {
     try {
         const res = await fetch(`${API_URL}/operations/stats`, {
-            headers: { 'Authorization': `Bearer ${token}` }
+            credentials: 'include'
         });
         const data = await res.json();
 
@@ -738,7 +719,7 @@ async function loadGarageFilter() {
         if (!select || select.options.length > 1) return; // Already loaded
 
         const res = await fetch(`${API_URL}/admin/garages?status=approved&limit=100`, {
-            headers: { 'Authorization': `Bearer ${token}` }
+            credentials: 'include'
         });
         const data = await res.json();
         const garages = data.garages || [];
@@ -767,7 +748,7 @@ async function exportOrdersCSV() {
         if (orderFilters.garageId) url += `&garage_id=${orderFilters.garageId}`;
 
         const res = await fetch(url, {
-            headers: { 'Authorization': `Bearer ${token}` }
+            credentials: 'include'
         });
         const data = await res.json();
         const orders = data.orders || [];
@@ -822,7 +803,7 @@ async function loadOrders(page = 1) {
         if (orderFilters.garageId) url += `&garage_id=${orderFilters.garageId}`;
 
         const res = await fetch(url, {
-            headers: { 'Authorization': `Bearer ${token}` }
+            credentials: 'include'
         });
         const data = await res.json();
 
@@ -932,7 +913,8 @@ async function loadOrders(page = 1) {
 async function loadEscalations() {
     try {
         const res = await fetch(`${API_URL}/operations/escalations?status=pending`, {
-            headers: { 'Authorization': `Bearer ${token}` }
+            headers: { 'X-CSRF-Token': getCsrfToken() },
+            credentials: 'include'
         });
         const data = await res.json();
 
@@ -978,11 +960,11 @@ async function loadEscalations() {
                         <td><small>${timeAgo}</small></td>
                         <td>
                             <div style="display: flex; gap: 4px;">
-                                <button class="btn btn-success btn-sm" onclick="resolveEscalation('${e.escalation_id}')" title="Resolve">
+                                <button class="btn btn-success btn-sm" data-action="resolveEscalation" data-arg="${e.escalation_id}" title="Resolve">
                                     <i class="bi bi-check-circle"></i>
                                 </button>
                                 ${e.ticket_id ? `
-                                    <button class="btn btn-ghost btn-sm" onclick="viewTicket('${e.ticket_id}')" title="View Ticket">
+                                    <button class="btn btn-ghost btn-sm" data-action="viewTicket" data-arg="${e.ticket_id}" title="View Ticket">
                                         <i class="bi bi-chat-dots"></i>
                                     </button>
                                 ` : ''}
@@ -1052,7 +1034,7 @@ async function resolveEscalation(escalationId) {
                 const res = await fetch(`${API_URL}/operations/escalations/${escalationId}/resolve`, {
                     method: 'POST',
                     headers: {
-                        'Authorization': `Bearer ${token}`,
+                        'X-CSRF-Token': getCsrfToken(),
                         'Content-Type': 'application/json'
                     },
                     body: JSON.stringify({
@@ -1120,7 +1102,8 @@ async function resolveEscalation(escalationId) {
 async function viewTicket(ticketId) {
     try {
         const res = await fetch(`${API_URL}/support/tickets/${ticketId}`, {
-            headers: { 'Authorization': `Bearer ${token}` }
+            headers: { 'X-CSRF-Token': getCsrfToken() },
+            credentials: 'include'
         });
         const data = await res.json();
 
@@ -1212,7 +1195,8 @@ function formatTimeAgo(dateStr) {
 async function viewUser(userId, userType) {
     try {
         const res = await fetch(`${API_URL}/operations/users/${userId}`, {
-            headers: { 'Authorization': `Bearer ${token}` }
+            headers: { 'X-CSRF-Token': getCsrfToken() },
+            credentials: 'include'
         });
         const data = await res.json();
 
@@ -1288,8 +1272,8 @@ async function viewUser(userId, userType) {
                         </div>
                         <div class="modal-footer" style="display: flex; gap: 10px; justify-content: flex-end; padding: 20px; border-top: 1px solid var(--border-color);">
                             ${u.is_suspended
-                ? `<button class="btn btn-success" onclick="activateUser('${userId}')"><i class="bi bi-check-circle"></i> Activate</button>`
-                : `<button class="btn btn-danger" onclick="suspendUser('${userId}')"><i class="bi bi-slash-circle"></i> Suspend</button>`
+                ? `<button class="btn btn-success" data-action="activateUser" data-arg="${userId}"><i class="bi bi-check-circle"></i> Activate</button>`
+                : `<button class="btn btn-danger" data-action="suspendUser" data-arg="${userId}"><i class="bi bi-slash-circle"></i> Suspend</button>`
             }
                             <button class="btn btn-ghost" onclick="document.getElementById('userDetailModal').remove()">Close</button>
                         </div>
@@ -1314,7 +1298,8 @@ async function suspendUser(userId) {
             try {
                 const res = await fetch(`${API_URL}/operations/users/${userId}/suspend`, {
                     method: 'POST',
-                    headers: { 'Authorization': `Bearer ${token}`, 'Content-Type': 'application/json' },
+                    headers: { 'X-CSRF-Token': getCsrfToken() },
+                    credentials: 'include'
                     body: JSON.stringify({ reason: reason || 'Suspended by operations team' })
                 });
                 const data = await res.json();
@@ -1336,7 +1321,8 @@ async function activateUser(userId) {
     try {
         const res = await fetch(`${API_URL}/operations/users/${userId}/activate`, {
             method: 'POST',
-            headers: { 'Authorization': `Bearer ${token}` }
+            headers: { 'X-CSRF-Token': getCsrfToken() },
+            credentials: 'include'
         });
         const data = await res.json();
         if (res.ok) {
@@ -1357,7 +1343,8 @@ let currentAnalyticsPeriod = '7d';
 async function loadAnalytics() {
     try {
         const res = await fetch(`${API_URL}/operations/analytics?period=${currentAnalyticsPeriod}`, {
-            headers: { 'Authorization': `Bearer ${token}` }
+            headers: { 'X-CSRF-Token': getCsrfToken() },
+            credentials: 'include'
         });
         const data = await res.json();
 
@@ -1427,7 +1414,8 @@ async function loadDrivers(page = 1) {
     currentDriversPage = page;
     try {
         const res = await fetch(`${API_URL}/delivery/drivers?page=${page}&limit=${DELIVERY_PAGE_SIZE}`, {
-            headers: { 'Authorization': `Bearer ${token}` }
+            headers: { 'X-CSRF-Token': getCsrfToken() },
+            credentials: 'include'
         });
         const data = await res.json();
 
@@ -1437,8 +1425,8 @@ async function loadDrivers(page = 1) {
         if (data.drivers && data.drivers.length) {
             document.getElementById('driversTable').innerHTML = data.drivers.map(d => {
                 const toggleBtn = d.status === 'available'
-                    ? `<button class="btn btn-sm" style="background: var(--warning); color: white; padding: 4px 10px;" onclick="toggleDriverStatus('${d.driver_id}', 'busy')" title="Mark as Busy"><i class="bi bi-pause-circle"></i></button>`
-                    : `<button class="btn btn-sm" style="background: var(--success); color: white; padding: 4px 10px;" onclick="toggleDriverStatus('${d.driver_id}', 'available')" title="Mark as Available"><i class="bi bi-play-circle"></i></button>`;
+                    ? `<button class="btn btn-sm" style="background: var(--warning); color: white; padding: 4px 10px;" data-action="toggleDriverStatus" data-arg="${d.driver_id}" title="Mark as Busy"><i class="bi bi-pause-circle"></i></button>`
+                    : `<button class="btn btn-sm" style="background: var(--success); color: white; padding: 4px 10px;" data-action="toggleDriverStatus" data-arg="${d.driver_id}" title="Mark as Available"><i class="bi bi-play-circle"></i></button>`;
                 return `
                     <tr>
                         <td><strong>${escapeHTML(d.full_name)}</strong><br><small style="color: var(--text-muted);">${d.vehicle_type || 'car'} - ${d.vehicle_plate || 'N/A'}</small></td>
@@ -1468,7 +1456,8 @@ async function loadDeliveryOrders(page = 1) {
     currentDeliveryOrdersPage = page;
     try {
         const res = await fetch(`${API_URL}/delivery/orders?page=${page}&limit=${DELIVERY_PAGE_SIZE}`, {
-            headers: { 'Authorization': `Bearer ${token}` }
+            headers: { 'X-CSRF-Token': getCsrfToken() },
+            credentials: 'include'
         });
         const data = await res.json();
 
@@ -1478,7 +1467,7 @@ async function loadDeliveryOrders(page = 1) {
                 const statusLabel = o.driver_name ? `Assigned to ${escapeHTML(o.driver_name)}` : o.order_status;
                 const actionBtn = o.driver_name
                     ? `<span class="status-badge in_transit">Assigned</span>`
-                    : `<button class="btn btn-primary btn-sm" onclick="openUnifiedAssignmentModal('${o.order_id}', '${o.order_number}', 'delivery')"><i class="bi bi-person-plus"></i> Assign</button>`;
+                    : `<button class="btn btn-primary btn-sm" data-action="openUnifiedAssignmentModal" data-arg="${o.order_id}"><i class="bi bi-person-plus"></i> Assign</button>`;
                 return `
                     <tr class="${rowClass}">
                         <td><strong>#${o.order_number}</strong></td>
@@ -1521,7 +1510,7 @@ async function loadDeliveryHistory(page = 1) {
         }
 
         const res = await fetch(url, {
-            headers: { 'Authorization': `Bearer ${token}` }
+            credentials: 'include'
         });
         const data = await res.json();
 
@@ -1574,7 +1563,8 @@ async function loadDeliveryHistory(page = 1) {
 async function loadReturns() {
     try {
         const res = await fetch(`${API_URL}/operations/returns`, {
-            headers: { 'Authorization': `Bearer ${token}` }
+            headers: { 'X-CSRF-Token': getCsrfToken() },
+            credentials: 'include'
         });
         const data = await res.json();
 
@@ -1606,7 +1596,7 @@ async function loadReturns() {
 
             const actionBtn = r.driver_id
                 ? `<span class="status-badge completed">In Progress</span>`
-                : `<button class="btn btn-warning btn-sm" onclick="assignReturnDriver('${r.assignment_id}', '${r.order_number}')">
+                : `<button class="btn btn-warning btn-sm" data-action="assignReturnDriver" data-arg="${r.assignment_id}">
                     <i class="bi bi-person-plus"></i> Assign
                    </button>`;
 
@@ -1663,7 +1653,7 @@ async function assignReturnDriver(assignmentId, orderNumber) {
             </div>
             <div class="modal-footer" style="display: flex; gap: 10px; justify-content: flex-end; padding: 15px; border-top: 1px solid var(--border-color);">
                 <button class="btn btn-ghost" onclick="document.getElementById('returnAssignModal').remove()">Cancel</button>
-                <button class="btn btn-warning" onclick="submitReturnAssignment('${assignmentId}')">
+                <button class="btn btn-warning" data-action="submitReturnAssignment" data-arg="${assignmentId}">
                     <i class="bi bi-check-lg"></i> Confirm
                 </button>
             </div>
@@ -1682,7 +1672,8 @@ async function submitReturnAssignment(assignmentId) {
     try {
         const res = await fetch(`${API_URL}/operations/returns/${assignmentId}/assign-driver`, {
             method: 'POST',
-            headers: { 'Authorization': `Bearer ${token}`, 'Content-Type': 'application/json' },
+            headers: { 'X-CSRF-Token': getCsrfToken() },
+            credentials: 'include'
             body: JSON.stringify({ driver_id: driverId })
         });
 
@@ -1746,7 +1737,7 @@ async function openUnifiedAssignmentModal(orderId, orderNumber, type = 'collecti
             </div>
             <div class="modal-footer" style="display: flex; gap: 10px; justify-content: flex-end; padding: 20px; border-top: 1px solid var(--border-color);">
                 <button class="btn btn-ghost" onclick="document.getElementById('unifiedAssignModal').remove()">Cancel</button>
-                <button class="btn btn-primary" onclick="submitUnifiedAssignment()" id="unifiedSubmitBtn" style="background: linear-gradient(135deg, #f59e0b, #d97706); min-width: 120px;" disabled>
+                <button class="btn btn-primary" data-action="submitUnifiedAssignment" id="unifiedSubmitBtn" style="background: linear-gradient(135deg, #f59e0b, #d97706); min-width: 120px;" disabled>
                     <i class="bi bi-check-lg"></i> Confirm
                 </button>
             </div>
@@ -1757,7 +1748,8 @@ async function openUnifiedAssignmentModal(orderId, orderNumber, type = 'collecti
     // Fetch ranked drivers by distance to order's garage
     try {
         const response = await fetch(`${API_URL}/delivery/drivers/ranked/${orderId}`, {
-            headers: { 'Authorization': `Bearer ${token}` }
+            headers: { 'X-CSRF-Token': getCsrfToken() },
+            credentials: 'include'
         });
 
         if (!response.ok) {
@@ -1897,7 +1889,8 @@ async function submitUnifiedAssignment() {
     try {
         const res = await fetch(url, {
             method: 'POST',
-            headers: { 'Authorization': `Bearer ${token}`, 'Content-Type': 'application/json' },
+            headers: { 'X-CSRF-Token': getCsrfToken() },
+            credentials: 'include'
             body: JSON.stringify(body)
         });
 
@@ -1939,7 +1932,8 @@ async function confirmDelivery(orderId) {
             try {
                 const res = await fetch(`${API_URL}/operations/orders/${orderId}/status`, {
                     method: 'PATCH',
-                    headers: { 'Authorization': `Bearer ${token}`, 'Content-Type': 'application/json' },
+                    headers: { 'X-CSRF-Token': getCsrfToken() },
+                    credentials: 'include'
                     body: JSON.stringify({ new_status: 'delivered', notes: 'Delivery confirmed by operations' })
                 });
                 if (res.ok) {
@@ -1990,7 +1984,8 @@ async function viewOrder(orderId) {
 
     try {
         const res = await fetch(`${API_URL}/operations/orders/${orderId}`, {
-            headers: { 'Authorization': `Bearer ${token}` }
+            headers: { 'X-CSRF-Token': getCsrfToken() },
+            credentials: 'include'
         });
 
         if (!res.ok) {
@@ -2229,7 +2224,7 @@ async function resolveDispute(disputeId, resolution, skipConfirm = false) {
         const res = await fetch(`${API_URL}/operations/disputes/${disputeId}/resolve`, {
             method: 'POST',
             headers: {
-                'Authorization': `Bearer ${token}`,
+                'X-CSRF-Token': getCsrfToken(),
                 'Content-Type': 'application/json'
             },
             body: JSON.stringify({ resolution })
@@ -2311,7 +2306,8 @@ let deliveryMarkers = {};
 async function loadActiveDeliveries() {
     try {
         const res = await fetch(`${API_URL}/delivery/active`, {
-            headers: { 'Authorization': `Bearer ${token}` }
+            headers: { 'X-CSRF-Token': getCsrfToken() },
+            credentials: 'include'
         });
         const data = await res.json();
 
@@ -2360,11 +2356,11 @@ function renderActiveDeliveries(deliveries) {
                     <td>
                         ${d.assignment_id ? `
                             <div style="display: flex; gap: 4px; flex-wrap: wrap;">
-                                <button class="btn btn-sm" onclick="markAsDelivered('${d.assignment_id}', '${d.order_number}')" 
+                                <button class="btn btn-sm" data-action="markAsDelivered" data-arg="${d.assignment_id}" 
                                         style="padding: 4px 8px; font-size: 11px; background: var(--success);">
                                     <i class="bi bi-check-circle"></i> Delivered
                                 </button>
-                                <button class="btn btn-sm" onclick="openReassignModal('${d.assignment_id}', '${d.order_number}', '${d.driver_name || ''}')" 
+                                <button class="btn btn-sm" data-action="openReassignModal" data-arg="${d.assignment_id}" 
                                         style="padding: 4px 8px; font-size: 11px; background: var(--warning); color: #000;"
                                         title="Emergency driver reassignment">
                                     <i class="bi bi-arrow-left-right"></i> Reassign
@@ -2372,7 +2368,7 @@ function renderActiveDeliveries(deliveries) {
                             </div>
                         ` : `
                             <div style="display: flex; gap: 4px; flex-wrap: wrap;">
-                                <button class="btn btn-sm" onclick="markOrderDelivered('${d.order_id}', '${d.order_number}')" 
+                                <button class="btn btn-sm" data-action="markOrderDelivered" data-arg="${d.order_id}" 
                                         style="padding: 4px 8px; font-size: 11px; background: var(--success);">
                                     <i class="bi bi-check-circle"></i> Delivered
                                 </button>
@@ -2446,7 +2442,7 @@ async function markAsDelivered(assignmentId, orderNumber) {
                 const res = await fetch(`${API_URL}/delivery/assignment/${assignmentId}/status`, {
                     method: 'PATCH',
                     headers: {
-                        'Authorization': `Bearer ${token}`,
+                        'X-CSRF-Token': getCsrfToken(),
                         'Content-Type': 'application/json'
                     },
                     body: JSON.stringify({
@@ -2482,7 +2478,7 @@ async function markOrderDelivered(orderId, orderNumber) {
                 const res = await fetch(`${API_URL}/operations/orders/${orderId}/status`, {
                     method: 'PATCH',
                     headers: {
-                        'Authorization': `Bearer ${token}`,
+                        'X-CSRF-Token': getCsrfToken(),
                         'Content-Type': 'application/json'
                     },
                     body: JSON.stringify({
@@ -2519,7 +2515,8 @@ function setElementText(id, value) {
 async function loadDeliveryStats() {
     try {
         const res = await fetch(`${API_URL}/delivery/stats`, {
-            headers: { 'Authorization': `Bearer ${token}` }
+            headers: { 'X-CSRF-Token': getCsrfToken() },
+            credentials: 'include'
         });
         const data = await res.json();
         if (data.stats) {
@@ -2605,7 +2602,8 @@ document.getElementById('deliveryTabs')?.addEventListener('click', (e) => {
 async function loadCollectionOrders() {
     try {
         const res = await fetch(`${API_URL}/delivery/collection/pending`, {
-            headers: { 'Authorization': `Bearer ${token}` }
+            headers: { 'X-CSRF-Token': getCsrfToken() },
+            credentials: 'include'
         });
         const data = await res.json();
 
@@ -2620,7 +2618,7 @@ async function loadCollectionOrders() {
                     </td>
                     <td>${o.part_description}</td>
                     <td>
-                        <button class="btn btn-sm" onclick="collectOrder('${o.order_id}')" 
+                        <button class="btn btn-sm" data-action="collectOrder" data-arg="${o.order_id}" 
                                 style="background: var(--warning); color: white; padding: 4px 10px;">
                             <i class="bi bi-box-arrow-in-down"></i> Collect
                         </button>
@@ -2639,7 +2637,8 @@ async function loadCollectionOrders() {
 async function loadDeliveryPending() {
     try {
         const res = await fetch(`${API_URL}/delivery/delivery/pending`, {
-            headers: { 'Authorization': `Bearer ${token}` }
+            headers: { 'X-CSRF-Token': getCsrfToken() },
+            credentials: 'include'
         });
         const data = await res.json();
 
@@ -2658,7 +2657,7 @@ async function loadDeliveryPending() {
                         </span>
                     </td>
                     <td>
-                        <button class="btn btn-sm" onclick="openDeliveryAssignModal('${o.order_id}', '${o.order_number}')" 
+                        <button class="btn btn-sm" data-action="openDeliveryAssignModal" data-arg="${o.order_id}" 
                                 style="background: var(--success); color: white; padding: 4px 10px;">
                             <i class="bi bi-truck"></i> Assign Driver
                         </button>
@@ -2677,7 +2676,8 @@ async function loadDeliveryPending() {
 async function loadDriversList() {
     try {
         const res = await fetch(`${API_URL}/delivery/drivers`, {
-            headers: { 'Authorization': `Bearer ${token}` }
+            headers: { 'X-CSRF-Token': getCsrfToken() },
+            credentials: 'include'
         });
         const data = await res.json();
 
@@ -2699,17 +2699,17 @@ async function loadDriversList() {
                         </td>
                         <td>
                             ${d.status === 'available' ? `
-                                <button class="btn btn-sm" onclick="toggleDriverStatus('${d.driver_id}', 'busy')" 
+                                <button class="btn btn-sm" data-action="toggleDriverStatus" data-arg="${d.driver_id}" 
                                         style="padding: 2px 8px; font-size: 11px; background: var(--warning); color: white;" title="Mark as Busy">
                                     <i class="bi bi-pause-circle"></i>
                                 </button>
                             ` : d.status === 'busy' ? `
-                                <button class="btn btn-sm" onclick="toggleDriverStatus('${d.driver_id}', 'available')" 
+                                <button class="btn btn-sm" data-action="toggleDriverStatus" data-arg="${d.driver_id}" 
                                         style="padding: 2px 8px; font-size: 11px; background: var(--success); color: white;" title="Mark as Available">
                                     <i class="bi bi-play-fill"></i>
                                 </button>
                             ` : d.status === 'offline' ? `
-                                <button class="btn btn-sm" onclick="toggleDriverStatus('${d.driver_id}', 'available')" 
+                                <button class="btn btn-sm" data-action="toggleDriverStatus" data-arg="${d.driver_id}" 
                                         style="padding: 2px 8px; font-size: 11px; background: var(--success); color: white;" title="Mark as Available">
                                     <i class="bi bi-play-fill"></i>
                                 </button>
@@ -2733,7 +2733,8 @@ async function collectOrder(orderId) {
     let hasDrivers = false;
     try {
         const res = await fetch(`${API_URL}/delivery/drivers`, {
-            headers: { 'Authorization': `Bearer ${token}` }
+            headers: { 'X-CSRF-Token': getCsrfToken() },
+            credentials: 'include'
         });
         const data = await res.json();
         // Filter for available drivers
@@ -2768,7 +2769,7 @@ async function collectOrder(orderId) {
             </div>
             <div class="modal-footer" style="display: flex; gap: 10px; justify-content: flex-end; padding: 15px 20px; border-top: 1px solid var(--border-color);">
                 <button class="btn btn-ghost" onclick="document.getElementById('collectOrderModal').remove()">Cancel</button>
-                <button class="btn btn-primary" id="confirmCollectOrderBtn" onclick="submitCollectOrder('${orderId}')" style="background: linear-gradient(135deg, #f59e0b, #d97706);" ${!hasDrivers ? 'disabled' : ''}>
+                <button class="btn btn-primary" id="confirmCollectOrderBtn" data-action="submitCollectOrder" data-arg="${orderId}" style="background: linear-gradient(135deg, #f59e0b, #d97706);" ${!hasDrivers ? 'disabled' : ''}>
                     <i class="bi bi-check-lg"></i> Collect Order
                 </button>
             </div>
@@ -2793,7 +2794,7 @@ async function submitCollectOrder(orderId) {
         const res = await fetch(`${API_URL}/delivery/collect/${orderId}`, {
             method: 'POST',
             headers: {
-                'Authorization': `Bearer ${token}`,
+                'X-CSRF-Token': getCsrfToken(),
                 'Content-Type': 'application/json'
             },
             body: JSON.stringify({
@@ -2827,7 +2828,7 @@ async function toggleDriverStatus(driverId, newStatus) {
         const res = await fetch(`${API_URL}/delivery/drivers/${driverId}`, {
             method: 'PATCH',
             headers: {
-                'Authorization': `Bearer ${token}`,
+                'X-CSRF-Token': getCsrfToken(),
                 'Content-Type': 'application/json'
             },
             body: JSON.stringify({ status: newStatus })
@@ -2852,7 +2853,8 @@ async function openDeliveryAssignModal(orderId, orderNumber) {
     let driversHtml = '<option value="">-- No drivers available --</option>';
     try {
         const res = await fetch(`${API_URL}/delivery/drivers?status=available`, {
-            headers: { 'Authorization': `Bearer ${token}` }
+            headers: { 'X-CSRF-Token': getCsrfToken() },
+            credentials: 'include'
         });
         const data = await res.json();
         const drivers = (data.drivers || []).filter(d => d.status === 'available');
@@ -2883,7 +2885,7 @@ async function openDeliveryAssignModal(orderId, orderNumber) {
             </div>
             <div class="modal-footer" style="display: flex; gap: 10px; justify-content: flex-end; padding: 15px 20px; border-top: 1px solid var(--border-color);">
                 <button class="btn btn-ghost" onclick="document.getElementById('deliveryAssignModal').remove()">Cancel</button>
-                <button class="btn btn-primary" id="confirmDeliveryBtn" onclick="submitDeliveryAssignment('${orderId}')" style="background: var(--success);">
+                <button class="btn btn-primary" id="confirmDeliveryBtn" data-action="submitDeliveryAssignment" data-arg="${orderId}" style="background: var(--success);">
                     <i class="bi bi-check-lg"></i> Assign & Start Delivery
                 </button>
             </div>
@@ -2908,7 +2910,7 @@ async function submitDeliveryAssignment(orderId) {
         const res = await fetch(`${API_URL}/delivery/assign/${orderId}`, {
             method: 'POST',
             headers: {
-                'Authorization': `Bearer ${token}`,
+                'X-CSRF-Token': getCsrfToken(),
                 'Content-Type': 'application/json'
             },
             body: JSON.stringify({ driver_id: driverId })
@@ -2939,7 +2941,8 @@ async function loadUsers() {
     try {
         // Load user stats
         const statsRes = await fetch(`${API_URL}/operations/users/stats`, {
-            headers: { 'Authorization': `Bearer ${token}` }
+            headers: { 'X-CSRF-Token': getCsrfToken() },
+            credentials: 'include'
         });
         const statsData = await statsRes.json();
 
@@ -2952,7 +2955,8 @@ async function loadUsers() {
 
         // Load users list
         const usersRes = await fetch(`${API_URL}/operations/users`, {
-            headers: { 'Authorization': `Bearer ${token}` }
+            headers: { 'X-CSRF-Token': getCsrfToken() },
+            credentials: 'include'
         });
         const usersData = await usersRes.json();
 
@@ -2989,10 +2993,10 @@ function renderUsersTable(users) {
             </td>
             <td>
                 ${u.is_active ?
-            `<button class="btn btn-sm btn-danger" onclick="suspendUser('${u.user_id}')">
+            `<button class="btn btn-sm btn-danger" data-action="suspendUser" data-arg="${u.user_id}">
                         <i class="bi bi-ban"></i> Suspend
                     </button>` :
-            `<button class="btn btn-sm btn-success" onclick="activateUser('${u.user_id}')">
+            `<button class="btn btn-sm btn-success" data-action="activateUser" data-arg="${u.user_id}">
                         <i class="bi bi-check"></i> Activate
                     </button>`
         }
@@ -3013,7 +3017,8 @@ function searchUsers() {
 async function loadGarages() {
     try {
         const res = await fetch(`${API_URL}/operations/garages`, {
-            headers: { 'Authorization': `Bearer ${token}` }
+            headers: { 'X-CSRF-Token': getCsrfToken() },
+            credentials: 'include'
         });
         const data = await res.json();
 
@@ -3043,7 +3048,7 @@ async function loadGarages() {
                 <td>
                     ${g.is_verified ?
                 `<span class="status-badge verified"><i class="bi bi-patch-check"></i> Verified</span>` :
-                `<button class="btn btn-sm btn-primary" onclick="verifyGarage('${g.garage_id}')">
+                `<button class="btn btn-sm btn-primary" data-action="verifyGarage" data-arg="${g.garage_id}">
                             <i class="bi bi-patch-check"></i> Verify
                         </button>`
             }
@@ -3060,7 +3065,8 @@ async function verifyGarage(garageId) {
     try {
         const res = await fetch(`${API_URL}/operations/garages/${garageId}/verify`, {
             method: 'POST',
-            headers: { 'Authorization': `Bearer ${token}` }
+            headers: { 'X-CSRF-Token': getCsrfToken() },
+            credentials: 'include'
         });
         if (res.ok) {
             showToast('Garage verified!', 'success');
@@ -3076,7 +3082,8 @@ async function loadFinance() {
     try {
         // Load finance stats
         const statsRes = await fetch(`${API_URL}/finance/stats`, {
-            headers: { 'Authorization': `Bearer ${token}` }
+            headers: { 'X-CSRF-Token': getCsrfToken() },
+            credentials: 'include'
         });
         const statsData = await statsRes.json();
 
@@ -3104,7 +3111,8 @@ async function loadPendingPayouts(page = 1) {
     currentPendingPayoutsPage = page;
     try {
         const res = await fetch(`${API_URL}/finance/payouts?status=pending,on_hold&page=${page}&limit=${PENDING_PAYOUTS_PER_PAGE}`, {
-            headers: { 'Authorization': `Bearer ${token}` }
+            headers: { 'X-CSRF-Token': getCsrfToken() },
+            credentials: 'include'
         });
         const data = await res.json();
 
@@ -3143,14 +3151,14 @@ async function loadPendingPayouts(page = 1) {
                 </td>
                 <td>
                     ${isHeld ? `
-                        <button class="btn btn-sm" onclick="releasePayout('${p.payout_id}')" title="Release Hold" style="background-color: #059669; color: white; border: none; padding: 6px 12px; font-weight: 600;">
+                        <button class="btn btn-sm" data-action="releasePayout" data-arg="${p.payout_id}" title="Release Hold" style="background-color: #059669; color: white; border: none; padding: 6px 12px; font-weight: 600;">
                             <i class="bi bi-play-fill"></i> Release
                         </button>
                     ` : `
-                        <button class="btn btn-sm btn-success" onclick="openSendPaymentModal('${p.payout_id}', '${p.garage_name || ''}', '${p.order_number || ''}', ${p.net_amount})">
+                        <button class="btn btn-sm btn-success" data-action="openSendPaymentModal" data-arg="${p.payout_id}">
                             <i class="bi bi-send-check"></i> Send
                         </button>
-                        <button class="btn btn-sm btn-warning" onclick="holdPayout('${p.payout_id}')" title="Put on hold">
+                        <button class="btn btn-sm btn-warning" data-action="holdPayout" data-arg="${p.payout_id}" title="Put on hold">
                             <i class="bi bi-pause"></i>
                         </button>
                     `}
@@ -3204,13 +3212,15 @@ async function loadDisputeStats() {
     try {
         // Get order disputes count
         const orderRes = await fetch(`${API_URL}/operations/disputes?status=pending&limit=1`, {
-            headers: { 'Authorization': `Bearer ${token}` }
+            headers: { 'X-CSRF-Token': getCsrfToken() },
+            credentials: 'include'
         });
         const orderData = await orderRes.json();
 
         // Get payment disputes count
         const paymentRes = await fetch(`${API_URL}/finance/payouts?status=disputed`, {
-            headers: { 'Authorization': `Bearer ${token}` }
+            headers: { 'X-CSRF-Token': getCsrfToken() },
+            credentials: 'include'
         });
         const paymentData = await paymentRes.json();
 
@@ -3246,7 +3256,8 @@ async function loadOrderDisputes() {
         tbody.innerHTML = '<tr><td colspan="7" class="empty-state">Loading...</td></tr>';
 
         const res = await fetch(`${API_URL}/operations/disputes?status=pending`, {
-            headers: { 'Authorization': `Bearer ${token}` }
+            headers: { 'X-CSRF-Token': getCsrfToken() },
+            credentials: 'include'
         });
         const data = await res.json();
 
@@ -3269,10 +3280,10 @@ async function loadOrderDisputes() {
                 <td>${d.created_at ? new Date(d.created_at).toLocaleDateString() : '-'}</td>
                 <td>
                     <div style="display: flex; gap: 6px;">
-                        <button class="btn btn-sm btn-success" onclick="resolveOrderDisputeAction('${d.dispute_id}', 'refund_approved', ${d.refund_amount || 0})" title="Approve Refund">
+                        <button class="btn btn-sm btn-success" data-action="resolveOrderDisputeAction" data-arg="${d.dispute_id}" title="Approve Refund">
                             <i class="bi bi-check-lg"></i> Approve
                         </button>
-                        <button class="btn btn-sm btn-danger" onclick="resolveOrderDisputeAction('${d.dispute_id}', 'refund_declined', 0)" title="Reject Dispute">
+                        <button class="btn btn-sm btn-danger" data-action="resolveOrderDisputeAction" data-arg="${d.dispute_id}" title="Reject Dispute">
                             <i class="bi bi-x-lg"></i> Reject
                         </button>
                     </div>
@@ -3293,7 +3304,8 @@ async function loadPaymentDisputesData() {
         tbody.innerHTML = '<tr><td colspan="6" class="empty-state">Loading...</td></tr>';
 
         const res = await fetch(`${API_URL}/finance/payouts?status=disputed`, {
-            headers: { 'Authorization': `Bearer ${token}` }
+            headers: { 'X-CSRF-Token': getCsrfToken() },
+            credentials: 'include'
         });
         const data = await res.json();
 
@@ -3319,13 +3331,13 @@ async function loadPaymentDisputesData() {
                 <td>${p.created_at ? new Date(p.created_at).toLocaleDateString() : '-'}</td>
                 <td>
                     <div style="display: flex; gap: 6px;">
-                        <button class="btn btn-sm btn-success" onclick="resolvePaymentDisputeAction('${p.payout_id}', 'resent_payment', '${p.net_amount}')" title="Resend Payment">
+                        <button class="btn btn-sm btn-success" data-action="resolvePaymentDisputeAction" data-arg="${p.payout_id}" title="Resend Payment">
                             <i class="bi bi-arrow-repeat"></i> Resend
                         </button>
-                        <button class="btn btn-sm btn-primary" onclick="resolvePaymentDisputeAction('${p.payout_id}', 'confirmed_received', '${p.net_amount}')" title="Mark as Received">
+                        <button class="btn btn-sm btn-primary" data-action="resolvePaymentDisputeAction" data-arg="${p.payout_id}" title="Mark as Received">
                             <i class="bi bi-check-lg"></i> Confirmed
                         </button>
-                        <button class="btn btn-sm btn-danger" onclick="resolvePaymentDisputeAction('${p.payout_id}', 'cancelled', '${p.net_amount}')" title="Cancel">
+                        <button class="btn btn-sm btn-danger" data-action="resolvePaymentDisputeAction" data-arg="${p.payout_id}" title="Cancel">
                             <i class="bi bi-x-lg"></i>
                         </button>
                     </div>
@@ -3375,7 +3387,7 @@ async function resolveOrderDisputeAction(disputeId, resolution, refundAmount) {
                 const res = await fetch(`${API_URL}/operations/disputes/${disputeId}/resolve`, {
                     method: 'POST',
                     headers: {
-                        'Authorization': `Bearer ${token}`,
+                        'X-CSRF-Token': getCsrfToken(),
                         'Content-Type': 'application/json'
                     },
                     body: JSON.stringify({
@@ -3420,7 +3432,7 @@ async function resolvePaymentDisputeAction(payoutId, resolution, amount) {
                 const res = await fetch(`${API_URL}/finance/payouts/${payoutId}/resolve-dispute`, {
                     method: 'POST',
                     headers: {
-                        'Authorization': `Bearer ${token}`,
+                        'X-CSRF-Token': getCsrfToken(),
                         'Content-Type': 'application/json'
                     },
                     body: JSON.stringify({
@@ -3487,8 +3499,9 @@ async function submitSendPayment() {
             method: 'POST',
             headers: {
                 'Content-Type': 'application/json',
-                'Authorization': `Bearer ${token}`
+                'X-CSRF-Token': getCsrfToken()
             },
+            credentials: 'include',
             body: JSON.stringify({
                 payout_method: method,
                 payout_reference: reference,
@@ -3521,7 +3534,8 @@ async function loadTransactions(page = 1) {
     currentTransactionsPage = page;
     try {
         const res = await fetch(`${API_URL}/finance/transactions?page=${page}&limit=${TRANSACTIONS_PER_PAGE}`, {
-            headers: { 'Authorization': `Bearer ${token}` }
+            headers: { 'X-CSRF-Token': getCsrfToken() },
+            credentials: 'include'
         });
         const data = await res.json();
 
@@ -3555,7 +3569,7 @@ async function loadTransactions(page = 1) {
                     ${statusBadge}
                     ${isHeld ? `
                         <div style="margin-top: 5px;">
-                            <button class="btn btn-sm" onclick="releasePayout('${t.id}')" title="Release Hold" style="background-color: #059669; color: white; border: none; padding: 4px 10px; font-weight: 600; font-size: 11px;">
+                            <button class="btn btn-sm" data-action="releasePayout" data-arg="${t.id}" title="Release Hold" style="background-color: #059669; color: white; border: none; padding: 4px 10px; font-weight: 600; font-size: 11px;">
                                 <i class="bi bi-play-fill"></i> Release
                             </button>
                         </div>
@@ -3586,7 +3600,8 @@ async function processPayout(payoutId) {
             try {
                 const res = await fetch(`${API_URL}/finance/payouts/${payoutId}/process`, {
                     method: 'POST',
-                    headers: { 'Authorization': `Bearer ${token}` }
+                    headers: { 'X-CSRF-Token': getCsrfToken() },
+                    credentials: 'include'
                 });
                 if (res.ok) {
                     showToast('Payout processed!', 'success');
@@ -3620,7 +3635,7 @@ async function holdPayout(payoutId) {
                 const res = await fetch(`${API_URL}/finance/payouts/${payoutId}/hold`, {
                     method: 'POST',
                     headers: {
-                        'Authorization': `Bearer ${token}`,
+                        'X-CSRF-Token': getCsrfToken(),
                         'Content-Type': 'application/json'
                     },
                     body: JSON.stringify({ reason })
@@ -3650,7 +3665,7 @@ async function releasePayout(payoutId) {
                 const res = await fetch(`${API_URL}/finance/payouts/${payoutId}/release`, {
                     method: 'POST',
                     headers: {
-                        'Authorization': `Bearer ${token}`,
+                        'X-CSRF-Token': getCsrfToken(),
                         'Content-Type': 'application/json'
                     },
                     body: JSON.stringify({})
@@ -3678,7 +3693,8 @@ let activeOpsTicketId = null;
 async function loadOpsTickets() {
     try {
         const res = await fetch(`${API_URL}/support/tickets`, {
-            headers: { 'Authorization': `Bearer ${token}` }
+            headers: { 'X-CSRF-Token': getCsrfToken() },
+            credentials: 'include'
         });
         const data = await res.json();
 
@@ -3742,7 +3758,8 @@ async function loadOpsTicketMessages(ticketId) {
 
     try {
         const res = await fetch(`${API_URL}/support/tickets/${ticketId}/messages`, {
-            headers: { 'Authorization': `Bearer ${token}` }
+            headers: { 'X-CSRF-Token': getCsrfToken() },
+            credentials: 'include'
         });
         const messages = await res.json();
 
@@ -3773,7 +3790,7 @@ async function sendOpsMessage() {
         const res = await fetch(`${API_URL}/support/tickets/${activeOpsTicketId}/messages`, {
             method: 'POST',
             headers: {
-                'Authorization': `Bearer ${token}`,
+                'X-CSRF-Token': getCsrfToken(),
                 'Content-Type': 'application/json'
             },
             body: JSON.stringify({ message_text: message })
@@ -3794,7 +3811,7 @@ async function updateTicketStatus(status) {
         const res = await fetch(`${API_URL}/support/tickets/${activeOpsTicketId}/status`, {
             method: 'PATCH',
             headers: {
-                'Authorization': `Bearer ${token}`,
+                'X-CSRF-Token': getCsrfToken(),
                 'Content-Type': 'application/json'
             },
             body: JSON.stringify({ status })
@@ -3912,7 +3929,8 @@ if (searchInput) {
 async function performGlobalSearch(query) {
     try {
         const res = await fetch(`${API_URL}/search?q=${encodeURIComponent(query)}`, {
-            headers: { 'Authorization': `Bearer ${token}` }
+            headers: { 'X-CSRF-Token': getCsrfToken() },
+            credentials: 'include'
         });
         const data = await res.json();
 
@@ -3966,7 +3984,7 @@ function renderSearchResults(results) {
     if (results.disputes && results.disputes.length > 0) {
         html += `<div style="padding: 8px 12px; font-size: 11px; font-weight: 600; color: var(--text-muted); text-transform: uppercase; margin-top: 8px;">Disputes</div>`;
         html += results.disputes.slice(0, 5).map(d => `
-            <div class="search-result-item" onclick="switchSection('disputes'); searchResultsDiv.style.display='none';"
+            <div class="search-result-item" data-action="switchSection" data-arg="disputes" data-prevent-default="false"
                  style="padding: 10px 12px; cursor: pointer; display: flex; justify-content: space-between; align-items: center; border-bottom: 1px solid var(--border);"
                  onmouseover="this.style.background='var(--bg-hover)'" onmouseout="this.style.background=''">
                 <div>
@@ -4053,7 +4071,8 @@ async function generateReport() {
 
     try {
         const res = await fetch(`${API_URL}/reports/${type}?from=${from}&to=${to}`, {
-            headers: { 'Authorization': `Bearer ${token}` }
+            headers: { 'X-CSRF-Token': getCsrfToken() },
+            credentials: 'include'
         });
         const data = await res.json();
 
@@ -4453,7 +4472,8 @@ async function processAllPayouts() {
             try {
                 // Get all pending payouts
                 const res = await fetch(`${API_URL}/finance/payouts?status=pending`, {
-                    headers: { 'Authorization': `Bearer ${token}` }
+                    headers: { 'X-CSRF-Token': getCsrfToken() },
+                    credentials: 'include'
                 });
                 const data = await res.json();
 
@@ -4472,7 +4492,7 @@ async function processAllPayouts() {
                         const sendRes = await fetch(`${API_URL}/finance/payouts/${payout.payout_id}/send`, {
                             method: 'POST',
                             headers: {
-                                'Authorization': `Bearer ${token}`,
+                                'X-CSRF-Token': getCsrfToken(),
                                 'Content-Type': 'application/json'
                             },
                             body: JSON.stringify({
@@ -4543,7 +4563,8 @@ async function loadReviewModeration(arg1, arg2) {
             : `${API_URL}/reviews/all?status=${status}&page=${page}&limit=${REVIEWS_PER_PAGE}`;
 
         const res = await fetch(endpoint, {
-            headers: { 'Authorization': `Bearer ${token}` }
+            headers: { 'X-CSRF-Token': getCsrfToken() },
+            credentials: 'include'
         });
         const data = await res.json();
 
@@ -4584,10 +4605,10 @@ async function loadReviewModeration(arg1, arg2) {
                 <td>
                     ${status === 'pending' ? `
                         <div style="display: flex; gap: 8px;">
-                            <button onclick="approveReview('${r.review_id}')" class="btn-sm btn-success" title="Approve">
+                            <button data-action="approveReview" data-arg="${r.review_id}" class="btn-sm btn-success" title="Approve">
                                 <i class="bi bi-check-lg"></i>
                             </button>
-                            <button onclick="openRejectReviewModal('${r.review_id}')" class="btn-sm btn-danger" title="Reject">
+                            <button data-action="openRejectReviewModal" data-arg="${r.review_id}" class="btn-sm btn-danger" title="Reject">
                                 <i class="bi bi-x-lg"></i>
                             </button>
                         </div>
@@ -4615,7 +4636,7 @@ async function approveReview(reviewId) {
         const res = await fetch(`${API_URL}/reviews/${reviewId}/moderate`, {
             method: 'POST',
             headers: {
-                'Authorization': `Bearer ${token}`,
+                'X-CSRF-Token': getCsrfToken(),
                 'Content-Type': 'application/json'
             },
             body: JSON.stringify({ action: 'approve' })
@@ -4656,7 +4677,7 @@ async function rejectReview(reviewId, reason) {
         const res = await fetch(`${API_URL}/reviews/${reviewId}/moderate`, {
             method: 'POST',
             headers: {
-                'Authorization': `Bearer ${token}`,
+                'X-CSRF-Token': getCsrfToken(),
                 'Content-Type': 'application/json'
             },
             body: JSON.stringify({ action: 'reject', rejection_reason: reason })
@@ -4697,7 +4718,8 @@ async function openReassignModal(assignmentId, orderNumber, currentDriverName) {
     let driversHtml = '<option value="">-- No drivers available --</option>';
     try {
         const res = await fetch(`${API_URL}/delivery/drivers`, {
-            headers: { 'Authorization': `Bearer ${token}` }
+            headers: { 'X-CSRF-Token': getCsrfToken() },
+            credentials: 'include'
         });
         const data = await res.json();
         const drivers = (data.drivers || []).filter(d => d.status === 'available');
@@ -4721,7 +4743,7 @@ async function openReassignModal(assignmentId, orderNumber, currentDriverName) {
                     <i class="bi bi-arrow-left-right" style="color: var(--warning);"></i>
                     Emergency Reassignment
                 </h3>
-                <button onclick="document.getElementById('reassignDriverModal').remove()" 
+                <button data-action="remove" data-arg="#reassignDriverModal" 
                         style="background: none; border: none; font-size: 20px; cursor: pointer; color: var(--text-secondary);">
                     <i class="bi bi-x-lg"></i>
                 </button>
@@ -4746,7 +4768,7 @@ async function openReassignModal(assignmentId, orderNumber, currentDriverName) {
                 <label style="display: block; margin-bottom: 6px; font-weight: 500;">
                     Reason <span style="color: var(--danger);">*</span>
                 </label>
-                <select id="reassignReasonPreset" onchange="updateReassignReason()" style="width: 100%; padding: 10px; border: 1px solid var(--border-color); border-radius: 8px; background: var(--bg-secondary); color: var(--text-primary); margin-bottom: 8px;">
+                <select id="reassignReasonPreset" data-action="updateReassignReason" style="width: 100%; padding: 10px; border: 1px solid var(--border-color); border-radius: 8px; background: var(--bg-secondary); color: var(--text-primary); margin-bottom: 8px;">
                     <option value="">-- Select reason --</option>
                     <option value="Vehicle breakdown">Vehicle breakdown</option>
                     <option value="Driver emergency/illness">Driver emergency/illness</option>
@@ -4760,8 +4782,8 @@ async function openReassignModal(assignmentId, orderNumber, currentDriverName) {
             </div>
 
             <div style="display: flex; gap: 10px; justify-content: flex-end;">
-                <button class="btn btn-ghost" onclick="document.getElementById('reassignDriverModal').remove()">Cancel</button>
-                <button class="btn" id="confirmReassignBtn" onclick="submitReassignment('${assignmentId}')" 
+                <button class="btn btn-ghost" data-action="remove" data-arg="#reassignDriverModal">Cancel</button>
+                <button class="btn" id="confirmReassignBtn" data-action="submitReassignment" data-arg="${assignmentId}" 
                         style="background: linear-gradient(135deg, var(--warning), #d97706); color: #000; font-weight: 600;">
                     <i class="bi bi-arrow-left-right"></i> Reassign Driver
                 </button>
@@ -4818,7 +4840,7 @@ async function submitReassignment(assignmentId) {
         const res = await fetch(`${API_URL}/delivery/reassign/${assignmentId}`, {
             method: 'POST',
             headers: {
-                'Authorization': `Bearer ${token}`,
+                'X-CSRF-Token': getCsrfToken(),
                 'Content-Type': 'application/json'
             },
             body: JSON.stringify({
@@ -4870,7 +4892,7 @@ if (typeof socket !== 'undefined' && socket) {
 async function updateAllBadges() {
     try {
         const res = await fetch(`${API_URL}/operations/dashboard/stats`, {
-            headers: { 'Authorization': `Bearer ${token}` }
+            credentials: 'include'
         });
         const data = await res.json();
 
@@ -5094,7 +5116,8 @@ function closeAllModals() {
 async function loadRecentOrders() {
     try {
         const res = await fetch(`${API_URL}/operations/orders?limit=5`, {
-            headers: { 'Authorization': `Bearer ${token}` }
+            headers: { 'X-CSRF-Token': getCsrfToken() },
+            credentials: 'include'
         });
         const data = await res.json();
 
@@ -5240,7 +5263,7 @@ async function loadHeaderNotifications() {
     try {
         // Get stats for notifications
         const res = await fetch(`${API_URL}/operations/dashboard/stats`, {
-            headers: { 'Authorization': `Bearer ${token}` }
+            credentials: 'include'
         });
         const data = await res.json();
 
@@ -5314,7 +5337,7 @@ function renderNotifications(notifications) {
     }
 
     list.innerHTML = notifications.map(n => `
-        <div class="notification-item" onclick="handleNotificationClick('${n.section}')" style="display: flex; align-items: center;">
+        <div class="notification-item" data-action="handleNotificationClick" data-arg="${n.section}" style="display: flex; align-items: center;">
             <div class="icon ${n.icon}">
                 <i class="bi bi-${n.icon === 'warning' ? 'exclamation-triangle' : n.icon === 'danger' ? 'x-circle' : 'info-circle'}"></i>
             </div>
@@ -5407,7 +5430,8 @@ async function loadFraudSection() {
 async function loadFraudStats() {
     try {
         const res = await fetch(`${API_URL}/cancellation/fraud-stats`, {
-            headers: { 'Authorization': `Bearer ${token}` }
+            headers: { 'X-CSRF-Token': getCsrfToken() },
+            credentials: 'include'
         });
 
         if (res.ok) {
@@ -5439,7 +5463,8 @@ async function loadReturnRequests() {
 
     try {
         const res = await fetch(`${API_URL}/cancellation/return-requests?status=pending`, {
-            headers: { 'Authorization': `Bearer ${token}` }
+            headers: { 'X-CSRF-Token': getCsrfToken() },
+            credentials: 'include'
         });
 
         if (!res.ok) {
@@ -5461,14 +5486,14 @@ async function loadReturnRequests() {
                     <strong>${escapeHTML(r.customer_name || 'Customer')}</strong>
                     <div style="font-size: 11px; color: var(--text-muted);">${escapeHTML(r.customer_phone || '')}</div>
                 </td>
-                <td><a href="#" onclick="viewOrder('${r.order_id}'); return false;" style="color: var(--accent);">#${escapeHTML(r.order_number || r.order_id?.slice(0, 8))}</a></td>
+                <td><a href="#" data-action="viewOrder" data-arg="${r.order_id}" style="color: var(--accent);">#${escapeHTML(r.order_number || r.order_id?.slice(0, 8))}</a></td>
                 <td style="max-width: 150px; overflow: hidden; text-overflow: ellipsis;">${escapeHTML(r.part_description || 'Part')}</td>
                 <td>
                     <span class="badge badge-${r.reason === 'defective' ? 'warning' : 'secondary'}">${escapeHTML(r.reason || 'N/A')}</span>
                 </td>
                 <td>
                     ${r.photo_urls?.length > 0 ?
-                `<button class="btn-sm btn-ghost" onclick="viewReturnPhotos('${r.return_id}')" title="View ${r.photo_urls.length} photos">
+                `<button class="btn-sm btn-ghost" data-action="viewReturnPhotos" data-arg="${r.return_id}" title="View ${r.photo_urls.length} photos">
                             <i class="bi bi-images"></i> ${r.photo_urls.length}
                         </button>` :
                 '<span style="color: #ef4444;"><i class="bi bi-x-circle"></i> None</span>'
@@ -5477,10 +5502,10 @@ async function loadReturnRequests() {
                 <td>${getTimeAgo(r.created_at)}</td>
                 <td>
                     <div style="display: flex; gap: 6px;">
-                        <button class="btn-sm btn-success" onclick="approveReturn('${r.return_id}')" title="Approve Return">
+                        <button class="btn-sm btn-success" data-action="approveReturn" data-arg="${r.return_id}" title="Approve Return">
                             <i class="bi bi-check-lg"></i>
                         </button>
-                        <button class="btn-sm btn-danger" onclick="rejectReturn('${r.return_id}')" title="Reject Return">
+                        <button class="btn-sm btn-danger" data-action="rejectReturn" data-arg="${r.return_id}" title="Reject Return">
                             <i class="bi bi-x-lg"></i>
                         </button>
                     </div>
@@ -5507,7 +5532,7 @@ async function approveReturn(returnId) {
                 const res = await fetch(`${API_URL}/cancellation/return-requests/${returnId}/approve`, {
                     method: 'POST',
                     headers: {
-                        'Authorization': `Bearer ${token}`,
+                        'X-CSRF-Token': getCsrfToken(),
                         'Content-Type': 'application/json'
                     }
                 });
@@ -5548,7 +5573,7 @@ async function rejectReturn(returnId) {
                 const res = await fetch(`${API_URL}/cancellation/return-requests/${returnId}/reject`, {
                     method: 'POST',
                     headers: {
-                        'Authorization': `Bearer ${token}`,
+                        'X-CSRF-Token': getCsrfToken(),
                         'Content-Type': 'application/json'
                     },
                     body: JSON.stringify({ rejection_reason: reason.trim() })
@@ -5588,7 +5613,7 @@ async function loadAbuseTracking() {
         if (flagFilter) url += `?flag=${flagFilter}`;
 
         const res = await fetch(url, {
-            headers: { 'Authorization': `Bearer ${token}` }
+            credentials: 'include'
         });
 
         if (!res.ok) {
@@ -5629,7 +5654,7 @@ async function loadAbuseTracking() {
                     <td style="text-align: center;">${c.cancellations_this_month || 0}</td>
                     <td>${getTimeAgo(c.updated_at || c.created_at)}</td>
                     <td>
-                        <button class="btn-sm btn-ghost" onclick="editCustomerFlag('${c.customer_id}', '${c.fraud_flag}')" title="Change Flag">
+                        <button class="btn-sm btn-ghost" data-action="editCustomerFlag" data-arg="${c.customer_id}" title="Change Flag">
                             <i class="bi bi-pencil"></i>
                         </button>
                     </td>
@@ -5666,7 +5691,7 @@ async function editCustomerFlag(customerId, currentFlag) {
                 const res = await fetch(`${API_URL}/cancellation/abuse-flag`, {
                     method: 'POST',
                     headers: {
-                        'Authorization': `Bearer ${token}`,
+                        'X-CSRF-Token': getCsrfToken(),
                         'Content-Type': 'application/json'
                     },
                     body: JSON.stringify({
@@ -5699,7 +5724,8 @@ async function loadGaragePenalties() {
 
     try {
         const res = await fetch(`${API_URL}/cancellation/garage-penalties`, {
-            headers: { 'Authorization': `Bearer ${token}` }
+            headers: { 'X-CSRF-Token': getCsrfToken() },
+            credentials: 'include'
         });
 
         if (!res.ok) {
@@ -5718,7 +5744,7 @@ async function loadGaragePenalties() {
         tbody.innerHTML = penalties.map(p => `
             <tr>
                 <td><strong>${escapeHTML(p.garage_name || 'Garage')}</strong></td>
-                <td><a href="#" onclick="viewOrder('${p.order_id}'); return false;" style="color: var(--accent);">#${escapeHTML(p.order_number || p.order_id?.slice(0, 8))}</a></td>
+                <td><a href="#" data-action="viewOrder" data-arg="${p.order_id}" style="color: var(--accent);">#${escapeHTML(p.order_number || p.order_id?.slice(0, 8))}</a></td>
                 <td>${escapeHTML(p.reason || 'N/A')}</td>
                 <td style="color: #ef4444; font-weight: 600;">${formatCurrency(p.penalty_amount)}</td>
                 <td>

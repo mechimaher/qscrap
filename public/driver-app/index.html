@@ -173,19 +173,19 @@
             </div>
 
             <div class="profile-section">
-                <div class="profile-option" onclick="showDeliveryStats()">
+                <div class="profile-option" data-action="showDeliveryStats">
                     <i class="bi bi-graph-up"></i>
                     <span>Detailed Statistics</span>
                     <i class="bi bi-chevron-right chevron"></i>
                 </div>
-                <div class="profile-option" onclick="requestNotificationPermission()">
+                <div class="profile-option" data-action="requestNotificationPermission">
                     <i class="bi bi-bell"></i>
                     <span>Enable Notifications</span>
                     <i class="bi bi-chevron-right chevron"></i>
                 </div>
             </div>
 
-            <button class="btn logout-btn" onclick="logout()">
+            <button class="btn logout-btn" data-action="logout">
                 <i class="bi bi-box-arrow-left"></i>
                 Sign Out
             </button>
@@ -214,7 +214,7 @@
         <div class="modal-header">
             <span class="modal-title" id="assignmentModalTitle">Assignment</span>
             <span id="modalOrderNumber"></span>
-            <button class="modal-close" onclick="closeModal()" aria-label="Close modal">
+            <button class="modal-close" data-action="closeModal" aria-label="Close modal">
                 <i class="bi bi-x"></i>
             </button>
         </div>
@@ -232,7 +232,7 @@
     <div class="modal-overlay" id="statsModal" role="dialog" aria-modal="true" aria-labelledby="statsModalTitle">
         <div class="modal-header">
             <span class="modal-title" id="statsModalTitle">Detailed Statistics</span>
-            <button class="modal-close" onclick="closeStatsModal()" aria-label="Close modal">
+            <button class="modal-close" data-action="closeStatsModal" aria-label="Close modal">
                 <i class="bi bi-x"></i>
             </button>
         </div>
@@ -240,7 +240,7 @@
             <!-- Dynamic stats content -->
         </div>
         <div class="modal-actions">
-            <button class="btn btn-outline" onclick="closeStatsModal()">Close</button>
+            <button class="btn btn-outline" data-action="closeStatsModal">Close</button>
         </div>
     </div>
 
@@ -248,7 +248,7 @@
     <div class="modal-overlay" id="photoModal" role="dialog" aria-modal="true" aria-label="Delivery Photo">
         <div class="modal-header">
             <span class="modal-title">📸 Delivery Photo</span>
-            <button class="modal-close" onclick="closePhotoModal()" aria-label="Close modal">
+            <button class="modal-close" data-action="closePhotoModal" aria-label="Close modal">
                 <i class="bi bi-x"></i>
             </button>
         </div>
@@ -274,7 +274,7 @@
 
             <!-- Camera Actions -->
             <div class="photo-actions" id="photoActions">
-                <button class="btn btn-primary btn-large" onclick="capturePhoto()">
+                <button class="btn btn-primary btn-large" data-action="capturePhoto">
                     <i class="bi bi-camera-fill"></i>
                     Capture Photo
                 </button>
@@ -282,11 +282,11 @@
 
             <!-- Post-capture Actions -->
             <div class="photo-actions" id="photoCapturedActions" style="display: none;">
-                <button class="btn btn-outline" onclick="retakePhoto()">
+                <button class="btn btn-outline" data-action="retakePhoto">
                     <i class="bi bi-arrow-counterclockwise"></i>
                     Retake
                 </button>
-                <button class="btn btn-success" onclick="confirmDeliveryWithPhoto()">
+                <button class="btn btn-success" data-action="confirmDeliveryWithPhoto">
                     <i class="bi bi-check-circle"></i>
                     Confirm Delivery
                 </button>
@@ -304,8 +304,8 @@
             <p>Please confirm the customer has received the part in good condition.</p>
 
             <div class="confirm-actions">
-                <button class="btn btn-outline" onclick="closeConfirmModal()">Cancel</button>
-                <button class="btn btn-success" onclick="finalizeDelivery()">
+                <button class="btn btn-outline" data-action="closeConfirmModal">Cancel</button>
+                <button class="btn btn-success" data-action="finalizeDelivery">
                     <i class="bi bi-check"></i>
                     Confirm Complete
                 </button>
@@ -321,7 +321,7 @@
                     <span class="chat-customer-name" id="chatCustomerName">Customer</span>
                     <span class="chat-order-number" id="chatOrderNumber">#-</span>
                 </div>
-                <button class="modal-close" onclick="closeChat()">
+                <button class="modal-close" data-action="closeChat">
                     <i class="bi bi-x"></i>
                 </button>
             </div>
@@ -336,7 +336,7 @@
 
             <div class="chat-input-area">
                 <input type="text" id="chatInput" placeholder="Type a message..." maxlength="500">
-                <button class="chat-send-btn" onclick="sendChatMessage()">
+                <button class="chat-send-btn" data-action="sendChatMessage">
                     <i class="bi bi-send-fill"></i>
                 </button>
             </div>

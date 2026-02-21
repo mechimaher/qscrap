@@ -354,9 +354,7 @@ async function loadPendingPayouts(page = 1) {
         tbody.innerHTML = payouts.map(p => `
             <tr class="${p.payout_type === 'cancellation_compensation' ? 'compensation-row' : ''}">
                 <td>
-                    <input type="checkbox" class="payout-checkbox" 
-                           data-payout-id="${p.payout_id}"
-                           onchange="handlePayoutCheckbox('${p.payout_id}', this.checked)">
+                    <input type="checkbox" class="payout-check" data-action="handlePayoutCheckbox" data-arg="${p.payout_id}" ${p.status === 'processing' ? 'checked disabled' : ''}>
                 </td>
                 <td>${getPayoutTypeBadge(p)}</td>
                 <td><strong>${escapeHTML(p.garage_name)}</strong></td>
@@ -704,7 +702,7 @@ async function loadAwaitingPayouts() {
                     <td>${formatDate(p.sent_at)}</td>
                     <td style="${urgency}">${days} days</td>
                     <td>
-                        <button class="btn btn-ghost btn-sm" onclick="resendNotification('${p.payout_id}')">
+                        <button class="btn btn-ghost btn-sm" data-action="resendNotification" data-arg="${p.payout_id}">
                             <i class="bi bi-bell"></i> Remind
                         </button>
                     </td>
@@ -761,7 +759,7 @@ async function loadDisputedPayouts() {
                 <td style="color: var(--danger);">${escapeHTML(p.dispute_reason || 'Not specified')}</td>
                 <td>${formatDate(p.disputed_at)}</td>
                 <td>
-                    <button class="btn btn-warning btn-sm" onclick="resolveDispute('${p.payout_id}', '${escapeHTML(p.garage_name || '')}', ${p.net_amount || 0}, '${escapeHTML(p.dispute_reason || '')}')">
+                    <button class="btn btn-warning btn-sm" data-action="resolveDispute" data-arg="${p.payout_id}, '${escapeHTML(p.garage_name || '')}', ${p.net_amount || 0}, '${escapeHTML(p.dispute_reason || '')}'">
                         <i class="bi bi-shield-check"></i> Resolve
                     </button>
                 </td>
@@ -1024,11 +1022,11 @@ async function loadPendingRefunds() {
                 <td>
                     <div style="display: flex; gap: 6px;">
                         <button class="btn btn-success btn-sm" 
-                            onclick="approveRefund('${r.refund_id}', '${escapeHTML(r.order_number || '')}', ${r.refund_amount || 0})" 
+                            data-action="approveRefund" data-arg="${r.refund_id}, '${escapeHTML(r.order_number || '')}', ${r.refund_amount || 0}"
                             style="padding: 6px 12px; font-size: 11px;">
                             <i class="bi bi-check-lg"></i> Approve
                         </button>
-                        <button class="btn btn-ghost btn-sm" onclick="rejectRefund('${r.refund_id}')"
+                        <button class="btn btn-ghost btn-sm" data-action="rejectRefund" data-arg="${r.refund_id}"
                             style="padding: 6px 12px; font-size: 11px; color: var(--danger);">
                             <i class="bi bi-x-lg"></i> Reject
                         </button>
@@ -1848,10 +1846,10 @@ async function loadCompensationReviews() {
                 <td><strong>${formatCurrency(r.potential_compensation)}</strong></td>
                 <td>${formatDate(r.created_at)}</td>
                 <td>
-                    <button class="btn btn-success btn-sm" onclick="approveCompensationReview('${r.payout_id}', '${escapeHTML(r.garage_name)}', ${r.potential_compensation})">
+                    <button class="btn btn-success btn-sm" data-action="approveCompensationReview" data-arg="${r.payout_id}, '${escapeHTML(r.garage_name)}', ${r.potential_compensation}">
                         <i class="bi bi-check-lg"></i> Approve
                     </button>
-                    <button class="btn btn-danger btn-sm" onclick="denyCompensationReview('${r.payout_id}', '${escapeHTML(r.garage_name)}', '${r.garage_id}')">
+                    <button class="btn btn-danger btn-sm" data-action="denyCompensationReview" data-arg="${r.payout_id}, '${escapeHTML(r.garage_name)}', '${r.garage_id}'">
                         <i class="bi bi-x-lg"></i> Deny
                     </button>
                 </td>

@@ -966,7 +966,7 @@
 
     <!-- Main App -->
     <div class="app-container" id="app" style="display: none;">
-        <div class="app-overlay" id="appOverlay" onclick="toggleSidebar()"></div>
+        <div class="app-overlay" id="appOverlay" data-action="toggleSidebar"></div>
 
         <!-- Minimal Sidebar -->
         <aside class="sidebar sidebar-compact">
@@ -1001,7 +1001,7 @@
                         <div class="user-role">Agent</div>
                     </div>
                 </div>
-                <button class="btn btn-logout" onclick="logout()">
+                <button class="btn btn-logout" data-action="logout">
                     <i class="bi bi-box-arrow-right"></i>
                 </button>
             </div>
@@ -1099,7 +1099,7 @@
                                     </div>
 
                                     <!-- Premium WhatsApp Business Card -->
-                                    <div class="whatsapp-business-card" onclick="openWhatsAppBusiness()">
+                                    <div class="whatsapp-business-card" data-action="openWhatsAppBusiness">
                                         <div class="wa-card-glow"></div>
                                         <div class="wa-card-content">
                                             <div class="wa-card-icon">
@@ -1170,7 +1170,8 @@
                                         <i class="bi bi-briefcase"></i> Quick Actions
                                     </div>
                                     <div class="actions-grid">
-                                        <div class="action-btn-premium" onclick="quickAction('request_refund')">
+                                        <div class="action-btn-premium" data-action="quickAction"
+                                            data-arg="request_refund">
                                             <i class="bi bi-arrow-counterclockwise"></i>
                                             <span>Request Refund</span>
                                         </div>
@@ -1182,11 +1183,12 @@
                                         <i class="bi bi-exclamation-triangle"></i> Escalation
                                     </div>
                                     <div class="actions-grid">
-                                        <div class="action-btn-premium danger" onclick="quickAction('escalate_to_ops')">
+                                        <div class="action-btn-premium danger" data-action="quickAction"
+                                            data-arg="escalate_to_ops">
                                             <i class="bi bi-exclamation-triangle"></i>
                                             <span>Escalate to Ops</span>
                                         </div>
-                                        <div class="action-btn-premium" onclick="showCustomerAbuseStatus()">
+                                        <div class="action-btn-premium" data-action="showCustomerAbuseStatus">
                                             <i class="bi bi-shield-exclamation"></i>
                                             <span>Fraud Check</span>
                                         </div>
@@ -1201,7 +1203,7 @@
                                     <div style="display: flex; gap: 8px;">
                                         <input type="text" id="noteInput" placeholder="Add a note..."
                                             style="flex: 1; padding: 12px; border: 1px solid var(--border); border-radius: 10px; font-size: 13px; background: var(--bg-secondary);">
-                                        <button onclick="addNote()"
+                                        <button data-action="addNote"
                                             style="padding: 12px 20px; background: var(--primary); color: white; border: none; border-radius: 10px; font-weight: 600; cursor: pointer;">
                                             Add
                                         </button>
@@ -1229,7 +1231,7 @@
                                 <i class="bi bi-ticket-perforated" style="color: var(--primary);"></i> Tickets Queue
                             </h1>
                             <div style="display: flex; gap: 8px;">
-                                <select id="ticketQueueStatus" onchange="loadTicketsQueue()"
+                                <select id="ticketQueueStatus" data-action="loadTicketsQueue"
                                     style="padding: 8px 12px; border: 1px solid var(--border); border-radius: 8px; font-size: 12px; background: var(--bg-secondary);">
                                     <option value="open,in_progress">Open & In Progress</option>
                                     <option value="open">Open Only</option>
@@ -1237,7 +1239,7 @@
                                     <option value="resolved">Resolved</option>
                                     <option value="closed">Closed</option>
                                 </select>
-                                <select id="ticketQueuePriority" onchange="loadTicketsQueue()"
+                                <select id="ticketQueuePriority" data-action="loadTicketsQueue"
                                     style="padding: 8px 12px; border: 1px solid var(--border); border-radius: 8px; font-size: 12px; background: var(--bg-secondary);">
                                     <option value="">All Priorities</option>
                                     <option value="urgent">Urgent</option>
@@ -1245,7 +1247,7 @@
                                     <option value="normal">Normal</option>
                                     <option value="low">Low</option>
                                 </select>
-                                <button onclick="loadTicketsQueue()"
+                                <button data-action="loadTicketsQueue"
                                     style="padding: 8px 16px; background: var(--primary); color: white; border: none; border-radius: 8px; font-weight: 600; cursor: pointer;">
                                     <i class="bi bi-arrow-clockwise"></i> Refresh
                                 </button>
@@ -1323,7 +1325,7 @@
         <div class="modal-container" style="max-width: 900px; max-height: 90vh; overflow-y: auto;">
             <div class="modal-header" style="background: var(--vvip-gradient); color: white;">
                 <h2><i class="bi bi-box-seam"></i> Order Details</h2>
-                <button class="modal-close" onclick="closeOrderDetailsModal()" style="color: white;">&times;</button>
+                <button class="modal-close" data-action="closeOrderDetailsModal" style="color: white;">&times;</button>
             </div>
             <div class="modal-body" id="orderDetailsContent" style="padding: 0;">
                 <div style="text-align: center; padding: 40px;">
@@ -1339,6 +1341,8 @@
 
     <script src="https://cdn.socket.io/4.6.0/socket.io.min.js"></script>
     <script src="js/shared/utils.js"></script>
+    <script src="js/shared/error-boundary.js"></script>
+    <script src="js/shared/ui-init.js"></script>
     <script src="js/shared/toast.js"></script>
     <script src="js/shared/modal.js"></script>
     <script src="js/support-dashboard.js?v=20260131h"></script>

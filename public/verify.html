@@ -510,8 +510,8 @@
 
         <div class="verify-card">
             <div class="lang-toggle">
-                <button class="lang-btn active" onclick="setLang('en')">EN</button>
-                <button class="lang-btn" onclick="setLang('ar')">عربي</button>
+                <button class="lang-btn active" data-action="setLang" data-arg="en">EN</button>
+                <button class="lang-btn" data-action="setLang" data-arg="ar">عربي</button>
             </div>
 
             <div class="shield-container">
@@ -770,6 +770,8 @@
         // Start verification
         verifyDocument();
     </script>
+    <script src="/js/shared/error-boundary.js"></script>
+    <script src="/js/shared/ui-init.js"></script>
 </body>
 
 </html>

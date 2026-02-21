@@ -10,14 +10,10 @@
     <link rel="stylesheet" href="/assets/bootstrap-icons/bootstrap-icons.css">
     <link rel="stylesheet" href="css/shared.css">
     <link rel="stylesheet" href="css/operations-dashboard.css?v=2.3">
-    <script>
-        window.toggleSidebar = function () {
-            const sidebar = document.querySelector('.sidebar');
-            const overlay = document.getElementById('appOverlay');
-            if (sidebar) sidebar.classList.toggle('active');
-            if (overlay) overlay.classList.toggle('is-visible');
-        };
-    </script>
+    <!-- Hardened Utilities (Phase 2) -->
+    <script src="js/shared/utils.js"></script>
+    <script src="js/shared/error-boundary.js"></script>
+    <script src="js/shared/ui-init.js"></script>
     <style>
         /* Compensation payout row styling */
         .compensation-row {
@@ -69,7 +65,7 @@
 
     <!-- Main App -->
     <div class="app-container" id="app" style="display: none;">
-        <div class="app-overlay" id="appOverlay" onclick="toggleSidebar()"></div>
+        <div class="app-overlay" id="appOverlay" data-action="toggleSidebar"></div>
 
         <!-- Sidebar -->
         <aside class="sidebar">
@@ -140,7 +136,7 @@
                         <div class="user-role">Accountant</div>
                     </div>
                 </div>
-                <button class="btn btn-logout" onclick="logout()">
+                <button class="btn btn-logout" data-action="logout">
                     <i class="bi bi-box-arrow-right"></i> Logout
                 </button>
             </div>
@@ -149,7 +145,7 @@
         <!-- Top Header -->
         <header class="top-header">
             <div class="header-left" style="display: flex; align-items: center;">
-                <button class="menu-toggle" onclick="toggleSidebar()" style="margin-right: 12px;">
+                <button class="menu-toggle" data-action="toggleSidebar" style="margin-right: 12px;">
                     <i class="bi bi-list"></i>
                 </button>
                 <div class="header-greeting">
@@ -158,7 +154,7 @@
                 <div class="header-datetime" id="headerDateTime">Loading...</div>
             </div>
             <div class="header-right">
-                <button class="header-btn" onclick="refreshCurrentSection()" title="Refresh">
+                <button class="header-btn" data-action="refreshCurrentSection" title="Refresh">
                     <i class="bi bi-arrow-clockwise"></i>
                 </button>
                 <div class="header-status">
@@ -273,22 +269,22 @@
                 <div class="content-card" style="margin-top: 24px;">
                     <h3 style="margin-bottom: 20px;"><i class="bi bi-lightning-charge"></i> Quick Actions</h3>
                     <div style="display: grid; grid-template-columns: repeat(4, 1fr); gap: 15px;">
-                        <button class="btn btn-primary" onclick="switchSection('pending')"
+                        <button class="btn btn-primary" data-action="switchSection" data-arg="pending"
                             style="padding: 20px; flex-direction: column; gap: 10px;">
                             <i class="bi bi-send" style="font-size: 24px;"></i>
                             <span>Process Payouts</span>
                         </button>
-                        <button class="btn btn-warning" onclick="switchSection('disputed')"
+                        <button class="btn btn-warning" data-action="switchSection" data-arg="disputed"
                             style="padding: 20px; flex-direction: column; gap: 10px;">
                             <i class="bi bi-exclamation-triangle" style="font-size: 24px;"></i>
                             <span>Resolve Disputes</span>
                         </button>
-                        <button class="btn btn-secondary" onclick="switchSection('revenue')"
+                        <button class="btn btn-secondary" data-action="switchSection" data-arg="revenue"
                             style="padding: 20px; flex-direction: column; gap: 10px;">
                             <i class="bi bi-file-earmark-bar-graph" style="font-size: 24px;"></i>
                             <span>Revenue Report</span>
                         </button>
-                        <button class="btn btn-ghost" onclick="exportPayouts()"
+                        <button class="btn btn-ghost" data-action="exportPayouts"
                             style="padding: 20px; flex-direction: column; gap: 10px; border: 1px solid var(--border);">
                             <i class="bi bi-download" style="font-size: 24px;"></i>
                             <span>Export CSV</span>
@@ -300,7 +296,8 @@
                 <div class="content-card" style="margin-top: 24px;">
                     <div class="content-header">
                         <h3 class="content-title">Recent Payouts</h3>
-                        <button class="btn btn-ghost btn-sm" onclick="switchSection('pending')">View All</button>
+                        <button class="btn btn-ghost btn-sm" data-action="switchSection" data-arg="pending">View
+                            All</button>
                     </div>
                     <table class="data-table">
                         <thead>
@@ -341,10 +338,11 @@
                                 style="min-width: 220px; padding: 8px 12px; border-radius: 8px; border: 1px solid var(--border);">
                                 <option value="">All Garages</option>
                             </select>
-                            <button class="btn btn-secondary" onclick="applyGarageFilter()" style="padding: 8px 16px;">
+                            <button class="btn btn-secondary" data-action="applyGarageFilter"
+                                style="padding: 8px 16px;">
                                 <i class="bi bi-funnel"></i> Apply
                             </button>
-                            <button class="btn btn-ghost" onclick="clearGarageFilter()" style="padding: 8px 12px;"
+                            <button class="btn btn-ghost" data-action="clearGarageFilter" style="padding: 8px 12px;"
                                 title="Clear filter">
                                 <i class="bi bi-x-circle"></i>
                             </button>
@@ -357,7 +355,7 @@
                                 <strong id="pendingCountDisplay">0</strong> payouts • <strong
                                     id="pendingAmountDisplay">0 QAR</strong>
                             </span>
-                            <button class="btn btn-primary" onclick="openBatchPaymentFlow()" id="btnBatchSend"
+                            <button class="btn btn-primary" data-action="openBatchPaymentFlow" id="btnBatchSend"
                                 style="padding: 10px 20px; font-weight: 600;">
                                 <i class="bi bi-send-fill"></i> Send All Filtered
                             </button>
@@ -370,7 +368,7 @@
                         <thead>
                             <tr>
                                 <th style="width: 40px;">
-                                    <input type="checkbox" id="selectAllPending" onchange="toggleSelectAllPending()"
+                                    <input type="checkbox" id="selectAllPending" data-action="toggleSelectAllPending"
                                         title="Select all visible payouts">
                                 </th>
                                 <th>Type</th>
@@ -511,8 +509,9 @@
                         <input type="date" id="completedFromDate" class="form-control" style="width: auto;">
                         <span>to</span>
                         <input type="date" id="completedToDate" class="form-control" style="width: auto;">
-                        <button class="btn btn-secondary" onclick="loadCompletedPayouts()">Filter</button>
-                        <button class="btn btn-ghost" onclick="exportCompletedPayouts()"><i class="bi bi-download"></i>
+                        <button class="btn btn-secondary" data-action="loadCompletedPayouts">Filter</button>
+                        <button class="btn btn-ghost" data-action="exportCompletedPayouts"><i
+                                class="bi bi-download"></i>
                             Export</button>
                     </div>
                 </div>
@@ -536,10 +535,10 @@
                             <input type="date" id="invoiceFromDate" class="form-control" style="width: auto;">
                             <span>to</span>
                             <input type="date" id="invoiceToDate" class="form-control" style="width: auto;">
-                            <button class="btn btn-success" onclick="downloadTaxInvoice('pdf')">
+                            <button class="btn btn-success" data-action="downloadTaxInvoice" data-arg="pdf">
                                 <i class="bi bi-file-pdf"></i> PDF
                             </button>
-                            <button class="btn btn-ghost" onclick="downloadTaxInvoice('html')">
+                            <button class="btn btn-ghost" data-action="downloadTaxInvoice" data-arg="html">
                                 <i class="bi bi-code-slash"></i> HTML
                             </button>
                         </div>
@@ -687,7 +686,7 @@
             <section class="section" id="sectionRefunds">
                 <div class="page-header">
                     <h1 class="page-title"><i class="bi bi-arrow-return-left"></i> Refunds</h1>
-                    <button class="btn btn-primary" onclick="openRefundModal()">
+                    <button class="btn btn-primary" data-action="openRefundModal">
                         <i class="bi bi-plus-lg"></i> New Refund
                     </button>
                 </div>
@@ -770,7 +769,7 @@
         <div class="modal-container" style="max-width: 450px;">
             <div class="modal-header" style="background: linear-gradient(135deg, #10b981, #059669); color: white;">
                 <h2><i class="bi bi-send-check"></i> Send Payment</h2>
-                <button class="modal-close" onclick="closeSendPaymentModal()" style="color: white;">&times;</button>
+                <button class="modal-close" data-action="closeModal" style="color: white;">&times;</button>
             </div>
             <div class="modal-body">
                 <div style="background: var(--bg-secondary); padding: 15px; border-radius: 8px; margin-bottom: 15px;">
@@ -814,8 +813,8 @@
                 </div>
             </div>
             <div class="modal-footer">
-                <button class="btn btn-ghost" onclick="closeSendPaymentModal()">Cancel</button>
-                <button class="btn btn-success" onclick="submitSendPayment()">
+                <button class="btn btn-ghost" data-action="closeModal">Cancel</button>
+                <button class="btn btn-success" data-action="submitSendPayment">
                     <i class="bi bi-send-check"></i> Mark as Sent
                 </button>
             </div>
@@ -827,7 +826,7 @@
         <div class="modal-container" style="max-width: 550px;">
             <div class="modal-header" style="background: linear-gradient(135deg, #6366f1, #4f46e5); color: white;">
                 <h2><i class="bi bi-lightning-charge-fill"></i> Batch Payment</h2>
-                <button class="modal-close" onclick="closeBatchPaymentModal()" style="color: white;">&times;</button>
+                <button class="modal-close" data-action="closeModal" style="color: white;">&times;</button>
             </div>
             <div class="modal-body">
                 <!-- Preview Summary -->
@@ -886,8 +885,8 @@
                 </div>
             </div>
             <div class="modal-footer" style="display: flex; justify-content: space-between;">
-                <button class="btn btn-ghost" onclick="closeBatchPaymentModal()">Cancel</button>
-                <button class="btn btn-success" onclick="submitBatchPayment()" id="btnSubmitBatch"
+                <button class="btn btn-ghost" data-action="closeModal">Cancel</button>
+                <button class="btn btn-success" data-action="submitBatchPayment" id="btnSubmitBatch"
                     style="padding: 12px 24px;">
                     <i class="bi bi-send-fill"></i> Send All Payments
                 </button>
@@ -900,7 +899,7 @@
         <div class="modal-container" style="max-width: 500px;">
             <div class="modal-header" style="background: linear-gradient(135deg, #ef4444, #dc2626); color: white;">
                 <h2><i class="bi bi-arrow-return-left"></i> Create Refund</h2>
-                <button class="modal-close" onclick="closeRefundModal()" style="color: white;">&times;</button>
+                <button class="modal-close" data-action="closeModal" style="color: white;">&times;</button>
             </div>
             <div class="modal-body">
                 <!-- Order Search -->
@@ -908,7 +907,7 @@
                     <label>Order Number *</label>
                     <div style="display: flex; gap: 10px;">
                         <input type="text" id="refundOrderNumber" class="form-control" placeholder="e.g. ORD-12345">
-                        <button class="btn btn-secondary" onclick="searchOrderForRefund()">
+                        <button class="btn btn-secondary" data-action="searchOrderForRefund">
                             <i class="bi bi-search"></i> Find
                         </button>
                     </div>
@@ -986,8 +985,8 @@
                 </div>
             </div>
             <div class="modal-footer">
-                <button class="btn btn-ghost" onclick="closeRefundModal()">Cancel</button>
-                <button class="btn btn-danger" onclick="submitRefund()" id="submitRefundBtn" disabled>
+                <button class="btn btn-ghost" data-action="closeModal">Cancel</button>
+                <button class="btn btn-danger" data-action="submitRefund" id="submitRefundBtn" disabled>
                     <i class="bi bi-arrow-return-left"></i> Process Refund
                 </button>
             </div>
@@ -999,7 +998,7 @@
         <div class="modal-container" style="max-width: 500px;">
             <div class="modal-header" style="background: linear-gradient(135deg, #f59e0b, #d97706); color: white;">
                 <h2><i class="bi bi-shield-check"></i> Resolve Payment Dispute</h2>
-                <button class="modal-close" onclick="closeResolveDisputeModal()" style="color: white;">&times;</button>
+                <button class="modal-close" data-action="closeModal" style="color: white;">&times;</button>
             </div>
             <div class="modal-body">
                 <div style="background: var(--bg-secondary); padding: 15px; border-radius: 8px; margin-bottom: 15px;">
@@ -1019,7 +1018,7 @@
 
                 <div class="form-group" style="margin-bottom: 15px;">
                     <label>Resolution Type *</label>
-                    <select id="rdResolutionType" class="form-control" required onchange="toggleAmountCorrection()">
+                    <select id="rdResolutionType" class="form-control" required data-action="toggleAmountCorrection">
                         <option value="">Select resolution...</option>
                         <option value="confirmed">Confirmed - Garage received payment (dispute invalid)</option>
                         <option value="corrected">Corrected - Resend with fix</option>
@@ -1067,8 +1066,8 @@
                 </div>
             </div>
             <div class="modal-footer">
-                <button class="btn btn-ghost" onclick="closeResolveDisputeModal()">Cancel</button>
-                <button class="btn btn-warning" onclick="submitDisputeResolution()">
+                <button class="btn btn-ghost" data-action="closeModal">Cancel</button>
+                <button class="btn btn-warning" data-action="submitDisputeResolution">
                     <i class="bi bi-shield-check"></i> Resolve Dispute
                 </button>
             </div>
@@ -1079,11 +1078,10 @@
     <div class="toast-container" id="toastContainer"></div>
 
     <script src="https://cdn.socket.io/4.6.0/socket.io.min.js"></script>
-    <script src="js/shared/utils.js?v=20260115d"></script>
-    <script src="js/shared/toast.js?v=20260115d"></script>
-    <script src="js/shared/modal.js?v=20260115d"></script>
-    <script src="js/pagination-utils.js?v=20260115d"></script>
-    <script src="js/finance-dashboard.js?v=20260213b"></script>
+    <script src="js/shared/toast.js"></script>
+    <script src="js/shared/modal.js"></script>
+    <script src="js/pagination-utils.js"></script>
+    <script src="js/finance-dashboard.js"></script>
 </body>
 
 </html>

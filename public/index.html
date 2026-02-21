@@ -458,7 +458,11 @@
     </style>
 
     <!-- tsParticles - Lightweight particle system -->
-    <script src="https://cdn.jsdelivr.net/npm/tsparticles-slim@2.12.0/tsparticles.slim.bundle.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/tsparticles-slim@2.12.0/tsparticles-slim.bundle.min.js"></script>
+    <!-- Hardened Utilities (Phase 2) -->
+    <script src="js/shared/utils.js"></script>
+    <script src="js/shared/ui-init.js"></script>
+    <script src="js/shared/cookie-consent.js" defer></script>
 </head>
 
 <body>
@@ -1167,17 +1171,18 @@
     <!-- Intelligent Scroll-Based Sequencing -->
     <!-- ============================================ -->
     <div id="vvipWidgetContainer" class="vvip-widget-container">
-        
+
         <!-- CONCEPT 3: SONIC RADAR (0-30% scroll) -->
         <div id="vvipRadar" class="vvip-widget vvip-radar vvip-widget-visible">
             <!-- Radar pulse rings -->
             <div class="vvip-radar-ring"></div>
             <div class="vvip-radar-ring"></div>
             <div class="vvip-radar-ring"></div>
-            
+
             <!-- Radar center -->
             <div class="vvip-radar-center">
-                <svg class="vvip-radar-icon" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                <svg class="vvip-radar-icon" width="24" height="24" viewBox="0 0 24 24" fill="none"
+                    stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
                     <circle cx="12" cy="12" r="10"></circle>
                     <circle cx="12" cy="12" r="3"></circle>
                     <line x1="12" y1="2" x2="12" y2="4"></line>
@@ -1186,13 +1191,14 @@
                     <line x1="20" y1="12" x2="22" y2="12"></line>
                 </svg>
             </div>
-            
+
             <!-- Radar expandable card -->
             <div class="vvip-radar-card">
                 <div class="vvip-radar-map"></div>
                 <div class="vvip-radar-card-content">
                     <div>
-                        <div id="vvipRadarText" class="vvip-radar-text">Wherever you are in Qatar, the parts find you.</div>
+                        <div id="vvipRadarText" class="vvip-radar-text">Wherever you are in Qatar, the parts find you.
+                        </div>
                         <a href="#download" id="vvipRadarCta" class="vvip-cta-btn">Start Request</a>
                     </div>
                 </div>
@@ -1215,7 +1221,8 @@
             <!-- Animated car icon -->
             <div class="vvip-maglev-car" aria-hidden="true">
                 <svg width="24" height="24" viewBox="0 0 24 24" fill="currentColor">
-                    <path d="M18.92 6.01C18.72 5.42 18.16 5 17.5 5h-11c-.66 0-1.21.42-1.42 1.01L3 12v8c0 .55.45 1 1 1h1c.55 0 1-.45 1-1v-1h12v1c0 .55.45 1 1 1h1c.55 0 1-.45 1-1v-8l-2.08-5.99zM6.5 16c-.83 0-1.5-.67-1.5-1.5S5.67 13 6.5 13s1.5.67 1.5 1.5S7.33 16 6.5 16zm11 0c-.83 0-1.5-.67-1.5-1.5s.67-1.5 1.5-1.5 1.5.67 1.5 1.5-.67 1.5-1.5 1.5zM5 11l1.5-4.5h11L19 11H5z"/>
+                    <path
+                        d="M18.92 6.01C18.72 5.42 18.16 5 17.5 5h-11c-.66 0-1.21.42-1.42 1.01L3 12v8c0 .55.45 1 1 1h1c.55 0 1-.45 1-1v-1h12v1c0 .55.45 1 1 1h1c.55 0 1-.45 1-1v-8l-2.08-5.99zM6.5 16c-.83 0-1.5-.67-1.5-1.5S5.67 13 6.5 13s1.5.67 1.5 1.5S7.33 16 6.5 16zm11 0c-.83 0-1.5-.67-1.5-1.5s.67-1.5 1.5-1.5 1.5.67 1.5 1.5-.67 1.5-1.5 1.5zM5 11l1.5-4.5h11L19 11H5z" />
                 </svg>
             </div>
         </div>
@@ -1230,10 +1237,11 @@
                 <!-- Sparkle icon -->
                 <div class="vvip-orb-icon">
                     <svg width="28" height="28" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true">
-                        <path d="M12 0L14.59 9.41L24 12L14.59 14.59L12 24L9.41 14.59L0 12L9.41 9.41L12 0Z"/>
+                        <path d="M12 0L14.59 9.41L24 12L14.59 14.59L12 24L9.41 14.59L0 12L9.41 9.41L12 0Z" />
                     </svg>
                 </div>
-                <div id="vvipOrbText" class="vvip-orb-text">Spare parts teleported to your door. No traffic, no stress.</div>
+                <div id="vvipOrbText" class="vvip-orb-text">Spare parts teleported to your door. No traffic, no stress.
+                </div>
                 <a href="#download" id="vvipOrbCta" class="vvip-cta-btn">Get Started</a>
             </div>
         </div>
@@ -1245,16 +1253,18 @@
         <div class="cookie-content">
             <i class="bi bi-cookie" style="font-size: 24px; margin-right: 12px;"></i>
             <p style="margin: 0; font-size: 14px; line-height: 1.5;">
-                We use cookies to improve your experience. By continuing, you agree to our 
+                We use cookies to improve your experience. By continuing, you agree to our
                 <a href="/privacy.html" style="color: #8D1B3D; text-decoration: underline;">Privacy Policy</a>.
             </p>
         </div>
         <div class="cookie-actions">
-            <button id="acceptCookies" class="btn btn-primary" style="padding: 10px 20px; font-size: 14px;">Accept</button>
-            <button id="declineCookies" class="btn btn-outline" style="padding: 10px 20px; font-size: 14px;">Decline</button>
+            <button id="acceptCookies" class="btn btn-primary"
+                style="padding: 10px 20px; font-size: 14px;">Accept</button>
+            <button id="declineCookies" class="btn btn-outline"
+                style="padding: 10px 20px; font-size: 14px;">Decline</button>
         </div>
     </div>
-    
+
     <style>
         .cookie-consent-banner {
             position: fixed;
@@ -1263,7 +1273,7 @@
             right: 0;
             background: #FFFFFF;
             border-top: 2px solid #8D1B3D;
-            box-shadow: 0 -4px 12px rgba(0,0,0,0.15);
+            box-shadow: 0 -4px 12px rgba(0, 0, 0, 0.15);
             padding: 16px 24px;
             display: flex;
             align-items: center;
@@ -1272,6 +1282,7 @@
             z-index: 10000;
             max-width: 100%;
         }
+
         .cookie-content {
             display: flex;
             align-items: center;
@@ -1279,63 +1290,36 @@
             flex: 1;
             color: #1A1A1A;
         }
+
         .cookie-actions {
             display: flex;
             gap: 12px;
             flex-shrink: 0;
         }
+
         @media (max-width: 768px) {
             .cookie-consent-banner {
                 flex-direction: column;
                 padding: 16px;
             }
+
             .cookie-content {
                 flex-direction: column;
                 align-items: flex-start;
             }
+
             .cookie-actions {
                 width: 100%;
             }
+
             .cookie-actions button {
                 flex: 1;
             }
         }
     </style>
-    
-    <script>
-    (function() {
-        const CONSENT_KEY = 'qscrap_cookie_consent';
-        const consent = localStorage.getItem(CONSENT_KEY);
-        
-        // Show banner only if no consent recorded
-        if (!consent) {
-            document.getElementById('cookieConsent').style.display = 'flex';
-        } else if (consent === 'declined') {
-            // Disable analytics if declined
-            window.ga = window.ga || function() { (window.ga.q = window.ga.q || []).push(arguments); };
-            window.ga.l = +new Date;
-        }
-        
-        // Accept cookies
-        document.getElementById('acceptCookies').addEventListener('click', function() {
-            localStorage.setItem(CONSENT_KEY, 'accepted');
-            document.getElementById('cookieConsent').style.display = 'none';
-            // Load analytics if not already loaded
-            if (typeof window.loadAnalytics === 'function') {
-                window.loadAnalytics();
-            }
-        });
-        
-        // Decline cookies
-        document.getElementById('declineCookies').addEventListener('click', function() {
-            localStorage.setItem(CONSENT_KEY, 'declined');
-            document.getElementById('cookieConsent').style.display = 'none';
-            // Disable analytics
-            window.ga = window.ga || function() { (window.ga.q = window.ga.q || []).push(arguments); };
-            window.ga.l = +new Date;
-        });
-    })();
-    </script>
+
+    <!-- Main Website Scripts -->
+    <script src="js/main.js"></script>
 </body>
 
 </html>

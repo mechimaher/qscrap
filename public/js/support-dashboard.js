@@ -398,7 +398,7 @@ function renderCustomerProfile(data) {
             ${c.loyalty_tier ? `<span class="loyalty-badge loyalty-${loyaltyClass}"><i class="bi bi-trophy"></i> ${c.loyalty_tier}</span>` : ''}
             
             <div class="contact-buttons">
-                <button class="contact-btn whatsapp" onclick="openWhatsApp('${c.phone_number}')">
+                <button class="contact-btn whatsapp" data-action="openWhatsApp" data-arg="${c.phone_number}">
                     <i class="bi bi-whatsapp"></i> WhatsApp
                 </button>
                 <button class="contact-btn call" onclick="window.open('tel:${c.phone_number}')">
@@ -457,7 +457,7 @@ function renderOrders(orders) {
         const cardClass = hasIssue ? 'has-issue' : (isActive ? 'in-transit' : 'completed');
 
         html += `
-            <div class="order-card ${cardClass}" onclick="selectOrder(event, '${o.order_id}', '${o.order_number}')"  data-order-id="${o.order_id}" data-order-number="${o.order_number}">
+            <div class="order-card ${cardClass}" data-action="selectOrder" data-arg="event, '${o.order_id}', '${o.order_number}'"  data-order-id="${o.order_id}" data-order-number="${o.order_number}">
                 <div class="order-header">
                     <span class="order-number">#${o.order_number}</span>
                     <span class="order-status" style="background: ${getStatusColor(o.order_status)}; color: white;">
@@ -1084,13 +1084,13 @@ function renderTickets(tickets) {
             <div class="empty-state-mini">
                 <i class="bi bi-chat-dots"></i>
                 <p>No support tickets</p>
-                <button class="btn btn-sm" onclick="createNewTicket()">+ New Ticket</button>
+                <button class="btn btn-sm" data-action="createNewTicket">+ New Ticket</button>
             </div>
         `;
         return;
     }
 
-    let html = `<button class="btn btn-sm" style="margin-bottom: 10px; width: 100%;" onclick="createNewTicket()">
+    let html = `<button class="btn btn-sm" style="margin-bottom: 10px; width: 100%;" data-action="createNewTicket">
         <i class="bi bi-plus-circle"></i> New Ticket
     </button>`;
 
@@ -1101,7 +1101,7 @@ function renderTickets(tickets) {
         const priorityBadge = t.priority ? `<span style="background:${priorityColor};color:white;font-size:10px;padding:2px 6px;border-radius:4px;font-weight:600;">${(t.priority || 'normal').toUpperCase()}</span>` : '';
 
         html += `
-            <div class="ticket-card ${t.status} ${t.sla_breached ? 'has-issue' : ''}" onclick="openTicketChat('${t.ticket_id}')">
+            <div class="ticket-card ${t.status} ${t.sla_breached ? 'has-issue' : ''}" data-action="openTicketChat" data-arg="${t.ticket_id}">
                 <div class="ticket-header">
                     <span class="ticket-subject">${escapeHTML(t.subject)}</span>
                     <div style="display:flex;gap:4px;align-items:center;">
@@ -1177,34 +1177,34 @@ async function openTicketChat(ticketId) {
             let buttonsHtml = '';
             if (currentStatus === 'open') {
                 buttonsHtml = `
-                    <button onclick="updateTicketStatus('in_progress')" style="padding: 6px 12px; background: #3b82f6; color: white; border: none; border-radius: 6px; font-size: 11px; font-weight: 600; cursor: pointer;">
+                    <button data-action="updateTicketStatus" data-arg="in_progress" style="padding: 6px 12px; background: #3b82f6; color: white; border: none; border-radius: 6px; font-size: 11px; font-weight: 600; cursor: pointer;">
                         <i class="bi bi-play-fill"></i> Start Working
                     </button>
-                    <button onclick="updateTicketStatus('resolved')" style="padding: 6px 12px; background: #10b981; color: white; border: none; border-radius: 6px; font-size: 11px; font-weight: 600; cursor: pointer;">
+                    <button data-action="updateTicketStatus" data-arg="resolved" style="padding: 6px 12px; background: #10b981; color: white; border: none; border-radius: 6px; font-size: 11px; font-weight: 600; cursor: pointer;">
                         <i class="bi bi-check-lg"></i> Resolve
                     </button>
                 `;
             } else if (currentStatus === 'in_progress') {
                 buttonsHtml = `
-                    <button onclick="updateTicketStatus('resolved')" style="padding: 6px 12px; background: #10b981; color: white; border: none; border-radius: 6px; font-size: 11px; font-weight: 600; cursor: pointer;">
+                    <button data-action="updateTicketStatus" data-arg="resolved" style="padding: 6px 12px; background: #10b981; color: white; border: none; border-radius: 6px; font-size: 11px; font-weight: 600; cursor: pointer;">
                         <i class="bi bi-check-lg"></i> Resolve
                     </button>
-                    <button onclick="updateTicketStatus('open')" style="padding: 6px 12px; background: #f59e0b; color: white; border: none; border-radius: 6px; font-size: 11px; font-weight: 600; cursor: pointer;">
+                    <button data-action="updateTicketStatus" data-arg="open" style="padding: 6px 12px; background: #f59e0b; color: white; border: none; border-radius: 6px; font-size: 11px; font-weight: 600; cursor: pointer;">
                         <i class="bi bi-arrow-counterclockwise"></i> Reopen
                     </button>
                 `;
             } else if (currentStatus === 'resolved') {
                 buttonsHtml = `
-                    <button onclick="updateTicketStatus('closed')" style="padding: 6px 12px; background: #6b7280; color: white; border: none; border-radius: 6px; font-size: 11px; font-weight: 600; cursor: pointer;">
+                    <button data-action="updateTicketStatus" data-arg="closed" style="padding: 6px 12px; background: #6b7280; color: white; border: none; border-radius: 6px; font-size: 11px; font-weight: 600; cursor: pointer;">
                         <i class="bi bi-archive"></i> Close
                     </button>
-                    <button onclick="updateTicketStatus('open')" style="padding: 6px 12px; background: #ef4444; color: white; border: none; border-radius: 6px; font-size: 11px; font-weight: 600; cursor: pointer;">
+                    <button data-action="updateTicketStatus" data-arg="open" style="padding: 6px 12px; background: #ef4444; color: white; border: none; border-radius: 6px; font-size: 11px; font-weight: 600; cursor: pointer;">
                         <i class="bi bi-arrow-counterclockwise"></i> Reopen
                     </button>
                 `;
             } else if (currentStatus === 'closed') {
                 buttonsHtml = `
-                    <button onclick="updateTicketStatus('open')" style="padding: 6px 12px; background: #ef4444; color: white; border: none; border-radius: 6px; font-size: 11px; font-weight: 600; cursor: pointer;">
+                    <button data-action="updateTicketStatus" data-arg="open" style="padding: 6px 12px; background: #ef4444; color: white; border: none; border-radius: 6px; font-size: 11px; font-weight: 600; cursor: pointer;">
                         <i class="bi bi-arrow-counterclockwise"></i> Reopen
                     </button>
                 `;
@@ -1369,7 +1369,7 @@ function showCannedResponsesDropdown() {
     let html = '<div style="max-height: 300px; overflow-y: auto;">';
     cannedResponses.forEach((r, i) => {
         html += `
-            <div class="canned-item" onclick="insertCannedResponse(${i})" 
+            <div class="canned-item" data-action="insertCannedResponse" data-arg="${i}" 
                 style="padding: 10px; border-bottom: 1px solid var(--border); cursor: pointer; transition: background 0.2s;"
                 onmouseover="this.style.background='var(--bg-secondary)'" 
                 onmouseout="this.style.background='transparent'">
@@ -1689,8 +1689,8 @@ function renderReviews(reviews) {
             <td>${timeAgo(r.created_at)}</td>
             <td>
                 ${reviewStatus === 'pending' ? `
-                    <button class="btn btn-sm btn-primary" onclick="moderateReview('${r.review_id}', 'approved')"><i class="bi bi-check-lg"></i></button>
-                    <button class="btn btn-sm btn-danger" onclick="moderateReview('${r.review_id}', 'rejected')"><i class="bi bi-x-lg"></i></button>
+                    <button class="btn btn-sm btn-primary" data-action="moderateReview" data-arg="${r.review_id}"><i class="bi bi-check-lg"></i></button>
+                    <button class="btn btn-sm btn-danger" data-action="moderateReview" data-arg="${r.review_id}"><i class="bi bi-x-lg"></i></button>
                 ` : `<span class="status-badge status-${r.moderation_status}">${r.moderation_status}</span>`}
             </td>
         </tr>
@@ -2302,7 +2302,7 @@ function renderTicketsQueue(tickets) {
         }
 
         html += `
-            <div class="ticket-queue-item" onclick="openQueueTicket('${ticket.ticket_id}')" style="
+            <div class="ticket-queue-item" data-action="openQueueTicket" data-arg="${ticket.ticket_id}" style="
                 display: flex;
                 align-items: center;
                 gap: 16px;
@@ -2600,7 +2600,7 @@ async function openOrderDetailsModal(orderId) {
             <div style="text-align: center; padding: 40px; color: #ef4444;">
                 <i class="bi bi-exclamation-triangle" style="font-size: 32px;"></i>
                 <p>${escapeHTML(err.message || 'Failed to load order details')}</p>
-                <button onclick="closeOrderDetailsModal()" class="btn btn-ghost" style="margin-top: 16px;">Close</button>
+                <button data-action="closeOrderDetailsModal" class="btn btn-ghost" style="margin-top: 16px;">Close</button>
             </div>
         `;
     }
@@ -2806,7 +2806,7 @@ function renderOrderDetailsModal(data) {
                     <div style="font-size: 12px; color: var(--text-secondary);">${escapeHTML(order.customer_phone || 'N/A')}</div>
                     ${order.customer_email ? `<div style="font-size: 11px; color: var(--text-muted);">${escapeHTML(order.customer_email)}</div>` : ''}
                     ${order.customer_phone ? `
-                        <button onclick="openWhatsApp('${order.customer_phone}')" style="margin-top: 8px; padding: 4px 10px; background: #25D366; color: white; border: none; border-radius: 6px; font-size: 11px; cursor: pointer;">
+                        <button data-action="openWhatsApp" data-arg="${order.customer_phone}" style="margin-top: 8px; padding: 4px 10px; background: #25D366; color: white; border: none; border-radius: 6px; font-size: 11px; cursor: pointer;">
                             <i class="bi bi-whatsapp"></i> Chat
                         </button>
                     ` : ''}
@@ -2820,7 +2820,7 @@ function renderOrderDetailsModal(data) {
                     ${order.garage_rating ? `<div style="font-size: 11px; color: #f59e0b;"><i class="bi bi-star-fill"></i> ${order.garage_rating} (${order.garage_rating_count || 0})</div>` : ''}
                     <div style="font-size: 10px; color: var(--text-muted);">Plan: ${escapeHTML(order.garage_plan || 'N/A')}</div>
                     ${order.garage_phone ? `
-                        <button onclick="openWhatsApp('${order.garage_phone}')" style="margin-top: 8px; padding: 4px 10px; background: #3b82f6; color: white; border: none; border-radius: 6px; font-size: 11px; cursor: pointer;">
+                        <button data-action="openWhatsApp" data-arg="${order.garage_phone}" style="margin-top: 8px; padding: 4px 10px; background: #3b82f6; color: white; border: none; border-radius: 6px; font-size: 11px; cursor: pointer;">
                             <i class="bi bi-whatsapp"></i> Chat
                         </button>
                     ` : ''}
@@ -2834,7 +2834,7 @@ function renderOrderDetailsModal(data) {
                         <div style="font-size: 12px; color: var(--text-secondary);">${escapeHTML(order.driver_phone || 'N/A')}</div>
                         <div style="font-size: 11px; color: var(--text-muted);">${escapeHTML(order.vehicle_type || '')} ${escapeHTML(order.vehicle_plate || '')}</div>
                         ${order.driver_phone ? `
-                            <button onclick="openWhatsApp('${order.driver_phone}')" style="margin-top: 8px; padding: 4px 10px; background: #8b5cf6; color: white; border: none; border-radius: 6px; font-size: 11px; cursor: pointer;">
+                            <button data-action="openWhatsApp" data-arg="${order.driver_phone}" style="margin-top: 8px; padding: 4px 10px; background: #8b5cf6; color: white; border: none; border-radius: 6px; font-size: 11px; cursor: pointer;">
                                 <i class="bi bi-whatsapp"></i> Chat
                             </button>
                         ` : ''}
@@ -2991,12 +2991,12 @@ function renderOrderDetailsModal(data) {
                     </div>
                 ` : `
                     ${['pending', 'confirmed', 'processing', 'awaiting_pickup'].includes(order.order_status) ? `
-                        <button onclick="quickAction('cancel_order', '${order.order_id}')" class="btn btn-danger" style="flex: 1;">
+                        <button data-action="quickAction" data-arg="'cancel_order', '${order.order_id}'" class="btn btn-danger" style="flex: 1;">
                             <i class="bi bi-x-circle"></i> Cancel Order
                         </button>
                     ` : ''}
                     ${['completed', 'delivered'].includes(order.order_status) && order.payment_status !== 'refund_pending' ? `
-                        <button onclick="quickAction('request_refund', '${order.order_id}')" class="btn btn-warning" style="flex: 1;">
+                        <button data-action="quickAction" data-arg="'request_refund', '${order.order_id}'" class="btn btn-warning" style="flex: 1;">
                             <i class="bi bi-arrow-return-left"></i> Refund
                         </button>
                     ` : ''}
@@ -3006,7 +3006,7 @@ function renderOrderDetailsModal(data) {
                         </div>
                     ` : ''}
                 `}
-                <button onclick="closeOrderDetailsModal()" class="btn btn-ghost" style="flex: 1;">
+                <button data-action="closeOrderDetailsModal" class="btn btn-ghost" style="flex: 1;">
                     Close
                 </button>
             </div>

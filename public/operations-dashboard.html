@@ -14,15 +14,11 @@
     <!-- Shared CSS (must come before module CSS) -->
     <link rel="stylesheet" href="css/shared.css">
     <link rel="stylesheet" href="css/operations-dashboard.css?v=2.3">
-    <script>
-        // Critical UI Interaction - Inlined for robustness
-        window.toggleSidebar = function () {
-            const sidebar = document.querySelector('.sidebar') || document.querySelector('.app-sidebar');
-            const overlay = document.getElementById('appOverlay') || document.querySelector('.app-overlay');
-            if (sidebar) sidebar.classList.toggle('active');
-            if (overlay) overlay.classList.toggle('is-visible');
-        };
-    </script>
+    <link rel="stylesheet" href="css/operations-dashboard.css?v=2.3">
+    <!-- Hardened Utilities (Phase 2) -->
+    <script src="js/shared/utils.js"></script>
+    <script src="js/shared/error-boundary.js"></script>
+    <script src="js/shared/ui-init.js"></script>
 </head>
 
 <body>
@@ -58,7 +54,7 @@
     <!-- Main App Container -->
     <div class="app-container" id="app" style="display: none;">
         <!-- Mobile Overlay -->
-        <div class="app-overlay" id="appOverlay" onclick="toggleSidebar()"></div>
+        <div class="app-overlay" id="appOverlay" data-action="toggleSidebar"></div>
         <!-- Sidebar -->
         <aside class="sidebar">
             <div class="sidebar-header">
@@ -84,10 +80,10 @@
             <nav class="nav-menu">
                 <div class="nav-section">
                     <div class="nav-section-title">Dashboard</div>
-                    <a class="nav-item active" data-section="overview">
+                    <button class="nav-item active" data-action="switchSection" data-arg="overview">
                         <i class="bi bi-grid-1x2-fill"></i>
                         Overview
-                    </a>
+                    </button>
                 </div>
 
                 <div class="nav-section">
@@ -141,7 +137,7 @@
                         <div class="user-role">Manager</div>
                     </div>
                 </div>
-                <button class="btn btn-logout" onclick="logout()">
+                <button class="btn-logout" data-action="logout">
                     <i class="bi bi-box-arrow-right"></i> Logout
                 </button>
             </div>
@@ -150,7 +146,7 @@
         <!-- Top Header Bar -->
         <header class="top-header">
             <div class="header-left" style="display: flex; align-items: center;">
-                <button class="menu-toggle" onclick="toggleSidebar()" style="margin-right: 12px;">
+                <button class="menu-toggle" data-action="toggleSidebar" style="margin-right: 12px;">
                     <i class="bi bi-list"></i>
                 </button>
                 <div class="header-greeting">
@@ -161,21 +157,21 @@
                 </div>
             </div>
             <div class="header-right">
-                <button class="header-btn" onclick="refreshCurrentSection()" title="Refresh (R)">
+                <button class="header-btn" data-action="refreshCurrentSection" title="Refresh (R)">
                     <i class="bi bi-arrow-clockwise" id="refreshIcon"></i>
                 </button>
-                <button class="header-btn" onclick="showKeyboardShortcuts()" title="Keyboard Shortcuts (?)">
+                <button class="header-btn" data-action="showKeyboardShortcuts" title="Keyboard Shortcuts (?)">
                     <i class="bi bi-keyboard"></i>
                 </button>
                 <div class="header-notifications">
-                    <button class="header-btn notification-btn" onclick="toggleNotifications()">
+                    <button class="header-btn notification-btn" data-action="toggleNotifications">
                         <i class="bi bi-bell"></i>
                         <span class="notification-badge" id="notificationBadge" style="display: none;">0</span>
                     </button>
                     <div class="notifications-dropdown" id="notificationsDropdown">
                         <div class="notifications-header">
                             <span>System Alerts</span>
-                            <button onclick="markAllRead()">Mark all read</button>
+                            <button data-action="markAllRead">Mark all read</button>
                         </div>
                         <div class="notifications-list" id="notificationsList">
                             <div class="notification-empty">No new notifications</div>
@@ -211,14 +207,15 @@
                         <div class="stat-value" id="statActiveOrders">0</div>
                         <div class="stat-label">Active Orders</div>
                     </div>
-                    <div class="stat-card" onclick="switchSection('escalations')" style="cursor: pointer;">
+                    <button class="nav-item stat-card" data-action="switchSection" data-arg="escalations"
+                        style="cursor: pointer;">
                         <div class="stat-header">
                             <div class="stat-icon" style="background: linear-gradient(135deg, #f59e0b, #d97706);"><i
                                     class="bi bi-arrow-up-circle"></i></div>
                         </div>
                         <div class="stat-value" id="statPendingEscalations">0</div>
                         <div class="stat-label">Support Escalations</div>
-                    </div>
+                    </button>
                     <div class="stat-card">
                         <div class="stat-header">
                             <div class="stat-icon blue"><i class="bi bi-truck"></i></div>
@@ -307,7 +304,8 @@
                 <div class="content-card">
                     <div class="content-header">
                         <h3 class="content-title">Recent Orders</h3>
-                        <button class="btn btn-ghost btn-sm" onclick="switchSection('orders')">View All</button>
+                        <button class="btn btn-ghost btn-sm" data-action="switchSection" data-arg="orders">View
+                            All</button>
                     </div>
                     <table class="data-table">
                         <thead>
@@ -336,10 +334,10 @@
                 <div class="page-header">
                     <h1 class="page-title">Order Management</h1>
                     <div style="display: flex; gap: 12px; align-items: center;">
-                        <button class="btn btn-secondary" onclick="refreshOrders()">
+                        <button class="btn btn-secondary" data-action="refreshOrders">
                             <i class="bi bi-arrow-clockwise"></i> Refresh
                         </button>
-                        <button class="btn btn-outline" onclick="exportOrdersCSV()">
+                        <button class="btn btn-outline" data-action="exportOrdersCSV">
                             <i class="bi bi-download"></i> Export
                         </button>
                     </div>
@@ -407,7 +405,7 @@
                             onchange="applyOrderFilters()">
                             <option value="">All Garages</option>
                         </select>
-                        <button class="btn btn-ghost" onclick="clearOrderFilters()" title="Clear Filters">
+                        <button class="btn btn-ghost" data-action="clearOrderFilters" title="Clear Filters">
                             <i class="bi bi-x-circle"></i> Clear
                         </button>
                     </div>
@@ -494,7 +492,7 @@
                 <div class="content-card">
                     <div class="content-header">
                         <h3 class="content-title"><i class="bi bi-list-task"></i> Escalation Queue</h3>
-                        <button class="btn btn-ghost btn-sm" onclick="loadEscalations()">
+                        <button class="btn btn-ghost btn-sm" data-action="loadEscalations">
                             <i class="bi bi-arrow-clockwise"></i> Refresh
                         </button>
                     </div>
@@ -705,7 +703,7 @@
                             <div style="display: flex; gap: 10px; align-items: center;">
                                 <input type="date" id="deliveryHistoryDate" class="form-control"
                                     style="width: auto; padding: 8px 12px;">
-                                <button class="btn btn-secondary" onclick="loadDeliveryHistory()">
+                                <button class="btn btn-secondary" data-action="loadDeliveryHistory">
                                     <i class="bi bi-search"></i> Filter
                                 </button>
                             </div>
@@ -734,11 +732,11 @@
                                 deliveries</span>
                             <div style="display: flex; gap: 8px;">
                                 <button class="btn btn-secondary" id="deliveryHistoryPrev"
-                                    onclick="loadDeliveryHistory(deliveryHistoryPage - 1)" disabled>
+                                    data-action="loadDeliveryHistory" data-arg="${deliveryHistoryPage - 1}" disabled>
                                     <i class="bi bi-chevron-left"></i>
                                 </button>
                                 <button class="btn btn-secondary" id="deliveryHistoryNext"
-                                    onclick="loadDeliveryHistory(deliveryHistoryPage + 1)">
+                                    data-action="loadDeliveryHistory" data-arg="${deliveryHistoryPage + 1}">
                                     <i class="bi bi-chevron-right"></i>
                                 </button>
                             </div>
@@ -754,7 +752,7 @@
                                 <span id="returnsBadgeCount" class="badge"
                                     style="background: var(--warning); color: white; padding: 2px 8px; border-radius: 12px; font-size: 12px; margin-left: 8px;">0</span>
                             </h3>
-                            <button class="btn btn-secondary" onclick="loadReturns()">
+                            <button class="btn btn-secondary" data-action="loadReturns">
                                 <i class="bi bi-arrow-clockwise"></i> Refresh
                             </button>
                         </div>
@@ -791,10 +789,10 @@
                 <div class="page-header" style="flex-wrap: wrap; gap: 16px;">
                     <h1 class="page-title"><i class="bi bi-file-earmark-bar-graph"></i> Reports Center</h1>
                     <div style="display: flex; gap: 12px; flex-wrap: wrap;">
-                        <button class="btn btn-outline" onclick="printReport()">
+                        <button class="btn btn-outline" data-action="printReport">
                             <i class="bi bi-printer"></i> Print
                         </button>
-                        <button class="btn btn-primary" onclick="exportPDF()">
+                        <button class="btn btn-primary" data-action="exportPDF">
                             <i class="bi bi-file-pdf"></i> Export PDF
                         </button>
                     </div>
@@ -827,7 +825,7 @@
                             <input type="date" id="reportToDate" class="form-control" onchange="updateReportPreview()">
                         </div>
                         <div class="form-group" style="display: flex; align-items: flex-end;">
-                            <button class="btn btn-primary" onclick="generateReport()" style="width: 100%;">
+                            <button class="btn btn-primary" data-action="generateReport" style="width: 100%;">
                                 <i class="bi bi-play-circle"></i> Generate Report
                             </button>
                         </div>
@@ -903,7 +901,7 @@
                     <div class="content-header">
                         <h3 class="content-title"><i class="bi bi-arrow-return-left" style="color: #f59e0b;"></i> Return
                             Request Review Queue</h3>
-                        <button class="btn btn-ghost btn-sm" onclick="loadReturnRequests()">
+                        <button class="btn btn-ghost btn-sm" data-action="loadReturnRequests">
                             <i class="bi bi-arrow-clockwise"></i> Refresh
                         </button>
                     </div>
@@ -943,7 +941,7 @@
                                 <option value="high_risk">High Risk</option>
                                 <option value="blocked">Blocked</option>
                             </select>
-                            <button class="btn btn-ghost btn-sm" onclick="loadAbuseTracking()">
+                            <button class="btn btn-ghost btn-sm" data-action="loadAdminStats">
                                 <i class="bi bi-arrow-clockwise"></i>
                             </button>
                         </div>
@@ -973,7 +971,7 @@
                     <div class="content-header">
                         <h3 class="content-title"><i class="bi bi-shop" style="color: #8b5cf6;"></i> Garage Penalties
                         </h3>
-                        <button class="btn btn-ghost btn-sm" onclick="loadGaragePenalties()">
+                        <button class="btn btn-ghost btn-sm" data-action="loadGaragePenalties">
                             <i class="bi bi-arrow-clockwise"></i> Refresh
                         </button>
                     </div>
@@ -1011,7 +1009,7 @@
         <div class="modal-container">
             <div class="modal-header">
                 <h2><i class="bi bi-box-seam"></i> Order <span id="modalOrderNumber">#12345</span></h2>
-                <button class="modal-close" onclick="closeOrderModal()"><i class="bi bi-x-lg"></i></button>
+                <button class="modal-close" data-action="closeModal"><i class="bi bi-x-lg"></i></button>
             </div>
             <div class="modal-body" id="modalBody">
                 <!-- Customer & Garage Info -->
@@ -1132,7 +1130,7 @@
                 </div>
             </div>
             <div class="modal-footer">
-                <button class="btn btn-ghost" onclick="closeOrderModal()">Close</button>
+                <button class="btn btn-ghost" data-action="closeModal">Close</button>
             </div>
         </div>
     </div>
@@ -1142,7 +1140,7 @@
         <div class="modal-container" style="max-width: 500px;">
             <div class="modal-header" style="background: linear-gradient(135deg, #10b981, #059669);">
                 <h2><i class="bi bi-send-check"></i> Send Payment</h2>
-                <button class="modal-close" onclick="closeSendPaymentModal()">&times;</button>
+                <button class="modal-close" data-action="closeModal">&times;</button>
             </div>
             <div class="modal-body">
                 <div class="info-card"
@@ -1195,8 +1193,8 @@
                 </div>
             </div>
             <div class="modal-footer">
-                <button class="btn btn-ghost" onclick="closeSendPaymentModal()">Cancel</button>
-                <button class="btn btn-success" onclick="submitSendPayment()">
+                <button class="btn btn-ghost" data-action="closeModal">Cancel</button>
+                <button class="btn btn-success" data-action="submitSendPayment">
                     <i class="bi bi-send-check"></i> Mark as Sent
                 </button>
             </div>
@@ -1211,7 +1209,7 @@
         <div class="shortcuts-modal">
             <div class="shortcuts-header">
                 <h3><i class="bi bi-keyboard"></i> Keyboard Shortcuts</h3>
-                <button class="close-btn" onclick="closeAllModals()">&times;</button>
+                <button class="close-btn" data-action="closeAllModals">&times;</button>
             </div>
             <div class="shortcuts-grid">
                 <div class="shortcuts-section">
@@ -1235,18 +1233,18 @@
                 </div>
             </div>
             <div class="shortcuts-footer">
-                <button class="btn btn-primary" onclick="closeAllModals()">Got it!</button>
+                <button class="btn btn-primary" data-action="closeModal">Got it!</button>
             </div>
         </div>
     </div>
 
     <script src="https://cdn.socket.io/4.6.0/socket.io.min.js"></script>
     <!-- Shared JS utilities (must come before module JS) -->
-    <script src="js/shared/utils.js"></script>
     <script src="js/shared/toast.js"></script>
     <script src="js/shared/modal.js"></script>
     <script src="js/pagination-utils.js"></script>
-    <script src="js/operations-dashboard.js?v=20260128a"></script>
+    <script src="js/pagination-utils.js"></script>
+    <script src="js/operations-dashboard.js"></script>
 </body>
 
 </html>

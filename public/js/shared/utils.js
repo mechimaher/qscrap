@@ -7,6 +7,18 @@
 // ===== SECURITY UTILITIES =====
 
 /**
+ * Get cookie value by name
+ * @param {string} name 
+ * @returns {string|null}
+ */
+function getCookie(name) {
+    const value = `; ${document.cookie}`;
+    const parts = value.split(`; ${name}=`);
+    if (parts.length === 2) return parts.pop().split(';').shift();
+    return null;
+}
+
+/**
  * Escape HTML to prevent XSS attacks
  * Use this for ALL user-generated content
  * @param {string} text - User-provided text
@@ -125,6 +137,16 @@ async function apiRequest(endpoint, options = {}, tokenKey = 'token') {
             ...options.headers
         }
     };
+
+    // ===== CSRF PROTECTION (Phase 2) =====
+    // Inject X-CSRF-Token for state-changing requests
+    const method = (config.method || 'GET').toUpperCase();
+    if (!['GET', 'HEAD', 'OPTIONS'].includes(method)) {
+        const csrfToken = getCookie('XSRF-TOKEN');
+        if (csrfToken) {
+            config.headers['x-csrf-token'] = csrfToken;
+        }
+    }
 
     try {
         const res = await fetch(`/api${endpoint}`, config);
@@ -262,6 +284,7 @@ function isValidVIN(vin) {
 
 // Export for use in other scripts
 window.QScrapUtils = {
+    getCookie,
     escapeHTML,
     createTextElement,
     formatDate,
@@ -277,6 +300,7 @@ window.QScrapUtils = {
 };
 
 // Also export individual functions for direct use
+window.getCookie = getCookie;
 window.escapeHTML = escapeHTML;
 window.formatDate = formatDate;
 window.timeAgo = timeAgo;
