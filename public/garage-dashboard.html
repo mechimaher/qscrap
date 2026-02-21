@@ -674,9 +674,15 @@
             <section class="section" id="sectionRequests">
                 <div class="page-header" style="flex-wrap: wrap; gap: 16px;">
                     <h1 class="page-title">Live Requests</h1>
-                    <div class="live-indicator">
-                        <span class="live-dot"></span>
-                        Real-time
+                    <div style="display: flex; align-items: center; gap: 16px;">
+                        <div class="live-indicator">
+                            <span class="live-dot"></span>
+                            Real-time
+                        </div>
+                        <button id="quickBidToggleBtn" class="btn btn-outline" onclick="toggleQuickBidMode()"
+                            style="font-size: 13px; font-weight: 600; display: flex; align-items: center; gap: 8px; padding: 10px 16px; border-radius: 12px; transition: all 0.3s; background: var(--bg-card); border-color: var(--border); color: var(--text-primary);">
+                            <i class="bi bi-lightning-charge-fill" style="color: #eab308;"></i> Quick Bid Mode
+                        </button>
                     </div>
                 </div>
 
@@ -1611,7 +1617,9 @@
                 </div>
 
                 <!-- Print Packing Slip Button (dynamically populated by JS) -->
-                <div id="orderModalPrintBtn" style="display: none; text-align: center; padding-top: 16px; border-top: 1px solid var(--border); margin-top: 8px;"></div>
+                <div id="orderModalPrintBtn"
+                    style="display: none; text-align: center; padding-top: 16px; border-top: 1px solid var(--border); margin-top: 8px;">
+                </div>
             </div>
         </div>
     </div>
@@ -1851,19 +1859,19 @@
         };
 
         // Secure Configuration Loader
-        (async function() {
+        (async function () {
             try {
                 // Fetch public config (safe keys) from backend
                 const res = await fetch('/api/v1/config/public');
                 const data = await res.json();
-                
+
                 if (data.success && data.config) {
                     const config = data.config;
-                    
+
                     // 1. Initialize Sentry (if available)
                     if (window.Sentry && config.sentryDsn) {
                         try {
-                            Sentry.init({ 
+                            Sentry.init({
                                 dsn: config.sentryDsn,
                                 environment: config.environment || 'production',
                                 tracesSampleRate: 1.0,
@@ -1896,6 +1904,11 @@
     <script src="js/shared/toast.js"></script>
     <script src="js/shared/modal.js"></script>
     <script src="js/pagination-utils.js"></script>
+    <script type="module">
+        import { QuickBidStore, EVENTS, AVAILABILITY, CONDITION, ITEM_STATUS, SESSION_STATUS } from './js/garage/QuickBidStore.js';
+        window.QuickBidStore = QuickBidStore;
+        window.QuickBidConstants = { EVENTS, AVAILABILITY, CONDITION, ITEM_STATUS, SESSION_STATUS };
+    </script>
     <script>
         const script = document.createElement('script');
         // PERMANENT FIX: Use timestamp to prevent caching issues
