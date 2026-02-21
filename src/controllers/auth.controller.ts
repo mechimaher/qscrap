@@ -89,19 +89,43 @@ const parseOptionalNumber = (value: number | string | undefined): number | undef
     return undefined;
 };
 
+// Helper to set secure cookies
+const setAuthCookies = (res: Response, token: string, refreshToken?: string) => {
+    const isProduction = process.env.NODE_ENV === 'production';
+
+    // Set access token cookie
+    res.cookie('token', token, {
+        httpOnly: true,
+        secure: isProduction,
+        sameSite: 'strict',
+        maxAge: 30 * 24 * 60 * 60 * 1000 // 30 days
+    });
+
+    // Set refresh token cookie if provided
+    if (refreshToken) {
+        res.cookie('refreshToken', refreshToken, {
+            httpOnly: true,
+            secure: isProduction,
+            sameSite: 'strict',
+            path: '/api/v1/auth/refresh', // Only send to refresh endpoint
+            maxAge: 7 * 24 * 60 * 60 * 1000 // 7 days
+        });
+    }
+};
+
 export const register = catchAsync(async (req: RegisterRequest, res: Response) => {
     const { phone_number, password, user_type, full_name, email, garage_name, address, supplier_type, specialized_brands, all_brands, location_lat, location_lng, preferred_plan_code, cr_number, trade_license_number } = req.body;
 
-    if (!phone_number || !password || !user_type) {return res.status(400).json({ error: 'Missing required fields: phone_number, password, user_type' });}
-    if (!isValidPhoneNumber(phone_number)) {return res.status(400).json({ error: 'Invalid phone number format', hint: 'Use Qatar format: +974XXXXXXXX or 8-digit local number' });}
-    if (password.length < 4) {return res.status(400).json({ error: 'Password must be at least 4 characters' });}
-    if (user_type !== 'customer' && user_type !== 'garage') {return res.status(400).json({ error: 'Invalid user_type. Must be "customer" or "garage"' });}
+    if (!phone_number || !password || !user_type) { return res.status(400).json({ error: 'Missing required fields: phone_number, password, user_type' }); }
+    if (!isValidPhoneNumber(phone_number)) { return res.status(400).json({ error: 'Invalid phone number format', hint: 'Use Qatar format: +974XXXXXXXX or 8-digit local number' }); }
+    if (password.length < 4) { return res.status(400).json({ error: 'Password must be at least 4 characters' }); }
+    if (user_type !== 'customer' && user_type !== 'garage') { return res.status(400).json({ error: 'Invalid user_type. Must be "customer" or "garage"' }); }
     const normalizedUserType: RegisterData['user_type'] = user_type;
 
     const exists = await authService.checkUserExists(phone_number);
-    if (exists) {return res.status(400).json({ error: 'User with this phone number already exists' });}
+    if (exists) { return res.status(400).json({ error: 'User with this phone number already exists' }); }
 
-    if (normalizedUserType === 'garage' && !garage_name) {return res.status(400).json({ error: 'Garage name is required for garage registration' });}
+    if (normalizedUserType === 'garage' && !garage_name) { return res.status(400).json({ error: 'Garage name is required for garage registration' }); }
 
     let validLat: number | undefined;
     let validLng: number | undefined;
@@ -111,7 +135,7 @@ export const register = catchAsync(async (req: RegisterRequest, res: Response) =
         if (lat >= -90 && lat <= 90 && lng >= -180 && lng <= 180) {
             validLat = lat;
             validLng = lng;
-            if (lat < 24.4 || lat > 26.2 || lng < 50.7 || lng > 51.7) {logger.warn('Garage location outside Qatar bounds', { lat, lng });}
+            if (lat < 24.4 || lat > 26.2 || lng < 50.7 || lng > 51.7) { logger.warn('Garage location outside Qatar bounds', { lat, lng }); }
         }
     }
 
@@ -133,33 +157,36 @@ export const register = catchAsync(async (req: RegisterRequest, res: Response) =
         trade_license_number
     });
 
+    setAuthCookies(res, result.token, result.refreshToken);
     res.status(201).json({ token: result.token, refreshToken: result.refreshToken, userId: result.userId, userType: normalizedUserType });
 });
 
 export const login = catchAsync(async (req: LoginRequest, res: Response) => {
     const { phone_number, password } = req.body;
-    if (!phone_number || !password) {return res.status(400).json({ error: 'Phone number and password are required' });}
+    if (!phone_number || !password) { return res.status(400).json({ error: 'Phone number and password are required' }); }
 
     try {
         const result = await authService.login(phone_number, password);
+        setAuthCookies(res, result.token, result.refreshToken);
         res.json(result);
     } catch (err) {
         const message = getErrorMessage(err);
-        if (message === 'Invalid credentials') {return res.status(401).json({ error: message });}
-        if (message === 'Account deactivated') {return res.status(403).json({ error: message, message: 'Your account has been deactivated. Please contact support.' });}
-        if (message.startsWith('Account suspended') || message === 'Account suspended') {return res.status(403).json({ error: 'Account suspended', message });}
-        if (message === 'pending_approval') {return res.status(403).json({ error: 'pending_approval', message: 'Your account is pending approval.', status: 'pending' });}
-        if (message.startsWith('application_rejected:')) {return res.status(403).json({ error: 'application_rejected', message: message.split(':')[1], status: 'rejected' });}
+        if (message === 'Invalid credentials') { return res.status(401).json({ error: message }); }
+        if (message === 'Account deactivated') { return res.status(403).json({ error: message, message: 'Your account has been deactivated. Please contact support.' }); }
+        if (message.startsWith('Account suspended') || message === 'Account suspended') { return res.status(403).json({ error: 'Account suspended', message }); }
+        if (message === 'pending_approval') { return res.status(403).json({ error: 'pending_approval', message: 'Your account is pending approval.', status: 'pending' }); }
+        if (message.startsWith('application_rejected:')) { return res.status(403).json({ error: 'application_rejected', message: message.split(':')[1], status: 'rejected' }); }
         throw err;
     }
 });
 
 export const refreshToken = catchAsync(async (req: RefreshTokenRequest, res: Response) => {
-    const { refreshToken: refreshTokenRaw } = req.body;
-    if (!refreshTokenRaw) {return res.status(400).json({ error: 'refreshToken is required' });}
+    const refreshTokenRaw = req.body.refreshToken || req.cookies?.refreshToken;
+    if (!refreshTokenRaw) { return res.status(400).json({ error: 'refreshToken is required' }); }
 
     try {
         const result = await authService.refreshAccessToken(refreshTokenRaw);
+        setAuthCookies(res, result.token, result.refreshToken);
         res.json({ token: result.token, refreshToken: result.refreshToken });
     } catch (err) {
         const message = getErrorMessage(err);
@@ -174,21 +201,50 @@ export const refreshToken = catchAsync(async (req: RefreshTokenRequest, res: Res
 });
 
 export const logout = catchAsync(async (req: AuthRefreshTokenRequest, res: Response) => {
-    const { refreshToken: refreshTokenRaw } = req.body;
+    const refreshTokenRaw = req.body.refreshToken || req.cookies?.refreshToken;
     if (refreshTokenRaw) {
         await authService.revokeRefreshToken(refreshTokenRaw);
     }
+
+    res.clearCookie('token');
+    res.clearCookie('refreshToken', { path: '/api/v1/auth/refresh' });
     res.json({ message: 'Logged out successfully' });
 });
 
+export const getMe = catchAsync(async (req: AuthRequest, res: Response) => {
+    if (!req.user?.userId) {
+        return res.status(401).json({ error: 'Not authenticated' });
+    }
+
+    // Fetch full user data for UI state
+    const { rows } = await pool.query(
+        'SELECT user_id, email, phone_number, full_name, user_type, staff_role FROM users WHERE user_id = $1',
+        [req.user.userId]
+    );
+
+    if (rows.length === 0) {
+        return res.status(404).json({ error: 'User not found' });
+    }
+
+    const user = rows[0];
+    res.json({
+        userId: user.user_id,
+        email: user.email,
+        phoneNumber: user.phone_number,
+        fullName: user.full_name,
+        userType: user.user_type,
+        staffRole: user.staff_role
+    });
+});
+
 export const deleteAccount = catchAsync(async (req: AuthRequest, res: Response) => {
-    if (!req.user?.userId) {return res.status(401).json({ error: 'Unauthorized' });}
+    if (!req.user?.userId) { return res.status(401).json({ error: 'Unauthorized' }); }
     logger.info('Deleting user account', { userId: req.user.userId });
     try {
         await authService.deleteAccount(req.user.userId);
         res.json({ message: 'Account deleted successfully' });
     } catch (err) {
-        if (getErrorMessage(err) === 'User not found') {return res.status(404).json({ error: 'User not found' });}
+        if (getErrorMessage(err) === 'User not found') { return res.status(404).json({ error: 'User not found' }); }
         throw err;
     }
 });
@@ -198,7 +254,7 @@ export const deleteAccount = catchAsync(async (req: AuthRequest, res: Response) 
  * Returns blockers if there are pending business items (orders, tickets, disputes)
  */
 export const checkDeletionEligibility = catchAsync(async (req: AuthRequest, res: Response) => {
-    if (!req.user?.userId) {return res.status(401).json({ error: 'Unauthorized' });}
+    if (!req.user?.userId) { return res.status(401).json({ error: 'Unauthorized' }); }
 
     const result = await accountDeletionService.checkDeletionEligibility(req.user.userId);
     res.json(result);
@@ -316,6 +372,7 @@ export const verifyEmailOTP = catchAsync(async (req: VerifyEmailOtpRequest, res:
 
         logger.info('[Auth] Email verified and user registered', { userId: result.userId, email });
 
+        setAuthCookies(res, result.token, result.refreshToken);
         res.status(201).json({
             success: true,
             message: 'Registration successful',
@@ -382,7 +439,7 @@ export const resendOTP = catchAsync(async (req: ResendOtpRequest, res: Response)
  */
 export const changePassword = catchAsync(async (req: AuthChangePasswordRequest, res: Response) => {
     const userId = getAuthenticatedUserId(req);
-    if (!userId) {return res.status(401).json({ error: 'Authentication required' });}
+    if (!userId) { return res.status(401).json({ error: 'Authentication required' }); }
 
     const { current_password, new_password } = req.body;
     if (!current_password || !new_password) {

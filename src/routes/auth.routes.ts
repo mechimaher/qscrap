@@ -1,5 +1,5 @@
 import { Router } from 'express';
-import { register, login, refreshToken, logout, deleteAccount, checkDeletionEligibility, registerWithEmail, verifyEmailOTP, resendOTP, changePassword } from '../controllers/auth.controller';
+import { register, login, getMe, refreshToken, logout, deleteAccount, checkDeletionEligibility, registerWithEmail, verifyEmailOTP, resendOTP, changePassword } from '../controllers/auth.controller';
 import { authenticate } from '../middleware/auth.middleware';
 import { loginLimiter, registerLimiter } from '../middleware/rateLimiter.middleware';
 import { validate, loginSchema, registerCustomerSchema, registerGarageSchema } from '../middleware/validation.middleware';
@@ -10,6 +10,7 @@ const router = Router();
 router.post('/register', registerLimiter, validate(registerCustomerSchema), register);
 router.post('/register/garage', registerLimiter, validate(registerGarageSchema), register);
 router.post('/login', loginLimiter, validate(loginSchema), login);
+router.get('/me', authenticate, getMe);
 router.post('/refresh', loginLimiter, refreshToken);
 router.post('/logout', authenticate, logout);
 router.get('/deletion-eligibility', authenticate, checkDeletionEligibility);

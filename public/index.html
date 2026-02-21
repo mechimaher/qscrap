@@ -1239,6 +1239,103 @@
         </div>
 
     </div>
+
+    <!-- Cookie Consent Banner (Qatar Data Protection Compliance) -->
+    <div id="cookieConsent" class="cookie-consent-banner" style="display: none;">
+        <div class="cookie-content">
+            <i class="bi bi-cookie" style="font-size: 24px; margin-right: 12px;"></i>
+            <p style="margin: 0; font-size: 14px; line-height: 1.5;">
+                We use cookies to improve your experience. By continuing, you agree to our 
+                <a href="/privacy.html" style="color: #8D1B3D; text-decoration: underline;">Privacy Policy</a>.
+            </p>
+        </div>
+        <div class="cookie-actions">
+            <button id="acceptCookies" class="btn btn-primary" style="padding: 10px 20px; font-size: 14px;">Accept</button>
+            <button id="declineCookies" class="btn btn-outline" style="padding: 10px 20px; font-size: 14px;">Decline</button>
+        </div>
+    </div>
+    
+    <style>
+        .cookie-consent-banner {
+            position: fixed;
+            bottom: 0;
+            left: 0;
+            right: 0;
+            background: #FFFFFF;
+            border-top: 2px solid #8D1B3D;
+            box-shadow: 0 -4px 12px rgba(0,0,0,0.15);
+            padding: 16px 24px;
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            gap: 24px;
+            z-index: 10000;
+            max-width: 100%;
+        }
+        .cookie-content {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            flex: 1;
+            color: #1A1A1A;
+        }
+        .cookie-actions {
+            display: flex;
+            gap: 12px;
+            flex-shrink: 0;
+        }
+        @media (max-width: 768px) {
+            .cookie-consent-banner {
+                flex-direction: column;
+                padding: 16px;
+            }
+            .cookie-content {
+                flex-direction: column;
+                align-items: flex-start;
+            }
+            .cookie-actions {
+                width: 100%;
+            }
+            .cookie-actions button {
+                flex: 1;
+            }
+        }
+    </style>
+    
+    <script>
+    (function() {
+        const CONSENT_KEY = 'qscrap_cookie_consent';
+        const consent = localStorage.getItem(CONSENT_KEY);
+        
+        // Show banner only if no consent recorded
+        if (!consent) {
+            document.getElementById('cookieConsent').style.display = 'flex';
+        } else if (consent === 'declined') {
+            // Disable analytics if declined
+            window.ga = window.ga || function() { (window.ga.q = window.ga.q || []).push(arguments); };
+            window.ga.l = +new Date;
+        }
+        
+        // Accept cookies
+        document.getElementById('acceptCookies').addEventListener('click', function() {
+            localStorage.setItem(CONSENT_KEY, 'accepted');
+            document.getElementById('cookieConsent').style.display = 'none';
+            // Load analytics if not already loaded
+            if (typeof window.loadAnalytics === 'function') {
+                window.loadAnalytics();
+            }
+        });
+        
+        // Decline cookies
+        document.getElementById('declineCookies').addEventListener('click', function() {
+            localStorage.setItem(CONSENT_KEY, 'declined');
+            document.getElementById('cookieConsent').style.display = 'none';
+            // Disable analytics
+            window.ga = window.ga || function() { (window.ga.q = window.ga.q || []).push(arguments); };
+            window.ga.l = +new Date;
+        });
+    })();
+    </script>
 </body>
 
 </html>

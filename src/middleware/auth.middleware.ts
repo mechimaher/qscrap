@@ -13,16 +13,18 @@ export interface AuthRequest extends Request {
 
 export const authenticate = (req: AuthRequest, res: Response, next: NextFunction) => {
     const authHeader = req.headers.authorization;
+    const cookieToken = req.cookies?.token;
 
-    // SECURITY: Token must be provided via Authorization header only
-    // Query string tokens are insecure (appear in logs, browser history, referrer headers)
-    if (!authHeader) {
-        return res.status(401).json({ error: 'No token provided' });
+    let token: string | undefined;
+
+    if (authHeader) {
+        token = authHeader.split(' ')[1];
+    } else if (cookieToken) {
+        token = cookieToken;
     }
 
-    const token = authHeader.split(' ')[1];
     if (!token) {
-        return res.status(401).json({ error: 'Invalid authorization header format' });
+        return res.status(401).json({ error: 'No token provided' });
     }
 
     try {

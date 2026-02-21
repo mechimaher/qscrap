@@ -4,7 +4,7 @@
  */
 
 const API_URL = '/api';
-let token = localStorage.getItem('financeToken') || localStorage.getItem('opsToken');
+let currentUser = null; // Replaces token as auth state indicator
 let socket = null;
 let currentSection = 'overview';
 let currentPeriod = '30d';
@@ -71,20 +71,32 @@ function getCommissionDisplay(payout) {
 // AUTHENTICATION
 // ==========================================
 
-function isAuthorizedUser(token) {
+
+// Session Check via Cookie
+async function checkAuth() {
     try {
-        const payload = JSON.parse(atob(token.split('.')[1]));
-        // Admin always has access
-        if (payload.userType === 'admin') return true;
+        const res = await fetch(`${API_URL}/v1/auth/me`, {
+            credentials: 'include'
+        });
+        if (res.ok) {
+            currentUser = await res.json();
 
-        // Staff users need finance role for finance dashboard
-        if (payload.userType === 'staff') {
-            return payload.staffRole === 'finance';
+            // Check if user has finance access
+            const hasAccess = currentUser.userType === 'admin' || (currentUser.userType === 'staff' && currentUser.staffRole === 'finance');
+
+            if (!hasAccess) {
+                showToast('Access denied. Finance access required.', 'error');
+                document.getElementById('loginScreen').style.display = 'flex';
+                return;
+            }
+
+            showDashboard();
+        } else {
+            document.getElementById('loginScreen').style.display = 'flex';
         }
-
-        return false;
-    } catch {
-        return false;
+    } catch (err) {
+        console.error('Auth check failed:', err);
+        document.getElementById('loginScreen').style.display = 'flex';
     }
 }
 
@@ -97,22 +109,13 @@ document.getElementById('loginForm').addEventListener('submit', async (e) => {
         const res = await fetch(`${API_URL}/auth/login`, {
             method: 'POST',
             headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({ phone_number: phone, password })
+            body: JSON.stringify({ phone_number: phone, password }),
+            credentials: 'include'
         });
         const data = await res.json();
 
-        if (data.token) {
-            if (!isAuthorizedUser(data.token)) {
-                showToast('Access denied. Finance access required.', 'error');
-                return;
-            }
-            localStorage.setItem('financeToken', data.token);
-            localStorage.setItem('userId', data.userId);
-            localStorage.setItem('userType', data.userType);
-            localStorage.setItem('finUserName', data.fullName || 'Finance User');
-            localStorage.setItem('finUserPhone', data.phoneNumber || '');
-            token = data.token;
-            showDashboard();
+        if (res.ok) {
+            await checkAuth();
         } else {
             showToast(data.error || 'Login failed', 'error');
         }
@@ -121,46 +124,17 @@ document.getElementById('loginForm').addEventListener('submit', async (e) => {
     }
 });
 
-if (token && isAuthorizedUser(token)) {
-    showDashboard();
-}
+checkAuth();
 
-function showDashboard() {
-    document.getElementById('loginScreen').style.display = 'none';
-    document.getElementById('app').style.display = 'flex';
-
-    // Display logged-in user info
-    const userName = localStorage.getItem('finUserName') || 'Finance User';
-    const userNameEl = document.getElementById('userName');
-    const userAvatarEl = document.getElementById('userAvatar');
-    const greetingEl = document.getElementById('greetingText');
-
-    if (userNameEl) userNameEl.textContent = userName;
-    if (userAvatarEl) userAvatarEl.textContent = userName.charAt(0).toUpperCase();
-    if (greetingEl) greetingEl.textContent = `Welcome, ${userName.split(' ')[0]}`;
-
-    // Update datetime
-    updateDateTime();
-    setInterval(updateDateTime, 60000);
-
-    // Load initial data
-    loadOverview();
-    loadBadges();
-
-    // Setup navigation
-    setupNavigation();
-
-    // Setup socket
-    setupSocket();
-}
-
-function updateDateTime() {
-    const now = new Date();
-    const options = { weekday: 'short', year: 'numeric', month: 'short', day: 'numeric', hour: '2-digit', minute: '2-digit' };
-    document.getElementById('headerDateTime').textContent = now.toLocaleDateString('en-QA', options);
-}
-
-function logout() {
+async function logout() {
+    try {
+        await fetch(`${API_URL}/v1/auth/logout`, {
+            method: 'POST',
+            credentials: 'include'
+        });
+    } catch (err) {
+        console.error('Logout failed:', err);
+    }
     localStorage.removeItem('financeToken');
     location.reload();
 }
@@ -216,7 +190,7 @@ function refreshCurrentSection() {
 // ==========================================
 
 function setupSocket() {
-    socket = io({ auth: { token } });
+    socket = io();
 
     // Connection handlers for data freshness
     socket.on('connect', () => {
@@ -248,7 +222,7 @@ function setupSocket() {
 async function loadBadges() {
     try {
         const res = await fetch(`${API_URL}/finance/stats`, {
-            headers: { 'Authorization': `Bearer ${token}` }
+            credentials: 'include'
         });
         const data = await res.json();
         const stats = data.stats || data;
@@ -278,7 +252,7 @@ async function loadOverview() {
     try {
         // Load stats
         const statsRes = await fetch(`${API_URL}/finance/stats`, {
-            headers: { 'Authorization': `Bearer ${token}` }
+            credentials: 'include'
         });
         const data = await statsRes.json();
         const stats = data.stats || data;
@@ -291,7 +265,7 @@ async function loadOverview() {
         // Load loyalty program stats from operations API
         try {
             const loyaltyRes = await fetch(`${API_URL}/operations/dashboard/stats`, {
-                headers: { 'Authorization': `Bearer ${token}` }
+                credentials: 'include'
             });
             const loyaltyData = await loyaltyRes.json();
             if (loyaltyData.stats) {
@@ -312,7 +286,7 @@ async function loadOverview() {
 
         // Load recent payouts
         const payoutsRes = await fetch(`${API_URL}/finance/payouts?limit=5`, {
-            headers: { 'Authorization': `Bearer ${token}` }
+            credentials: 'include'
         });
         const payoutsData = await payoutsRes.json();
 
@@ -354,7 +328,7 @@ async function loadPendingPayouts(page = 1) {
         }
 
         const res = await fetch(url, {
-            headers: { 'Authorization': `Bearer ${token}` }
+            credentials: 'include'
         });
         const data = await res.json();
 
@@ -430,7 +404,7 @@ async function loadPendingPayouts(page = 1) {
 async function loadInWarrantyPayouts() {
     try {
         const res = await fetch(`${API_URL}/finance/payouts/in-warranty`, {
-            headers: { 'Authorization': `Bearer ${token}` }
+            credentials: 'include'
         });
         const data = await res.json();
 
@@ -707,7 +681,7 @@ async function executeHoldPayout(payoutId, reason) {
 async function loadAwaitingPayouts() {
     try {
         const res = await fetch(`${API_URL}/finance/payouts?status=awaiting_confirmation`, {
-            headers: { 'Authorization': `Bearer ${token}` }
+            credentials: 'include'
         });
         const data = await res.json();
 
@@ -746,7 +720,7 @@ async function resendNotification(payoutId) {
     try {
         const res = await fetch(`${API_URL}/finance/payouts/${payoutId}/remind`, {
             method: 'POST',
-            headers: { 'Authorization': `Bearer ${token}` }
+            credentials: 'include'
         });
 
         if (res.ok) {
@@ -767,7 +741,7 @@ async function resendNotification(payoutId) {
 async function loadDisputedPayouts() {
     try {
         const res = await fetch(`${API_URL}/finance/payouts?status=disputed`, {
-            headers: { 'Authorization': `Bearer ${token}` }
+            credentials: 'include'
         });
         const data = await res.json();
 
@@ -902,7 +876,7 @@ async function loadCompletedPayouts(page = 1) {
 
     try {
         const res = await fetch(url, {
-            headers: { 'Authorization': `Bearer ${token}` }
+            credentials: 'include'
         });
         const data = await res.json();
 
@@ -941,7 +915,7 @@ async function loadCompletedPayouts(page = 1) {
 async function loadRevenue() {
     try {
         const res = await fetch(`${API_URL}/finance/revenue?period=${currentPeriod}`, {
-            headers: { 'Authorization': `Bearer ${token}` }
+            credentials: 'include'
         });
         const data = await res.json();
 
@@ -1024,7 +998,7 @@ document.getElementById('periodTabs')?.addEventListener('click', e => {
 async function loadPendingRefunds() {
     try {
         const res = await fetch(`${API_URL}/finance/refunds/pending`, {
-            headers: { 'Authorization': `Bearer ${token}` }
+            credentials: 'include'
         });
         const data = await res.json();
 
@@ -1236,7 +1210,7 @@ async function loadRefunds(page = 1) {
     try {
         // Use dedicated refunds endpoint with pagination
         const res = await fetch(`${API_URL}/finance/refunds?page=${page}&limit=20`, {
-            headers: { 'Authorization': `Bearer ${token}` }
+            credentials: 'include'
         });
         const data = await res.json();
 
@@ -1299,7 +1273,7 @@ async function searchOrderForRefund() {
     try {
         // Search for order by order_number
         const res = await fetch(`${API_URL}/operations/orders?search=${encodeURIComponent(orderNumber)}&limit=1`, {
-            headers: { 'Authorization': `Bearer ${token}` }
+            credentials: 'include'
         });
         const data = await res.json();
 
@@ -1410,7 +1384,7 @@ async function exportPayouts() {
     try {
         // Fetch all completed payouts
         const res = await fetch(`${API_URL}/finance/payouts?status=confirmed&limit=1000`, {
-            headers: { 'Authorization': `Bearer ${token}` }
+            credentials: 'include'
         });
         const data = await res.json();
         const payouts = data.payouts || [];
@@ -1466,7 +1440,7 @@ function exportCompletedPayouts() {
 async function loadGaragesForFilter() {
     try {
         const res = await fetch(`${API_URL}/finance/payouts/garages-pending`, {
-            headers: { 'Authorization': `Bearer ${token}` }
+            credentials: 'include'
         });
         const data = await res.json();
 
@@ -1849,7 +1823,7 @@ async function loadCompensationReviews() {
 
     try {
         const res = await fetch(`${API_URL}/finance/compensation-reviews/pending`, {
-            headers: { 'Authorization': `Bearer ${token}` }
+            credentials: 'include'
         });
 
         if (!res.ok) throw new Error('Failed to load');

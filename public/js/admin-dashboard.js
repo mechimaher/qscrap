@@ -4,7 +4,7 @@
 // ============================================
 
 const API_URL = '/api';
-let token = localStorage.getItem('adminToken');
+let currentUser = null; // Replaces token as auth state indicator
 let currentGarageId = null;
 let autoRefreshInterval = null;
 let lastActivityTime = Date.now();
@@ -22,13 +22,73 @@ function createDebounce(key, fn, delay = 300) {
 // INITIALIZATION
 // ============================================
 
-if (token) {
-    showApp();
-    // Stagger premium features to avoid 429 rate limit
-    setTimeout(() => initializePremiumFeatures(), 500);
-} else {
-    document.getElementById('authScreen').style.display = 'flex';
+// Global Error Handler - Error Boundary for entire dashboard
+window.addEventListener('error', function (event) {
+    console.error('[Admin Dashboard] Uncaught error:', event.error);
+
+    // Log to Sentry if configured
+    if (window.Sentry) {
+        Sentry.captureException(event.error);
+    }
+
+    // Show user-friendly error UI (don't show for script errors from other origins)
+    if (event.error && !event.filename?.includes('cdn')) {
+        showErrorOverlay(event.message);
+    }
+});
+
+// Show error overlay with recovery option
+function showErrorOverlay(message) {
+    // Don't show multiple overlays
+    if (document.querySelector('.error-overlay')) return;
+
+    const overlay = document.createElement('div');
+    overlay.className = 'error-overlay';
+    overlay.innerHTML = `
+        <div class="error-content">
+            <i class="bi bi-exclamation-triangle" style="font-size: 48px; color: #dc2626; margin-bottom: 16px;"></i>
+            <h2 style="font-size: 20px; font-weight: 600; margin-bottom: 8px;">Something went wrong</h2>
+            <p style="color: #666; margin-bottom: 24px; font-size: 14px;">${escapeHtml(message)}</p>
+            <button class="btn btn-primary" onclick="location.reload()">
+                <i class="bi bi-arrow-clockwise"></i> Reload Dashboard
+            </button>
+        </div>
+    `;
+    overlay.style.cssText = `
+        position: fixed;
+        top: 0;
+        left: 0;
+        right: 0;
+        bottom: 0;
+        background: rgba(0,0,0,0.5);
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        z-index: 9999;
+    `;
+    document.body.appendChild(overlay);
 }
+
+// Session Check via Cookie
+async function checkAuth() {
+    try {
+        const res = await fetch(`${API_URL}/v1/auth/me`, {
+            credentials: 'include'
+        });
+        if (res.ok) {
+            currentUser = await res.json();
+            showApp();
+            setTimeout(() => initializePremiumFeatures(), 500);
+        } else {
+            document.getElementById('authScreen').style.display = 'flex';
+        }
+    } catch (err) {
+        console.error('Auth check failed:', err);
+        document.getElementById('authScreen').style.display = 'flex';
+    }
+}
+
+checkAuth();
 
 // ============================================
 // AUTHENTICATION
@@ -43,14 +103,13 @@ document.getElementById('loginForm').addEventListener('submit', async (e) => {
         const res = await fetch(`${API_URL}/auth/login`, {
             method: 'POST',
             headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({ phone_number: phone, password })
+            body: JSON.stringify({ phone_number: phone, password }),
+            credentials: 'include'
         });
         const data = await res.json();
 
         if (res.ok && data.userType === 'admin') {
-            localStorage.setItem('adminToken', data.token);
-            token = data.token;
-            showApp();
+            await checkAuth();
         } else if (data.userType && data.userType !== 'admin') {
             showToast('Access denied. Admin privileges required.', 'error');
         } else {
@@ -61,9 +120,28 @@ document.getElementById('loginForm').addEventListener('submit', async (e) => {
     }
 });
 
-function logout() {
+async function logout() {
+    try {
+        await fetch(`${API_URL}/v1/auth/logout`, {
+            method: 'POST',
+            credentials: 'include'
+        });
+    } catch (err) {
+        console.error('Logout failed:', err);
+    }
+
+    // Clear all intervals to prevent memory leaks
+    if (window.dashboardRefreshInterval) {
+        clearInterval(window.dashboardRefreshInterval);
+        window.dashboardRefreshInterval = null;
+    }
+    if (autoRefreshInterval) {
+        clearInterval(autoRefreshInterval);
+        autoRefreshInterval = null;
+    }
+
+    // Clear legacy storage and reload
     localStorage.removeItem('adminToken');
-    token = null;
     window.location.reload();
 }
 
@@ -125,7 +203,7 @@ function switchSection(section) {
 async function loadDashboard() {
     try {
         const res = await fetch(`${API_URL}/admin/dashboard`, {
-            headers: { 'Authorization': `Bearer ${token}` }
+            credentials: 'include'
         });
         const data = await res.json();
 
@@ -229,7 +307,7 @@ async function loadPendingGarages(page = 1) {
         if (search) url += `&search=${encodeURIComponent(search)}`;
 
         const res = await fetch(url, {
-            headers: { 'Authorization': `Bearer ${token}` }
+            credentials: 'include'
         });
         const data = await res.json();
 
@@ -283,7 +361,7 @@ async function loadGarages(page = 1) {
     try {
         const params = new URLSearchParams({ status, search, page, limit: 20 });
         const res = await fetch(`${API_URL}/admin/garages?${params}`, {
-            headers: { 'Authorization': `Bearer ${token}` }
+            credentials: 'include'
         });
         const data = await res.json();
 
@@ -330,15 +408,15 @@ function renderGarageCard(garage, isPending) {
             <div class="garage-info">
                 <div class="garage-info-row">
                     <i class="bi bi-telephone"></i>
-                    <span>${garage.phone_number || '-'}</span>
+                    <span>${escapeHtml(garage.phone_number) || '-'}</span>
                 </div>
                 <div class="garage-info-row">
                     <i class="bi bi-envelope"></i>
-                    <span>${garage.email || '-'}</span>
+                    <span>${escapeHtml(garage.email) || '-'}</span>
                 </div>
                 <div class="garage-info-row">
                     <i class="bi bi-geo-alt"></i>
-                    <span>${garage.address || 'No address'}</span>
+                    <span>${escapeHtml(garage.address) || 'No address'}</span>
                 </div>
                 <div class="garage-info-row">
                     <i class="bi bi-calendar"></i>
@@ -438,8 +516,8 @@ async function confirmApprove() {
     try {
         const res = await fetch(`${API_URL}/admin/garages/${currentGarageId}/approve`, {
             method: 'POST',
+            credentials: 'include',
             headers: {
-                'Authorization': `Bearer ${token}`,
                 'Content-Type': 'application/json'
             },
             body: JSON.stringify({ notes })
@@ -470,8 +548,8 @@ async function confirmReject() {
     try {
         const res = await fetch(`${API_URL}/admin/garages/${currentGarageId}/reject`, {
             method: 'POST',
+            credentials: 'include',
             headers: {
-                'Authorization': `Bearer ${token}`,
                 'Content-Type': 'application/json'
             },
             body: JSON.stringify({ reason })
@@ -498,8 +576,8 @@ async function confirmDemo() {
     try {
         const res = await fetch(`${API_URL}/admin/garages/${currentGarageId}/demo`, {
             method: 'POST',
+            credentials: 'include',
             headers: {
-                'Authorization': `Bearer ${token}`,
                 'Content-Type': 'application/json'
             },
             body: JSON.stringify({ days: parseInt(days), notes })
@@ -525,8 +603,8 @@ async function revokeAccess(garageId) {
     try {
         const res = await fetch(`${API_URL}/admin/garages/${garageId}/revoke`, {
             method: 'POST',
+            credentials: 'include',
             headers: {
-                'Authorization': `Bearer ${token}`,
                 'Content-Type': 'application/json'
             },
             body: JSON.stringify({ reason: 'Access revoked by admin' })
@@ -559,7 +637,7 @@ async function openManagePlanModal(garageId, garageName, currentPlan, status) {
     // Load available plans
     try {
         const res = await fetch(`${API_URL}/admin/plans`, {
-            headers: { 'Authorization': `Bearer ${token}` }
+            credentials: 'include'
         });
         const data = await res.json();
 
@@ -650,8 +728,8 @@ async function confirmAssignSubscription() {
 
         const res = await fetch(endpoint, {
             method: 'POST',
+            credentials: 'include',
             headers: {
-                'Authorization': `Bearer ${token}`,
                 'Content-Type': 'application/json'
             },
             body: JSON.stringify(body)
@@ -666,7 +744,6 @@ async function confirmAssignSubscription() {
                     await fetch(`${API_URL}/admin/garages/${garageId}/commission`, {
                         method: 'POST',
                         headers: {
-                            'Authorization': `Bearer ${token}`,
                             'Content-Type': 'application/json'
                         },
                         body: JSON.stringify({
@@ -710,7 +787,6 @@ async function revokeSubscription() {
         const res = await fetch(`${API_URL}/admin/garages/${garageId}/plan/revoke`, {
             method: 'POST',
             headers: {
-                'Authorization': `Bearer ${token}`,
                 'Content-Type': 'application/json'
             },
             body: JSON.stringify({ reason: 'Revoked by admin' })
@@ -757,7 +833,7 @@ async function loadAuditLog(page = 1) {
         if (targetFilter !== 'all') url += `&target_type=${targetFilter}`;
 
         const res = await fetch(url, {
-            headers: { 'Authorization': `Bearer ${token}` }
+            credentials: 'include'
         });
 
         if (!res.ok) {
@@ -1046,7 +1122,7 @@ async function loadUsers(page = 1) {
             limit: 25
         });
         const res = await fetch(`${API_URL}/admin/users?${params}`, {
-            headers: { 'Authorization': `Bearer ${token}` }
+            credentials: 'include'
         });
         const data = await res.json();
 
@@ -1084,8 +1160,8 @@ function renderUserRow(user) {
             <td><span class="type-badge ${user.user_type}">${user.user_type}</span></td>
             <td>
                 <div class="contact-info">
-                    <span><i class="bi bi-telephone"></i> ${user.phone_number || '-'}</span>
-                    <span><i class="bi bi-envelope"></i> ${user.email || '-'}</span>
+                    <span><i class="bi bi-telephone"></i> ${escapeHtml(user.phone_number) || '-'}</span>
+                    <span><i class="bi bi-envelope"></i> ${escapeHtml(user.email) || '-'}</span>
                 </div>
             </td>
             <td><span class="status-badge ${statusClass}">${statusLabel}</span></td>
@@ -1095,7 +1171,7 @@ function renderUserRow(user) {
                     <button class="btn-icon" onclick="viewUserDetails('${user.user_id}')" title="View Details">
                         <i class="bi bi-eye"></i>
                     </button>
-                    <button class="btn-icon" onclick="openEditUserModal('${user.user_id}', '${escapeHtml(user.full_name || '')}', '${user.email || ''}', '${user.phone_number || ''}')" title="Edit">
+                    <button class="btn-icon" onclick="openEditUserModal('${user.user_id}', '${escapeHtml(user.full_name || '')}', '${escapeHtml(user.email) || ''}', '${escapeHtml(user.phone_number) || ''}')" title="Edit">
                         <i class="bi bi-pencil"></i>
                     </button>
                     ${user.is_suspended ? `
@@ -1127,7 +1203,7 @@ async function viewUserDetails(userId) {
 
     try {
         const res = await fetch(`${API_URL}/admin/users/${userId}`, {
-            headers: { 'Authorization': `Bearer ${token}` }
+            credentials: 'include'
         });
         const data = await res.json();
 
@@ -1294,7 +1370,6 @@ async function confirmEditUser() {
         const res = await fetch(`${API_URL}/admin/users/${userId}`, {
             method: 'PUT',
             headers: {
-                'Authorization': `Bearer ${token}`,
                 'Content-Type': 'application/json'
             },
             body: JSON.stringify({ full_name: name, email, phone_number: phone })
@@ -1340,7 +1415,6 @@ async function confirmResetPassword() {
         const res = await fetch(`${API_URL}/admin/users/${userId}/reset-password`, {
             method: 'POST',
             headers: {
-                'Authorization': `Bearer ${token}`,
                 'Content-Type': 'application/json'
             },
             body: JSON.stringify({ new_password: newPassword })
@@ -1365,7 +1439,6 @@ async function suspendUser(userId) {
         const res = await fetch(`${API_URL}/admin/users/${userId}/suspend`, {
             method: 'POST',
             headers: {
-                'Authorization': `Bearer ${token}`,
                 'Content-Type': 'application/json'
             },
             body: JSON.stringify({ reason: 'Suspended by admin' })
@@ -1388,7 +1461,6 @@ async function activateUser(userId) {
         const res = await fetch(`${API_URL}/admin/users/${userId}/activate`, {
             method: 'POST',
             headers: {
-                'Authorization': `Bearer ${token}`,
                 'Content-Type': 'application/json'
             }
         });
@@ -1416,7 +1488,7 @@ async function loadSubscriptionPlans() {
 
     try {
         const res = await fetch(`${API_URL}/admin/plans`, {
-            headers: { 'Authorization': `Bearer ${token}` }
+            credentials: 'include'
         });
         const data = await res.json();
         subscriptionPlansCache = data.plans || [];
@@ -1483,8 +1555,8 @@ async function confirmAssignSubscription() {
 
         const res = await fetch(endpoint, {
             method: 'POST',
+            credentials: 'include',
             headers: {
-                'Authorization': `Bearer ${token}`,
                 'Content-Type': 'application/json'
             },
             body: JSON.stringify(body)
@@ -1498,7 +1570,6 @@ async function confirmAssignSubscription() {
                     await fetch(`${API_URL}/admin/garages/${garageId}/commission`, {
                         method: 'POST',
                         headers: {
-                            'Authorization': `Bearer ${token}`,
                             'Content-Type': 'application/json'
                         },
                         body: JSON.stringify({
@@ -1534,7 +1605,6 @@ async function revokeSubscription() {
         const res = await fetch(`${API_URL}/admin/garages/${garageId}/plan/revoke`, {
             method: 'POST',
             headers: {
-                'Authorization': `Bearer ${token}`,
                 'Content-Type': 'application/json'
             },
             body: JSON.stringify({ reason: 'Revoked by admin' })
@@ -1570,7 +1640,6 @@ async function confirmExtendSubscription() {
         const res = await fetch(`${API_URL}/admin/garages/${garageId}/plan/extend`, {
             method: 'POST',
             headers: {
-                'Authorization': `Bearer ${token}`,
                 'Content-Type': 'application/json'
             },
             body: JSON.stringify({ days: parseInt(days), reason })
@@ -1747,7 +1816,6 @@ async function submitCreateUser() {
         const res = await fetch(`${API_URL}/admin/users/create`, {
             method: 'POST',
             headers: {
-                'Authorization': `Bearer ${token}`,
                 'Content-Type': 'application/json'
             },
             body: JSON.stringify(userData)
@@ -1809,7 +1877,7 @@ async function loadStaff(page = 1) {
         });
 
         const res = await fetch(`${API_URL}/admin/users?${params}`, {
-            headers: { 'Authorization': `Bearer ${token}` }
+            credentials: 'include'
         });
         const data = await res.json();
 
@@ -1873,11 +1941,11 @@ function renderStaffCard(staff) {
             <div class="staff-details">
                 <div class="detail-row">
                     <i class="bi bi-telephone"></i>
-                    <span>${staff.phone_number || '-'}</span>
+                    <span>${escapeHtml(staff.phone_number) || '-'}</span>
                 </div>
                 <div class="detail-row">
                     <i class="bi bi-envelope"></i>
-                    <span>${staff.email || '-'}</span>
+                    <span>${escapeHtml(staff.email) || '-'}</span>
                 </div>
             </div>
             <div class="staff-actions">
@@ -1918,7 +1986,7 @@ async function loadDrivers(page = 1) {
         });
 
         const res = await fetch(`${API_URL}/admin/users?${params}`, {
-            headers: { 'Authorization': `Bearer ${token}` }
+            credentials: 'include'
         });
         const data = await res.json();
 
@@ -1968,7 +2036,7 @@ function renderDriverRow(driver) {
                     </div>
                 </div>
             </td>
-            <td>${driver.phone_number || '-'}</td>
+            <td>${escapeHtml(driver.phone_number) || '-'}</td>
             <td><span class="vehicle-badge"><i class="bi ${vehicleIcon}"></i> ${escapeHtml(vehicleType)}</span></td>
             <td><span class="status-badge ${statusClass}"><i class="bi bi-circle-fill" style="font-size: 8px;"></i> ${statusLabel}</span></td>
             <td>${deliveryCount}</td>
@@ -2087,7 +2155,7 @@ async function loadReports(page = 1) {
         const url = `${API_URL}/admin/reports/${endpoint}?page=${page}&period=${currentReportPeriod}&limit=20`;
 
         const res = await fetch(url, {
-            headers: { 'Authorization': `Bearer ${token}` }
+            credentials: 'include'
         });
         const data = await res.json();
         lastReportData = data;
@@ -2475,7 +2543,7 @@ async function loadNotifications() {
     try {
         // Get pending approvals and expiring demos
         const res = await fetch(`${API_URL}/admin/dashboard`, {
-            headers: { 'Authorization': `Bearer ${token}` }
+            credentials: 'include'
         });
         const data = await res.json();
 
@@ -2602,7 +2670,7 @@ async function loadPlanRequests() {
     try {
         // Pass status filter to backend
         const res = await fetch(`${API_URL}/admin/requests?status=${status}`, {
-            headers: { 'Authorization': `Bearer ${token}` }
+            credentials: 'include'
         });
         const data = await res.json();
         const requests = data.requests || [];
@@ -2692,7 +2760,7 @@ async function approveRequest(id) {
     try {
         const res = await fetch(`${API_URL}/admin/requests/${id}/approve`, {
             method: 'POST',
-            headers: { 'Authorization': `Bearer ${token}` }
+            credentials: 'include'
         });
 
         if (res.ok) {
@@ -2715,7 +2783,6 @@ async function rejectRequest(id) {
         const res = await fetch(`${API_URL}/admin/requests/${id}/reject`, {
             method: 'POST',
             headers: {
-                'Authorization': `Bearer ${token}`,
                 'Content-Type': 'application/json'
             },
             body: JSON.stringify({ reason })
@@ -2747,68 +2814,72 @@ function initializeWebSocket() {
 
     try {
         socket = io({
-            auth: { token },
             transports: ['websocket', 'polling'],
             reconnection: true,
             reconnectionAttempts: 5,
             reconnectionDelay: 1000
         });
+    } catch (err) {
+        console.warn('[WebSocket] Socket.IO initialization failed:', err);
+    }
 
+    if (socket) {
         socket.on('connect', () => {
             console.log('[WebSocket] Connected to server');
             updateConnectionStatus(true);
         });
-
-        socket.on('disconnect', () => {
-            console.log('[WebSocket] Disconnected');
-            updateConnectionStatus(false);
-        });
-
-        // Real-time stats update
-        socket.on('admin_stats_update', (data) => {
-            console.log('[WebSocket] Stats update received:', data);
-            updateBadgesRealtime(data);
-            showToast('📊 Dashboard updated', 'info');
-        });
-
-        // New garage registration - update pending count
-        socket.on('new_garage_registration', (data) => {
-            console.log('[WebSocket] New garage registration:', data);
-            incrementBadge('pendingBadge');
-            showToast(`🏪 New garage: ${data.garage_name || 'New registration'}`, 'info');
-
-            // Refresh approvals section if currently viewing
-            if (document.getElementById('sectionApprovals')?.classList.contains('active')) {
-                loadPendingGarages();
-            }
-        });
-
-        // New plan request - update plan requests count
-        socket.on('new_plan_request', (data) => {
-            console.log('[WebSocket] New plan request:', data);
-            incrementBadge('planRequestsBadge');
-            showToast(`📋 New plan request from ${data.garage_name || 'a garage'}`, 'info');
-
-            // Refresh requests section if currently viewing
-            if (document.getElementById('sectionRequests')?.classList.contains('active')) {
-                loadPlanRequests();
-            }
-        });
-
-        // Garage approved/rejected - update counts
-        socket.on('garage_status_changed', (data) => {
-            console.log('[WebSocket] Garage status changed:', data);
-            // Refresh dashboard stats
-            loadDashboard();
-        });
-
-        socket.on('connect_error', (err) => {
-            console.warn('[WebSocket] Connection error:', err.message);
-        });
-
-    } catch (err) {
-        console.error('[WebSocket] Initialization error:', err);
     }
+
+    socket.on('disconnect', () => {
+        console.log('[WebSocket] Disconnected');
+        updateConnectionStatus(false);
+    });
+
+    // Real-time stats update
+    socket.on('admin_stats_update', (data) => {
+        console.log('[WebSocket] Stats update received:', data);
+        updateBadgesRealtime(data);
+        showToast('📊 Dashboard updated', 'info');
+    });
+
+    // New garage registration - update pending count
+    socket.on('new_garage_registration', (data) => {
+        console.log('[WebSocket] New garage registration:', data);
+        incrementBadge('pendingBadge');
+        showToast(`🏪 New garage: ${data.garage_name || 'New registration'}`, 'info');
+
+        // Refresh approvals section if currently viewing
+        if (document.getElementById('sectionApprovals')?.classList.contains('active')) {
+            loadPendingGarages();
+        }
+    });
+
+    // New plan request - update plan requests count
+    socket.on('new_plan_request', (data) => {
+        console.log('[WebSocket] New plan request:', data);
+        incrementBadge('planRequestsBadge');
+        showToast(`📋 New plan request from ${data.garage_name || 'a garage'}`, 'info');
+
+        // Refresh requests section if currently viewing
+        if (document.getElementById('sectionRequests')?.classList.contains('active')) {
+            loadPlanRequests();
+        }
+    });
+
+    // Garage approved/rejected - update counts
+    socket.on('garage_status_changed', (data) => {
+        console.log('[WebSocket] Garage status changed:', data);
+        // Refresh dashboard stats
+        loadDashboard();
+    });
+
+    socket.on('connect_error', (err) => {
+        console.warn('[WebSocket] Connection error:', err.message);
+    });
+
+} catch (err) {
+    console.error('[WebSocket] Initialization error:', err);
+}
 }
 
 function updateConnectionStatus(isOnline) {
@@ -2859,8 +2930,6 @@ function incrementBadge(badgeId) {
 }
 
 // Initialize WebSocket when app loads
-if (token) {
-    setTimeout(() => {
-        initializeWebSocket();
-    }, 500);
-}
+setTimeout(() => {
+    initializeWebSocket();
+}, 500);

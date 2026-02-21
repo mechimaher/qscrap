@@ -1,15 +1,12 @@
 const API_URL = '/api';
-let token = localStorage.getItem('token');
+let currentUser = null; // Replaces token as auth state indicator
 let userId = localStorage.getItem('userId');
 let userType = localStorage.getItem('userType');
 
 // STRICT ROLE CHECK: If logged in as customer, force logout on garage dashboard
-if (token && userType && userType !== 'garage') {
+if (userType && userType !== 'garage') {
     console.warn('Wrong user role for Garage Dashboard. Clearing session.');
-    localStorage.clear();
-    token = null;
-    userId = null;
-    userType = null;
+    logout();
 }
 
 let socket = null;
@@ -20,7 +17,12 @@ let requests = [];
  * Escape HTML to prevent XSS attacks
  * Use this for ALL user-generated content
  */
-// escapeHTML: provided by shared/utils.js
+function escapeHtml(text) {
+    if (!text) return '';
+    const div = document.createElement('div');
+    div.textContent = text;
+    return div.innerHTML;
+}
 
 /**
  * Escape string for use in inline JavaScript onclick handlers
@@ -35,6 +37,51 @@ function escapeJSString(text) {
         .replace(/\n/g, '\\n')
         .replace(/\r/g, '\\r')
         .replace(/\t/g, '\\t');
+}
+
+// Global Error Handler - Error Boundary for entire dashboard
+window.addEventListener('error', function (event) {
+    console.error('[Garage Dashboard] Uncaught error:', event.error);
+
+    // Log to Sentry if configured
+    if (window.Sentry) {
+        Sentry.captureException(event.error);
+    }
+
+    // Show user-friendly error UI
+    if (event.error && !event.filename?.includes('cdn')) {
+        showErrorOverlay(event.message);
+    }
+});
+
+function showErrorOverlay(message) {
+    if (document.querySelector('.error-overlay')) return;
+
+    const overlay = document.createElement('div');
+    overlay.className = 'error-overlay';
+    overlay.innerHTML = `
+        <div class="error-content">
+            <i class="bi bi-exclamation-triangle" style="font-size: 48px; color: #dc2626; margin-bottom: 16px;"></i>
+            <h2 style="font-size: 20px; font-weight: 600; margin-bottom: 8px;">Something went wrong</h2>
+            <p style="color: #666; margin-bottom: 24px; font-size: 14px;">${escapeHtml(message)}</p>
+            <button class="btn btn-primary" onclick="location.reload()">
+                <i class="bi bi-arrow-clockwise"></i> Reload Dashboard
+            </button>
+        </div>
+    `;
+    overlay.style.cssText = `
+        position: fixed;
+        top: 0;
+        left: 0;
+        right: 0;
+        bottom: 0;
+        background: rgba(0,0,0,0.5);
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        z-index: 9999;
+    `;
+    document.body.appendChild(overlay);
 }
 
 let ignoredRequests = JSON.parse(localStorage.getItem('ignoredRequests') || '[]');
@@ -80,9 +127,9 @@ async function undoOrder(orderId, reason = 'User initiated undo') {
     try {
         const res = await fetch(`${API_URL}/orders/${orderId}/undo`, {
             method: 'POST',
+            credentials: 'include',
             headers: {
                 'Content-Type': 'application/json',
-                'Authorization': `Bearer ${token}`
             },
             body: JSON.stringify({ reason })
         });
@@ -140,9 +187,32 @@ function toggleTheme() {
 initTheme();
 
 // Initialize app
-if (token) {
-    showDashboard();
+// Session Check via Cookie
+async function checkAuth() {
+    try {
+        const res = await fetch(`${API_URL}/v1/auth/me`, {
+            credentials: 'include'
+        });
+        if (res.ok) {
+            currentUser = await res.json();
+            userId = currentUser.userId;
+            userType = currentUser.userType;
+            localStorage.setItem('userId', userId);
+            localStorage.setItem('userType', userType);
+
+            showDashboard();
+            initSocket();
+            loadDashboard();
+        } else {
+            document.getElementById('authScreen').style.display = 'flex';
+        }
+    } catch (err) {
+        console.error('Auth check failed:', err);
+        document.getElementById('authScreen').style.display = 'flex';
+    }
 }
+
+checkAuth();
 
 // Login
 document.getElementById('loginForm').addEventListener('submit', async (e) => {
@@ -154,22 +224,15 @@ document.getElementById('loginForm').addEventListener('submit', async (e) => {
         const res = await fetch(`${API_URL}/auth/login`, {
             method: 'POST',
             headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({ phone_number: phone, password })
+            body: JSON.stringify({ phone_number: phone, password }),
+            credentials: 'include'
         });
         const data = await res.json();
 
-        if (data.token) {
-            if (data.userType !== 'garage') {
-                showToast('This portal is for garage partners only', 'error');
-                return;
-            }
-            localStorage.setItem('token', data.token);
-            localStorage.setItem('userId', data.userId);
-            localStorage.setItem('userType', 'garage');
-            token = data.token;
-            userId = data.userId;
-            userType = 'garage';
-            showDashboard();
+        if (res.ok && data.userType === 'garage') {
+            await checkAuth();
+        } else if (data.userType && data.userType !== 'garage') {
+            showToast('Please use the customer app or correct portal.', 'error');
         } else {
             showToast(data.error || 'Login failed', 'error');
         }
@@ -193,11 +256,45 @@ function switchAuthTab(tab) {
 // Register
 document.getElementById('registerForm').addEventListener('submit', async (e) => {
     e.preventDefault();
-    const garageName = document.getElementById('regGarageName').value;
-    const ownerName = document.getElementById('regOwnerName').value;
-    const phone = document.getElementById('regPhone').value;
-    const address = document.getElementById('regAddress').value;
+
+    // Get form values
+    const garageName = document.getElementById('regGarageName').value.trim();
+    const ownerName = document.getElementById('regOwnerName').value.trim();
+    const phone = document.getElementById('regPhone').value.trim();
+    const address = document.getElementById('regAddress').value.trim();
     const password = document.getElementById('regPassword').value;
+
+    // Client-side validation
+    const errors = [];
+
+    if (!garageName || garageName.length < 3) {
+        errors.push('Garage name must be at least 3 characters');
+    }
+
+    if (!ownerName || ownerName.length < 3) {
+        errors.push('Owner name must be at least 3 characters');
+    }
+
+    // Validate Qatar phone format: +974 followed by 8 digits, or 8 digits starting with 3-7
+    const phoneRegex = /^(\+974)?[3-7]\d{7}$/;
+    const cleanedPhone = phone.replace(/\D/g, '');
+    if (!phoneRegex.test(phone) && !phoneRegex.test(cleanedPhone)) {
+        errors.push('Phone must be Qatar format: +974XXXXXXXX (8 digits starting with 3-7)');
+    }
+
+    if (!address || address.length < 5) {
+        errors.push('Please enter a valid address (at least 5 characters)');
+    }
+
+    if (!password || password.length < 6) {
+        errors.push('Password must be at least 6 characters');
+    }
+
+    // Show validation errors
+    if (errors.length > 0) {
+        showValidationErrors(errors);
+        return;
+    }
 
     // Get specialization fields
     const supplierType = document.getElementById('regSupplierType').value;
@@ -220,7 +317,8 @@ document.getElementById('registerForm').addEventListener('submit', async (e) => 
                 supplier_type: supplierType,
                 specialized_brands: specializedBrands,
                 all_brands: allBrands
-            })
+            }),
+            credentials: 'include'
         });
         const data = await res.json();
 
@@ -228,6 +326,7 @@ document.getElementById('registerForm').addEventListener('submit', async (e) => 
             showToast('Account created! Please sign in.', 'success');
             switchAuthTab('login');
             document.getElementById('registerForm').reset();
+            clearValidationErrors();
         } else {
             showToast(data.error || 'Registration failed', 'error');
         }
@@ -235,6 +334,41 @@ document.getElementById('registerForm').addEventListener('submit', async (e) => 
         showToast('Connection error', 'error');
     }
 });
+
+// Show validation errors in a dedicated container
+function showValidationErrors(errors) {
+    clearValidationErrors();
+
+    const errorContainer = document.createElement('div');
+    errorContainer.id = 'regErrors';
+    errorContainer.className = 'validation-errors';
+    errorContainer.style.cssText = `
+        background: #FEF2F2;
+        border: 1px solid #FCA5A5;
+        border-radius: 8px;
+        padding: 12px 16px;
+        margin-bottom: 16px;
+    `;
+    errorContainer.innerHTML = errors.map(e => `
+        <div style="color: #DC2626; font-size: 13px; margin-bottom: 4px; display: flex; align-items: center; gap: 8px;">
+            <i class="bi bi-exclamation-circle"></i> ${escapeHtml(e)}
+        </div>
+    `).join('');
+
+    const form = document.getElementById('registerForm');
+    form.insertBefore(errorContainer, form.firstChild);
+
+    // Auto-clear after 5 seconds
+    setTimeout(clearValidationErrors, 5000);
+}
+
+// Clear validation errors
+function clearValidationErrors() {
+    const errorContainer = document.getElementById('regErrors');
+    if (errorContainer) {
+        errorContainer.remove();
+    }
+}
 
 // Toggle brand selection visibility (for registration form)
 function toggleBrandSelection() {
@@ -245,7 +379,40 @@ function toggleBrandSelection() {
     }
 }
 
-function logout() {
+async function logout() {
+    try {
+        await fetch(`${API_URL}/v1/auth/logout`, {
+            method: 'POST',
+            credentials: 'include'
+        });
+    } catch (err) {
+        console.error('Logout failed:', err);
+    }
+
+    // Clear all intervals to prevent memory leaks
+    if (window.dashboardRefreshInterval) {
+        clearInterval(window.dashboardRefreshInterval);
+        window.dashboardRefreshInterval = null;
+    }
+    if (autoRefreshInterval) {
+        clearInterval(autoRefreshInterval);
+        autoRefreshInterval = null;
+    }
+
+    // Clear all pending timers
+    const highestId = window.setTimeout(function () { }, 0);
+    for (let i = 1; i < highestId; i++) {
+        window.clearTimeout(i);
+        window.clearInterval(i);
+    }
+
+    // Disconnect socket
+    if (socket) {
+        socket.disconnect();
+        socket = null;
+    }
+
+    // Clear storage and reload
     localStorage.clear();
     location.reload();
 }
@@ -316,9 +483,7 @@ async function showDashboard() {
     initNotificationSound();
 
     // Connect Socket
-    socket = io({
-        auth: { token }
-    });
+    socket = io();
 
     // Initialize premium features (live datetime, shortcuts, notifications)
     if (typeof initializePremiumFeatures === 'function') {
@@ -331,7 +496,7 @@ async function showDashboard() {
     // Sync ignored requests from backend (merge with localStorage)
     try {
         const res = await fetch(`${API_URL}/requests/ignored/list`, {
-            headers: { 'Authorization': `Bearer ${token}` }
+            credentials: 'include'
         });
         if (res.ok) {
             const data = await res.json();
@@ -615,7 +780,7 @@ async function showDashboard() {
 async function loadStats() {
     try {
         const res = await fetch(`${API_URL}/dashboard/garage/stats`, {
-            headers: { 'Authorization': `Bearer ${token}` }
+            credentials: 'include'
         });
         const data = await res.json();
         // Dashboard stats loaded
@@ -655,7 +820,7 @@ async function loadStats() {
 async function loadBadgeCounts() {
     try {
         const res = await fetch(`${API_URL}/dashboard/garage/badge-counts`, {
-            headers: { 'Authorization': `Bearer ${token}` }
+            credentials: 'include'
         });
         const data = await res.json();
 
@@ -707,7 +872,7 @@ async function loadRequests(page = 1) {
 
     try {
         const res = await fetch(`${API_URL}/requests/pending?page=${page}&limit=${REQUESTS_PAGE_SIZE}&urgency=${urgency}&condition=${condition}&sort=${sort}`, {
-            headers: { 'Authorization': `Bearer ${token}` }
+            credentials: 'include'
         });
         const data = await res.json();
         // Handle both old array format and new wrapped format
@@ -773,9 +938,9 @@ function clearRequestFilters() {
 
 
 function createRequestCard(req, isNew = false) {
-    const title = req.car_make ? `${req.car_make} ${req.car_model} ${req.car_year || ''}` :
-        req.summary?.car || 'Vehicle';
-    const desc = req.part_description || req.summary?.part || 'Part Request';
+    const title = req.car_make ? `${escapeHtml(req.car_make)} ${escapeHtml(req.car_model)} ${escapeHtml(req.car_year || '')}` :
+        escapeHtml(req.summary?.car || 'Vehicle');
+    const desc = escapeHtml(req.part_description || req.summary?.part || 'Part Request');
     const id = req.request_id;
     const age = req.created_at ? getTimeAgo(req.created_at) : 'Just now';
     const isIgnored = ignoredRequests.includes(id);
@@ -972,7 +1137,7 @@ async function loadBids(page = 1) {
     currentBidsPage = page;
     try {
         const res = await fetch(`${API_URL}/bids/my?page=${page}&limit=${BIDS_PAGE_SIZE}`, {
-            headers: { 'Authorization': `Bearer ${token}` }
+            credentials: 'include'
         });
         const data = await res.json();
 
@@ -1066,7 +1231,7 @@ async function fetchAndRenderTimeline(bidId, initialAmount, bidCreatedAt, bidSta
 
     try {
         const res = await fetch(`${API_URL}/negotiations/bids/${bidId}/negotiations`, {
-            headers: { 'Authorization': `Bearer ${token}` }
+            credentials: 'include'
         });
         const data = await res.json();
 
@@ -1162,7 +1327,7 @@ async function fetchAndRenderTimeline(bidId, initialAmount, bidCreatedAt, bidSta
 async function loadPendingCounterOffers() {
     try {
         const res = await fetch(`${API_URL}/negotiations/pending-offers`, {
-            headers: { 'Authorization': `Bearer ${token}` }
+            credentials: 'include'
         });
         const data = await res.json();
 
@@ -1385,8 +1550,8 @@ async function respondToCounterFromCard(counterOfferId, action) {
     try {
         const res = await fetch(`${API_URL}/negotiations/counter-offers/${counterOfferId}/garage-respond`, {
             method: 'POST',
+            credentials: 'include',
             headers: {
-                'Authorization': `Bearer ${token}`,
                 'Content-Type': 'application/json'
             },
             body: JSON.stringify({ action: action })
@@ -1458,8 +1623,8 @@ async function respondToCounterWithAmount(counterOfferId, amount) {
     try {
         const res = await fetch(`${API_URL}/negotiations/counter-offers/${counterOfferId}/garage-respond`, {
             method: 'POST',
+            credentials: 'include',
             headers: {
-                'Authorization': `Bearer ${token}`,
                 'Content-Type': 'application/json'
             },
             body: JSON.stringify({ action: 'counter', counter_amount: amount })
@@ -1538,7 +1703,7 @@ function generateOrderTimeline(status) {
 async function loadOrders() {
     try {
         const res = await fetch(`${API_URL}/orders/my`, {
-            headers: { 'Authorization': `Bearer ${token}` }
+            credentials: 'include'
         });
         const data = await res.json();
         // Handle both old array format and new wrapped format
@@ -1918,7 +2083,7 @@ async function openUpdateBidModal(bidId, title) {
     // Find bid info from server (optimized fetch)
     try {
         const res = await fetch(`${API_URL}/bids/${bidId}`, {
-            headers: { 'Authorization': `Bearer ${token}` }
+            credentials: 'include'
         });
 
         if (res.ok) {
@@ -2038,8 +2203,8 @@ async function confirmCancelOrder() {
     try {
         const res = await fetch(`${API_URL}/cancellations/orders/${cancelOrderId}/cancel/garage`, {
             method: 'POST',
+            credentials: 'include',
             headers: {
-                'Authorization': `Bearer ${token}`,
                 'Content-Type': 'application/json'
             },
             body: JSON.stringify({ reason_code: reasonCode, reason_text: reasonText })
@@ -2070,7 +2235,7 @@ async function loadMyReviews(page = 1) {
 
     try {
         const res = await fetch(`${API_URL}/reviews/my?page=${page}&limit=${REVIEWS_PAGE_SIZE}`, {
-            headers: { 'Authorization': `Bearer ${token}` }
+            credentials: 'include'
         });
         const data = await res.json();
 
@@ -2147,7 +2312,7 @@ async function loadMyReviews(page = 1) {
 async function loadProfile() {
     try {
         const res = await fetch(`${API_URL}/dashboard/garage/profile`, {
-            headers: { 'Authorization': `Bearer ${token}` }
+            credentials: 'include'
         });
         const profile = await res.json();
 
@@ -2556,9 +2721,9 @@ async function saveSupplierSettings(event) {
     try {
         const res = await fetch(`${API_URL}/dashboard/garage/specialization`, {
             method: 'PUT',
+            credentials: 'include',
             headers: {
                 'Content-Type': 'application/json',
-                'Authorization': `Bearer ${token}`
             },
             body: JSON.stringify({
                 supplier_type: supplierType,
@@ -2592,8 +2757,8 @@ async function saveBusinessDetails(event) {
     try {
         const res = await fetch(`${API_URL}/dashboard/garage/business-details`, {
             method: 'PUT',
+            credentials: 'include',
             headers: {
-                'Authorization': `Bearer ${token}`,
                 'Content-Type': 'application/json'
             },
             body: JSON.stringify({
@@ -2923,8 +3088,8 @@ async function saveGarageLocation() {
     try {
         const res = await fetch(`${API_URL}/dashboard/garage/location`, {
             method: 'PUT',
+            credentials: 'include',
             headers: {
-                'Authorization': `Bearer ${token}`,
                 'Content-Type': 'application/json'
             },
             body: JSON.stringify({
@@ -2972,8 +3137,8 @@ async function updateOrderStatus(orderId, newStatus) {
     try {
         const res = await fetch(`${API_URL}/orders/${orderId}/status`, {
             method: 'PATCH',
+            credentials: 'include',
             headers: {
-                'Authorization': `Bearer ${token}`,
                 'Content-Type': 'application/json'
             },
             body: JSON.stringify({ order_status: newStatus })
@@ -3071,7 +3236,7 @@ async function ignoreRequest(reqId) {
             try {
                 await fetch(`${API_URL}/requests/${reqId}/ignore`, {
                     method: 'POST',
-                    headers: { 'Authorization': `Bearer ${token}` }
+                    credentials: 'include'
                 });
             } catch (err) {
                 console.error('Failed to persist ignore to backend:', err);
@@ -3107,7 +3272,7 @@ async function undoIgnoreRequest(reqId) {
     try {
         await fetch(`${API_URL}/requests/${reqId}/ignore`, {
             method: 'DELETE',
-            headers: { 'Authorization': `Bearer ${token}` }
+            credentials: 'include'
         });
     } catch (err) {
         // Ignore - might not exist yet
@@ -3259,7 +3424,6 @@ document.getElementById('bidForm').addEventListener('submit', async (e) => {
             res = await fetch(`${API_URL}/bids/${currentEditBidId}`, {
                 method: 'PUT',
                 headers: {
-                    'Authorization': `Bearer ${token}`,
                     'Content-Type': 'application/json'
                 },
                 body: JSON.stringify({
@@ -3304,9 +3468,7 @@ document.getElementById('bidForm').addEventListener('submit', async (e) => {
 
             res = await fetch(`${API_URL}/bids`, {
                 method: 'POST',
-                headers: {
-                    'Authorization': `Bearer ${token}`
-                },
+                credentials: 'include',
                 body: formData
             });
             data = await res.json();
@@ -3369,7 +3531,8 @@ function getTimeAgo(date) {
 function showToast(message, type = 'success') {
     const toast = document.createElement('div');
     toast.className = `toast ${type}`;
-    toast.innerHTML = `<i class="bi bi-${type === 'success' ? 'check-circle' : type === 'error' ? 'x-circle' : 'exclamation-triangle'}"></i> ${message}`;
+    const safeMessage = escapeHtml(message);
+    toast.innerHTML = `<i class="bi bi-${type === 'success' ? 'check-circle' : type === 'error' ? 'x-circle' : 'exclamation-triangle'}"></i> ${safeMessage}`;
     document.getElementById('toastContainer').appendChild(toast);
     setTimeout(() => toast.remove(), 4000);
 }
@@ -3549,7 +3712,6 @@ async function respondToDispute(action) {
         const res = await fetch(`${API_URL}/disputes/${currentDisputeId}/garage-respond`, {
             method: 'POST',
             headers: {
-                'Authorization': `Bearer ${token}`,
                 'Content-Type': 'application/json'
             },
             body: JSON.stringify({
@@ -3576,7 +3738,7 @@ async function respondToDispute(action) {
 async function loadPendingDisputes() {
     try {
         const res = await fetch(`${API_URL}/disputes/my`, {
-            headers: { 'Authorization': `Bearer ${token}` }
+            credentials: 'include'
         });
         const data = await res.json();
 
@@ -3625,7 +3787,7 @@ function updateOrdersBadge() {
 async function updateEarningsBadge() {
     try {
         const res = await fetch(`${API_URL}/finance/payouts/awaiting-confirmation`, {
-            headers: { 'Authorization': `Bearer ${token}` }
+            credentials: 'include'
         });
         const data = await res.json();
 
@@ -3668,7 +3830,7 @@ async function reviewDisputeForOrder(orderId) {
     // Otherwise fetch from API
     try {
         const res = await fetch(`${API_URL}/disputes/my`, {
-            headers: { 'Authorization': `Bearer ${token}` }
+            credentials: 'include'
         });
         const data = await res.json();
 
@@ -3692,7 +3854,7 @@ async function loadSubscription() {
     try {
         // console.log('Garage Dashboard v2026.01.10-FIXED-2: Loading subscription...');
         const res = await fetch(`${API_URL}/subscriptions/my`, {
-            headers: { 'Authorization': `Bearer ${token}` }
+            credentials: 'include'
         });
         const data = await res.json();
 
@@ -3865,7 +4027,7 @@ async function showPlanOptions() {
 
         try {
             const res = await fetch(`${API_URL}/subscriptions/plans`, {
-                headers: { 'Authorization': `Bearer ${token}` }
+                credentials: 'include'
             });
             const data = await res.json();
 
@@ -3955,9 +4117,9 @@ async function executeChangePlan(planId) {
     try {
         const res = await fetch(`${API_URL}/subscriptions/change-plan`, {
             method: 'PUT',
+            credentials: 'include',
             headers: {
                 'Content-Type': 'application/json',
-                'Authorization': `Bearer ${token}`
             },
             body: JSON.stringify({ plan_id: planId })
         });
@@ -4002,7 +4164,6 @@ async function executeCancelPendingRequest() {
         const res = await fetch(`${API_URL}/subscriptions/pending-request`, {
             method: 'DELETE',
             headers: {
-                'Authorization': `Bearer ${token}`
             }
         });
 
@@ -4109,9 +4270,9 @@ document.addEventListener('DOMContentLoaded', function () {
                 // Step 1: First create the upgrade request
                 const reqRes = await fetch(`${API_URL}/subscriptions/change-plan`, {
                     method: 'PUT',
+                    credentials: 'include',
                     headers: {
                         'Content-Type': 'application/json',
-                        'Authorization': `Bearer ${token}`
                     },
                     body: JSON.stringify({ plan_id: currentPaymentPlan.planId })
                 });
@@ -4127,9 +4288,9 @@ document.addEventListener('DOMContentLoaded', function () {
                 // Step 2: Create payment intent on server
                 const payRes = await fetch(`${API_URL}/subscriptions/pay`, {
                     method: 'POST',
+                    credentials: 'include',
                     headers: {
                         'Content-Type': 'application/json',
-                        'Authorization': `Bearer ${token}`
                     },
                     body: JSON.stringify({ request_id: requestId })
                 });
@@ -4161,9 +4322,9 @@ document.addEventListener('DOMContentLoaded', function () {
                     // Step 4: Confirm payment on our server
                     await fetch(`${API_URL}/subscriptions/confirm-payment`, {
                         method: 'POST',
+                        credentials: 'include',
                         headers: {
                             'Content-Type': 'application/json',
-                            'Authorization': `Bearer ${token}`
                         },
                         body: JSON.stringify({ payment_intent_id: paymentIntent.id })
                     });
@@ -4205,7 +4366,7 @@ async function loadAnalytics() {
 
     try {
         const res = await fetch(`${API_URL}/garage/analytics?period=${period}`, {
-            headers: { 'Authorization': `Bearer ${token}` }
+            credentials: 'include'
         });
 
         if (res.status === 403) {
@@ -4342,7 +4503,7 @@ function renderTopCategories(categories) {
 async function loadCustomerInsights() {
     try {
         const res = await fetch(`${API_URL}/garage/analytics/customers`, {
-            headers: { 'Authorization': `Bearer ${token}` }
+            credentials: 'include'
         });
 
         if (!res.ok) return;
@@ -4381,7 +4542,7 @@ async function loadCustomerInsights() {
 async function loadMarketInsights() {
     try {
         const res = await fetch(`${API_URL}/garage/analytics/market`, {
-            headers: { 'Authorization': `Bearer ${token}` }
+            credentials: 'include'
         });
 
         if (!res.ok) return;
@@ -4478,7 +4639,7 @@ async function exportAnalytics() {
 
     try {
         const res = await fetch(`${API_URL}/garage/analytics/export?period=${period}`, {
-            headers: { 'Authorization': `Bearer ${token}` }
+            credentials: 'include'
         });
 
         if (!res.ok) {
@@ -4522,7 +4683,7 @@ async function loadEarnings() {
     try {
         // Load payout summary
         const summaryRes = await fetch(`${API_URL}/finance/payouts/summary`, {
-            headers: { 'Authorization': `Bearer ${token}` }
+            credentials: 'include'
         });
         const summaryData = await summaryRes.json();
 
@@ -4548,7 +4709,7 @@ async function loadEarnings() {
 async function loadAwaitingConfirmation() {
     try {
         const res = await fetch(`${API_URL}/finance/payouts/awaiting-confirmation`, {
-            headers: { 'Authorization': `Bearer ${token}` }
+            credentials: 'include'
         });
         const data = await res.json();
 
@@ -4639,9 +4800,9 @@ async function executeConfirmPayment(payoutId) {
     try {
         const res = await fetch(`${API_URL}/finance/payouts/${payoutId}/confirm`, {
             method: 'POST',
+            credentials: 'include',
             headers: {
                 'Content-Type': 'application/json',
-                'Authorization': `Bearer ${token}`
             },
             body: JSON.stringify({ notes: 'Payment received and confirmed' })
         });
@@ -4687,7 +4848,6 @@ async function executeConfirmAll(count) {
             method: 'POST',
             headers: {
                 'Content-Type': 'application/json',
-                'Authorization': `Bearer ${token}`
             }
         });
 
@@ -4765,9 +4925,9 @@ async function executeReportIssue(payoutId, reason, description) {
     try {
         const res = await fetch(`${API_URL}/finance/payouts/${payoutId}/dispute`, {
             method: 'POST',
+            credentials: 'include',
             headers: {
                 'Content-Type': 'application/json',
-                'Authorization': `Bearer ${token}`
             },
             body: JSON.stringify({
                 dispute_reason: reason,
@@ -4798,7 +4958,7 @@ async function loadPayoutHistory(page = 1) {
 
     try {
         const res = await fetch(`${API_URL}/finance/payouts?page=${page}&limit=${PAYOUTS_PAGE_SIZE}`, {
-            headers: { 'Authorization': `Bearer ${token}` }
+            credentials: 'include'
         });
         const data = await res.json();
 
@@ -4858,7 +5018,7 @@ async function downloadGarageInvoice(orderId) {
         // Generate invoice if needed
         const genRes = await fetch(`${API_URL}/documents/invoice/${orderId}`, {
             method: 'POST',
-            headers: { 'Authorization': `Bearer ${token}` }
+            credentials: 'include'
         });
         const genData = await genRes.json();
 
@@ -4875,7 +5035,7 @@ async function downloadGarageInvoice(orderId) {
 
         // Download the PDF
         const pdfRes = await fetch(`${API_URL}/documents/${docId}/download`, {
-            headers: { 'Authorization': `Bearer ${token}` }
+            credentials: 'include'
         });
 
         if (!pdfRes.ok) {
@@ -4912,7 +5072,7 @@ let unreadNotificationCount = 0;
 async function loadNotifications() {
     try {
         const res = await fetch(`${API_URL}/notifications?limit=20`, {
-            headers: { 'Authorization': `Bearer ${token}` }
+            credentials: 'include'
         });
         const data = await res.json();
 
@@ -5014,9 +5174,9 @@ async function markNotificationRead(id) {
     try {
         await fetch(`${API_URL}/notifications/mark-read`, {
             method: 'POST',
+            credentials: 'include',
             headers: {
                 'Content-Type': 'application/json',
-                'Authorization': `Bearer ${token}`
             },
             body: JSON.stringify({ notification_ids: [id] })
         });
@@ -5097,7 +5257,7 @@ if (searchInput) {
 async function performSearch(query) {
     try {
         const res = await fetch(`${API_URL}/search?q=${encodeURIComponent(query)}`, {
-            headers: { 'Authorization': `Bearer ${token}` }
+            credentials: 'include'
         });
         const data = await res.json();
 
@@ -5161,7 +5321,7 @@ function navigateToOrder(orderId, orderNumber) {
 async function viewOrder(orderId) {
     try {
         const res = await fetch(`${API_URL}/orders/${orderId}`, {
-            headers: { 'Authorization': `Bearer ${token}` }
+            credentials: 'include'
         });
 
         if (!res.ok) throw new Error('Failed to load order');
@@ -5380,7 +5540,7 @@ async function downloadPayoutStatement(orderId) {
         // Generate the garage payout statement
         const genRes = await fetch(`${API_URL}/documents/invoice/${orderId}?type=garage`, {
             method: 'POST',
-            headers: { 'Authorization': `Bearer ${token}` }
+            credentials: 'include'
         });
         const genData = await genRes.json();
 
@@ -5397,7 +5557,7 @@ async function downloadPayoutStatement(orderId) {
 
         // Download the PDF
         const pdfRes = await fetch(`${API_URL}/documents/${docId}/download`, {
-            headers: { 'Authorization': `Bearer ${token}` }
+            credentials: 'include'
         });
 
         if (!pdfRes.ok) {
@@ -5439,7 +5599,7 @@ async function printPackingSlip(orderId) {
 
         // Fetch full order details
         const res = await fetch(`${API_URL}/orders/${orderId}`, {
-            headers: { 'Authorization': `Bearer ${token}` }
+            credentials: 'include'
         });
         if (!res.ok) throw new Error('Failed to load order');
         const data = await res.json();
@@ -5959,7 +6119,6 @@ async function markAllRead() {
         const res = await fetch(`${API_URL}/notifications/mark-read`, {
             method: 'POST',
             headers: {
-                'Authorization': `Bearer ${token}`,
                 'Content-Type': 'application/json'
             },
             body: JSON.stringify({ notification_ids: ['all'] })
@@ -5998,7 +6157,6 @@ async function clearAllNotifications() {
         await fetch(`${API_URL}/dashboard/notifications`, {
             method: 'DELETE',
             headers: {
-                'Authorization': `Bearer ${token}`,
                 'Content-Type': 'application/json'
             }
         });
@@ -6255,7 +6413,7 @@ window.addEventListener('offline', () => updateConnectionStatus(false));
 async function viewNegotiationHistory(bidId) {
     try {
         const res = await fetch(`${API_URL}/negotiations/bids/${bidId}/negotiations`, {
-            headers: { 'Authorization': `Bearer ${token}` }
+            credentials: 'include'
         });
         const data = await res.json();
 
@@ -6393,7 +6551,7 @@ let hasShowcaseAccess = false;
 async function loadShowcase() {
     try {
         const res = await fetch(`${API_URL}/showcase/garage`, {
-            headers: { 'Authorization': `Bearer ${token}` }
+            credentials: 'include'
         });
 
         if (res.status === 403 || res.status === 400) {
@@ -6691,7 +6849,7 @@ async function submitAddPart(event) {
 
         const res = await fetch(url, {
             method: method,
-            headers: { 'Authorization': `Bearer ${token}` },
+            credentials: 'include',
             body: formData
         });
 
@@ -6724,7 +6882,7 @@ async function togglePartStatus(partId) {
     try {
         const res = await fetch(`${API_URL}/showcase/garage/${partId}/toggle`, {
             method: 'POST',
-            headers: { 'Authorization': `Bearer ${token}` }
+            credentials: 'include'
         });
 
         const data = await res.json();
@@ -6765,7 +6923,7 @@ async function executeDeletePart(partId) {
     try {
         const res = await fetch(`${API_URL}/showcase/garage/${partId}`, {
             method: 'DELETE',
-            headers: { 'Authorization': `Bearer ${token}` }
+            credentials: 'include'
         });
 
         if (res.ok) {
@@ -7032,7 +7190,7 @@ async function downloadMyTaxInvoice(format = 'pdf') {
         const url = `${API_URL}/dashboard/garage/my-payout-statement?from_date=${fromDate}&to_date=${toDate}&format=${format}`;
 
         const res = await fetch(url, {
-            headers: { 'Authorization': `Bearer ${token}` }
+            credentials: 'include'
         });
 
         if (!res.ok) {

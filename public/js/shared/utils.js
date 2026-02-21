@@ -119,6 +119,7 @@ async function apiRequest(endpoint, options = {}, tokenKey = 'token') {
 
     const config = {
         ...options,
+        credentials: 'include', // Support secure cookies (Phase 1 hardening)
         headers: {
             ...defaultHeaders,
             ...options.headers
