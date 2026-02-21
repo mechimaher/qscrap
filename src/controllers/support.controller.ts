@@ -865,3 +865,24 @@ export const getOrderDetailsForSupport = async (req: AuthRequest, res: Response)
         return respondAgentError(res, err);
     }
 };
+
+/**
+ * [NEW] Get Refund Preview
+ * GET /api/support/refund-preview/:order_id?reason=...
+ */
+export const getRefundPreview = async (req: AuthRequest, res: Response) => {
+    try {
+        const { order_id } = req.params;
+        const reason = (req.query.reason as string) || '';
+
+        const calculation = await supportActionsService.getRefundPreview(order_id, reason);
+
+        res.json({
+            success: true,
+            calculation
+        });
+    } catch (err) {
+        logError('getRefundPreview error', err);
+        return respondAgentError(res, err);
+    }
+};

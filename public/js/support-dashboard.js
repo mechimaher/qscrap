@@ -17,6 +17,38 @@ let currentOrderData = null;  // Full order context including status
 let reviewStatus = 'pending';  // For reviews filter
 
 // ==========================================
+// UI CONFIGURATION (Centralized constants)
+// ==========================================
+const UI_CONFIG = {
+    STATUS_COLORS: {
+        'open': '#ef4444',
+        'in_progress': '#3b82f6',
+        'resolved': '#10b981',
+        'closed': '#6b7280',
+        'pending': '#f59e0b',
+        'confirmed': '#3b82f6',
+        'delivered': '#10b981',
+        'cancelled': '#6b7280',
+        'refund_pending': '#f59e0b',
+        'refunded': '#10b981'
+    },
+    PRIORITY_COLORS: {
+        'urgent': '#ef4444',
+        'high': '#f59e0b',
+        'normal': '#3b82f6',
+        'low': '#6b7280'
+    },
+    ACTION_LABELS: {
+        'request_refund': 'Request Refund',
+        'goodwill_credit': 'Goodwill Credit',
+        'cancel_order': 'Cancel Order',
+        'reassign_driver': 'Reassign Driver',
+        'rush_delivery': 'Rush Delivery',
+        'escalate_to_ops': 'Escalated'
+    }
+};
+
+// ==========================================
 // UTILITIES
 // ==========================================
 
@@ -727,52 +759,28 @@ function quickAction(actionType, orderId = null) {
     // Show order amount preview for refunds (100/100 alignment)
     if (config.showOrderAmount && currentOrderData) {
         const orderCard = document.querySelector(`.order-card[data-order-id="${orderId}"]`);
-        const orderAmount = parseFloat(orderCard?.querySelector('.order-meta')?.textContent?.match(/[\d,]+\.\d{2}|\d+/)?.[0]?.replace(',', '') || '0');
-        const deliveryFee = 10; // Standard delivery fee
-
-        // Calculate Stage 7 deductions (20% + delivery fee)
-        const partPrice = orderAmount - deliveryFee;
-        const platformFee = partPrice * 0.20;
-        const refundableAmount = orderAmount - platformFee - deliveryFee;
 
         formContent += `
-            <!-- BRAIN v3.0 Stage 7 Warning -->
-            <div style="margin-bottom: 16px; padding: 14px; background: linear-gradient(135deg, rgba(245, 158, 11, 0.15), rgba(217, 119, 6, 0.15)); border: 2px solid rgba(245, 158, 11, 0.5); border-radius: 10px;">
+            <!-- BRAIN v3.1 Policy Warning -->
+            <div id="refundPolicyWarning" style="margin-bottom: 16px; padding: 14px; background: linear-gradient(135deg, rgba(245, 158, 11, 0.15), rgba(217, 119, 6, 0.15)); border: 2px solid rgba(245, 158, 11, 0.5); border-radius: 10px;">
                 <div style="display: flex; align-items: center; gap: 8px; margin-bottom: 8px;">
-                    <i class="bi bi-exclamation-triangle-fill" style="color: #f59e0b; font-size: 18px;"></i>
-                    <strong style="color: #f59e0b;">BRAIN v3.0 Policy - Stage 7 (After Delivery)</strong>
+                    <i class="bi bi-shield-check" style="color: #f59e0b; font-size: 18px;"></i>
+                    <strong style="color: #f59e0b;">BRAIN v3.1 Enterprise Policy</strong>
                 </div>
                 <p style="margin: 0; color: var(--text-secondary); font-size: 13px; line-height: 1.5;">
-                    Per Qatar Law 8/2008, post-delivery refunds incur <strong>20% platform fee</strong> + <strong>100% delivery fee</strong>.
-                    Full refunds only apply for defective/wrong parts (select reason below).
+                    Refunds are calculated based on order stage and modern enterprise policies. 
+                    <strong>Select a reason below</strong> to see the exact breakdown and fees.
                 </p>
             </div>
             
-            <!-- Refund Amount Breakdown -->
-            <div style="margin-bottom: 16px; padding: 16px; background: var(--bg-secondary); border-radius: 10px;">
-                <div style="display: flex; justify-content: space-between; margin-bottom: 8px;">
-                    <span style="color: var(--text-muted);">Original Amount:</span>
-                    <span style="font-weight: 600;">${orderAmount.toFixed(2)} QAR</span>
-                </div>
-                <div style="display: flex; justify-content: space-between; margin-bottom: 8px; color: #ef4444;">
-                    <span>Platform Fee (20%):</span>
-                    <span>-${platformFee.toFixed(2)} QAR</span>
-                </div>
-                <div style="display: flex; justify-content: space-between; margin-bottom: 12px; color: #ef4444;">
-                    <span>Delivery Fee Retained:</span>
-                    <span>-${deliveryFee.toFixed(2)} QAR</span>
-                </div>
-                <hr style="border: 0; border-top: 1px dashed var(--border); margin: 8px 0;">
-                <div style="display: flex; justify-content: space-between; font-size: 18px;">
-                    <span style="font-weight: 700;">Refundable Amount:</span>
-                    <span style="font-weight: 700; color: #10b981;">${refundableAmount.toFixed(2)} QAR</span>
-                </div>
-                <div style="font-size: 11px; color: var(--text-muted); margin-top: 8px; text-align: center;">
-                    Order #${currentOrderData.order_number} • Finance team will review
+            <!-- Refund Amount Breakdown (Dynamic) -->
+            <div id="refundPreviewContainer" style="margin-bottom: 16px; padding: 16px; background: var(--bg-secondary); border-radius: 10px; border: 1px solid var(--border);">
+                <div style="text-align: center; color: var(--text-muted); font-size: 13px;">
+                    <i class="bi bi-hourglass-split"></i> Loading refund breakdown...
                 </div>
             </div>
             
-            <!-- Refund Reason Dropdown (BRAIN v3.0) -->
+            <!-- Refund Reason Dropdown (BRAIN v3.1) -->
             <div class="form-group" style="margin-bottom: 16px;">
                 <label style="display: block; margin-bottom: 6px; font-weight: 600;">
                     <i class="bi bi-list-check" style="margin-right: 4px;"></i>Refund Reason *
@@ -780,12 +788,12 @@ function quickAction(actionType, orderId = null) {
                 <select id="refundReason" class="form-control" required
                     style="width: 100%; padding: 10px; border: 1px solid var(--border); border-radius: 8px; background: var(--bg-primary); color: var(--text-primary);">
                     <option value="">-- Select Reason --</option>
-                    <optgroup label="Full Refund (No Fees)">
+                    <optgroup label="Full Refund (Compliant)">
                         <option value="Defective Part">Defective Part</option>
                         <option value="Wrong Part Delivered">Wrong Part Delivered</option>
                         <option value="Part Does Not Match Description">Part Does Not Match Description</option>
                     </optgroup>
-                    <optgroup label="Partial Refund (Stage 7 Fees Apply)">
+                    <optgroup label="Partial Refund (Standard Deductions)">
                         <option value="Part Does Not Fit Vehicle">Part Does Not Fit Vehicle</option>
                         <option value="Quality Not As Expected">Quality Not As Expected</option>
                         <option value="Changed Mind - No Longer Needed">Changed Mind - No Longer Needed</option>
@@ -794,7 +802,7 @@ function quickAction(actionType, orderId = null) {
                     <option value="Other">Other (Specify in notes)</option>
                 </select>
                 <small style="color: var(--text-muted); font-size: 11px; display: block; margin-top: 4px;">
-                    <i class="bi bi-info-circle"></i> Selecting "Defective/Wrong Part" qualifies for FULL refund (no deductions)
+                    <i class="bi bi-info-circle"></i> Deductions are automatically calculated based on the reason and order status.
                 </small>
             </div>
         `;
@@ -915,6 +923,92 @@ function quickAction(actionType, orderId = null) {
     if (config.needsAmount) {
         setTimeout(() => document.getElementById('actionAmount')?.focus(), 100);
     }
+
+    // [Remediation] Initial refund preview (BRAIN v3.1)
+    if (actionType === 'request_refund') {
+        // Fetch initial preview for general refund
+        setTimeout(() => updateRefundPreview(orderId, ''), 100);
+
+        // Add listener for real-time calculation when reason changes
+        setTimeout(() => {
+            const reasonEl = document.getElementById('refundReason');
+            reasonEl?.addEventListener('change', (e) => {
+                updateRefundPreview(orderId, e.target.value);
+            });
+        }, 300);
+    }
+}
+
+/**
+ * [NEW] Fetch and render live refund preview from backend (BRAIN v3.1)
+ * This eliminates the need for hardcoded math in JS.
+ */
+async function updateRefundPreview(orderId, reason) {
+    const container = document.getElementById('refundPreviewContainer');
+    if (!container) return;
+
+    try {
+        const res = await fetch(`${API_URL}/support/refund-preview/${orderId}?reason=${encodeURIComponent(reason)}`, {
+            headers: { 'Authorization': `Bearer ${token}` }
+        });
+        const data = await res.json();
+
+        if (data.success && data.calculation) {
+            const calc = data.calculation;
+
+            // Render the authoritative breakdown from the backend
+            let html = `
+                <div style="display: flex; justify-content: space-between; margin-bottom: 8px;">
+                    <span style="color: var(--text-muted);">Order Total:</span>
+                    <span style="font-weight: 600;">${calc.originalAmount.toFixed(2)} QAR</span>
+                </div>
+            `;
+
+            if (calc.platformFee > 0) {
+                html += `
+                    <div style="display: flex; justify-content: space-between; margin-bottom: 8px; color: #ef4444;">
+                        <span>Deduction (${calc.feePercentage}% Fee):</span>
+                        <span>-${calc.platformFee.toFixed(2)} QAR</span>
+                    </div>
+                `;
+            }
+
+            if (calc.deliveryFeeRetained > 0) {
+                html += `
+                    <div style="display: flex; justify-content: space-between; margin-bottom: 12px; color: #ef4444;">
+                        <span>Delivery Fee Retained:</span>
+                        <span>-${calc.deliveryFeeRetained.toFixed(2)} QAR</span>
+                    </div>
+                `;
+            }
+
+            if (calc.feePercentage === 0 && calc.deliveryFeeRetained === 0) {
+                html += `
+                    <div style="margin: 8px 0; padding: 10px; background: rgba(16, 185, 129, 0.1); color: #10b981; font-size: 13px; text-align: center; border-radius: 8px; border: 1px solid rgba(16, 185, 129, 0.2);">
+                        <i class="bi bi-patch-check-fill"></i> Full Refund Authorized
+                    </div>
+                `;
+            }
+
+            html += `
+                <hr style="border: 0; border-top: 1px dashed var(--border); margin: 12px 0;">
+                <div style="display: flex; justify-content: space-between; font-size: 18px; align-items: center;">
+                    <span style="font-weight: 700;">Final Refund:</span>
+                    <span style="font-weight: 700; color: #10b981;">${calc.refundableAmount.toFixed(2)} QAR</span>
+                </div>
+                <div style="font-size: 11px; color: var(--text-muted); margin-top: 10px; text-align: center; background: var(--bg-primary); padding: 4px; border-radius: 4px;">
+                    Policy: ${calc.stageName} (Stage ${calc.stage})
+                </div>
+            `;
+
+            container.innerHTML = html;
+        } else {
+            container.innerHTML = `<div style="color: #ef4444; font-size: 12px; text-align: center; padding: 10px;">Failed to load live preview</div>`;
+        }
+    } catch (err) {
+        console.error('Preview error:', err);
+        container.innerHTML = `<div style="color: #ef4444; font-size: 12px; text-align: center; padding: 10px;">Error calculating refund</div>`;
+    }
 }
 
 // ==========================================
@@ -1001,10 +1095,9 @@ function renderTickets(tickets) {
     </button>`;
 
     tickets.forEach(t => {
-        const statusColor = t.status === 'open' ? '#f59e0b' : (t.status === 'in_progress' ? '#3b82f6' : '#10b981');
+        const statusColor = UI_CONFIG.STATUS_COLORS[t.status] || UI_CONFIG.STATUS_COLORS.open;
         const slaBadge = t.sla_breached ? '<span class="sla-breach"><i class="bi bi-alarm"></i> SLA!</span>' : '';
-        const priorityColors = { urgent: '#ef4444', high: '#f59e0b', normal: '#3b82f6', low: '#6b7280' };
-        const priorityColor = priorityColors[t.priority] || '#6b7280';
+        const priorityColor = UI_CONFIG.PRIORITY_COLORS[t.priority] || UI_CONFIG.PRIORITY_COLORS.normal;
         const priorityBadge = t.priority ? `<span style="background:${priorityColor};color:white;font-size:10px;padding:2px 6px;border-radius:4px;font-weight:600;">${(t.priority || 'normal').toUpperCase()}</span>` : '';
 
         html += `
@@ -1067,13 +1160,7 @@ async function openTicketChat(ticketId) {
 
             // Show current status badge
             if (ticketStatusBadge) {
-                const statusColors = {
-                    'open': '#ef4444',
-                    'in_progress': '#3b82f6',
-                    'resolved': '#10b981',
-                    'closed': '#6b7280'
-                };
-                const statusColor = statusColors[currentStatus] || '#6b7280';
+                const statusColor = UI_CONFIG.STATUS_COLORS[currentStatus] || '#6b7280';
                 ticketStatusBadge.innerHTML = `Current status: <span style="color: ${statusColor}; font-weight: 600;">${currentStatus.replace('_', ' ').toUpperCase()}</span>`;
             }
 
@@ -1145,13 +1232,6 @@ async function updateTicketStatus(newStatus) {
         return;
     }
 
-    const statusLabels = {
-        'resolved': 'Resolved',
-        'closed': 'Closed',
-        'in_progress': 'In Progress',
-        'open': 'Open'
-    };
-
     try {
         const res = await fetch(`${API_URL}/support/tickets/${currentTicket}/status`, {
             method: 'PATCH',
@@ -1163,18 +1243,12 @@ async function updateTicketStatus(newStatus) {
         });
 
         if (res.ok) {
-            showToast(`Ticket marked as ${statusLabels[newStatus] || newStatus}`, 'success');
+            showToast(`Ticket status updated to ${newStatus.replace('_', ' ')}`, 'success');
 
             // Update the badge
             const ticketStatusBadge = document.getElementById('ticketStatusBadge');
             if (ticketStatusBadge) {
-                const statusColors = {
-                    'open': '#ef4444',
-                    'in_progress': '#3b82f6',
-                    'resolved': '#10b981',
-                    'closed': '#6b7280'
-                };
-                const statusColor = statusColors[newStatus] || '#6b7280';
+                const statusColor = UI_CONFIG.STATUS_COLORS[newStatus] || '#6b7280';
                 ticketStatusBadge.innerHTML = `Current status: <span style="color: ${statusColor}; font-weight: 600;">${newStatus.replace('_', ' ').toUpperCase()}</span>`;
             }
 
@@ -1480,21 +1554,12 @@ function renderResolutionLog(logs) {
         return;
     }
 
-    const actionLabels = {
-        'request_refund': 'Request Refund',
-
-        'goodwill_credit': 'Goodwill Credit',
-        'cancel_order': 'Cancel Order',
-        'reassign_driver': 'Reassign Driver',
-        'rush_delivery': 'Rush Delivery',
-        'escalate_to_ops': 'Escalated'
-    };
-
     let html = '';
     logs.forEach(l => {
+        const actionLabel = UI_CONFIG.ACTION_LABELS[l.action_type] || l.action_type;
         html += `
             <div class="resolution-item">
-                <div class="resolution-action">${actionLabels[l.action_type] || l.action_type}</div>
+                <div class="resolution-action">${actionLabel}</div>
                 ${l.order_number ? `<div class="resolution-meta">Order: #${l.order_number}</div>` : ''}
                 ${l.notes ? `<div class="resolution-meta">"${escapeHTML(l.notes)}"</div>` : ''}
                 <div class="resolution-meta">${escapeHTML(l.agent_name)} • ${timeAgo(l.created_at)}</div>

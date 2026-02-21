@@ -1,16 +1,4 @@
-/**
- * Refund Calculator Service (BRAIN v3.0 Compliant)
- * 
- * Calculates refundable amounts based on order stage per Qatar Law No. 8/2008
- * and BRAIN v3.0 policy document.
- * 
- * Stage Fees:
- * - Stage 1-3 (Pre-Payment): 0% fee
- * - Stage 4 (Payment Complete): 5% fee 
- * - Stage 5 (Preparation): 10% fee
- * - Stage 6 (In Delivery): 10% + 100% delivery fee
- * - Stage 7 (After Delivery/Return Window): 20% + 100% delivery fee
- */
+import { CANCELLATION_FEES, FEE_POLICY, STATUS_TO_STAGE, CancellationStage } from '../cancellation/cancellation.constants';
 
 export interface RefundCalculation {
     originalAmount: number;
@@ -29,6 +17,7 @@ export interface RefundCalculation {
     };
     reason?: string;
     isDefectiveItem?: boolean;
+    isFirstCancellationFree?: boolean;
 }
 
 export interface RefundCalculationInput {
@@ -36,6 +25,7 @@ export interface RefundCalculationInput {
     paymentStatus: string;
     totalAmount: number;
     deliveryFee: number;
+    customerCancellationCount?: number;
     deliveredAt?: Date | null;
     isDefectiveItem?: boolean;
     isWrongItem?: boolean;
@@ -45,30 +35,18 @@ export interface RefundCalculationInput {
  * Determine the refund stage based on order status
  */
 export function determineRefundStage(orderStatus: string, deliveredAt?: Date | null): number {
-    const statusToStage: Record<string, number> = {
-        // Stage 1-3: Pre-Payment
-        'pending_payment': 1,
-        'confirmed': 2,
+    const stageKey = (STATUS_TO_STAGE as Record<string, CancellationStage>)[orderStatus] || 'AFTER_DELIVERY';
 
-        // Stage 4: Payment Complete
-        'preparing': 4,
-        'ready_for_pickup': 4,
-        'ready_for_collection': 4,
-
-        // Stage 5: Preparation/Collection in progress
-        'collected': 5,
-        'qc_in_progress': 5,
-        'qc_passed': 5,
-
-        // Stage 6: In Delivery
-        'in_transit': 6,
-
-        // Stage 7: After Delivery (Return Window)
-        'delivered': 7,
-        'completed': 7,
+    // Map stage strings back to numeric stages for display/logic compatibility
+    const stageMap: Record<CancellationStage, number> = {
+        'BEFORE_PAYMENT': 1,
+        'AFTER_PAYMENT': 4,
+        'DURING_PREPARATION': 5,
+        'IN_DELIVERY': 6,
+        'AFTER_DELIVERY': 7
     };
 
-    return statusToStage[orderStatus] || 7; // Default to Stage 7 for unknown statuses
+    return stageMap[stageKey] || 7;
 }
 
 /**
@@ -77,8 +55,6 @@ export function determineRefundStage(orderStatus: string, deliveredAt?: Date | n
 export function getStageName(stage: number): string {
     const stageNames: Record<number, string> = {
         1: 'Pre-Payment',
-        2: 'Order Confirmed',
-        3: 'Pre-Payment',
         4: 'Payment Complete',
         5: 'Preparation',
         6: 'In Delivery',
@@ -88,7 +64,7 @@ export function getStageName(stage: number): string {
 }
 
 /**
- * Calculate refundable amount based on BRAIN v3.0 policy
+ * Calculate refundable amount based on BRAIN v3.1 policy
  * 
  * @param input - Order details for calculation
  * @returns Detailed refund calculation
@@ -98,6 +74,7 @@ export function calculateRefundableAmount(input: RefundCalculationInput): Refund
         orderStatus,
         totalAmount,
         deliveryFee,
+        customerCancellationCount = 0,
         deliveredAt,
         isDefectiveItem = false,
         isWrongItem = false
@@ -107,7 +84,7 @@ export function calculateRefundableAmount(input: RefundCalculationInput): Refund
     const stageName = getStageName(stage);
     const partPrice = totalAmount - deliveryFee;
 
-    // Defective or wrong items = 100% refund (Garage covers all costs)
+    // Defective or wrong items = 100% refund (Garage covers all costs per BRAIN v3.1)
     if (isDefectiveItem || isWrongItem) {
         return {
             originalAmount: totalAmount,
@@ -129,47 +106,32 @@ export function calculateRefundableAmount(input: RefundCalculationInput): Refund
         };
     }
 
-    // Stage-based fee calculation
-    let feePercentage: number;
-    let deliveryFeeRetained: number;
+    // Stage-based fee calculation from constants (BRAIN v3.1)
+    let feeRate = 0;
+    let deliveryFeeRetained = 0;
 
-    switch (stage) {
-        case 1:
-        case 2:
-        case 3:
-            // Stage 1-3: 0% fee (pre-payment)
-            feePercentage = 0;
-            deliveryFeeRetained = 0;
-            break;
+    const stageKey = (STATUS_TO_STAGE as Record<string, CancellationStage>)[orderStatus] || 'AFTER_DELIVERY';
+    feeRate = CANCELLATION_FEES[stageKey] || 0.20;
 
-        case 4:
-            // Stage 4: 5% fee (payment complete)
-            feePercentage = 5;
-            deliveryFeeRetained = 0;
-            break;
-
-        case 5:
-            // Stage 5: 10% fee (preparation)
-            feePercentage = 10;
-            deliveryFeeRetained = 0;
-            break;
-
-        case 6:
-            // Stage 6: 10% + 100% delivery fee
-            feePercentage = 10;
-            deliveryFeeRetained = deliveryFee;
-            break;
-
-        case 7:
-        default:
-            // Stage 7: 20% + 100% delivery fee (after delivery)
-            feePercentage = 20;
-            deliveryFeeRetained = deliveryFee;
-            break;
+    if (stageKey === 'IN_DELIVERY' || stageKey === 'AFTER_DELIVERY') {
+        deliveryFeeRetained = deliveryFee;
     }
 
-    // Calculate amounts
-    const platformFeeAmount = Math.round((partPrice * feePercentage / 100) * 100) / 100;
+    // [BRAIN v3.1] Policy: First Cancellation Free
+    let isFirstFree = false;
+    if (FEE_POLICY.FIRST_CANCELLATION_FREE && customerCancellationCount === 0 && feeRate > 0) {
+        isFirstFree = true;
+        feeRate = 0;
+    }
+
+    // Calculate platform fee on PART PRICE only
+    let platformFeeAmount = Math.round((partPrice * feeRate) * 100) / 100;
+
+    // [BRAIN v3.1] Policy: Max Fee Cap (100 QAR)
+    if (platformFeeAmount > FEE_POLICY.MAX_FEE_QAR) {
+        platformFeeAmount = FEE_POLICY.MAX_FEE_QAR;
+    }
+
     const totalDeductions = platformFeeAmount + deliveryFeeRetained;
     const refundableAmount = Math.max(0, totalAmount - totalDeductions);
 
@@ -178,7 +140,7 @@ export function calculateRefundableAmount(input: RefundCalculationInput): Refund
         deliveryFee,
         stage,
         stageName,
-        feePercentage,
+        feePercentage: Math.round(feeRate * 100),
         platformFee: platformFeeAmount,
         deliveryFeeRetained,
         refundableAmount: Math.round(refundableAmount * 100) / 100,
@@ -189,6 +151,7 @@ export function calculateRefundableAmount(input: RefundCalculationInput): Refund
             totalDeductions,
         },
         isDefectiveItem: false,
+        isFirstCancellationFree: isFirstFree
     };
 }
 
@@ -196,7 +159,7 @@ export function calculateRefundableAmount(input: RefundCalculationInput): Refund
  * Validate if refund is allowed based on warranty period (7 days)
  */
 export function isWithinWarrantyPeriod(deliveredAt: Date | null): boolean {
-    if (!deliveredAt) {return false;}
+    if (!deliveredAt) { return false; }
 
     const WARRANTY_DAYS = 7;
     const warrantyEnd = new Date(deliveredAt);
@@ -209,7 +172,7 @@ export function isWithinWarrantyPeriod(deliveredAt: Date | null): boolean {
  * Calculate remaining warranty days
  */
 export function getWarrantyDaysRemaining(deliveredAt: Date | null): number {
-    if (!deliveredAt) {return 0;}
+    if (!deliveredAt) { return 0; }
 
     const WARRANTY_DAYS = 7;
     const now = new Date();

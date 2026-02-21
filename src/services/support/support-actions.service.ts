@@ -1015,4 +1015,31 @@ export class SupportActionsService {
             });
         }
     }
+
+    /**
+     * [NEW] Get Refund Preview (BRAIN v3.1)
+     * Centralized logic to be called by frontend for live previews
+     */
+    async getRefundPreview(orderId: string, reason: string): Promise<RefundCalculation> {
+        const context = await this.getActionContext(orderId);
+
+        // Fetch customer cancellation count for "First Free" policy
+        const cancellationResult = await this.pool.query(
+            `SELECT COUNT(*) as count FROM cancellation_requests 
+             WHERE requested_by = $1 AND requested_by_type = 'customer'`,
+            [context.order.customer_id]
+        );
+        const customerCancellationCount = parseInt(cancellationResult.rows[0].count);
+
+        return calculateRefundableAmount({
+            orderStatus: context.order.order_status,
+            paymentStatus: context.order.payment_status,
+            totalAmount: parseFloat(context.order.total_amount),
+            deliveryFee: parseFloat(context.order.delivery_fee || '0'),
+            customerCancellationCount,
+            deliveredAt: context.order.delivered_at,
+            isDefectiveItem: reason.toLowerCase().includes('defective'),
+            isWrongItem: reason.toLowerCase().includes('wrong')
+        });
+    }
 }

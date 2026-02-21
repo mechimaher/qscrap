@@ -22,7 +22,8 @@ import {
     createTicketForCustomer,
     getCannedResponses,
     grantGoodwillCredit,
-    getOrderDetailsForSupport
+    getOrderDetailsForSupport,
+    getRefundPreview
 } from '../controllers/support.controller';
 import { authenticate } from '../middleware/auth.middleware';
 import { authorizeOperations } from '../middleware/authorize.middleware';
@@ -99,6 +100,9 @@ router.post('/goodwill-credit', authenticate, authorizeOperations, grantGoodwill
 
 // Full order details for decision-making
 router.get('/order-details/:order_id', authenticate, authorizeOperations, getOrderDetailsForSupport);
+
+// [NEW] Get refund preview
+router.get('/refund-preview/:order_id', authenticate, authorizeOperations, getRefundPreview);
 
 export default router;
 

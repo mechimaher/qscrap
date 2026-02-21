@@ -1,9 +1,5 @@
-/**
- * Support Service
- * Handles support tickets, messages, dashboard stats, and urgent items
- */
-import { Pool, PoolClient } from 'pg';
 import { CANCELLATION_FEES, STATUS_TO_STAGE, FEE_POLICY, CancellationStage } from '../cancellation/cancellation.constants';
+import { calculateRefundableAmount } from '../finance/refund-calculator.service';
 
 export class SupportService {
     constructor(private pool: Pool) { }
@@ -136,9 +132,9 @@ export class SupportService {
 
     async verifyTicketAccess(ticketId: string, userId: string, userType: string): Promise<{ hasAccess: boolean; customerId?: string }> {
         const result = await this.pool.query(`SELECT customer_id FROM support_tickets WHERE ticket_id = $1`, [ticketId]);
-        if (result.rows.length === 0) {return { hasAccess: false };}
+        if (result.rows.length === 0) { return { hasAccess: false }; }
         const customerId = result.rows[0].customer_id;
-        if (userType === 'customer' && customerId !== userId) {return { hasAccess: false };}
+        if (userType === 'customer' && customerId !== userId) { return { hasAccess: false }; }
         return { hasAccess: true, customerId };
     }
 
@@ -262,7 +258,7 @@ export class SupportService {
             LEFT JOIN users gu ON g.garage_id = gu.user_id
             WHERE t.ticket_id = $1
         `, [ticketId]);
-        if (ticketResult.rows.length === 0) {return null;}
+        if (ticketResult.rows.length === 0) { return null; }
 
         // Get messages with internal notes visible for agents
         const messagesResult = await this.pool.query(`
@@ -543,7 +539,7 @@ export class SupportService {
             switch (params.actionType) {
                 case 'request_refund': // Unified refund button - Finance determines full/partial based on reason
                 case 'full_refund':
-                    if (!params.orderId) {throw new Error('Order ID required for refund');}
+                    if (!params.orderId) { throw new Error('Order ID required for refund'); }
 
                     // P0 FIX: Check for existing pending refund to prevent duplicates
                     const existingPendingRefund = await client.query(
@@ -560,70 +556,31 @@ export class SupportService {
                         [params.orderId]
                     );
 
-                    if (orderResult.rows.length === 0) {throw new Error('Order not found');}
+                    if (orderResult.rows.length === 0) { throw new Error('Order not found'); }
                     const order = orderResult.rows[0];
 
-                    // BRAIN v3.0 Fee Calculation based on order status
-                    const totalAmount = parseFloat(String(order.total_amount));
-                    const deliveryFee = parseFloat(String(order.delivery_fee || 0));
-                    const partPrice = parseFloat(String(order.part_price || (totalAmount - deliveryFee)));
+                    // [Remediation] Align with BRAIN v3.1 using centralized calculator
+                    const prevCancellations = await client.query(
+                        `SELECT COUNT(*) as count FROM cancellation_requests 
+                         WHERE requested_by = $1 AND requested_by_type = 'customer'`,
+                        [order.customer_id]
+                    );
+                    const customerCancellationCount = parseInt(prevCancellations.rows[0].count);
 
-                    // Map status to cancellation stage
-                    const stage = (STATUS_TO_STAGE as Record<string, CancellationStage>)[order.order_status] || 'BEFORE_PAYMENT';
+                    const calculation = calculateRefundableAmount({
+                        orderStatus: order.order_status,
+                        paymentStatus: 'paid', // If in executeQuickAction, usually paid
+                        totalAmount,
+                        deliveryFee,
+                        customerCancellationCount,
+                        isDefectiveItem: params.notes?.toLowerCase().includes('defective'),
+                        isWrongItem: params.notes?.toLowerCase().includes('wrong')
+                    });
 
-                    // Get fee rate based on stage
-                    let feeRate = 0;
-                    let deliveryFeeRetained = 0;
-                    switch (stage) {
-                        case 'BEFORE_PAYMENT':
-                            feeRate = CANCELLATION_FEES.BEFORE_PAYMENT; // 0%
-                            break;
-                        case 'AFTER_PAYMENT':
-                            feeRate = CANCELLATION_FEES.AFTER_PAYMENT; // 5%
-                            break;
-                        case 'DURING_PREPARATION':
-                            feeRate = CANCELLATION_FEES.DURING_PREPARATION; // 10%
-                            break;
-                        case 'IN_DELIVERY':
-                            feeRate = CANCELLATION_FEES.IN_DELIVERY; // 10%
-                            deliveryFeeRetained = deliveryFee; // 100% delivery fee retained
-                            break;
-                        case 'AFTER_DELIVERY':
-                            feeRate = CANCELLATION_FEES.AFTER_DELIVERY; // 20%
-                            deliveryFeeRetained = deliveryFee; // 100% delivery fee retained
-                            break;
-                        default:
-                            feeRate = 0;
-                    }
-
-                    // Calculate fee on PART PRICE only (not delivery)
-                    let cancellationFee = Math.round(partPrice * feeRate * 100) / 100;
-
-                    // BRAIN v3.1: Apply customer-friendly fee policy
-                    if (cancellationFee > 0) {
-                        // Check first cancellation free policy
-                        if (FEE_POLICY.FIRST_CANCELLATION_FREE) {
-                            const prevCancellations = await client.query(
-                                `SELECT COUNT(*) as count FROM cancellation_requests 
-                                 WHERE requested_by = $1 AND requested_by_type = 'customer'`,
-                                [order.customer_id]
-                            );
-                            if (parseInt(prevCancellations.rows[0].count) === 0) {
-                                cancellationFee = 0; // First cancellation is FREE!
-                            }
-                        }
-
-                        // Apply max fee cap
-                        if (cancellationFee > 0 && cancellationFee > FEE_POLICY.MAX_FEE_QAR) {
-                            cancellationFee = FEE_POLICY.MAX_FEE_QAR;
-                        }
-                    }
-
-                    const refundAmount = Math.round((totalAmount - cancellationFee - deliveryFeeRetained) * 100) / 100;
-
-                    // NOTE: Do NOT change order status here!
-                    // Order status only changes to 'refunded' when Finance approves the refund.
-                    // This just creates a pending refund request for Finance team review.
+                    const cancellationFee = calculation.platformFee;
+                    const deliveryFeeRetained = calculation.breakdown.deliveryFeeRetained;
+                    const refundAmount = calculation.refundableAmount;
+                    const stage = calculation.stageName;
 
                     // Create refund record with PENDING status and BRAIN v3.1 fee calculation
                     await client.query(`
@@ -639,7 +596,7 @@ export class SupportService {
                         refundAmount,
                         cancellationFee,
                         deliveryFeeRetained,
-                        params.notes || `Refund requested by support (Stage: ${stage}, Fee: ${cancellationFee > 0 ? `${feeRate * 100  }%` : 'FREE'})`
+                        params.notes || `Refund requested by support (Stage: ${stage}, Fee: ${cancellationFee > 0 ? `${calculation.feePercentage}%` : 'FREE'})`
                     ]);
 
                     result = {
@@ -655,7 +612,7 @@ export class SupportService {
                     break;
 
                 case 'partial_refund':
-                    if (!params.orderId || !params.actionDetails?.amount) {throw new Error('Order ID and amount required');}
+                    if (!params.orderId || !params.actionDetails?.amount) { throw new Error('Order ID and amount required'); }
 
                     // Get order details
                     const partialOrderResult = await client.query(
@@ -663,7 +620,7 @@ export class SupportService {
                         [params.orderId]
                     );
 
-                    if (partialOrderResult.rows.length === 0) {throw new Error('Order not found');}
+                    if (partialOrderResult.rows.length === 0) { throw new Error('Order not found'); }
                     const partialOrder = partialOrderResult.rows[0];
                     const partialRefundAmount = params.actionDetails.amount;
 
@@ -684,14 +641,35 @@ export class SupportService {
                     result = { action: 'partial_refund', amount: partialRefundAmount, orderId: params.orderId };
                     break;
 
-                case 'goodwill_credit':
-                    // Just log goodwill credit - no loyalty table on VPS
-                    const creditAmount = params.actionDetails?.amount || 10;
-                    result = { action: 'goodwill_credit', amount: creditAmount };
+                case 'goodwill_credit': {
+                    const amount = params.actionDetails?.amount || 10;
+                    const expiresInDays = params.actionDetails?.expiresInDays || 90;
+
+                    // [P2] Implementation: Grant actual credit in ledger
+                    const creditResult = await client.query(`
+                        INSERT INTO customer_credits (
+                            customer_id, amount, reason, granted_by, order_id, expires_at
+                        ) VALUES ($1, $2, $3, $4, $5, NOW() + INTERVAL '$6 days')
+                        RETURNING *
+                    `, [
+                        params.customerId,
+                        amount,
+                        params.notes || 'Goodwill credit from support',
+                        params.agentId,
+                        params.orderId || null,
+                        expiresInDays
+                    ]);
+
+                    result = {
+                        action: 'goodwill_credit',
+                        amount,
+                        credit_id: creditResult.rows[0].credit_id
+                    };
                     break;
+                }
 
                 case 'cancel_order':
-                    if (!params.orderId) {throw new Error('Order ID required');}
+                    if (!params.orderId) { throw new Error('Order ID required'); }
                     await client.query(`
                         UPDATE orders SET 
                             order_status = 'cancelled',
@@ -702,7 +680,7 @@ export class SupportService {
                     break;
 
                 case 'reassign_driver':
-                    if (!params.orderId) {throw new Error('Order ID required');}
+                    if (!params.orderId) { throw new Error('Order ID required'); }
                     await client.query(`
                         UPDATE orders SET 
                             driver_id = NULL,
@@ -713,13 +691,13 @@ export class SupportService {
                     break;
 
                 case 'rush_delivery':
-                    if (!params.orderId) {throw new Error('Order ID required');}
+                    if (!params.orderId) { throw new Error('Order ID required'); }
                     // Just log - no priority column exists
                     result = { action: 'rush_delivery', orderId: params.orderId };
                     break;
 
                 case 'escalate_to_ops':
-                    if (!params.orderId) {throw new Error('Order ID required');}
+                    if (!params.orderId) { throw new Error('Order ID required'); }
                     // Just log escalation - will appear in resolution_logs
                     result = { action: 'escalate_to_ops', orderId: params.orderId };
                     break;
