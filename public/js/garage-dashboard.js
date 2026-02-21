@@ -1037,7 +1037,7 @@ async function loadBids(page = 1) {
 
         // Fetch and render negotiation timelines for each bid asynchronously
         // Use original_bid_amount to show true initial bid (bid_amount is overwritten on acceptance)
-        bids.forEach(b => fetchAndRenderTimeline(b.bid_id, b.original_bid_amount || b.bid_amount, b.created_at));
+        bids.forEach(b => fetchAndRenderTimeline(b.bid_id, b.original_bid_amount || b.bid_amount, b.created_at, b.status));
 
 
         // Render pagination
@@ -1053,7 +1053,7 @@ async function loadBids(page = 1) {
 }
 
 // Fetch and render inline timeline for a bid
-async function fetchAndRenderTimeline(bidId, initialAmount, bidCreatedAt) {
+async function fetchAndRenderTimeline(bidId, initialAmount, bidCreatedAt, bidStatus) {
     const container = document.getElementById(`timeline-${bidId}`);
     if (!container) return;
 
@@ -1109,15 +1109,37 @@ async function fetchAndRenderTimeline(bidId, initialAmount, bidCreatedAt) {
             }
         } else {
             // No negotiation yet
-            timelineHtml += `
-                <div class="timeline-connector dashed"></div>
-                <div class="timeline-step waiting">
-                    <div class="step-marker"><i class="bi bi-clock"></i></div>
-                    <div class="step-info">
-                        <span class="step-label">Awaiting response</span>
+            if (bidStatus === 'pending') {
+                timelineHtml += `
+                    <div class="timeline-connector dashed"></div>
+                    <div class="timeline-step waiting">
+                        <div class="step-marker"><i class="bi bi-clock"></i></div>
+                        <div class="step-info">
+                            <span class="step-label">Awaiting response</span>
+                        </div>
                     </div>
-                </div>
-            `;
+                `;
+            } else if (bidStatus === 'accepted') {
+                timelineHtml += `
+                    <div class="timeline-connector"></div>
+                    <div class="timeline-step accepted" title="Bid Accepted Directly">
+                        <div class="step-marker"><i class="bi bi-check-circle-fill"></i></div>
+                        <div class="step-info">
+                            <span class="step-label">Accepted</span>
+                        </div>
+                    </div>
+                `;
+            } else if (bidStatus === 'rejected') {
+                timelineHtml += `
+                    <div class="timeline-connector"></div>
+                    <div class="timeline-step rejected" title="Bid Not Selected">
+                        <div class="step-marker"><i class="bi bi-x-circle-fill"></i></div>
+                        <div class="step-info">
+                            <span class="step-label">Not Selected</span>
+                        </div>
+                    </div>
+                `;
+            }
         }
 
         timelineHtml += `</div>`;
