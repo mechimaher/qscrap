@@ -926,6 +926,14 @@ body {
     background: var(--bg-secondary);
 }
 
+.tab-content {
+    display: none;
+}
+
+.tab-content.active {
+    display: block;
+}
+
 /* ===== Filters ===== */
 .filters-bar {
     display: flex;

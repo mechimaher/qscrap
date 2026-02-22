@@ -86,6 +86,7 @@
         // Add global listeners for event delegation
         document.addEventListener('click', handleAction);
         document.addEventListener('change', handleAction);
+        document.addEventListener('input', handleAction);
 
         // Register built-in actions
         registerBuiltInActions();

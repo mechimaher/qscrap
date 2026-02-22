@@ -125,6 +125,11 @@
                         <i class="bi bi-clipboard-check"></i> Compensation Reviews
                         <span class="nav-badge" id="reviewsBadge" style="display: none; background: #f59e0b;">0</span>
                     </a>
+                    <a class="nav-item" data-section="warrantyClaims">
+                        <i class="bi bi-shield-check"></i> Warranty Claims
+                        <span class="nav-badge" id="warrantyClaimsBadge"
+                            style="display: none; background: #3b82f6;">0</span>
+                    </a>
                 </div>
             </nav>
 
@@ -761,6 +766,186 @@
                     </table>
                 </div>
             </section>
+
+            <!-- Warranty Claims Section -->
+            <section class="section" id="sectionWarrantyClaims">
+                <div class="page-header">
+                    <h1 class="page-title"><i class="bi bi-shield-check"></i> Warranty Claims</h1>
+                    <div style="display: flex; gap: 10px; align-items: center;">
+                        <div class="search-box" style="margin-bottom: 0; min-width: 250px;">
+                            <i class="bi bi-search" style="left: 14px;"></i>
+                            <input type="text" id="warrantyClaimsSearch" class="form-control"
+                                placeholder="Filter by order # or garage..."
+                                style="padding: 10px 10px 10px 40px; border-radius: 8px;"
+                                data-action="filterWarrantyClaims">
+                        </div>
+                        <button class="btn btn-primary" onclick="loadWarrantyAnalytics()" style="padding: 10px 20px;">
+                            <i class="bi bi-arrow-clockwise"></i> Refresh
+                        </button>
+                        <div class="live-indicator">
+                            <span class="live-dot"></span> Live Analytics
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Analytics Stats Cards -->
+                <div class="stats-grid" id="warrantyStatsGrid" style="display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 15px; margin-bottom: 25px;">
+                    <div class="stat-card" style="background: linear-gradient(135deg, #3b82f6, #2563eb); color: white;">
+                        <div class="stat-icon"><i class="bi bi-folder-open"></i></div>
+                        <div class="stat-content">
+                            <div class="stat-value" id="statTotalClaims">-</div>
+                            <div class="stat-label">Total Claims</div>
+                        </div>
+                    </div>
+                    <div class="stat-card" style="background: linear-gradient(135deg, #f59e0b, #d97706); color: white;">
+                        <div class="stat-icon"><i class="bi bi-hourglass-split"></i></div>
+                        <div class="stat-content">
+                            <div class="stat-value" id="statPendingClaims">-</div>
+                            <div class="stat-label">Pending Review</div>
+                        </div>
+                    </div>
+                    <div class="stat-card" style="background: linear-gradient(135deg, #10b981, #059669); color: white;">
+                        <div class="stat-icon"><i class="bi bi-check-circle"></i></div>
+                        <div class="stat-content">
+                            <div class="stat-value" id="statApprovedClaims">-</div>
+                            <div class="stat-label">Approved</div>
+                        </div>
+                    </div>
+                    <div class="stat-card" style="background: linear-gradient(135deg, #ef4444, #dc2626); color: white;">
+                        <div class="stat-icon"><i class="bi bi-x-circle"></i></div>
+                        <div class="stat-content">
+                            <div class="stat-value" id="statRejectedClaims">-</div>
+                            <div class="stat-label">Rejected</div>
+                        </div>
+                    </div>
+                    <div class="stat-card" style="background: linear-gradient(135deg, #8b5cf6, #7c3aed); color: white;">
+                        <div class="stat-icon"><i class="bi bi-cash-stack"></i></div>
+                        <div class="stat-content">
+                            <div class="stat-value" id="statTotalRefund">-</div>
+                            <div class="stat-label">Total Refunds</div>
+                        </div>
+                    </div>
+                    <div class="stat-card" style="background: linear-gradient(135deg, #06b6d4, #0891b2); color: white;">
+                        <div class="stat-icon"><i class="bi bi-clock"></i></div>
+                        <div class="stat-content">
+                            <div class="stat-value" id="statAvgTime">-</div>
+                            <div class="stat-label">Avg Approval Time</div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- SLA Risk Alert -->
+                <div class="content-card" id="slaRiskAlert" style="display: none; margin-bottom: 20px; background: rgba(239, 68, 68, 0.08); border-left: 4px solid #ef4444;">
+                    <div style="display: flex; gap: 15px; align-items: center;">
+                        <i class="bi bi-exclamation-triangle" style="font-size: 24px; color: #ef4444;"></i>
+                        <div style="flex: 1;">
+                            <strong style="color: #ef4444;">SLA Breach Alert</strong>
+                            <p style="margin: 5px 0 0; color: var(--text-secondary);" id="slaRiskText">
+                                Claims pending > 72 hours require immediate attention.
+                            </p>
+                        </div>
+                        <button class="btn btn-sm btn-primary" onclick="viewSlaRiskClaims()">
+                            <i class="bi bi-eye"></i> View At-Risk Claims
+                        </button>
+                    </div>
+                </div>
+
+                <div class="content-card"
+                    style="margin-bottom: 20px; background: rgba(59, 130, 246, 0.05); border-left: 4px solid #3b82f6;">
+                    <div style="display: flex; gap: 15px; align-items: center;">
+                        <i class="bi bi-info-circle" style="font-size: 24px; color: #3b82f6;"></i>
+                        <div>
+                            <strong>Post-7-Day Warranty Resolution</strong>
+                            <p style="margin: 5px 0 0; color: var(--text-secondary);">
+                                These claims are filed by the support team for issues discovered after the 7-day return
+                                window.
+                                Review the defect description and images. Approval will trigger a refund to the
+                                customer.
+                            </p>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Tabs for Claims and Quality Scores -->
+                <div class="tabs-container" style="margin-bottom: 20px;">
+                    <div class="tabs">
+                        <button class="tab active" onclick="switchWarrantyTab('claims')">
+                            <i class="bi bi-list-check"></i> Claims Queue
+                        </button>
+                        <button class="tab" onclick="switchWarrantyTab('quality')">
+                            <i class="bi bi-star"></i> Garage Quality Scores
+                        </button>
+                        <button class="tab" onclick="switchWarrantyTab('trends')">
+                            <i class="bi bi-graph-up"></i> Trends & Insights
+                        </button>
+                    </div>
+                </div>
+
+                <!-- Claims Queue Tab -->
+                <div id="warrantyClaimsTab" class="tab-content active">
+                    <div class="content-card">
+                        <table class="data-table">
+                            <thead>
+                                <tr>
+                                    <th>Order #</th>
+                                    <th>Customer</th>
+                                    <th>Garage</th>
+                                    <th>Defect</th>
+                                    <th>Filed On</th>
+                                    <th>Status</th>
+                                    <th>Actions</th>
+                                </tr>
+                            </thead>
+                            <tbody id="warrantyClaimsTable">
+                                <tr>
+                                    <td colspan="7" class="empty-state">Loading warranty claims...</td>
+                                </tr>
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+
+                <!-- Garage Quality Scores Tab -->
+                <div id="warrantyQualityTab" class="tab-content">
+                    <div class="content-card">
+                        <table class="data-table">
+                            <thead>
+                                <tr>
+                                    <th>Garage</th>
+                                    <th>Total Orders</th>
+                                    <th>Warranty Claims</th>
+                                    <th>Claim Rate</th>
+                                    <th>Quality Score</th>
+                                    <th>Quality Tier</th>
+                                </tr>
+                            </thead>
+                            <tbody id="garageQualityTable">
+                                <tr>
+                                    <td colspan="6" class="empty-state">Loading garage quality scores...</td>
+                                </tr>
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+
+                <!-- Trends & Insights Tab -->
+                <div id="warrantyTrendsTab" class="tab-content">
+                    <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 20px;">
+                        <div class="content-card">
+                            <h3 style="margin-bottom: 15px;"><i class="bi bi-pie-chart"></i> Common Defect Reasons</h3>
+                            <div id="defectReasonsChart">
+                                <p class="empty-state">Loading...</p>
+                            </div>
+                        </div>
+                        <div class="content-card">
+                            <h3 style="margin-bottom: 15px;"><i class="bi bi-graph-up"></i> Claims Trend (30 Days)</h3>
+                            <div id="claimsTrendChart">
+                                <p class="empty-state">Loading...</p>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </section>
         </main>
     </div>
 
@@ -1069,6 +1254,95 @@
                 <button class="btn btn-ghost" data-action="closeModal">Cancel</button>
                 <button class="btn btn-warning" data-action="submitDisputeResolution">
                     <i class="bi bi-shield-check"></i> Resolve Dispute
+                </button>
+            </div>
+        </div>
+    </div>
+    <!-- Warranty Claim Review Modal -->
+    <div class="modal" id="warrantyClaimModal">
+        <div class="modal-content" style="max-width: 600px;">
+            <div class="modal-header" style="background: var(--accent); color: white;">
+                <h2><i class="bi bi-shield-check"></i> Review Warranty Claim</h2>
+                <button class="modal-close" data-action="closeModal" style="color: white;">&times;</button>
+            </div>
+            <div class="modal-body">
+                <div style="background: var(--bg-secondary); padding: 15px; border-radius: 8px; margin-bottom: 15px;">
+                    <div style="display: flex; justify-content: space-between; margin-bottom: 8px;">
+                        <span style="color: var(--text-secondary);">Order:</span>
+                        <strong id="wcOrderNumber">-</strong>
+                    </div>
+                    <div style="display: flex; justify-content: space-between; margin-bottom: 8px;">
+                        <span style="color: var(--text-secondary);">Customer:</span>
+                        <strong id="wcCustomerName">-</strong>
+                    </div>
+                    <div style="display: flex; justify-content: space-between;">
+                        <span style="color: var(--text-secondary);">Garage:</span>
+                        <strong id="wcGarageName">-</strong>
+                    </div>
+                </div>
+
+                <div style="margin-bottom: 15px;">
+                    <label style="display: block; margin-bottom: 5px; font-weight: 500;">Defect Description</label>
+                    <div id="wcDefectDescription"
+                        style="background: rgba(0,0,0,0.05); padding: 12px; border-radius: 6px; font-style: italic;">-
+                    </div>
+                </div>
+
+                <!-- Photos Section -->
+                <div id="wcPhotosContainer" style="margin-bottom: 15px; display: none;">
+                    <label style="display: block; margin-bottom: 5px; font-weight: 500;">Photos</label>
+                    <div id="wcPhotosList" style="display: flex; gap: 8px; overflow-x: auto; padding-bottom: 8px;">
+                    </div>
+                </div>
+
+                <div class="form-group" style="margin-bottom: 15px;">
+                    <label>Refund Amount (QAR) *</label>
+                    <div style="position: relative;">
+                        <input type="number" id="wcRefundAmount" class="form-control" placeholder="0.00" step="0.01"
+                            min="0">
+                        <span
+                            style="position: absolute; right: 12px; top: 50%; transform: translateY(-50%); color: var(--text-secondary);">QAR</span>
+                    </div>
+                    <small style="color: var(--text-secondary);">Enter the amount to be refunded to the
+                        customer.</small>
+                </div>
+
+                <div class="form-group" style="margin-bottom: 15px;">
+                    <label>Rejection Reason (if rejecting)</label>
+                    <select id="wcRejectionReason" class="form-control">
+                        <option value="">Select reason...</option>
+                        <option value="outside_warranty">Outside Warranty Period</option>
+                        <option value="defect_not_proven">Defect Not Proven by Photos</option>
+                        <option value="incorrect_part_ordered">Incorrect Part Ordered by Customer</option>
+                        <option value="misuse_damage">Physical Damage / Misuse</option>
+                        <option value="other">Other</option>
+                    </select>
+                </div>
+
+                <div class="form-group" style="margin-bottom: 15px;">
+                    <label>Resolution Notes *</label>
+                    <textarea id="wcResolutionNotes" class="form-control" rows="3" placeholder="Explain the decision..."
+                        required></textarea>
+                </div>
+
+                <div class="form-group" style="margin-bottom: 15px;">
+                    <label style="display: flex; align-items: center; gap: 8px; cursor: pointer;">
+                        <input type="checkbox" id="wcNotifyGarage" checked>
+                        <span>Notify garage of this claim decision</span>
+                    </label>
+                </div>
+
+                <input type="hidden" id="wcClaimId">
+                <input type="hidden" id="wcOrderId">
+            </div>
+            <div class="modal-footer">
+                <button class="btn btn-danger" data-action="rejectWarrantyClaim">
+                    <i class="bi bi-x-circle"></i> Reject Claim
+                </button>
+                <div style="flex: 1;"></div>
+                <button class="btn btn-ghost" data-action="closeModal">Cancel</button>
+                <button class="btn btn-success" data-action="approveWarrantyClaim">
+                    <i class="bi bi-check-circle"></i> Approve & Refund
                 </button>
             </div>
         </div>

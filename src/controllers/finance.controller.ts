@@ -19,10 +19,15 @@ import {
     ResolveDisputeDto,
     RevenuePeriod,
     RevenueService,
+    WarrantyClaimService,
+    ApproveWarrantyClaimDto,
+    RejectWarrantyClaimDto,
     SendPaymentDto,
     TransactionFilters,
     isFinanceError,
-    getHttpStatusForError
+    getHttpStatusForError,
+    WarrantyClaimAnalyticsService,
+    getWarrantyClaimAnalyticsService
 } from '../services/finance';
 import { createNotification } from '../services/notification.service';
 import { getErrorMessage } from '../types';
@@ -32,6 +37,8 @@ import logger from '../utils/logger';
 const payoutService = new PayoutService(pool);
 const refundService = new RefundService(pool);
 const revenueService = new RevenueService(pool);
+const warrantyClaimService = new WarrantyClaimService(pool);
+const warrantyClaimAnalytics = getWarrantyClaimAnalyticsService(pool);
 
 interface ReasonBody {
     reason?: string;
@@ -1043,5 +1050,161 @@ export const denyCompensation = async (req: AuthRequest, res: Response) => {
     } catch (err) {
         logFinanceError('[Finance] denyCompensation error:', err);
         res.status(500).json({ error: 'Failed to deny compensation' });
+    }
+};
+
+// ==========================================
+// WARRANTY CLAIMS (Finance only)
+// ==========================================
+
+export const getPendingClaims = async (req: AuthRequest, res: Response) => {
+    try {
+        const user = getAuthenticatedUser(req);
+        if (!user) return res.status(401).json({ error: 'Authentication required' });
+
+        const claims = await warrantyClaimService.getPendingClaims();
+        res.json({ success: true, claims });
+    } catch (err) {
+        logFinanceError('getPendingClaims error', err);
+        return sendFinanceError(res, err, 'Failed to fetch pending claims');
+    }
+};
+
+export const getClaimHistory = async (req: AuthRequest, res: Response) => {
+    try {
+        const user = getAuthenticatedUser(req);
+        if (!user) return res.status(401).json({ error: 'Authentication required' });
+
+        const claims = await warrantyClaimService.getClaimHistory();
+        res.json({ success: true, claims });
+    } catch (err) {
+        logFinanceError('getClaimHistory error', err);
+        return sendFinanceError(res, err, 'Failed to fetch claim history');
+    }
+};
+
+export const getClaimById = async (req: AuthRequest, res: Response) => {
+    try {
+        const user = getAuthenticatedUser(req);
+        if (!user) return res.status(401).json({ error: 'Authentication required' });
+
+        const claim = await warrantyClaimService.getClaimById(req.params.claim_id);
+        res.json({ success: true, claim });
+    } catch (err) {
+        logFinanceError('getClaimById error', err);
+        return sendFinanceError(res, err, 'Failed to fetch claim details');
+    }
+};
+
+export const approveClaim = async (req: AuthRequest, res: Response) => {
+    try {
+        const user = getAuthenticatedUser(req);
+        if (!user) return res.status(401).json({ error: 'Authentication required' });
+
+        const body = req.body as ApproveWarrantyClaimDto;
+        await warrantyClaimService.approveClaim(req.params.claim_id, body, user.userId);
+        res.json({ success: true, message: 'Claim approved successfully' });
+    } catch (err) {
+        logFinanceError('approveClaim error', err);
+        return sendFinanceError(res, err, 'Failed to approve claim');
+    }
+};
+
+export const rejectClaim = async (req: AuthRequest, res: Response) => {
+    try {
+        const user = getAuthenticatedUser(req);
+        if (!user) return res.status(401).json({ error: 'Authentication required' });
+
+        const body = req.body as RejectWarrantyClaimDto;
+        await warrantyClaimService.rejectClaim(req.params.claim_id, body, user.userId);
+        res.json({ success: true, message: 'Claim rejected successfully' });
+    } catch (err) {
+        logFinanceError('rejectClaim error', err);
+        return sendFinanceError(res, err, 'Failed to reject claim');
+    }
+};
+
+// ==========================================
+// WARRANTY CLAIMS ANALYTICS (Finance only)
+// ==========================================
+
+export const getWarrantyClaimStats = async (req: AuthRequest, res: Response) => {
+    try {
+        const user = getAuthenticatedUser(req);
+        if (!user) return res.status(401).json({ error: 'Authentication required' });
+
+        const stats = await warrantyClaimAnalytics.getWarrantyClaimStats();
+        res.json({ success: true, stats });
+    } catch (err) {
+        logFinanceError('getWarrantyClaimStats error', err);
+        return sendFinanceError(res, err, 'Failed to fetch warranty claim stats');
+    }
+};
+
+export const getGarageQualityScores = async (req: AuthRequest, res: Response) => {
+    try {
+        const user = getAuthenticatedUser(req);
+        if (!user) return res.status(401).json({ error: 'Authentication required' });
+
+        const scores = await warrantyClaimAnalytics.getGarageQualityScores();
+        res.json({ success: true, scores });
+    } catch (err) {
+        logFinanceError('getGarageQualityScores error', err);
+        return sendFinanceError(res, err, 'Failed to fetch garage quality scores');
+    }
+};
+
+export const getGarageQualityScore = async (req: AuthRequest, res: Response) => {
+    try {
+        const user = getAuthenticatedUser(req);
+        if (!user) return res.status(401).json({ error: 'Authentication required' });
+
+        const score = await warrantyClaimAnalytics.getGarageQualityScore(req.params.garage_id);
+        if (!score) {
+            return res.status(404).json({ error: 'Garage not found or no orders' });
+        }
+        res.json({ success: true, score });
+    } catch (err) {
+        logFinanceError('getGarageQualityScore error', err);
+        return sendFinanceError(res, err, 'Failed to fetch garage quality score');
+    }
+};
+
+export const getClaimsTrend = async (req: AuthRequest, res: Response) => {
+    try {
+        const user = getAuthenticatedUser(req);
+        if (!user) return res.status(401).json({ error: 'Authentication required' });
+
+        const trend = await warrantyClaimAnalytics.getClaimsTrend();
+        res.json({ success: true, trend });
+    } catch (err) {
+        logFinanceError('getClaimsTrend error', err);
+        return sendFinanceError(res, err, 'Failed to fetch claims trend');
+    }
+};
+
+export const getCommonDefectReasons = async (req: AuthRequest, res: Response) => {
+    try {
+        const user = getAuthenticatedUser(req);
+        if (!user) return res.status(401).json({ error: 'Authentication required' });
+
+        const reasons = await warrantyClaimAnalytics.getCommonDefectReasons();
+        res.json({ success: true, reasons });
+    } catch (err) {
+        logFinanceError('getCommonDefectReasons error', err);
+        return sendFinanceError(res, err, 'Failed to fetch defect reasons');
+    }
+};
+
+export const getClaimsAtSlaRisk = async (req: AuthRequest, res: Response) => {
+    try {
+        const user = getAuthenticatedUser(req);
+        if (!user) return res.status(401).json({ error: 'Authentication required' });
+
+        const claims = await warrantyClaimAnalytics.getClaimsAtSlaRisk();
+        res.json({ success: true, claims });
+    } catch (err) {
+        logFinanceError('getClaimsAtSlaRisk error', err);
+        return sendFinanceError(res, err, 'Failed to fetch SLA risk claims');
     }
 };

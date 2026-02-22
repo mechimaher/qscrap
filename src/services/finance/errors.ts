@@ -128,6 +128,29 @@ export class RefundAlreadyProcessedError extends FinanceError {
 }
 
 // ============================================
+// WARRANTY CLAIM ERRORS
+// ============================================
+
+export class WarrantyClaimNotFoundError extends FinanceError {
+    constructor(claimId: string) {
+        super(`Warranty claim ${claimId} not found`, 'WARRANTY_CLAIM_NOT_FOUND');
+        this.name = 'WarrantyClaimNotFoundError';
+        Object.setPrototypeOf(this, WarrantyClaimNotFoundError.prototype);
+    }
+}
+
+export class InvalidWarrantyClaimStatusError extends FinanceError {
+    constructor(claimId: string, currentStatus: string, requiredStatus: string) {
+        super(
+            `Invalid warranty claim status: ${currentStatus}. Expected: ${requiredStatus}`,
+            'INVALID_WARRANTY_CLAIM_STATUS'
+        );
+        this.name = 'InvalidWarrantyClaimStatusError';
+        Object.setPrototypeOf(this, InvalidWarrantyClaimStatusError.prototype);
+    }
+}
+
+// ============================================
 // REVENUE ERRORS
 // ============================================
 
@@ -170,6 +193,7 @@ export function getHttpStatusForError(error: FinanceError): number {
         case 'REFUND_NOT_FOUND':
         case 'ORDER_NOT_FOUND':
         case 'TRANSACTION_NOT_FOUND':
+        case 'WARRANTY_CLAIM_NOT_FOUND':
             return 404;
 
         case 'UNAUTHORIZED_PAYOUT_ACCESS':
@@ -184,6 +208,7 @@ export function getHttpStatusForError(error: FinanceError): number {
         case 'REFUND_ALREADY_PROCESSED':
         case 'INVALID_PERIOD':
         case 'BULK_OPERATION_ERROR':
+        case 'INVALID_WARRANTY_CLAIM_STATUS':
             return 400;
 
         default:

@@ -43,6 +43,7 @@ interface ActionResult {
     payoutAction?: { action: string; payout_id?: string; reversal_id?: string };
     refundAction?: { refund_id?: string; amount: number };
     refundId?: string;
+    claimId?: string;
     status?: string;
     error?: string;
 }
@@ -723,6 +724,556 @@ export class SupportActionsService {
                 action: 'escalate_to_ops',
                 orderId: params.orderId,
                 message: 'Escalation failed',
+                error: err.message
+            };
+        } finally {
+            client.release();
+        }
+    }
+
+    /**
+     * Execute Orphaned Order Reset
+     * 
+     * Safety mechanism to recover orders stuck in 'picked_up' status with no driver assigned.
+     * This can happen when executeReassignDriver clears the driver but the order status
+     * remains 'picked_up', creating an orphaned state that blocks order completion.
+     * 
+     * Workflow:
+     * 1. Validate order is in 'picked_up' status with NULL driver_id
+     * 2. Reset order_status to 'processing' (back to garage)
+     * 3. Ensure ticket exists for audit trail
+     * 4. Post to ticket timeline
+     * 5. Log resolution
+     * 6. Notify Operations for reassignment
+     */
+    async executeOrphanedOrderReset(params: {
+        orderId: string;
+        agentId: string;
+        notes?: string;
+    }): Promise<ActionResult> {
+        const client = await this.pool.connect();
+
+        try {
+            await client.query('BEGIN');
+
+            // 1. Get order details with lock
+            const orderResult = await client.query(`
+                SELECT 
+                    o.order_id, o.order_number, o.order_status, o.driver_id,
+                    o.customer_id, o.garage_id,
+                    g.garage_name
+                FROM orders o
+                LEFT JOIN garages g ON o.garage_id = g.garage_id
+                WHERE o.order_id = $1
+                FOR UPDATE OF o
+            `, [params.orderId]);
+
+            if (orderResult.rows.length === 0) {
+                throw new Error(`Order ${params.orderId} not found`);
+            }
+
+            const order = orderResult.rows[0];
+
+            // 2. Strict validation: Must be picked_up AND have no driver
+            if (order.order_status !== 'picked_up') {
+                throw new Error(
+                    `Order is not in 'picked_up' status. Current status: '${order.order_status}'. ` +
+                    `This action is only for orders stuck in 'picked_up' with no driver.`
+                );
+            }
+
+            if (order.driver_id !== null) {
+                throw new Error(
+                    `Order has an active driver assigned. Use 'reassign_driver' instead.`
+                );
+            }
+
+            // 3. Ensure ticket exists for audit trail
+            const ticketId = await this.ensureTicketForOrder(
+                params.orderId,
+                order.customer_id,
+                params.agentId,
+                `Orphaned Order Reset — Order #${order.order_number}`,
+                'technical_issue',
+                client
+            );
+
+            // 4. Execute state change: picked_up → processing
+            await client.query(`
+                UPDATE orders SET
+                    order_status = 'processing',
+                    updated_at = NOW()
+                WHERE order_id = $1
+            `, [params.orderId]);
+
+            // 5. Log status change in history
+            await client.query(`
+                INSERT INTO order_status_history
+                (order_id, old_status, new_status, changed_by, changed_by_type, reason)
+                VALUES ($1, 'picked_up', 'processing', $2, 'support', $3)
+            `, [params.orderId, params.agentId, params.notes || 'Orphaned order reset: driver unassigned']);
+
+            // 6. Post to ticket timeline
+            await this.postTicketUpdate(ticketId, params.agentId,
+                `🔧 **Orphaned Order Reset**\n\n` +
+                `Order #${order.order_number}\n` +
+                `Previous Status: picked_up (no driver)\n` +
+                `New Status: processing\n` +
+                `Garage: ${order.garage_name || 'Unknown'}\n` +
+                `Notes: ${params.notes || 'Driver unassigned - order returned to garage'}`,
+                client
+            );
+
+            // 7. Log resolution
+            await this.logResolution({
+                orderId: params.orderId,
+                customerId: order.customer_id,
+                agentId: params.agentId,
+                actionType: 'orphaned_order_reset',
+                actionDetails: {
+                    ticket_id: ticketId,
+                    previous_status: order.order_status,
+                    new_status: 'processing',
+                    garage_id: order.garage_id,
+                    garage_name: order.garage_name
+                },
+                notes: params.notes || 'Orphaned order reset: driver unassigned'
+            }, client);
+
+            // 8. Notify Operations team for reassignment
+            const io = getIO();
+            if (io) {
+                io.to('operations').emit('orphaned_order_reset', {
+                    order_id: params.orderId,
+                    order_number: order.order_number,
+                    garage_id: order.garage_id,
+                    garage_name: order.garage_name,
+                    reset_by: params.agentId,
+                    ticket_id: ticketId
+                });
+            }
+
+            await client.query('COMMIT');
+
+            logger.info('Orphaned order reset', {
+                orderId: params.orderId,
+                orderNumber: order.order_number,
+                garageName: order.garage_name
+            });
+
+            return {
+                success: true,
+                action: 'orphaned_order_reset',
+                orderId: params.orderId,
+                message: `Order ${order.order_number} reset from 'picked_up' to 'processing'. Operations team notified for reassignment.`
+            };
+
+        } catch (err: any) {
+            await client.query('ROLLBACK');
+            logger.error('Orphaned order reset failed', { error: err.message });
+            return {
+                success: false,
+                action: 'orphaned_order_reset',
+                orderId: params.orderId,
+                message: 'Reset failed',
+                error: err.message
+            };
+        } finally {
+            client.release();
+        }
+    }
+
+    /**
+     * Execute Partial Refund Request
+     * 
+     * Allows support agents to request a partial refund for an order.
+     * Follows the same workflow as executeFullRefund:
+     * 1. Validate order is paid and delivered/completed
+     * 2. Validate refund amount is within bounds
+     * 3. Check for existing pending refunds (idempotency)
+     * 4. Create PENDING refund record (Finance must approve)
+     * 5. Flag order as refund_pending
+     * 6. Put payout on hold if not yet paid
+     * 7. Ensure ticket and post to timeline
+     * 
+     * Use Cases:
+     * - Defective part, customer keeps it with 50% refund
+     * - Minor damage, partial compensation
+     * - Goodwill gesture without full return
+     */
+    async executePartialRefund(params: {
+        orderId: string;
+        customerId: string;
+        amount: number;
+        reason: string;
+        agentId: string;
+        notes?: string;
+    }): Promise<ActionResult> {
+        const client = await this.pool.connect();
+
+        try {
+            await client.query('BEGIN');
+
+            // 1. Get context and validate
+            const context = await this.getActionContextInternal(params.orderId, client);
+
+            // Validate: Order must be paid
+            if (context.order.payment_status !== 'paid') {
+                throw new Error(
+                    `Cannot request refund: Order payment status is '${context.order.payment_status}'. ` +
+                    `Only fully paid orders can be refunded.`
+                );
+            }
+
+            // Validate: Order must be delivered/completed
+            const refundableStatuses = ['delivered', 'completed'];
+            if (!refundableStatuses.includes(context.order.order_status)) {
+                throw new Error(
+                    `Cannot request refund: Order status is '${context.order.order_status}'. ` +
+                    `For orders not yet delivered, use 'cancel_order' instead.`
+                );
+            }
+
+            // 2. Validate refund amount
+            const totalPaid = parseFloat(context.order.total_amount);
+            if (params.amount <= 0 || params.amount > totalPaid) {
+                throw new Error(
+                    `Invalid refund amount. Must be between 0 and ${totalPaid.toFixed(2)} QAR. ` +
+                    `Requested: ${params.amount.toFixed(2)} QAR.`
+                );
+            }
+
+            // 3. Check for existing pending refund (idempotency)
+            const existingRefund = await client.query(`
+                SELECT refund_id, refund_status FROM refunds
+                WHERE order_id = $1 AND refund_status = 'pending'
+            `, [params.orderId]);
+
+            if (existingRefund.rows.length > 0) {
+                throw new Error(
+                    `A refund request is already pending for this order. ` +
+                    `Please wait for Finance team to review.`
+                );
+            }
+
+            // 4. Check for payment intent (warn if missing)
+            const paymentIntentId = context.order.final_payment_intent_id || context.order.deposit_intent_id;
+            if (!paymentIntentId) {
+                logger.warn('Order missing payment intent', { orderNumber: context.order.order_number });
+            }
+
+            // 5. Ensure ticket exists for audit trail
+            const ticketId = await this.ensureTicketForOrder(
+                params.orderId,
+                params.customerId,
+                params.agentId,
+                `Partial Refund Request — Order #${context.order.order_number}`,
+                'billing',
+                client
+            );
+
+            // 6. Create PENDING refund request (Finance must approve)
+            const idempotencyKey = `support_partial_refund_${params.orderId}_${Date.now()}`;
+            const refundResult = await client.query(`
+                INSERT INTO refunds
+                (order_id, customer_id, original_amount, refund_amount, fee_retained, delivery_fee_retained,
+                 refund_reason, refund_status, initiated_by, refund_type, idempotency_key, payment_intent_id)
+                VALUES ($1, $2, $3, $4, $5, $6, $7, 'pending', 'support', 'support_partial_refund_request', $8, $9)
+                RETURNING refund_id
+            `, [
+                params.orderId,
+                params.customerId,
+                totalPaid,
+                params.amount,
+                0, // fee_retained (Finance determines during approval)
+                0, // delivery_fee_retained (Finance determines during approval)
+                `${params.reason} [Partial Refund: ${params.amount.toFixed(2)} QAR]`,
+                idempotencyKey,
+                paymentIntentId
+            ]);
+
+            const refundId = refundResult.rows[0]?.refund_id;
+
+            // 7. Flag order as refund_pending
+            await client.query(
+                `UPDATE orders SET payment_status = 'refund_pending' WHERE order_id = $1`,
+                [params.orderId]
+            );
+
+            // 8. Put garage payout on hold (if not already paid out)
+            await client.query(
+                `UPDATE garage_payouts
+                 SET payout_status = 'on_hold',
+                     adjustment_reason = 'Partial refund request pending Finance approval',
+                     updated_at = NOW()
+                 WHERE order_id = $1 AND payout_status IN ('pending', 'processing')`,
+                [params.orderId]
+            );
+
+            // 9. Post to ticket timeline
+            const ticketMessage = `🔄 **Partial Refund Requested**\n\n` +
+                `Order #${context.order.order_number}\n` +
+                `Refund Amount: ${params.amount.toFixed(2)} QAR\n` +
+                `Original Total: ${totalPaid.toFixed(2)} QAR\n` +
+                `Reason: ${params.reason}\n` +
+                `Status: ⏳ Awaiting Finance approval`;
+
+            await this.postTicketUpdate(ticketId, params.agentId, ticketMessage, client);
+
+            // 10. Log resolution
+            await this.logResolution({
+                orderId: params.orderId,
+                customerId: params.customerId,
+                agentId: params.agentId,
+                actionType: 'partial_refund_request',
+                actionDetails: {
+                    refund_id: refundId,
+                    original_amount: totalPaid,
+                    refund_amount: params.amount,
+                    status: 'pending_finance_approval',
+                    warranty_days_remaining: context.warrantyDaysRemaining,
+                    ticket_id: ticketId
+                },
+                notes: params.reason
+            }, client);
+
+            await client.query('COMMIT');
+
+            // 11. Notify Finance team
+            try {
+                await createNotification({
+                    userId: 'finance_team',
+                    target_role: 'operations',
+                    type: 'refund_request_pending',
+                    title: 'New Partial Refund Request',
+                    message: `Order #${context.order.order_number}: ${params.amount.toFixed(2)} QAR partial refund requested. Reason: ${params.reason}`,
+                    data: {
+                        order_id: params.orderId,
+                        order_number: context.order.order_number,
+                        refund_id: refundId,
+                        amount: params.amount,
+                        reason: params.reason
+                    }
+                });
+                logger.info('Finance notification sent', { refundId });
+            } catch (notifyErr) {
+                logger.warn('Failed to notify Finance team', { error: (notifyErr as Error).message });
+            }
+
+            logger.info('Partial refund request submitted', {
+                orderNumber: context.order.order_number,
+                amount: params.amount,
+                reason: params.reason
+            });
+
+            return {
+                success: true,
+                action: 'partial_refund_request',
+                orderId: params.orderId,
+                refundId,
+                message: `Partial refund request of ${params.amount.toFixed(2)} QAR submitted for order #${context.order.order_number}. Awaiting Finance team approval.`
+            };
+
+        } catch (err: any) {
+            await client.query('ROLLBACK');
+            logger.error('Partial refund request error', { error: err.message });
+            return {
+                success: false,
+                action: 'partial_refund_request',
+                orderId: params.orderId,
+                message: 'Partial refund request failed',
+                error: err.message
+            };
+        } finally {
+            client.release();
+        }
+    }
+
+    /**
+     * Execute Warranty Claim
+     * 
+     * Initiates a warranty claim for defective parts discovered AFTER the 7-day return window.
+     * This is distinct from the standard return flow:
+     * 
+     * Return Flow (ReturnService):
+     * - Within 7 days of delivery
+     * - Customer returns physical part
+     * - 20% restocking fee applies
+     * - Operations approval
+     * 
+     * Warranty Claim (This Method):
+     * - After 7 days (within manufacturer warranty period)
+     * - Customer may keep part (no return required)
+     * - No restocking fee (defect is garage's responsibility)
+     * - Finance approval required
+     * - Garage may be penalized for quality issues
+     * 
+     * Resolution Options:
+     * - Replacement: Send new part to customer
+     * - Refund: Full or partial refund
+     * - Repair Credit: Credit for repair costs
+     */
+    async executeWarrantyClaim(params: {
+        orderId: string;
+        customerId: string;
+        defectDescription: string;
+        agentId: string;
+        photos?: string[];
+        notes?: string;
+    }): Promise<ActionResult> {
+        const client = await this.pool.connect();
+
+        try {
+            await client.query('BEGIN');
+
+            // 1. Get context
+            const context = await this.getActionContextInternal(params.orderId, client);
+
+            // Validate: Order must be delivered/completed
+            if (!['delivered', 'completed'].includes(context.order.order_status)) {
+                throw new Error(
+                    `Warranty claims can only be made for delivered/completed orders. ` +
+                    `Current status: '${context.order.order_status}'.`
+                );
+            }
+
+            // 2. Check if within 7-day return window (should use ReturnService instead)
+            if (context.isWithinWarranty) {
+                throw new Error(
+                    `Order is within 7-day return window (${context.warrantyDaysRemaining} days remaining). ` +
+                    `Please use the standard return flow instead of warranty claim.`
+                );
+            }
+
+            // 3. Check for existing pending warranty claim
+            const existingClaim = await client.query(`
+                SELECT claim_id, claim_status FROM warranty_claims
+                WHERE order_id = $1 AND claim_status = 'pending_finance_review'
+            `, [params.orderId]);
+
+            if (existingClaim.rows.length > 0) {
+                throw new Error(
+                    `A warranty claim is already pending for this order. ` +
+                    `Please wait for Finance team to review.`
+                );
+            }
+
+            // 4. Ensure ticket exists for audit trail
+            const ticketId = await this.ensureTicketForOrder(
+                params.orderId,
+                params.customerId,
+                params.agentId,
+                `Warranty Claim — Order #${context.order.order_number}`,
+                'warranty',
+                client
+            );
+
+            // 5. Create warranty claim record
+            const claimResult = await client.query(`
+                INSERT INTO warranty_claims
+                (order_id, customer_id, ticket_id, defect_description, evidence_urls, claim_status, created_at)
+                VALUES ($1, $2, $3, $4, $5, 'pending_finance_review', NOW())
+                RETURNING claim_id
+            `, [
+                params.orderId,
+                params.customerId,
+                ticketId,
+                params.defectDescription,
+                params.photos || []
+            ]);
+
+            const claimId = claimResult.rows[0]?.claim_id;
+
+            // 6. Post to ticket timeline
+            const ticketMessage = `⚠️ **Warranty Claim Submitted**\n\n` +
+                `Order #${context.order.order_number}\n` +
+                `Days Since Delivery: ${Math.ceil(WARRANTY_DAYS - context.warrantyDaysRemaining)}\n` +
+                `Defect: ${params.defectDescription}\n` +
+                `Evidence: ${params.photos?.length || 0} photo(s)\n` +
+                `Status: ⏳ Awaiting Finance review`;
+
+            await this.postTicketUpdate(ticketId, params.agentId, ticketMessage, client);
+
+            // 7. Log resolution
+            await this.logResolution({
+                orderId: params.orderId,
+                customerId: params.customerId,
+                agentId: params.agentId,
+                actionType: 'warranty_claim',
+                actionDetails: {
+                    claim_id: claimId,
+                    ticket_id: ticketId,
+                    defect_description: params.defectDescription,
+                    photos_count: params.photos?.length || 0,
+                    days_since_delivery: Math.ceil(WARRANTY_DAYS - context.warrantyDaysRemaining),
+                    status: 'pending_finance_review'
+                },
+                notes: params.defectDescription
+            }, client);
+
+            await client.query('COMMIT');
+
+            // 8. Notify Finance team
+            try {
+                await createNotification({
+                    userId: 'finance_team',
+                    target_role: 'operations',
+                    type: 'warranty_claim_pending',
+                    title: 'New Warranty Claim',
+                    message: `Order #${context.order.order_number}: Warranty claim for defective part. Claim ID: ${claimId}`,
+                    data: {
+                        order_id: params.orderId,
+                        order_number: context.order.order_number,
+                        claim_id: claimId,
+                        defect_description: params.defectDescription,
+                        ticket_id: ticketId
+                    }
+                });
+                logger.info('Finance notification sent for warranty claim', { claimId });
+            } catch (notifyErr) {
+                logger.warn('Failed to notify Finance team', { error: (notifyErr as Error).message });
+            }
+
+            // 9. Notify garage about quality issue (for tracking)
+            try {
+                await createNotification({
+                    userId: context.order.garage_id,
+                    type: 'warranty_claim_filed',
+                    title: '⚠️ Warranty Claim Filed',
+                    message: `A warranty claim has been filed for Order #${context.order.order_number}. Defect: ${params.defectDescription}`,
+                    data: {
+                        order_id: params.orderId,
+                        claim_id: claimId,
+                        defect_description: params.defectDescription
+                    },
+                    target_role: 'garage'
+                });
+            } catch (notifyErr) {
+                logger.warn('Failed to notify garage', { error: (notifyErr as Error).message });
+            }
+
+            logger.info('Warranty claim submitted', {
+                orderNumber: context.order.order_number,
+                claimId,
+                defect: params.defectDescription
+            });
+
+            return {
+                success: true,
+                action: 'warranty_claim',
+                orderId: params.orderId,
+                claimId,
+                message: `Warranty claim submitted for order #${context.order.order_number}. Finance team will review and determine resolution (replacement/refund/credit).`
+            };
+
+        } catch (err: any) {
+            await client.query('ROLLBACK');
+            logger.error('Warranty claim error', { error: err.message });
+            return {
+                success: false,
+                action: 'warranty_claim',
+                orderId: params.orderId,
+                message: 'Warranty claim failed',
                 error: err.message
             };
         } finally {

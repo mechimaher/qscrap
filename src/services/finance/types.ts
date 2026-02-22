@@ -328,3 +328,45 @@ export interface TransactionDetail {
     refund?: Partial<Refund>;
     created_at: Date;
 }
+
+// ============================================
+// WARRANTY CLAIM TYPES
+// ============================================
+
+export type WarrantyClaimStatus = 'pending_finance_review' | 'approved' | 'rejected' | 'fulfilled';
+
+export interface WarrantyClaim {
+    claim_id: string;
+    order_id: string;
+    customer_id: string;
+    ticket_id?: string;
+    defect_description: string;
+    evidence_urls?: string[];
+    claim_status: WarrantyClaimStatus;
+    resolution_type?: 'replacement' | 'refund' | 'repair_credit';
+    refund_amount?: number;
+    resolution_notes?: string;
+    admin_notes?: string; // Add if we decide to store separate admin notes
+    created_at: Date;
+    resolved_at?: Date;
+    resolved_by?: string;
+}
+
+export interface WarrantyClaimListItem extends WarrantyClaim {
+    order_number: string;
+    customer_name: string;
+    garage_name: string;
+    garage_id: string;
+}
+
+export interface ApproveWarrantyClaimDto {
+    admin_notes?: string;
+    resolution_details?: string;
+    resolution_notes?: string; // Alias for resolution_details
+    refund_amount_override?: number; // Optional override for partial refunds
+}
+
+export interface RejectWarrantyClaimDto {
+    rejection_reason: string;
+    admin_notes?: string;
+}

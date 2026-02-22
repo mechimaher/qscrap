@@ -13,6 +13,9 @@ let currentPeriod = '30d';
 let currentGarageFilter = '';
 let pendingPayoutsData = [];
 let selectedPayoutIds = new Set();
+let allWarrantyClaims = []; // Store for filtering
+let allWarrantyStats = null;
+let allGarageScores = null;
 
 // ==========================================
 // UTILITIES
@@ -177,6 +180,7 @@ function switchSection(section) {
         case 'pendingRefunds': loadPendingRefunds(); break;
         case 'refunds': loadRefunds(); break;
         case 'compensationReviews': loadCompensationReviews(); break;
+        case 'warrantyClaims': loadWarrantyAnalytics(); break;
     }
 }
 
@@ -213,6 +217,11 @@ function setupSocket() {
         loadBadges();
         if (currentSection === 'disputed') loadDisputedPayouts();
     });
+
+    socket.on('warranty_claims_escalated', (data) => {
+        showToast(`⚠️ ${data.count} warranty claim(s) escalated due to SLA breach!`, 'error');
+        loadWarrantyAnalytics(); // Refresh all analytics
+    });
 }
 
 // ==========================================
@@ -231,6 +240,11 @@ async function loadBadges() {
         updateBadge('inWarrantyBadge', stats.in_warranty_count || 0);
         updateBadge('awaitingBadge', stats.awaiting_count || stats.sent_count || 0);
         updateBadge('disputedBadge', stats.disputed_count || 0);
+
+        // [NEW] Warranty Claims Badge
+        const warrantyRes = await fetch(`${API_URL}/finance/warranty-claims/pending`, { credentials: 'include' });
+        const warrantyData = await warrantyRes.json();
+        updateBadge('warrantyClaimsBadge', warrantyData.claims?.length || 0);
     } catch (err) {
         console.error('Failed to load badges:', err);
     }
@@ -1942,3 +1956,480 @@ async function denyCompensationReview(payoutId, garageName, garageId) {
         showToast('Connection error', 'error');
     }
 }
+
+// ==========================================
+// WARRANTY CLAIMS (Feb 2026)
+// ==========================================
+
+async function loadWarrantyClaims() {
+    const tableBody = document.getElementById('warrantyClaimsTable');
+    if (!tableBody) return;
+
+    tableBody.innerHTML = '<tr><td colspan="7" class="empty-state"><div class="loading-spinner"></div><p>Loading warranty claims...</p></td></tr>';
+
+    try {
+        const res = await fetch(`${API_URL}/finance/warranty-claims/pending`, { credentials: 'include' });
+        const data = await res.json();
+
+        if (!data.success || !data.claims) {
+            throw new Error(data.error || 'Failed to fetch claims');
+        }
+
+        allWarrantyClaims = data.claims;
+        renderWarrantyClaims(data.claims);
+    } catch (err) {
+        console.error('Error loading warranty claims:', err);
+        tableBody.innerHTML = `<tr><td colspan="7" class="empty-state text-danger"><i class="bi bi-exclamation-triangle"></i> Error: ${err.message}</td></tr>`;
+    }
+}
+
+function renderWarrantyClaims(claims) {
+    const tableBody = document.getElementById('warrantyClaimsTable');
+    if (claims.length === 0) {
+        tableBody.innerHTML = '<tr><td colspan="7" class="empty-state">No pending warranty claims.</td></tr>';
+        return;
+    }
+
+    tableBody.innerHTML = claims.map(claim => `
+        <tr>
+            <td><code>${claim.claim_id.slice(0, 8)}</code></td>
+            <td><strong>#${claim.order_number}</strong></td>
+            <td>${escapeHTML(claim.garage_name)}</td>
+            <td>
+                <div style="max-width: 250px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis;" title="${escapeHTML(claim.defect_description)}">
+                    ${escapeHTML(claim.defect_description)}
+                </div>
+            </td>
+            <td>${formatDate(claim.created_at)}</td>
+            <td><span class="badge badge-info shadow-sm">Pending</span></td>
+            <td>
+                <button class="btn btn-sm btn-ghost" data-action="reviewWarrantyClaim" data-arg='${JSON.stringify(claim).replace(/'/g, "&apos;")}'>
+                    <i class="bi bi-eye"></i> Review
+                </button>
+            </td>
+        </tr>
+    `).join('');
+}
+
+// Register Warranty Claim Actions
+if (window.QScrapUI) {
+    window.QScrapUI.registerAction('reviewWarrantyClaim', function (target, params) {
+        let claim;
+        try {
+            claim = typeof params === 'string' ? JSON.parse(params) : params;
+        } catch (e) {
+            console.error('Failed to parse claim data', e);
+            return;
+        }
+
+        document.getElementById('wcClaimId').value = claim.claim_id;
+        document.getElementById('wcOrderId').value = claim.order_id;
+        document.getElementById('wcOrderNumber').innerText = claim.order_number;
+        document.getElementById('wcCustomerName').innerText = claim.customer_name || 'Customer';
+        document.getElementById('wcGarageName').innerText = claim.garage_name || 'Garage';
+        document.getElementById('wcDefectDescription').innerText = claim.defect_description;
+        document.getElementById('wcRefundAmount').value = claim.refund_amount || 0;
+        document.getElementById('wcResolutionNotes').value = '';
+        document.getElementById('wcRejectionReason').value = '';
+
+        // Handle photos
+        const photosList = document.getElementById('wcPhotosList');
+        const photosContainer = document.getElementById('wcPhotosContainer');
+        if (claim.photos && claim.photos.length > 0) {
+            photosList.innerHTML = claim.photos.map(url => `
+                <img src="${url}" style="height: 80px; width: 80px; object-fit: cover; border-radius: 4px; cursor: pointer; border: 1px solid var(--border-color);" 
+                     onclick="window.open('${url}', '_blank')">
+            `).join('');
+            photosContainer.style.display = 'block';
+        } else {
+            photosContainer.style.display = 'none';
+        }
+
+        // Open modal
+        const modal = document.getElementById('warrantyClaimModal');
+        if (modal) {
+            modal.style.display = 'flex';
+            setTimeout(() => modal.classList.add('active'), 10);
+        }
+    });
+
+    window.QScrapUI.registerAction('approveWarrantyClaim', async function () {
+        const claimId = document.getElementById('wcClaimId').value;
+        const refundAmount = parseFloat(document.getElementById('wcRefundAmount').value);
+        const notes = document.getElementById('wcResolutionNotes').value;
+        const notifyGarage = document.getElementById('wcNotifyGarage').checked;
+
+        if (isNaN(refundAmount) || refundAmount <= 0) {
+            showToast('Please enter a valid refund amount', 'error');
+            return;
+        }
+        if (!notes.trim()) {
+            showToast('Resolution notes are required', 'error');
+            return;
+        }
+
+        try {
+            const res = await fetch(`${API_URL}/finance/warranty-claims/${claimId}/approve`, {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({
+                    refund_amount_override: refundAmount,
+                    resolution_notes: notes,
+                    notify_garage: notifyGarage
+                }),
+                credentials: 'include'
+            });
+
+            if (res.ok) {
+                showToast('Warranty claim approved and refund initiated', 'success');
+                // Close modal
+                const modal = document.getElementById('warrantyClaimModal');
+                modal.classList.remove('active');
+                setTimeout(() => modal.style.display = 'none', 300);
+
+                loadWarrantyClaims();
+                loadBadges();
+            } else {
+                const data = await res.json();
+                showToast(data.error || 'Failed to approve claim', 'error');
+            }
+        } catch (err) {
+            showToast('Connection error', 'error');
+        }
+    });
+
+    window.QScrapUI.registerAction('rejectWarrantyClaim', async function () {
+        const claimId = document.getElementById('wcClaimId').value;
+        const notes = document.getElementById('wcResolutionNotes').value;
+        const notifyGarage = document.getElementById('wcNotifyGarage').checked;
+        const rejectionReason = document.getElementById('wcRejectionReason').value;
+
+        if (!rejectionReason) {
+            showToast('Please select a rejection reason', 'error');
+            return;
+        }
+
+        if (!notes.trim()) {
+            showToast('Resolution notes (admin notes) are required for rejection', 'error');
+            return;
+        }
+
+        try {
+            const res = await fetch(`${API_URL}/finance/warranty-claims/${claimId}/reject`, {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({
+                    rejection_reason: rejectionReason,
+                    admin_notes: notes,
+                    notify_garage: notifyGarage
+                }),
+                credentials: 'include'
+            });
+
+            if (res.ok) {
+                showToast('Warranty claim rejected', 'success');
+                // Close modal
+                const modal = document.getElementById('warrantyClaimModal');
+                modal.classList.remove('active');
+                setTimeout(() => modal.style.display = 'none', 300);
+
+                loadWarrantyClaims();
+                loadBadges();
+            } else {
+                const data = await res.json();
+                showToast(data.error || 'Failed to reject claim', 'error');
+            }
+        } catch (err) {
+            showToast('Connection error', 'error');
+        }
+    });
+
+    window.QScrapUI.registerAction('filterWarrantyClaims', function () {
+        const query = document.getElementById('warrantyClaimsSearch').value.toLowerCase();
+        if (!query) {
+            renderWarrantyClaims(allWarrantyClaims);
+            return;
+        }
+
+        const filtered = allWarrantyClaims.filter(c =>
+            c.order_number.toLowerCase().includes(query) ||
+            (c.garage_name && c.garage_name.toLowerCase().includes(query)) ||
+            c.claim_id.toLowerCase().includes(query)
+        );
+        renderWarrantyClaims(filtered);
+    });
+}
+
+// ==========================================
+// WARRANTY CLAIMS ANALYTICS (Feb 2026)
+// ==========================================
+
+let allWarrantyStats = null;
+let allGarageScores = null;
+
+async function loadWarrantyAnalytics() {
+    try {
+        await Promise.all([
+            loadWarrantyStats(),
+            loadWarrantyClaims(),
+            loadGarageQualityScores(),
+            loadDefectReasons(),
+            loadClaimsTrend(),
+            loadSlaRisk()
+        ]);
+        showToast('Analytics refreshed', 'success');
+    } catch (err) {
+        showToast('Failed to load analytics', 'error');
+    }
+}
+
+async function loadWarrantyStats() {
+    try {
+        const res = await fetch(`${API_URL}/finance/warranty-claims/stats`, {
+            credentials: 'include'
+        });
+        const data = await res.json();
+
+        if (data.success) {
+            allWarrantyStats = data.stats;
+
+            // Update stat cards
+            document.getElementById('statTotalClaims').textContent = allWarrantyStats.total_claims;
+            document.getElementById('statPendingClaims').textContent = allWarrantyStats.pending_claims;
+            document.getElementById('statApprovedClaims').textContent = allWarrantyStats.approved_claims;
+            document.getElementById('statRejectedClaims').textContent = allWarrantyStats.rejected_claims;
+            document.getElementById('statTotalRefund').textContent = formatCurrency(allWarrantyStats.total_refund_amount);
+
+            // Format average time
+            const hours = Math.floor(allWarrantyStats.avg_approval_time_hours);
+            const mins = Math.round((allWarrantyStats.avg_approval_time_hours - hours) * 60);
+            document.getElementById('statAvgTime').textContent = hours > 0 ? `${hours}h ${mins}m` : `${mins}m`;
+        }
+    } catch (err) {
+        console.error('Failed to load warranty stats:', err);
+    }
+}
+
+async function loadGarageQualityScores() {
+    try {
+        const res = await fetch(`${API_URL}/finance/warranty-claims/garage-quality`, {
+            credentials: 'include'
+        });
+        const data = await res.json();
+
+        if (data.success) {
+            allGarageScores = data.scores;
+            renderGarageQualityScores(allGarageScores);
+        }
+    } catch (err) {
+        console.error('Failed to load garage scores:', err);
+    }
+}
+
+function renderGarageQualityScores(scores) {
+    const tbody = document.getElementById('garageQualityTable');
+    if (!scores || scores.length === 0) {
+        tbody.innerHTML = '<tr><td colspan="6" class="empty-state">No garage data available</td></tr>';
+        return;
+    }
+
+    let html = '';
+    scores.forEach(g => {
+        const tierColor = {
+            'excellent': '#10b981',
+            'good': '#3b82f6',
+            'fair': '#f59e0b',
+            'poor': '#ef4444'
+        }[g.quality_tier] || '#6b7280';
+
+        html += `
+            <tr>
+                <td><strong>${escapeHTML(g.garage_name)}</strong></td>
+                <td>${g.total_orders}</td>
+                <td>${g.warranty_claims}</td>
+                <td style="color: ${g.claim_rate > 5 ? '#ef4444' : '#10b981'}">${g.claim_rate}%</td>
+                <td style="color: ${g.quality_score < 90 ? '#ef4444' : '#10b981'}">${g.quality_score}</td>
+                <td>
+                    <span class="status-badge" style="background: ${tierColor}; color: white;">
+                        ${g.quality_tier.toUpperCase()}
+                    </span>
+                </td>
+            </tr>
+        `;
+    });
+
+    tbody.innerHTML = html;
+}
+
+async function loadDefectReasons() {
+    try {
+        const res = await fetch(`${API_URL}/finance/warranty-claims/defect-reasons`, {
+            credentials: 'include'
+        });
+        const data = await res.json();
+
+        if (data.success) {
+            renderDefectReasons(data.reasons);
+        }
+    } catch (err) {
+        console.error('Failed to load defect reasons:', err);
+    }
+}
+
+function renderDefectReasons(reasons) {
+    const container = document.getElementById('defectReasonsChart');
+    if (!reasons || reasons.length === 0) {
+        container.innerHTML = '<p class="empty-state">No defect data available</p>';
+        return;
+    }
+
+    let html = '<div style="space-y: 10px;">';
+    reasons.forEach((r, index) => {
+        const width = Math.max(10, r.percentage);
+        const colors = ['#3b82f6', '#10b981', '#f59e0b', '#ef4444', '#8b5cf6', '#06b6d4'];
+        const color = colors[index % colors.length];
+
+        html += `
+            <div style="margin-bottom: 12px;">
+                <div style="display: flex; justify-content: space-between; margin-bottom: 4px;">
+                    <span style="font-size: 13px; color: var(--text-primary);">${escapeHTML(r.reason)}</span>
+                    <span style="font-size: 13px; color: var(--text-secondary);">${r.count} (${r.percentage}%)</span>
+                </div>
+                <div style="height: 8px; background: var(--bg-secondary); border-radius: 4px; overflow: hidden;">
+                    <div style="width: ${width}%; height: 100%; background: ${color}; border-radius: 4px;"></div>
+                </div>
+            </div>
+        `;
+    });
+    html += '</div>';
+
+    container.innerHTML = html;
+}
+
+async function loadClaimsTrend() {
+    try {
+        const res = await fetch(`${API_URL}/finance/warranty-claims/trend`, {
+            credentials: 'include'
+        });
+        const data = await res.json();
+
+        if (data.success) {
+            renderClaimsTrend(data.trend);
+        }
+    } catch (err) {
+        console.error('Failed to load claims trend:', err);
+    }
+}
+
+function renderClaimsTrend(trend) {
+    const container = document.getElementById('claimsTrendChart');
+    if (!trend || trend.length === 0) {
+        container.innerHTML = '<p class="empty-state">No trend data available</p>';
+        return;
+    }
+
+    // Group by date
+    const byDate = {};
+    trend.forEach(t => {
+        if (!byDate[t.date]) byDate[t.date] = { total: 0, pending: 0, approved: 0, rejected: 0 };
+        byDate[t.date].total += t.count;
+        byDate[t.date][t.status] = t.count;
+    });
+
+    const dates = Object.keys(byDate).sort();
+
+    let html = '<div style="height: 200px; display: flex; align-items: flex-end; gap: 4px; padding: 10px;">';
+    dates.forEach(date => {
+        const data = byDate[date];
+        const height = Math.min(150, data.total * 10);
+        const shortDate = new Date(date).toLocaleDateString('en-GB', { day: '2-digit', month: '2-digit' });
+
+        html += `
+            <div style="flex: 1; display: flex; flex-direction: column; align-items: center;">
+                <div style="width: 100%; height: ${height}px; background: linear-gradient(to top, #3b82f6, #60a5fa); border-radius: 4px 4px 0 0;" 
+                     title="${data.total} claims on ${date}"></div>
+                <span style="font-size: 10px; color: var(--text-secondary); margin-top: 4px; transform: rotate(-45deg);">${shortDate}</span>
+            </div>
+        `;
+    });
+    html += '</div>';
+
+    container.innerHTML = html;
+}
+
+async function loadSlaRisk() {
+    try {
+        const res = await fetch(`${API_URL}/finance/warranty-claims/sla-risk`, {
+            credentials: 'include'
+        });
+        const data = await res.json();
+
+        if (data.success && data.claims && data.claims.length > 0) {
+            const highRisk = data.claims.filter(c => c.sla_breach_risk === 'high').length;
+            const mediumRisk = data.claims.filter(c => c.sla_breach_risk === 'medium').length;
+
+            const alertEl = document.getElementById('slaRiskAlert');
+            const textEl = document.getElementById('slaRiskText');
+
+            if (highRisk > 0) {
+                alertEl.style.display = 'flex';
+                textEl.innerHTML = `<strong style="color: #ef4444;">${highRisk} claim(s)</strong> breached SLA (>72h). ${mediumRisk > 0 ? `Additional ${mediumRisk} at risk (>48h).` : ''}`;
+            } else if (mediumRisk > 0) {
+                alertEl.style.display = 'flex';
+                textEl.innerHTML = `<strong style="color: #f59e0b;">${mediumRisk} claim(s)</strong> at risk of SLA breach (>48h pending).`;
+            } else {
+                alertEl.style.display = 'none';
+            }
+        }
+    } catch (err) {
+        console.error('Failed to load SLA risk:', err);
+    }
+}
+
+function viewSlaRiskClaims() {
+    // Switch to claims tab and filter for high-risk
+    switchWarrantyTab('claims');
+    showToast('Showing SLA at-risk claims (filter manually)', 'info');
+}
+
+function switchWarrantyTab(tabName) {
+    // Hide all tab contents
+    document.querySelectorAll('#sectionWarrantyClaims .tab-content').forEach(el => {
+        el.classList.remove('active');
+        el.style.display = 'none';
+    });
+
+    // Remove active from all tabs
+    document.querySelectorAll('#sectionWarrantyClaims .tab').forEach(el => {
+        el.classList.remove('active');
+    });
+
+    // Show selected tab
+    const selectedTab = document.getElementById(`warranty${tabName.charAt(0).toUpperCase() + tabName.slice(1)}Tab`);
+    if (selectedTab) {
+        selectedTab.style.display = 'block';
+        setTimeout(() => selectedTab.classList.add('active'), 10);
+    }
+
+    // Activate button
+    const buttons = document.querySelectorAll('#sectionWarrantyClaims .tab');
+    buttons.forEach(btn => {
+        if (btn.textContent.toLowerCase().includes(tabName)) {
+            btn.classList.add('active');
+        }
+    });
+
+    // Load data for tab
+    if (tabName === 'quality' && !allGarageScores) {
+        loadGarageQualityScores();
+    }
+    if (tabName === 'trends') {
+        loadDefectReasons();
+        loadClaimsTrend();
+    }
+}
+
+// Register global functions
+window.loadWarrantyAnalytics = loadWarrantyAnalytics;
+window.switchWarrantyTab = switchWarrantyTab;
+window.viewSlaRiskClaims = viewSlaRiskClaims;

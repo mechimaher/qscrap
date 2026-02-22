@@ -477,24 +477,38 @@ export class SupportService {
 
         // Get active support tickets for this customer
         const tickets = await this.pool.query(`
-            SELECT 
+            SELECT
                 t.ticket_id, t.subject, t.status, t.priority, t.created_at, t.last_message_at,
                 t.order_id, t.first_response_at, t.sla_deadline,
                 CASE WHEN t.sla_deadline < NOW() THEN true ELSE false END as sla_breached,
                 o.order_number,
-                (SELECT message_text FROM chat_messages 
-                 WHERE ticket_id = t.ticket_id 
+                (SELECT message_text FROM chat_messages
+                 WHERE ticket_id = t.ticket_id
                  ORDER BY created_at DESC LIMIT 1) as last_message,
-                (SELECT COUNT(*) FROM chat_messages 
+                (SELECT COUNT(*) FROM chat_messages
                  WHERE ticket_id = t.ticket_id) as message_count
             FROM support_tickets t
             LEFT JOIN orders o ON t.order_id = o.order_id
             WHERE t.customer_id = $1
-            ORDER BY 
-                CASE WHEN t.status = 'open' THEN 0 
-                     WHEN t.status = 'in_progress' THEN 1 
+            ORDER BY
+                CASE WHEN t.status = 'open' THEN 0
+                     WHEN t.status = 'in_progress' THEN 1
                      ELSE 2 END,
                 t.last_message_at DESC
+            LIMIT 10
+        `, [customer.user_id]);
+
+        // [NEW] Get warranty claims for this customer (Feb 2026)
+        const warrantyClaims = await this.pool.query(`
+            SELECT 
+                wc.claim_id, wc.order_id, wc.defect_description,
+                wc.claim_status, wc.resolution_type, wc.refund_amount,
+                wc.created_at, wc.resolved_at, wc.resolution_notes,
+                o.order_number
+            FROM warranty_claims wc
+            LEFT JOIN orders o ON wc.order_id = o.order_id
+            WHERE wc.customer_id = $1
+            ORDER BY wc.created_at DESC
             LIMIT 10
         `, [customer.user_id]);
 
@@ -503,7 +517,8 @@ export class SupportService {
             orders: orders.rows,
             tickets: tickets.rows,
             notes: notes.rows,
-            resolutions: resolutions.rows
+            resolutions: resolutions.rows,
+            warrantyClaims: warrantyClaims.rows
         };
     }
 

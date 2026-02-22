@@ -104,5 +104,12 @@ router.get('/order-details/:order_id', authenticate, authorizeOperations, getOrd
 // [NEW] Get refund preview
 router.get('/refund-preview/:order_id', authenticate, authorizeOperations, getRefundPreview);
 
+// [NEW] Warranty claim submission (explicit endpoint for API clarity)
+router.post('/warranty-claim', authenticate, authorizeOperations, (req, res) => {
+    // Wraps executeQuickAction with warranty_claim preset
+    req.body.action_type = 'warranty_claim';
+    executeQuickAction(req, res);
+});
+
 export default router;
 

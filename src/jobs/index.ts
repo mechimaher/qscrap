@@ -1,7 +1,8 @@
-/**
- * Jobs Module Index
- * Re-exports all job functions for clean imports
- */
+ * Re - exports all job functions for clean imports
+    */
+
+import pool from '../config/db';
+import { runWarrantyClaimsSlaJob } from './warranty-claims-sla.job';
 
 export { expireOldRequests, expireCounterOffers } from './expiration.jobs';
 export { checkSubscriptions } from './subscription.jobs';
@@ -17,3 +18,12 @@ export { runSLAAutoCancel, runSLAAutoCancelNow } from './sla-auto-cancel.job';
 
 // Enterprise Infrastructure 10/10 (Feb 2, 2026)
 export { processSubscriptionRenewals, sendRenewalReminders, processExpiredSubscriptions } from './billing.job';
+
+// Warranty Claims (Feb 2026)
+export { runWarrantyClaimsSlaJob, runWarrantyClaimsSlaJobNow } from './warranty-claims-sla.job';
+
+// [MANDATE] Schedule SLA monitoring independently for high-reliability
+setInterval(() => {
+    console.log('[SLA-JOB] Running scheduled monitor...');
+    runWarrantyClaimsSlaJob(pool).catch(err => console.error('[SLA-JOB] Failed:', err));
+}, 6 * 60 * 60 * 1000); // Every 6 hours

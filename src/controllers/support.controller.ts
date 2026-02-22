@@ -650,6 +650,49 @@ export const executeQuickAction = async (req: AuthRequest, res: Response) => {
                 break;
             }
 
+            // ==========================================
+            // NEW ACTIONS (Gap Fixes - Feb 22, 2026)
+            // ==========================================
+
+            case 'orphaned_order_reset':
+                if (!order_id) {
+                    return res.status(400).json({ error: 'order_id required for orphan reset' });
+                }
+                result = await supportActionsService.executeOrphanedOrderReset({
+                    orderId: order_id,
+                    agentId: agent.userId,
+                    notes: notes || 'Orphaned order reset from resolution center'
+                }) as unknown as SupportActionResult;
+                break;
+
+            case 'partial_refund':
+                if (!order_id || !action_details?.amount) {
+                    return res.status(400).json({ error: 'order_id and amount required for partial refund' });
+                }
+                result = await supportActionsService.executePartialRefund({
+                    orderId: order_id,
+                    customerId: customer_id,
+                    amount: parseFloat(String(action_details.amount)),
+                    reason: notes || String(action_details.reason || 'Partial refund from resolution center'),
+                    agentId: agent.userId,
+                    notes: notes
+                }) as unknown as SupportActionResult;
+                break;
+
+            case 'warranty_claim':
+                if (!order_id || !action_details?.defect_description) {
+                    return res.status(400).json({ error: 'order_id and defect_description required for warranty claim' });
+                }
+                result = await supportActionsService.executeWarrantyClaim({
+                    orderId: order_id,
+                    customerId: customer_id,
+                    defectDescription: String(action_details.defect_description),
+                    agentId: agent.userId,
+                    photos: Array.isArray(action_details.photos) ? action_details.photos : [],
+                    notes: notes
+                }) as unknown as SupportActionResult;
+                break;
+
             default:
                 result = await supportService.executeQuickAction({
                     orderId: order_id,

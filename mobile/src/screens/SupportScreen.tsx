@@ -73,6 +73,13 @@ const SUPPORT_OPTIONS: SupportOption[] = [
         descriptionKey: 'support.complaintDesc',
         messagePrefix: 'support.complaintPrefix',
     },
+    {
+        id: 'warranty',
+        icon: 'shield-check-outline',
+        titleKey: 'support.warrantyClaim',
+        descriptionKey: 'support.warrantyClaimDesc',
+        messagePrefix: 'support.warrantyClaimPrefix',
+    },
 ];
 
 const getStatusColor = (status: string): string => {

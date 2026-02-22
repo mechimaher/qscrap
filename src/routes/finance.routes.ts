@@ -38,7 +38,20 @@ import {
     // Compensation review (Support/Finance manual decision)
     getPendingCompensationReviews,
     approveCompensation,
-    denyCompensation
+    denyCompensation,
+    // [NEW] Warranty Claims (Feb 2026)
+    getPendingClaims,
+    getClaimHistory,
+    getClaimById,
+    approveClaim,
+    rejectClaim,
+    // [NEW] Warranty Claims Analytics (Feb 2026)
+    getWarrantyClaimStats,
+    getGarageQualityScores,
+    getGarageQualityScore,
+    getClaimsTrend,
+    getCommonDefectReasons,
+    getClaimsAtSlaRisk
 } from '../controllers/finance.controller';
 
 const router = Router();
@@ -142,5 +155,44 @@ router.post('/compensation-reviews/:payout_id/approve', authorizeOperations, app
 
 // Deny garage compensation (with optional penalty)
 router.post('/compensation-reviews/:payout_id/deny', authorizeOperations, denyCompensation);
+
+// ==========================================
+// WARRANTY CLAIMS (Finance only - Feb 2026)
+// ==========================================
+
+// List pending warranty claims
+router.get('/warranty-claims/pending', authorizeOperations, getPendingClaims);
+
+// View warranty claim history
+router.get('/warranty-claims/history', authorizeOperations, getClaimHistory);
+
+// View specific warranty claim
+router.get('/warranty-claims/:claim_id', authorizeOperations, getClaimById);
+
+// Approve warranty claim (triggers refund)
+router.post('/warranty-claims/:claim_id/approve', authorizeOperations, approveClaim);
+
+// Reject warranty claim
+router.post('/warranty-claims/:claim_id/reject', authorizeOperations, rejectClaim);
+
+// ==========================================
+// WARRANTY CLAIMS ANALYTICS (Feb 2026)
+// ==========================================
+
+// Dashboard statistics
+router.get('/warranty-claims/stats', authorizeOperations, getWarrantyClaimStats);
+
+// Garage quality scores
+router.get('/warranty-claims/garage-quality', authorizeOperations, getGarageQualityScores);
+router.get('/warranty-claims/garage-quality/:garage_id', authorizeOperations, getGarageQualityScore);
+
+// Claims trend (last 30 days)
+router.get('/warranty-claims/trend', authorizeOperations, getClaimsTrend);
+
+// Common defect reasons
+router.get('/warranty-claims/defect-reasons', authorizeOperations, getCommonDefectReasons);
+
+// SLA risk monitoring
+router.get('/warranty-claims/sla-risk', authorizeOperations, getClaimsAtSlaRisk);
 
 export default router;

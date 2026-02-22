@@ -20,7 +20,9 @@ import {
     // Enterprise Infrastructure 10/10 (Feb 2, 2026)
     processSubscriptionRenewals,
     sendRenewalReminders,
-    processExpiredSubscriptions
+    processExpiredSubscriptions,
+    // Warranty Claims (Feb 2026)
+    runWarrantyClaimsSlaJob
     // abandonStaleInspections removed 2026-02-01 - QC workflow cancelled
 } from '../jobs';
 
@@ -48,6 +50,9 @@ export async function runAllJobs(): Promise<void> {
         await processSubscriptionRenewals(pool);
         await sendRenewalReminders(pool);
         await processExpiredSubscriptions(pool);
+
+        // Warranty Claims SLA and Quality jobs
+        await runWarrantyClaimsSlaJob(pool);
 
         const duration = Date.now() - startTime;
         logger.jobComplete('runAllJobs', { durationMs: duration });

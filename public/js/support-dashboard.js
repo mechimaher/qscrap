@@ -44,7 +44,10 @@ const UI_CONFIG = {
         'cancel_order': 'Cancel Order',
         'reassign_driver': 'Reassign Driver',
         'rush_delivery': 'Rush Delivery',
-        'escalate_to_ops': 'Escalated'
+        'escalate_to_ops': 'Escalated',
+        'orphaned_order_reset': 'Orphaned Reset',
+        'partial_refund': 'Partial Refund',
+        'warranty_claim': 'Warranty Claim'
     }
 };
 
@@ -347,6 +350,7 @@ async function searchCustomer() {
         renderTickets(data.tickets || []);
         renderNotes(data.notes);
         renderResolutionLog(data.resolutions);
+        renderWarrantyClaims(data.warranty_claims || []);
 
         // Show Quick Actions panel when customer is loaded
         if (currentCustomer) {
@@ -433,6 +437,14 @@ function renderCustomerProfile(data) {
                 Resolution History
             </div>
             <div id="resolutionLog"></div>
+        </div>
+
+        <!-- Warranty Claims Section -->
+        <div style="margin-top: 16px;">
+            <div style="font-size: 12px; font-weight: 700; color: var(--text-secondary); margin-bottom: 10px; text-transform: uppercase;">
+                Warranty Claims
+            </div>
+            <div id="warrantyClaimsList"></div>
         </div>
     `;
 }
@@ -588,7 +600,7 @@ function quickAction(actionType, orderId = null) {
     orderId = orderId || currentOrder;
 
     // Actions that require an order
-    const orderRequiredActions = ['request_refund', 'escalate_to_ops'];
+    const orderRequiredActions = ['request_refund', 'escalate_to_ops', 'orphaned_order_reset', 'partial_refund', 'warranty_claim'];
     if (orderRequiredActions.includes(actionType) && !orderId) {
         showToast('Please select an order first', 'error');
         return;
@@ -633,7 +645,23 @@ function quickAction(actionType, orderId = null) {
             blockedStatuses: ['refunded', 'cancelled'],
             errorMessage: `Cannot refund order #${orderNumber}.\n\nOrder status is "${statusDisplay}".\n\nThis order has already been refunded or cancelled.`
         },
-
+        // ==========================================
+        // NEW VALIDATION RULES (Feb 2026 Gap Fixes)
+        // ==========================================
+        'orphaned_order_reset': {
+            allowedStatuses: ['picked_up'],
+            errorMessage: `Cannot reset order #${orderNumber}.\n\nOrder status is "${statusDisplay}".\n\nOrphaned order reset only applies to orders stuck in "picked_up" status with no driver assigned.`
+        },
+        'partial_refund': {
+            allowedStatuses: ['delivered', 'completed'],
+            blockedStatuses: ['refunded', 'cancelled', 'refund_pending'],
+            errorMessage: `Cannot refund order #${orderNumber}.\n\nOrder status is "${statusDisplay}".\n\nPartial refund only applies to delivered/completed orders.`
+        },
+        'warranty_claim': {
+            allowedStatuses: ['delivered', 'completed'],
+            blockedStatuses: ['refunded', 'cancelled'],
+            errorMessage: `Cannot file warranty claim for order #${orderNumber}.\n\nOrder status is "${statusDisplay}".\n\nWarranty claims only apply to delivered/completed orders.`
+        }
     };
 
     const rule = validationRules[actionType];
@@ -740,6 +768,35 @@ function quickAction(actionType, orderId = null) {
             confirmText: 'Escalate',
             needsAmount: false,
             message: 'This will create an urgent escalation for the operations team.'
+        },
+        // ==========================================
+        // NEW ACTIONS (Feb 2026 Gap Fixes)
+        // ==========================================
+        'orphaned_order_reset': {
+            title: 'Reset Orphaned Order',
+            icon: 'bi-arrow-repeat',
+            color: 'linear-gradient(135deg, #8b5cf6, #7c3aed)',
+            confirmText: 'Reset Order',
+            needsAmount: false,
+            message: 'This will reset the order from "picked_up" to "processing" when driver is unassigned. Use only for orphaned orders.'
+        },
+        'partial_refund': {
+            title: 'Partial Refund',
+            icon: 'bi-cash-stack',
+            color: 'linear-gradient(135deg, #10b981, #059669)',
+            confirmText: 'Request Partial Refund',
+            needsAmount: true,
+            amountLabel: 'Refund Amount (QAR)',
+            message: 'Request a partial refund. Customer keeps the part. Finance team will review and approve.'
+        },
+        'warranty_claim': {
+            title: 'Warranty Claim',
+            icon: 'bi-shield-check',
+            color: 'linear-gradient(135deg, #3b82f6, #2563eb)',
+            confirmText: 'File Warranty Claim',
+            needsAmount: false,
+            needsDefectDescription: true,
+            message: 'File warranty claim for defective part discovered after 7-day return window. Finance team will review.'
         }
     };
 
@@ -812,9 +869,26 @@ function quickAction(actionType, orderId = null) {
         formContent += `
             <div class="form-group" style="margin-bottom: 16px;">
                 <label style="display: block; margin-bottom: 6px; font-weight: 600;">${config.amountLabel}</label>
-                <input type="number" id="actionAmount" class="form-control" 
+                <input type="number" id="actionAmount" class="form-control"
                     min="1" step="0.01" placeholder="0.00" required
                     style="width: 100%; padding: 10px; border: 1px solid var(--border); border-radius: 8px;">
+            </div>
+        `;
+    }
+
+    // Warranty claim: Add defect description field
+    if (config.needsDefectDescription) {
+        formContent += `
+            <div class="form-group" style="margin-bottom: 16px;">
+                <label style="display: block; margin-bottom: 6px; font-weight: 600;">
+                    <i class="bi bi-exclamation-circle" style="margin-right: 4px;"></i>Defect Description *
+                </label>
+                <textarea id="defectDescription" class="form-control" rows="4" required
+                    placeholder="Describe the defect or issue with the part..."
+                    style="width: 100%; padding: 10px; border: 1px solid var(--border); border-radius: 8px; resize: vertical;"></textarea>
+                <small style="color: var(--text-muted); font-size: 11px; display: block; margin-top: 4px;">
+                    <i class="bi bi-info-circle"></i> Please provide detailed information about the defect.
+                </small>
             </div>
         `;
     }
@@ -822,7 +896,7 @@ function quickAction(actionType, orderId = null) {
     formContent += `
         <div class="form-group">
             <label style="display: block; margin-bottom: 6px; font-weight: 600;">Notes (optional)</label>
-            <textarea id="actionNotes" class="form-control" rows="3" 
+            <textarea id="actionNotes" class="form-control" rows="3"
                 placeholder="Add any relevant notes..."
                 style="width: 100%; padding: 10px; border: 1px solid var(--border); border-radius: 8px; resize: vertical;"></textarea>
         </div>
@@ -859,6 +933,18 @@ function quickAction(actionType, orderId = null) {
                             return;
                         }
                         actionDetails.amount = amount;
+                    }
+
+                    // Validate defect description for warranty claims
+                    if (config.needsDefectDescription) {
+                        const defectInput = document.getElementById('defectDescription');
+                        const defectDescription = defectInput.value.trim();
+                        if (!defectDescription) {
+                            showToast('Please describe the defect', 'error');
+                            defectInput.focus();
+                            return;
+                        }
+                        actionDetails.defect_description = defectDescription;
                     }
 
                     const notes = document.getElementById('actionNotes').value.trim();
@@ -922,6 +1008,11 @@ function quickAction(actionType, orderId = null) {
     // Focus amount input if present
     if (config.needsAmount) {
         setTimeout(() => document.getElementById('actionAmount')?.focus(), 100);
+    }
+
+    // Focus defect description if present
+    if (config.needsDefectDescription) {
+        setTimeout(() => document.getElementById('defectDescription')?.focus(), 100);
     }
 
     // [Remediation] Initial refund preview (BRAIN v3.1)
@@ -1567,6 +1658,36 @@ function renderResolutionLog(logs) {
         `;
     });
     document.getElementById('resolutionLog').innerHTML = html;
+}
+
+function renderWarrantyClaims(claims) {
+    const container = document.getElementById('warrantyClaimsList');
+    if (!container) return;
+
+    if (!claims || claims.length === 0) {
+        container.innerHTML = '<p style="color: var(--text-muted); font-size: 11px;">No warranty claims found</p>';
+        return;
+    }
+
+    let html = '';
+    claims.forEach(c => {
+        const claimColor = c.status === 'approved' ? '#10b981' : (c.status === 'rejected' ? '#ef4444' : '#3b82f6');
+        html += `
+            <div class="resolution-item" style="border-left: 3px solid ${claimColor};">
+                <div style="display: flex; justify-content: space-between;">
+                    <div class="resolution-action" style="color: ${claimColor};">Warranty Claim</div>
+                    <div style="font-size: 10px; padding: 2px 6px; border-radius: 10px; background: ${claimColor}20; color: ${claimColor}; font-weight: 600;">
+                        ${c.status.toUpperCase()}
+                    </div>
+                </div>
+                <div class="resolution-meta">Order: #${c.order_number}</div>
+                <div class="resolution-meta" style="font-style: italic;">"${escapeHTML(c.defect_description)}"</div>
+                ${c.resolution_notes ? `<div class="resolution-meta" style="margin-top: 4px; border-top: 1px dashed var(--border); padding-top: 4px;"><strong>Finance:</strong> "${escapeHTML(c.resolution_notes)}"</div>` : ''}
+                <div class="resolution-meta">${timeAgo(c.created_at)}</div>
+            </div>
+        `;
+    });
+    container.innerHTML = html;
 }
 
 // ==========================================
