@@ -58,7 +58,8 @@ export const validateCsrfToken = (req: Request, res: Response, next: NextFunctio
     const headerToken = req.headers[CSRF_HEADER_NAME];
 
     // Skip for public routes (Login, Register, Public Config)
-    const publicRoutes = ['/api/auth/login', '/api/auth/register', '/api/auth/register/garage', '/api/v1/config/public', '/api/config/public'];
+    // Note: req.path is the path AFTER the mount point (e.g., '/auth/login' not '/api/auth/login')
+    const publicRoutes = ['/auth/login', '/auth/register', '/auth/register/garage', '/v1/config/public', '/config/public'];
     if (publicRoutes.some(route => req.path.startsWith(route))) {
         return next();
     }
@@ -98,7 +99,8 @@ export const validateOrigin = (req: Request, res: Response, next: NextFunction) 
     const allowed = getAllowedOrigins();
 
     // Skip for public routes (Login, Register, Public Config)
-    const publicRoutes = ['/api/auth/login', '/api/auth/register', '/api/auth/register/garage', '/api/v1/config/public', '/api/config/public'];
+    // Note: req.path is the path AFTER the mount point (e.g., '/auth/login' not '/api/auth/login')
+    const publicRoutes = ['/auth/login', '/auth/register', '/auth/register/garage', '/v1/config/public', '/config/public'];
     if (publicRoutes.some(route => req.path.startsWith(route))) {
         return next();
     }
