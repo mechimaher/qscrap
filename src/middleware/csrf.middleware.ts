@@ -57,6 +57,12 @@ export const validateCsrfToken = (req: Request, res: Response, next: NextFunctio
     const cookieToken = req.cookies[CSRF_COOKIE_NAME];
     const headerToken = req.headers[CSRF_HEADER_NAME];
 
+    // Skip for public routes (Login, Register, Public Config)
+    const publicRoutes = ['/api/auth/login', '/api/auth/register', '/api/auth/register/garage', '/api/v1/config/public', '/api/config/public'];
+    if (publicRoutes.some(route => req.path.startsWith(route))) {
+        return next();
+    }
+
     if (!cookieToken || !headerToken || cookieToken !== headerToken) {
         logger.warn('CSRF validation failed', {
             hasCookie: !!cookieToken,
@@ -90,6 +96,12 @@ const getAllowedOrigins = (): string[] => {
 export const validateOrigin = (req: Request, res: Response, next: NextFunction) => {
     const origin = req.headers.origin as string | undefined;
     const allowed = getAllowedOrigins();
+
+    // Skip for public routes (Login, Register, Public Config)
+    const publicRoutes = ['/api/auth/login', '/api/auth/register', '/api/auth/register/garage', '/api/v1/config/public', '/api/config/public'];
+    if (publicRoutes.some(route => req.path.startsWith(route))) {
+        return next();
+    }
 
     if (origin && !allowed.includes(origin) && process.env.NODE_ENV === 'production') {
         logger.warn('Origin validation failed', { origin });
