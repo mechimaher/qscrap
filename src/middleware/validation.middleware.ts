@@ -204,7 +204,10 @@ export const createRequestSchema = z.object({
         .optional()
         .or(z.literal('')),
     urgency: z.enum(URGENCY_LEVELS).optional(),
-    photo_urls: z.array(z.string()).max(5).optional()
+    photo_urls: z.array(z.string()).max(5).optional(),
+    delivery_address_text: z.string().max(255).optional(),
+    delivery_lat: z.union([z.number(), z.string()]).optional(),
+    delivery_lng: z.union([z.number(), z.string()]).optional()
 });
 
 // --- UUID PARAM SCHEMAS ---

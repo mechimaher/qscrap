@@ -513,6 +513,8 @@
         condition: 'any',
         quantity: 1,
         images: [],
+        lat: null,
+        lng: null,
         myRequests: [],
         requestsLoading: false,
     };
@@ -738,6 +740,9 @@
             qtyMinus: q('#crqQtyMinus'),
             qtyPlus: q('#crqQtyPlus'),
             qtyVal: q('#crqQtyVal'),
+            btnGps: q('#crqBtnGps'),
+            gpsResult: q('#crqGpsResult'),
+            gpsBtnText: q('#crqGpsBtnText'),
             inpAddressDetail: q('#crqAddressDetail'),
             photoInput: q('#crqPhotoInput'),
             photoGrid: q('#crqPhotoGrid'),
@@ -927,6 +932,26 @@
             dom.photoZone.addEventListener('dragleave', () => dom.photoZone.classList.remove('drag-over'));
             dom.photoZone.addEventListener('drop', e => { e.preventDefault(); dom.photoZone.classList.remove('drag-over'); addPhotos([...e.dataTransfer.files].filter(f => f.type.startsWith('image/'))); });
         }
+        if (dom.btnGps) {
+            dom.btnGps.addEventListener('click', () => {
+                if (!navigator.geolocation) return showErr('Geolocation is not supported by your browser.');
+                const originalText = dom.gpsBtnText.textContent;
+                dom.gpsBtnText.textContent = '📍 Locating...';
+                dom.btnGps.disabled = true;
+                navigator.geolocation.getCurrentPosition(pos => {
+                    state.lat = pos.coords.latitude;
+                    state.lng = pos.coords.longitude;
+                    dom.gpsResult.style.display = 'block';
+                    dom.gpsResult.innerHTML = `<span style="color:var(--success)">✅ Location captured: ${state.lat.toFixed(5)}, ${state.lng.toFixed(5)}</span>`;
+                    dom.gpsBtnText.textContent = '📍 Update location';
+                    dom.btnGps.disabled = false;
+                }, err => {
+                    dom.gpsBtnText.textContent = originalText;
+                    dom.btnGps.disabled = false;
+                    showErr('Failed to get location. Please allow location access.');
+                }, { enableHighAccuracy: true, timeout: 10000 });
+            });
+        }
         if (dom.btnSubmit) dom.btnSubmit.addEventListener('click', handleSubmit);
         if (dom.btnNewAfterSuccess) dom.btnNewAfterSuccess.addEventListener('click', resetForm);
         if (dom.btnViewAfterSuccess) dom.btnViewAfterSuccess.addEventListener('click', () => { resetForm(); switchView('requests'); });
@@ -1021,6 +1046,10 @@
             const detail = dom.inpAddressDetail?.value.trim() || '';
             const addr = [zone, detail].filter(Boolean).join(', ');
             if (addr) fd.append('delivery_address_text', addr);
+            if (state.lat && state.lng) {
+                fd.append('delivery_lat', state.lat);
+                fd.append('delivery_lng', state.lng);
+            }
             state.images.forEach(f => fd.append('images', f));
             await apiFetch('/requests', { method: 'POST', body: fd });
             showSuccessScreen();
@@ -1049,6 +1078,9 @@
         if (ddZone) ddZone.setValue('');
         if (dom.inpAddressDetail) dom.inpAddressDetail.value = '';
         if (dom.photoGrid) dom.photoGrid.innerHTML = '';
+        state.lat = null; state.lng = null;
+        if (dom.gpsResult) { dom.gpsResult.style.display = 'none'; dom.gpsResult.innerHTML = ''; }
+        if (dom.gpsBtnText) dom.gpsBtnText.textContent = '📍 Use my current location';
         if (dom.photoCount) dom.photoCount.textContent = '0/5 photos';
         if (dom.qtyVal) dom.qtyVal.textContent = '1';
         setCondition('any'); hideAlert(dom.formAlert);
