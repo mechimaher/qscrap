@@ -98,8 +98,10 @@
             'app.condUsed': 'Used Only',
 
             // Delivery
-            'app.labelAddress': 'Address in Qatar',
-            'app.addressPlaceholder': 'e.g. West Bay, Doha; Industrial Area; Al Wakra…',
+            'app.labelZone': 'Area / Zone in Qatar',
+            'app.zonePlaceholder': 'Search area… e.g. West Bay, Lusail, Al Wakra',
+            'app.labelStreet': 'Building / Street / Zone #',
+            'app.streetPlaceholder': 'e.g. Building 42, Street 900, Zone 56',
 
             // Photos
             'app.photoClick': 'Click to upload or drag & drop',
@@ -242,8 +244,10 @@
             'app.condUsed': 'مستعمل فقط',
 
             // Delivery
-            'app.labelAddress': 'العنوان في قطر',
-            'app.addressPlaceholder': 'مثال: الخليج الغربي، الدوحة؛ المنطقة الصناعية؛ الوكرة…',
+            'app.labelZone': 'المنطقة / الحي في قطر',
+            'app.zonePlaceholder': 'ابحث عن المنطقة… مثال: الدفنة، لوسيل، الوكرة',
+            'app.labelStreet': 'رقم المبنى / الشارع / المنطقة',
+            'app.streetPlaceholder': 'مثال: مبنى 42، شارع 900، منطقة 56',
 
             // Photos
             'app.photoClick': 'انقر للرفع أو اسحب وأفلت',
