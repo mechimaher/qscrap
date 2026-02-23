@@ -688,17 +688,41 @@
     }
 
     // ─── Request Detail Modal ──────────────────────────────────────────────────
-    function openRequestModal(r) {
+    async function openRequestModal(r) {
         if (!dom.modalOverlay || !dom.modalBody) return;
 
         const car = `${r.car_year} ${r.car_make} ${r.car_model}`;
-        const date = new Date(r.created_at).toLocaleDateString('en-GB', { day: '2-digit', month: 'short', year: 'numeric', hour: '2-digit', minute: '2-digit' });
-        const statusClass = { active: 'active', pending: 'active', completed: 'completed', cancelled: 'cancelled', expired: 'expired' }[r.status] || 'expired';
-        const statusLabel = { active: 'Active', pending: 'Active', completed: 'Completed', cancelled: 'Cancelled', expired: 'Expired' }[r.status] || r.status;
-        const bids = r.bid_count || r.bids_count || 0;
-        const images = r.image_urls || r.images || [];
-
         if (dom.modalTitle) dom.modalTitle.textContent = car;
+
+        // Show loading state immediately
+        dom.modalBody.innerHTML = '<div class="crq-spinner"></div>';
+        dom.modalOverlay.classList.add('visible');
+        dom.modalOverlay.setAttribute('aria-hidden', 'false');
+        document.body.style.overflow = 'hidden';
+
+        // Fetch full details with bids from dedicated endpoint
+        let fullData = r;
+        let bids = [];
+        try {
+            const data = await apiFetch('/requests/' + r.request_id);
+            if (data.request) fullData = data.request;
+            bids = data.bids || [];
+        } catch (_) {
+            // Fallback to basic data if fetch fails
+            bids = [];
+        }
+
+        renderModalContent(fullData, bids);
+    }
+
+    function renderModalContent(r, bids) {
+        const car = `${r.car_year} ${r.car_make} ${r.car_model}`;
+        const date = new Date(r.created_at).toLocaleDateString('en-GB', { day: '2-digit', month: 'short', year: 'numeric', hour: '2-digit', minute: '2-digit' });
+        const statusMap = { active: 'active', pending: 'active', accepted: 'completed', completed: 'completed', cancelled: 'cancelled', expired: 'expired' };
+        const labelMap = { active: 'Active', pending: 'Active', accepted: 'Accepted', completed: 'Completed', cancelled: 'Cancelled', expired: 'Expired' };
+        const statusClass = statusMap[r.status] || 'expired';
+        const statusLabel = labelMap[r.status] || r.status;
+        const images = r.image_urls || r.images || [];
 
         let html = `
             <div class="crq-detail-row">
@@ -736,13 +760,13 @@
             <div class="crq-detail-row">
                 <div class="crq-detail-label">Delivery</div>
                 <div class="crq-detail-value">${escHtml(r.delivery_address_text)}</div>
+            </div>
+            <div class="crq-detail-row">
+                <div class="crq-detail-label">Created</div>
+                <div class="crq-detail-value">${date}</div>
             </div>`;
 
-        html += `
-            <div class="crq-detail-row">
-                <div class="crq-detail-label">Bids</div>
-                <div class="crq-detail-value">${bids > 0 ? `<span class="crq-bid-badge">🏷️ ${bids} bid${bids !== 1 ? 's' : ''}</span>` : '<span style="color:var(--slate)">No bids yet — garages are reviewing</span>'}</div>
-            </div>
+        if (!r.delivery_address_text) html += `
             <div class="crq-detail-row">
                 <div class="crq-detail-label">Created</div>
                 <div class="crq-detail-value">${date}</div>
@@ -758,10 +782,78 @@
             </div>`;
         }
 
+        // ── Bids Section ──
+        html += '<div class="crq-bids-section">';
+        html += `<div class="crq-bids-header">
+            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M20.59 13.41l-7.17 7.17a2 2 0 0 1-2.83 0L2 12V2h10l8.59 8.59a2 2 0 0 1 0 2.82z"/><line x1="7" y1="7" x2="7.01" y2="7"/></svg>
+            <span>Garage Bids (${bids.length})</span>
+        </div>`;
+
+        if (!bids.length) {
+            html += '<div class="crq-bids-empty"><div style="font-size:28px;margin-bottom:8px">⏳</div><div style="font-weight:600;color:var(--charcoal)">No bids yet</div><div style="font-size:13px;color:var(--slate);margin-top:4px">Verified garages are reviewing your request. You\'ll receive bids soon.</div></div>';
+        } else {
+            bids.forEach((bid, i) => {
+                const bidPrice = parseFloat(bid.bid_amount).toFixed(2);
+                const deliveryFee = bid.delivery_fee ? parseFloat(bid.delivery_fee).toFixed(2) : null;
+                const condLabel = bid.condition_offered === 'new' ? 'New' : bid.condition_offered === 'used' ? 'Used' : bid.condition_offered === 'aftermarket' ? 'Aftermarket' : (bid.condition_offered || '—');
+                const garageName = bid.garage_name || `Garage ${i + 1}`;
+                const rating = bid.garage_rating ? parseFloat(bid.garage_rating).toFixed(1) : null;
+                const txns = bid.total_transactions || 0;
+                const bidImages = bid.image_urls || [];
+                const bidStatus = bid.status === 'accepted' ? 'accepted' : 'pending';
+                const bidStatusLabel = bid.status === 'accepted' ? '✅ Accepted' : '⏳ Pending';
+                const rounds = parseInt(bid.negotiation_rounds) || 0;
+                const hasPending = bid.has_pending_negotiation;
+                const planBadge = bid.plan_code === 'enterprise' ? '🏆' : bid.plan_code === 'professional' ? '⭐' : '';
+                const bidNote = bid.notes || bid.message || '';
+
+                html += `<div class="crq-bid-card ${bidStatus}">
+                    <div class="crq-bid-card-top">
+                        <div class="crq-bid-garage">
+                            <div class="crq-bid-garage-avatar">${garageName.charAt(0).toUpperCase()}</div>
+                            <div>
+                                <div class="crq-bid-garage-name">${planBadge ? planBadge + ' ' : ''}${escHtml(garageName)}</div>
+                                <div class="crq-bid-garage-meta">
+                                    ${rating ? '⭐ ' + rating : ''}${rating && txns ? ' · ' : ''}${txns ? txns + ' sales' : ''}
+                                </div>
+                            </div>
+                        </div>
+                        <div class="crq-bid-price-box">
+                            <div class="crq-bid-price">QAR ${bidPrice}</div>
+                            ${deliveryFee ? '<div class="crq-bid-delivery">+ QAR ' + deliveryFee + ' delivery</div>' : '<div class="crq-bid-delivery">Free delivery</div>'}
+                        </div>
+                    </div>
+                    <div class="crq-bid-details-row">
+                        <span class="crq-bid-detail-chip">${escHtml(condLabel)}</span>
+                        <span class="crq-bid-detail-chip">${bidStatusLabel}</span>
+                        ${rounds > 0 ? `<span class="crq-bid-detail-chip">🔄 ${rounds} round${rounds !== 1 ? 's' : ''}</span>` : ''}
+                        ${hasPending ? '<span class="crq-bid-detail-chip pending-chip">💬 Counter pending</span>' : ''}
+                    </div>`;
+
+                if (bidNote) {
+                    html += `<div class="crq-bid-note"><strong>Note:</strong> ${escHtml(bidNote)}</div>`;
+                }
+
+                if (bidImages.length) {
+                    html += `<div class="crq-bid-images">${bidImages.map(url => `<img src="${escAttr(url)}" alt="Bid photo" class="crq-detail-photo" loading="lazy">`).join('')}</div>`;
+                }
+
+                html += '</div>';
+            });
+
+            // App download CTA — users must accept/reject bids via the mobile app
+            html += `<div class="crq-bid-app-cta">
+                <div class="crq-bid-app-cta-icon">📱</div>
+                <div>
+                    <div style="font-weight:700;font-size:14px;color:var(--charcoal)">Accept bids on the QScrap app</div>
+                    <div style="font-size:13px;color:var(--slate);margin-top:2px">Download the app to compare, negotiate, and accept bids from garages.</div>
+                </div>
+            </div>`;
+        }
+
+        html += '</div>'; // close bids section
+
         dom.modalBody.innerHTML = html;
-        dom.modalOverlay.classList.add('visible');
-        dom.modalOverlay.setAttribute('aria-hidden', 'false');
-        document.body.style.overflow = 'hidden';
     }
 
     function closeModal() {

@@ -1307,6 +1307,158 @@
     cursor: pointer;
 }
 
+/* ===== BID CARDS (inside modal) ===== */
+.crq-bids-section {
+    margin-top: 20px;
+    border-top: 2px solid var(--pearl);
+    padding-top: 16px;
+}
+
+.crq-bids-header {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    font-size: 15px;
+    font-weight: 700;
+    color: var(--qatar-maroon);
+    margin-bottom: 14px;
+}
+
+.crq-bids-empty {
+    text-align: center;
+    padding: 28px 16px;
+    background: var(--mist);
+    border-radius: var(--radius-md);
+}
+
+.crq-bid-card {
+    border: 1.5px solid var(--silver);
+    border-radius: var(--radius-md);
+    padding: 16px;
+    margin-bottom: 12px;
+    background: var(--white);
+    transition: border-color var(--transition-fast);
+}
+
+.crq-bid-card.accepted {
+    border-color: var(--success);
+    background: linear-gradient(135deg, var(--success-light) 0%, var(--white) 100%);
+}
+
+.crq-bid-card-top {
+    display: flex;
+    justify-content: space-between;
+    align-items: flex-start;
+    gap: 12px;
+    margin-bottom: 12px;
+}
+
+.crq-bid-garage {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+}
+
+.crq-bid-garage-avatar {
+    width: 36px;
+    height: 36px;
+    border-radius: 50%;
+    background: var(--qatar-maroon);
+    color: var(--white);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-weight: 700;
+    font-size: 14px;
+    flex-shrink: 0;
+}
+
+.crq-bid-garage-name {
+    font-size: 14px;
+    font-weight: 700;
+    color: var(--charcoal);
+}
+
+.crq-bid-garage-meta {
+    font-size: 12px;
+    color: var(--slate);
+    margin-top: 1px;
+}
+
+.crq-bid-price-box {
+    text-align: right;
+    flex-shrink: 0;
+}
+
+.crq-bid-price {
+    font-size: 18px;
+    font-weight: 800;
+    color: var(--qatar-maroon);
+    line-height: 1.1;
+}
+
+.crq-bid-delivery {
+    font-size: 11px;
+    color: var(--slate);
+    margin-top: 2px;
+}
+
+.crq-bid-details-row {
+    display: flex;
+    gap: 6px;
+    flex-wrap: wrap;
+}
+
+.crq-bid-detail-chip {
+    display: inline-flex;
+    align-items: center;
+    gap: 4px;
+    padding: 4px 10px;
+    background: var(--mist);
+    border-radius: var(--radius-full);
+    font-size: 11px;
+    font-weight: 600;
+    color: var(--charcoal);
+}
+
+.crq-bid-detail-chip.pending-chip {
+    background: var(--gold-light);
+    color: var(--gold-dark);
+}
+
+.crq-bid-note {
+    margin-top: 10px;
+    padding: 10px 12px;
+    background: var(--mist);
+    border-radius: var(--radius-sm);
+    font-size: 13px;
+    color: var(--charcoal);
+    line-height: 1.5;
+}
+
+.crq-bid-images {
+    margin-top: 10px;
+    display: flex;
+    gap: 6px;
+    flex-wrap: wrap;
+}
+
+.crq-bid-app-cta {
+    display: flex;
+    align-items: center;
+    gap: 14px;
+    padding: 16px;
+    margin-top: 8px;
+    background: linear-gradient(135deg, var(--qatar-maroon-lighter) 0%, #fef3c7 100%);
+    border: 1.5px solid var(--qatar-maroon-light);
+    border-radius: var(--radius-md);
+}
+
+.crq-bid-app-cta-icon {
+    font-size: 28px;
+    flex-shrink: 0;
+}
+
 @media (max-width: 600px) {
     .crq-modal {
         max-width: 100%;
@@ -1315,6 +1467,14 @@
 
     .crq-modal-body {
         padding: 20px 16px;
+    }
+
+    .crq-bid-card-top {
+        flex-direction: column;
+    }
+
+    .crq-bid-price-box {
+        text-align: left;
     }
 }
 
