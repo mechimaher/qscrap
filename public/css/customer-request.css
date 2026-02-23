@@ -3,11 +3,26 @@
    Uses global design-tokens.css — Qatar Maroon × Gold palette
    ============================================================ */
 
-/* ===== PAGE SHELL ===== */
+/* ===== PAGE SHELL (sticky footer) ===== */
+body {
+    display: flex;
+    flex-direction: column;
+    min-height: 100vh;
+    margin: 0;
+}
+
 .crq-page {
     min-height: 100vh;
     background: var(--bg-page);
     font-family: var(--font-sans);
+}
+
+.crq-app {
+    flex: 1;
+}
+
+.crq-auth-wrap {
+    flex: 1;
 }
 
 /* ===== NAV INTEGRATION (inherits main nav fully) ===== */
