@@ -1,6 +1,6 @@
 /**
  * QScrap Customer Web Request — JavaScript
- * v2.0 — Searchable dropdowns for vehicle + Request detail modal
+ * v2.0 — Searchable dropdowns for vehicle + Request detail modal + i18n
  *
  * API contract 100% aligned with backend.
  */
@@ -11,6 +11,379 @@
 
     // ─── Config ────────────────────────────────────────────────────────────────
     const API = '/api';
+
+    // ─── i18n Translations ─────────────────────────────────────────────────────
+    const I18N = {
+        en: {
+            // Nav
+            'nav.requestPart': 'Request a Part',
+            'nav.howItWorks': 'How It Works',
+            'nav.gallery': 'Gallery',
+            'nav.forBusiness': 'For Businesses',
+            'nav.about': 'About',
+            'nav.backHome': 'Back to Home',
+
+            // Auth
+            'auth.title': 'Request a Car Part',
+            'auth.subtitle': 'Sign in or create a free account to get started',
+            'auth.tabLogin': 'Sign In',
+            'auth.tabRegister': 'Create Account',
+            'auth.labelPhone': 'Phone Number',
+            'auth.labelPassword': 'Password',
+            'auth.loginPlaceholder': 'Your password',
+            'auth.loginBtn': 'Sign In →',
+            'auth.labelName': 'Full Name',
+            'auth.namePlaceholder': 'Your full name',
+            'auth.labelEmail': 'Email Address',
+            'auth.emailPlaceholder': 'you@email.com',
+            'auth.emailHint': 'We\'ll send a verification code to this email.',
+            'auth.phonePlaceholder': '+974 XXXX XXXX or 8-digit number',
+            'auth.pwdPlaceholder': 'Minimum 6 characters',
+            'auth.registerBtn': 'Create Account →',
+            'auth.otpTitle': 'Verification Code',
+            'auth.otpSent': '📧 Verification code sent to',
+            'auth.otpPlaceholder': 'Enter 6-digit code',
+            'auth.resend': 'Resend',
+            'auth.verifyBtn': 'Verify & Create Account →',
+            'auth.back': '← Back',
+
+            // App
+            'app.breadcrumbHome': 'Home',
+            'app.breadcrumbRequest': 'Request a Part',
+            'app.nudgeTitle': 'Get more on the QScrap app',
+            'app.nudgeText': 'Push notifications for bids, live delivery tracking, and camera photo uploads.',
+            'app.nudgeBtn': 'Download App',
+            'app.portalTitle': 'Auto Parts Portal',
+            'app.portalSubtitle': 'Request a part or track your existing requests',
+            'app.userLabel': 'Customer',
+            'app.signOut': 'Sign out',
+
+            // Tabs
+            'app.tabNewRequest': 'New Request',
+            'app.tabMyRequests': 'My Requests',
+
+            // Form Steps
+            'app.step1': 'Your Vehicle',
+            'app.step1Desc': 'Tell us about the car that needs the part',
+            'app.step2': 'Part Details',
+            'app.step2Desc': 'Describe the part you need — be specific for better bids',
+            'app.step3': 'Delivery Address',
+            'app.step3Desc': 'Where should we deliver? Helps garages provide accurate delivery quotes',
+            'app.step4': 'Photos',
+            'app.step4Desc': 'Upload up to 5 photos of the damaged part or area — helps garages match exactly',
+
+            // Vehicle Form
+            'app.labelMake': 'Make',
+            'app.labelModel': 'Model',
+            'app.labelYear': 'Year',
+            'app.labelVin': 'VIN Number',
+            'app.vinPlaceholder': '17-character VIN',
+            'app.searchMake': 'Search make…',
+            'app.searchModel': 'Select make first…',
+            'app.searchYear': 'Search year…',
+
+            // Part Details
+            'app.labelCategory': 'Category',
+            'app.selectCategory': '— Select a category —',
+            'app.labelSubcategory': 'Subcategory',
+            'app.selectSubcategory': '— Select subcategory —',
+            'app.labelDesc': 'Description',
+            'app.descPlaceholder': 'Describe the part in detail. E.g.: Right front shock absorber for 2020 Toyota Camry 2.5L. Need genuine OEM or equivalent quality.',
+            'app.labelPartNum': 'Part Number',
+            'app.partNumPlaceholder': 'OEM or aftermarket part #',
+            'app.labelQuantity': 'Quantity',
+            'app.labelCondition': 'Part Condition Preference',
+            'app.condAny': 'Any Condition',
+            'app.condNew': 'New Only',
+            'app.condUsed': 'Used Only',
+
+            // Delivery
+            'app.labelAddress': 'Address in Qatar',
+            'app.addressPlaceholder': 'e.g. West Bay, Doha; Industrial Area; Al Wakra…',
+
+            // Photos
+            'app.photoClick': 'Click to upload or drag & drop',
+            'app.photoHint': 'JPG, PNG, WebP — up to 5 photos',
+            'app.photoCount': '{n}/5 photos',
+
+            // Submit
+            'app.submitHint': 'Free to request. Garages compete for your business.',
+            'app.submitBtn': 'Submit Request',
+
+            // Success
+            'app.successTitle': 'Request Submitted!',
+            'app.successText': 'Your request is live. Verified garages are reviewing it now and will submit bids within hours.',
+            'app.successNew': 'Request Another Part',
+            'app.successView': 'View My Requests →',
+
+            // Requests List
+            'app.noRequests': 'No requests yet. Start by creating your first request!',
+            'app.loading': 'Loading...',
+            'app.requestTitle': 'Request #{id}',
+            'app.viewDetails': 'View Details',
+
+            // Modal
+            'app.modalTitle': 'Request Details',
+            'app.closeModal': 'Close modal',
+
+            // Footer
+            'app.footerRights': '© 2026 QScrap Services & Trading L.L.C. — Doha, Qatar',
+            'app.footerTerms': 'Terms of Service',
+            'app.footerPrivacy': 'Privacy Policy',
+            'app.footerRefund': 'Refund Policy',
+            'app.footerPartners': 'For Businesses',
+
+            // Toasts & Alerts
+            'toast.error': 'Error',
+            'toast.success': 'Success',
+            'toast.loginRequired': 'Please sign in to continue',
+            'toast.invalidPhone': 'Please enter a valid phone number',
+            'toast.invalidEmail': 'Please enter a valid email address',
+            'toast.invalidPassword': 'Password must be at least 6 characters',
+            'toast.loginSuccess': 'Welcome back!',
+            'toast.loginFailed': 'Login failed. Please check your credentials.',
+            'toast.otpSent': 'Verification code sent to your email',
+            'toast.otpInvalid': 'Invalid verification code',
+            'toast.accountCreated': 'Account created successfully!',
+            'toast.accountCreateFailed': 'Failed to create account',
+            'toast.requestSuccess': 'Request submitted successfully!',
+            'toast.requestFailed': 'Failed to submit request',
+            'toast.photoLimit': 'Maximum 5 photos allowed',
+
+            // Status labels
+            'status.active': 'Active',
+            'status.pending': 'Pending',
+            'status.completed': 'Completed',
+            'status.cancelled': 'Cancelled',
+            'status.expired': 'Expired',
+            'status.accepted': 'Accepted'
+        },
+        ar: {
+            // Nav
+            'nav.requestPart': 'طلب قطعة',
+            'nav.howItWorks': 'كيف يعمل',
+            'nav.gallery': 'المعرض',
+            'nav.forBusiness': 'للأعمال',
+            'nav.about': 'حول',
+            'nav.backHome': 'العودة للرئيسية',
+
+            // Auth
+            'auth.title': 'طلب قطعة غيار سيارة',
+            'auth.subtitle': 'سجل الدخول أو أنشئ حساباً مجانياً للبدء',
+            'auth.tabLogin': 'تسجيل الدخول',
+            'auth.tabRegister': 'إنشاء حساب',
+            'auth.labelPhone': 'رقم الهاتف',
+            'auth.labelPassword': 'كلمة المرور',
+            'auth.loginPlaceholder': 'كلمة المرور الخاصة بك',
+            'auth.loginBtn': 'تسجيل الدخول ←',
+            'auth.labelName': 'الاسم الكامل',
+            'auth.namePlaceholder': 'اسمك الكامل',
+            'auth.labelEmail': 'البريد الإلكتروني',
+            'auth.emailPlaceholder': 'you@email.com',
+            'auth.emailHint': 'سنرسل رمز التحقق إلى هذا البريد.',
+            'auth.phonePlaceholder': '+974 XXXX XXXX أو رقم من 8 خانات',
+            'auth.pwdPlaceholder': '6 أحرف على الأقل',
+            'auth.registerBtn': 'إنشاء حساب ←',
+            'auth.otpTitle': 'رمز التحقق',
+            'auth.otpSent': '📧 تم إرسال رمز التحقق إلى',
+            'auth.otpPlaceholder': 'أدخل الرمز المكون من 6 خانات',
+            'auth.resend': 'إعادة الإرسال',
+            'auth.verifyBtn': 'تحقق وأنشئ الحساب ←',
+            'auth.back': '← عودة',
+
+            // App
+            'app.breadcrumbHome': 'الرئيسية',
+            'app.breadcrumbRequest': 'طلب قطعة',
+            'app.nudgeTitle': 'احصل على المزيد في تطبيق كيوسكراب',
+            'app.nudgeText': 'إشعارات فورية للعروض، تتبع مباشر للتسليم، ورفع صور بالكاميرا.',
+            'app.nudgeBtn': 'تحميل التطبيق',
+            'app.portalTitle': 'بوابة قطع غيار السيارات',
+            'app.portalSubtitle': 'اطلب قطعة أو تتبع طلباتك الحالية',
+            'app.userLabel': 'عميل',
+            'app.signOut': 'تسجيل الخروج',
+
+            // Tabs
+            'app.tabNewRequest': 'طلب جديد',
+            'app.tabMyRequests': 'طلباتي',
+
+            // Form Steps
+            'app.step1': 'مركبتك',
+            'app.step1Desc': 'أخبرنا عن السيارة التي تحتاج القطعة',
+            'app.step2': 'تفاصيل القطعة',
+            'app.step2Desc': 'صِف القطعة التي تحتاجها - كن محدداً للحصول على عروض أفضل',
+            'app.step3': 'عنوان التسليم',
+            'app.step3Desc': 'أين يجب أن نسلم؟ يساعد الكراجات في تقديم عروض تسليم دقيقة',
+            'app.step4': 'الصور',
+            'app.step4Desc': 'ارفع حتى 5 صور للقطعة التالفة أو المنطقة - يساعد الكراجات في المطابقة الدقيقة',
+
+            // Vehicle Form
+            'app.labelMake': 'الصانع',
+            'app.labelModel': 'الموديل',
+            'app.labelYear': 'السنة',
+            'app.labelVin': 'رقم الهيكل (VIN)',
+            'app.vinPlaceholder': '17 حرف/رقم',
+            'app.searchMake': 'ابحث عن الصانع…',
+            'app.searchModel': 'اختر الصانع أولاً…',
+            'app.searchYear': 'ابحث عن السنة…',
+
+            // Part Details
+            'app.labelCategory': 'الفئة',
+            'app.selectCategory': '— اختر فئة —',
+            'app.labelSubcategory': 'الفئة الفرعية',
+            'app.selectSubcategory': '— اختر فئة فرعية —',
+            'app.labelDesc': 'الوصف',
+            'app.descPlaceholder': 'صِف القطعة بالتفصيل. مثال: ممتص صدمات أمامي أيمن لتويوتا كامري 2020 2.5 لتر. أحتاج أصلي أو ما يعادله.',
+            'app.labelPartNum': 'رقم القطعة',
+            'app.partNumPlaceholder': 'رقم القطعة الأصلي أو البديل',
+            'app.labelQuantity': 'الكمية',
+            'app.labelCondition': 'تفضيل حالة القطعة',
+            'app.condAny': 'أي حالة',
+            'app.condNew': 'جديد فقط',
+            'app.condUsed': 'مستعمل فقط',
+
+            // Delivery
+            'app.labelAddress': 'العنوان في قطر',
+            'app.addressPlaceholder': 'مثال: الخليج الغربي، الدوحة؛ المنطقة الصناعية؛ الوكرة…',
+
+            // Photos
+            'app.photoClick': 'انقر للرفع أو اسحب وأفلت',
+            'app.photoHint': 'JPG, PNG, WebP — حتى 5 صور',
+            'app.photoCount': '{n}/5 صور',
+
+            // Submit
+            'app.submitHint': 'الطلب مجاني. الكراجات تتنافس على عملك.',
+            'app.submitBtn': 'إرسال الطلب',
+
+            // Success
+            'app.successTitle': 'تم إرسال الطلب!',
+            'app.successText': 'طلبك نشط. الكراجات المعتمدة تراجعه الآن وستقدم عروضاً خلال ساعات.',
+            'app.successNew': 'طلب قطعة أخرى',
+            'app.successView': 'عرض طلباتي ←',
+
+            // Requests List
+            'app.noRequests': 'لا توجد طلبات بعد. ابدأ بإنشاء طلبك الأول!',
+            'app.loading': 'جاري التحميل...',
+            'app.requestTitle': 'طلب #{id}',
+            'app.viewDetails': 'عرض التفاصيل',
+
+            // Modal
+            'app.modalTitle': 'تفاصيل الطلب',
+            'app.closeModal': 'إغلاق',
+
+            // Footer
+            'app.footerRights': '© 2026 كيوسكراب للخدمات والتجارة ذ.م.م — الدوحة، قطر',
+            'app.footerTerms': 'شروط الخدمة',
+            'app.footerPrivacy': 'سياسة الخصوصية',
+            'app.footerRefund': 'سياسة الاسترداد',
+            'app.footerPartners': 'للأعمال',
+
+            // Toasts & Alerts
+            'toast.error': 'خطأ',
+            'toast.success': 'نجاح',
+            'toast.loginRequired': 'يرجى تسجيل الدخول للمتابعة',
+            'toast.invalidPhone': 'يرجى إدخال رقم هاتف صالح',
+            'toast.invalidEmail': 'يرجى إدخال بريد إلكتروني صالح',
+            'toast.invalidPassword': 'كلمة المرور يجب أن تكون 6 أحرف على الأقل',
+            'toast.loginSuccess': 'مرحباً بعودتك!',
+            'toast.loginFailed': 'فشل تسجيل الدخول. يرجى التحقق من بياناتك.',
+            'toast.otpSent': 'تم إرسال رمز التحقق إلى بريدك',
+            'toast.otpInvalid': 'رمز التحقق غير صالح',
+            'toast.accountCreated': 'تم إنشاء الحساب بنجاح!',
+            'toast.accountCreateFailed': 'فشل إنشاء الحساب',
+            'toast.requestSuccess': 'تم إرسال الطلب بنجاح!',
+            'toast.requestFailed': 'فشل إرسال الطلب',
+            'toast.photoLimit': 'الحد الأقصى 5 صور',
+
+            // Status labels
+            'status.active': 'نشط',
+            'status.pending': 'قيد المعالجة',
+            'status.completed': 'مكتمل',
+            'status.cancelled': 'ملغى',
+            'status.expired': 'منتهي',
+            'status.accepted': 'مقبول'
+        }
+    };
+
+    // ─── i18n System ───────────────────────────────────────────────────────────
+    const i18n = {
+        currentLang: localStorage.getItem('qscrap-lang') || 'en',
+
+        init() {
+            this.setLanguage(this.currentLang, false);
+            document.querySelectorAll('.lang-btn, .mobile-lang-btn').forEach(btn => {
+                btn.addEventListener('click', () => {
+                    const lang = btn.dataset.lang;
+                    this.setLanguage(lang, true);
+                });
+            });
+        },
+
+        setLanguage(lang, animate = true) {
+            this.currentLang = lang;
+            localStorage.setItem('qscrap-lang', lang);
+
+            const html = document.documentElement;
+            if (lang === 'ar') {
+                html.setAttribute('dir', 'rtl');
+                html.setAttribute('lang', 'ar');
+            } else {
+                html.setAttribute('dir', 'ltr');
+                html.setAttribute('lang', 'en');
+            }
+
+            // Swap logo
+            const logoSrc = lang === 'ar'
+                ? '/assets/images/qscrap-logo-ar.png?v=2026opt'
+                : '/assets/images/qscrap-logo.png?v=2026';
+            document.querySelectorAll('.nav-logo img, .mobile-menu-logo img').forEach(img => {
+                img.src = logoSrc;
+            });
+
+            // Update button states
+            document.querySelectorAll('.lang-btn, .mobile-lang-btn').forEach(btn => {
+                if (btn.dataset.lang === lang) {
+                    btn.classList.add('active');
+                } else {
+                    btn.classList.remove('active');
+                }
+            });
+
+            // Translate elements
+            document.querySelectorAll('[data-i18n]').forEach(el => {
+                const key = el.dataset.i18n;
+                const translation = I18N[lang][key];
+                if (translation) {
+                    if (animate) {
+                        el.style.opacity = '0';
+                        el.style.transition = 'opacity 0.15s ease';
+                        setTimeout(() => {
+                            el.innerHTML = translation;
+                            el.style.opacity = '1';
+                        }, 150);
+                    } else {
+                        el.innerHTML = translation;
+                    }
+                }
+            });
+
+            // Translate placeholders
+            document.querySelectorAll('[data-i18n-placeholder]').forEach(el => {
+                const key = el.dataset.i18nPlaceholder;
+                const translation = I18N[lang][key];
+                if (translation) {
+                    el.placeholder = translation;
+                }
+            });
+        },
+
+        t(key, params = {}) {
+            let text = I18N[this.currentLang][key] || I18N.en[key] || key;
+            Object.keys(params).forEach(k => {
+                text = text.replace(`{${k}}`, params[k]);
+            });
+            return text;
+        }
+    };
 
     // ─── Qatar-Market Car Makes & Models (2026 Edition) ───────────────────────
     const CAR_DATA = {
@@ -103,6 +476,32 @@
         'Climate Control (HVAC)': ['A/C Compressor', 'Condenser', 'Evaporator Core', 'Heater Core', 'Blower Motor', 'HVAC Control Panel', 'Cabin Air Filter'],
         'Cameras & Sensors': ['Backup Camera', 'Front Camera', '360° Camera System', 'Parking Sensor', 'Rain Sensor'],
     };
+
+    // ─── Qatar Zones & Areas ───────────────────────────────────────────────────
+    const QATAR_ZONES = [
+        // Doha Central
+        'West Bay', 'West Bay Lagoon', 'The Pearl-Qatar', 'Lusail', 'Al Dafna', 'Al Corniche', 'Musheireb', 'Souq Waqif', 'Al Bidda', 'Msheireb Downtown',
+        // Doha North
+        'Al Sadd', 'Al Muntazah', 'Al Hilal', 'Bin Mahmoud', 'Al Mirqab', 'Al Nasr', 'Madinat Khalifa', 'New Slata', 'Old Airport', 'Fereej Bin Omran',
+        // Doha South & West
+        'Al Aziziyah', 'Al Waab', 'Al Markhiya', 'Al Rayyan', 'Al Gharrafa', 'Ain Khaled', 'Muaither', 'Umm Salal Mohammed', 'Umm Salal Ali',
+        // Industrial & Commercial
+        'Industrial Area', 'Salwa Industrial Area', 'Street 1 Industrial', 'New Industrial Area', 'Free Zone', 'Logistics Village',
+        // Suburban
+        'Al Thumama', 'Al Wukair', 'Al Wakra', 'Al Khor', 'Al Thakhira', 'Simaisma', 'Al Daayen', 'Duhail',
+        // Northern Qatar
+        'Ras Laffan', 'Al Ruwais', 'Madinat Al Shamal', 'Al Zubarah', 'Al Ghuwairiya', 'Fuwairit',
+        // Residential
+        'Abu Hamour', 'Al Mansoura', 'Fereej Abdul Aziz', 'Najma', 'Old Al Ghanim', 'Al Maamoura', 'Rawdat Al Khail', 'Al Kheesa', 'Izghawa', 'Jeryan Nejaima',
+        // New Developments
+        'Lusail Marina', 'Lusail Fox Hills', 'Qetaifan Islands', 'Gewan Island', 'Al Erkyah', 'Msheireb Smart City', 'Education City', 'Qatar Foundation',
+        // South
+        'Mesaieed', 'Sealine', 'Abu Nakhla', 'Barwa City', 'Barwa Al Baraha',
+        // West
+        'Dukhan', 'Zekreet', 'Al Sheehaniya', 'Umm Bab', 'Al Karaana',
+    ];
+
+    const POPULAR_ZONES = ['West Bay', 'The Pearl-Qatar', 'Lusail', 'Industrial Area', 'Al Wakra', 'Al Rayyan', 'Al Sadd', 'Al Gharrafa', 'Al Khor', 'Abu Hamour', 'Al Thumama', 'Ain Khaled', 'Education City'];
 
     // ─── State ─────────────────────────────────────────────────────────────────
     let state = {
@@ -250,9 +649,12 @@
     }
 
     // ─── Init ──────────────────────────────────────────────────────────────────
-    let ddMake, ddModel, ddYear;
+    let ddMake, ddModel, ddYear, ddZone;
 
     function init() {
+        // Initialize i18n first
+        i18n.init();
+
         const stored = localStorage.getItem('crq_auth');
         if (stored) {
             try { const s = JSON.parse(stored); if (s.token && s.userId) Object.assign(state, s); } catch (_) { }
@@ -285,6 +687,11 @@
 
         ddYear = SearchableDropdown('crqCarYear', 'crqCarYearList', 'crqCarYearWrap', YEARS, {
             placeholder: 'Search year…',
+        });
+
+        ddZone = SearchableDropdown('crqZone', 'crqZoneList', 'crqZoneWrap', QATAR_ZONES, {
+            placeholder: 'Search area… e.g. West Bay, Lusail',
+            popularItems: POPULAR_ZONES,
         });
     }
 
@@ -331,7 +738,7 @@
             qtyMinus: q('#crqQtyMinus'),
             qtyPlus: q('#crqQtyPlus'),
             qtyVal: q('#crqQtyVal'),
-            inpAddress: q('#crqAddress'),
+            inpAddressDetail: q('#crqAddressDetail'),
             photoInput: q('#crqPhotoInput'),
             photoGrid: q('#crqPhotoGrid'),
             photoZone: q('#crqPhotoZone'),
@@ -610,7 +1017,9 @@
             const partNum = dom.inpPartNum?.value.trim();
             if (partNum) fd.append('part_number', partNum);
             fd.append('condition_required', state.condition);
-            const addr = dom.inpAddress?.value.trim();
+            const zone = ddZone ? ddZone.getValue() : '';
+            const detail = dom.inpAddressDetail?.value.trim() || '';
+            const addr = [zone, detail].filter(Boolean).join(', ');
             if (addr) fd.append('delivery_address_text', addr);
             state.images.forEach(f => fd.append('images', f));
             await apiFetch('/requests', { method: 'POST', body: fd });
@@ -637,7 +1046,8 @@
         if (dom.inpDesc) dom.inpDesc.value = '';
         if (dom.descCount) dom.descCount.textContent = '0/1000';
         if (dom.inpPartNum) dom.inpPartNum.value = '';
-        if (dom.inpAddress) dom.inpAddress.value = '';
+        if (ddZone) ddZone.setValue('');
+        if (dom.inpAddressDetail) dom.inpAddressDetail.value = '';
         if (dom.photoGrid) dom.photoGrid.innerHTML = '';
         if (dom.photoCount) dom.photoCount.textContent = '0/5 photos';
         if (dom.qtyVal) dom.qtyVal.textContent = '1';

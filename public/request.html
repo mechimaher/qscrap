@@ -55,10 +55,10 @@
                 <img src="/assets/images/qscrap-logo.png?v=2026" alt="QScrap Logo" id="navLogo">
             </a>
             <div class="nav-links">
-                <a href="/#how-it-works" class="nav-link">How It Works</a>
-                <a href="/#gallery" class="nav-link">Gallery</a>
-                <a href="/partners.html" class="nav-link">For Businesses</a>
-                <a href="/about.html" class="nav-link">About</a>
+                <a href="/#how-it-works" class="nav-link" data-i18n="nav.howItWorks">How It Works</a>
+                <a href="/#gallery" class="nav-link" data-i18n="nav.gallery">Gallery</a>
+                <a href="/partners.html" class="nav-link" data-i18n="nav.forBusiness">For Businesses</a>
+                <a href="/about.html" class="nav-link" data-i18n="nav.about">About</a>
             </div>
             <!-- Language Switcher -->
             <div class="lang-switcher" id="langSwitcher">
@@ -74,7 +74,7 @@
                     <line x1="12" y1="8" x2="12" y2="16" />
                     <line x1="8" y1="12" x2="16" y2="12" />
                 </svg>
-                <span>Request a Part</span>
+                <span data-i18n="nav.requestPart">Request a Part</span>
             </a>
             <button class="mobile-menu-btn" id="mobileMenuBtn" aria-label="Toggle Menu">
                 <span></span><span></span><span></span>
@@ -98,10 +98,10 @@
                 </button>
             </div>
             <nav class="mobile-menu-nav">
-                <a href="/#how-it-works" class="mobile-menu-link">How It Works</a>
-                <a href="/#gallery" class="mobile-menu-link">Gallery</a>
-                <a href="/partners.html" class="mobile-menu-link">For Businesses</a>
-                <a href="/about.html" class="mobile-menu-link">About</a>
+                <a href="/#how-it-works" class="mobile-menu-link" data-i18n="nav.howItWorks">How It Works</a>
+                <a href="/#gallery" class="mobile-menu-link" data-i18n="nav.gallery">Gallery</a>
+                <a href="/partners.html" class="mobile-menu-link" data-i18n="nav.forBusiness">For Businesses</a>
+                <a href="/about.html" class="mobile-menu-link" data-i18n="nav.about">About</a>
             </nav>
             <div class="mobile-menu-footer">
                 <div class="mobile-lang-switcher">
@@ -114,7 +114,7 @@
                         <line x1="12" y1="8" x2="12" y2="16" />
                         <line x1="8" y1="12" x2="16" y2="12" />
                     </svg>
-                    <span>Request a Part</span>
+                    <span data-i18n="nav.requestPart">Request a Part</span>
                 </a>
             </div>
         </div>
@@ -131,13 +131,15 @@
             <div class="crq-auth-logo">
                 <img src="/assets/images/qscrap-logo.png?v=2026" alt="QScrap">
             </div>
-            <h1 class="crq-auth-title">Request a Car Part</h1>
-            <p class="crq-auth-subtitle">Sign in or create a free account to get started</p>
+            <h1 class="crq-auth-title" data-i18n="auth.title">Request a Car Part</h1>
+            <p class="crq-auth-subtitle" data-i18n="auth.subtitle">Sign in or create a free account to get started</p>
 
             <!-- Tabs -->
             <div class="crq-tabs" role="tablist">
-                <button class="crq-tab active" id="crqTabLogin" role="tab" aria-selected="true">Sign In</button>
-                <button class="crq-tab" id="crqTabRegister" role="tab" aria-selected="false">Create Account</button>
+                <button class="crq-tab active" id="crqTabLogin" role="tab" aria-selected="true"
+                    data-i18n="auth.tabLogin">Sign In</button>
+                <button class="crq-tab" id="crqTabRegister" role="tab" aria-selected="false"
+                    data-i18n="auth.tabRegister">Create Account</button>
             </div>
 
             <!-- ── LOGIN FORM ── -->
@@ -145,17 +147,20 @@
                 <div id="crqAlertLogin" class="crq-alert" role="alert"></div>
 
                 <div class="crq-form-group">
-                    <label class="crq-label" for="crqLoginPhone">Phone Number <span class="required">*</span></label>
+                    <label class="crq-label" for="crqLoginPhone" data-i18n="auth.labelPhone">Phone Number <span
+                            class="required">*</span></label>
                     <input class="crq-input" id="crqLoginPhone" type="tel"
                         placeholder="+974 XXXX XXXX or 8-digit number" autocomplete="tel" spellcheck="false">
                 </div>
                 <div class="crq-form-group">
-                    <label class="crq-label" for="crqLoginPwd">Password <span class="required">*</span></label>
-                    <input class="crq-input" id="crqLoginPwd" type="password" placeholder="Your password"
+                    <label class="crq-label" for="crqLoginPwd" data-i18n="auth.labelPassword">Password <span
+                            class="required">*</span></label>
+                    <input class="crq-input" id="crqLoginPwd" type="password"
+                        data-i18n-placeholder="auth.loginPlaceholder" placeholder="Your password"
                         autocomplete="current-password">
                 </div>
 
-                <button class="crq-btn-primary" id="crqBtnLogin" type="button">
+                <button class="crq-btn-primary" id="crqBtnLogin" type="button" data-i18n="auth.loginBtn">
                     Sign In →
                 </button>
             </div>
@@ -165,30 +170,35 @@
                 <div id="crqAlertRegister" class="crq-alert" role="alert"></div>
 
                 <div class="crq-form-group">
-                    <label class="crq-label" for="crqRegName">Full Name <span class="required">*</span></label>
-                    <input class="crq-input" id="crqRegName" type="text" placeholder="Your full name"
-                        autocomplete="name">
+                    <label class="crq-label" for="crqRegName" data-i18n="auth.labelName">Full Name <span
+                            class="required">*</span></label>
+                    <input class="crq-input" id="crqRegName" type="text" data-i18n-placeholder="auth.namePlaceholder"
+                        placeholder="Your full name" autocomplete="name">
                 </div>
                 <div class="crq-form-group">
-                    <label class="crq-label" for="crqRegEmail">Email Address <span class="required">*</span></label>
-                    <input class="crq-input" id="crqRegEmail" type="email" placeholder="you@email.com"
-                        autocomplete="email" spellcheck="false">
-                    <small style="color:var(--slate);font-size:12px;margin-top:4px;display:block">
+                    <label class="crq-label" for="crqRegEmail" data-i18n="auth.labelEmail">Email Address <span
+                            class="required">*</span></label>
+                    <input class="crq-input" id="crqRegEmail" type="email" data-i18n-placeholder="auth.emailPlaceholder"
+                        placeholder="you@email.com" autocomplete="email" spellcheck="false">
+                    <small style="color:var(--slate);font-size:12px;margin-top:4px;display:block"
+                        data-i18n="auth.emailHint">
                         We'll send a verification code to this email.
                     </small>
                 </div>
                 <div class="crq-form-group">
-                    <label class="crq-label" for="crqRegPhone">Phone Number <span class="required">*</span></label>
-                    <input class="crq-input" id="crqRegPhone" type="tel" placeholder="+974 XXXX XXXX or 8-digit number"
-                        autocomplete="tel">
+                    <label class="crq-label" for="crqRegPhone" data-i18n="auth.labelPhone">Phone Number <span
+                            class="required">*</span></label>
+                    <input class="crq-input" id="crqRegPhone" type="tel" data-i18n-placeholder="auth.phonePlaceholder"
+                        placeholder="+974 XXXX XXXX or 8-digit number" autocomplete="tel">
                 </div>
                 <div class="crq-form-group">
-                    <label class="crq-label" for="crqRegPwd">Password <span class="required">*</span></label>
-                    <input class="crq-input" id="crqRegPwd" type="password" placeholder="Minimum 6 characters"
-                        autocomplete="new-password">
+                    <label class="crq-label" for="crqRegPwd" data-i18n="auth.labelPassword">Password <span
+                            class="required">*</span></label>
+                    <input class="crq-input" id="crqRegPwd" type="password" data-i18n-placeholder="auth.pwdPlaceholder"
+                        placeholder="Minimum 6 characters" autocomplete="new-password">
                 </div>
 
-                <button class="crq-btn-primary" id="crqBtnRegister" type="button">
+                <button class="crq-btn-primary" id="crqBtnRegister" type="button" data-i18n="auth.registerBtn">
                     Create Account →
                 </button>
             </div>
@@ -197,26 +207,30 @@
             <div id="crqFormOtp" style="display:none">
                 <div id="crqAlertOtp" class="crq-alert" role="alert"></div>
                 <div class="crq-otp-info">
-                    📧 Verification code sent to <strong id="crqOtpEmail"></strong>
+                    <span data-i18n="auth.otpSent">📧 Verification code sent to</span> <strong
+                        id="crqOtpEmail"></strong>
                 </div>
 
                 <div class="crq-form-group">
-                    <label class="crq-label" for="crqOtpCode">Verification Code <span class="required">*</span></label>
+                    <label class="crq-label" for="crqOtpCode" data-i18n="auth.otpTitle">Verification Code <span
+                            class="required">*</span></label>
                     <div class="crq-otp-row">
                         <input class="crq-input" id="crqOtpCode" type="text" inputmode="numeric" pattern="[0-9]*"
-                            placeholder="Enter 6-digit code" maxlength="6" autocomplete="one-time-code">
-                        <button class="crq-btn-resend" id="crqBtnResendOtp" type="button" disabled>
+                            data-i18n-placeholder="auth.otpPlaceholder" placeholder="Enter 6-digit code" maxlength="6"
+                            autocomplete="one-time-code">
+                        <button class="crq-btn-resend" id="crqBtnResendOtp" type="button" disabled
+                            data-i18n="auth.resend">
                             Resend <span id="crqOtpTimer"></span>
                         </button>
                     </div>
                 </div>
 
-                <button class="crq-btn-primary" id="crqBtnVerifyOtp" type="button">
+                <button class="crq-btn-primary" id="crqBtnVerifyOtp" type="button" data-i18n="auth.verifyBtn">
                     Verify & Create Account →
                 </button>
                 <button
                     style="margin-top:12px;width:100%;background:none;border:none;font-size:13px;color:var(--slate);cursor:pointer;"
-                    onclick="crqSwitchAuthTab('register')">
+                    onclick="crqSwitchAuthTab('register')" data-i18n="auth.back">
                     ← Back
                 </button>
             </div>
@@ -230,11 +244,11 @@
 
         <!-- Breadcrumb -->
         <div class="crq-breadcrumb">
-            <a href="/">Home</a>
+            <a href="/" data-i18n="app.breadcrumbHome">Home</a>
             <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
                 <polyline points="9 18 15 12 9 6" />
             </svg>
-            <span>Request a Part</span>
+            <span data-i18n="app.breadcrumbRequest">Request a Part</span>
         </div>
         <div style="height:16px"></div>
 
@@ -242,25 +256,27 @@
         <div id="crqAppNudge" class="crq-app-nudge" style="display:none" role="banner">
             <div class="crq-app-nudge-icon">📱</div>
             <div>
-                <div class="crq-app-nudge-title">Get more on the QScrap app</div>
-                <div class="crq-app-nudge-text">Push notifications for bids, live delivery tracking, and camera photo
+                <div class="crq-app-nudge-title" data-i18n="app.nudgeTitle">Get more on the QScrap app</div>
+                <div class="crq-app-nudge-text" data-i18n="app.nudgeText">Push notifications for bids, live delivery
+                    tracking, and camera photo
                     uploads.</div>
             </div>
-            <button id="crqBtnDismissNudge" class="crq-app-nudge-dismiss">Download App</button>
+            <button id="crqBtnDismissNudge" class="crq-app-nudge-dismiss" data-i18n="app.nudgeBtn">Download App</button>
         </div>
 
         <!-- ── Section Header ── -->
         <div class="crq-section-hdr">
             <div>
-                <div class="crq-section-title">Auto Parts Portal</div>
-                <div class="crq-section-subtitle">Request a part or track your existing requests</div>
+                <div class="crq-section-title" data-i18n="app.portalTitle">Auto Parts Portal</div>
+                <div class="crq-section-subtitle" data-i18n="app.portalSubtitle">Request a part or track your existing
+                    requests</div>
             </div>
             <div class="crq-user-chip">
                 <div class="crq-user-chip-avatar" id="crqUserAvatar">C</div>
-                <span id="crqUserName">Customer</span>
+                <span id="crqUserName" data-i18n="app.userLabel">Customer</span>
                 <button id="crqBtnLogout"
                     style="background:none;border:none;color:var(--slate);cursor:pointer;font-size:12px;padding:0 0 0 6px;"
-                    title="Sign out">
+                    title="Sign out" data-i18n="app.signOut">
                     Sign out
                 </button>
             </div>
@@ -274,7 +290,7 @@
                     <line x1="12" y1="8" x2="12" y2="16" />
                     <line x1="8" y1="12" x2="16" y2="12" />
                 </svg>
-                New Request
+                <span data-i18n="app.tabNewRequest">New Request</span>
             </button>
             <button class="crq-view-tab" id="crqViewTabRequests" role="tab" aria-selected="false">
                 <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5">
@@ -284,7 +300,7 @@
                     <line x1="16" y1="17" x2="8" y2="17" />
                     <polyline points="10 9 9 9 8 9" />
                 </svg>
-                My Requests
+                <span data-i18n="app.tabMyRequests">My Requests</span>
             </button>
         </div>
 
@@ -297,13 +313,15 @@
             <!-- Success screen -->
             <div id="crqSuccess" class="crq-success" role="status" aria-live="polite">
                 <div class="crq-success-icon">✅</div>
-                <h2 class="crq-success-title">Request Submitted!</h2>
-                <p class="crq-success-text">Your request is live. Verified garages are reviewing it now and will submit
+                <h2 class="crq-success-title" data-i18n="app.successTitle">Request Submitted!</h2>
+                <p class="crq-success-text" data-i18n="app.successText">Your request is live. Verified garages are
+                    reviewing it now and will submit
                     bids within hours.</p>
                 <div class="crq-success-actions">
-                    <button class="crq-btn-secondary" id="crqBtnNewAfterSuccess">Request Another Part</button>
+                    <button class="crq-btn-secondary" id="crqBtnNewAfterSuccess" data-i18n="app.successNew">Request
+                        Another Part</button>
                     <button class="crq-btn-primary" id="crqBtnViewAfterSuccess" style="max-width:200px">
-                        View My Requests →
+                        <span data-i18n="app.successView">View My Requests →</span>
                     </button>
                 </div>
             </div>
@@ -315,18 +333,21 @@
                     <div class="crq-form-card-header">
                         <div class="crq-step-badge">1</div>
                         <div>
-                            <div class="crq-form-card-title">Your Vehicle</div>
-                            <div class="crq-form-card-desc">Tell us about the car that needs the part</div>
+                            <div class="crq-form-card-title" data-i18n="app.step1">Your Vehicle</div>
+                            <div class="crq-form-card-desc" data-i18n="app.step1Desc">Tell us about the car that needs
+                                the part</div>
                         </div>
                     </div>
                     <div class="crq-form-card-body">
                         <div style="display:grid;grid-template-columns:1fr 1fr;gap:16px" class="crq-vehicle-grid">
                             <div class="crq-form-group">
-                                <label class="crq-label">Make <span class="required">*</span></label>
+                                <label class="crq-label" data-i18n="app.labelMake">Make <span
+                                        class="required">*</span></label>
                                 <div class="crq-searchable" id="crqCarMakeWrap">
                                     <input class="crq-input crq-search-input" id="crqCarMake" type="text"
-                                        placeholder="Search make…" autocomplete="off" role="combobox"
-                                        aria-expanded="false" aria-autocomplete="list" aria-controls="crqCarMakeList">
+                                        data-i18n-placeholder="app.searchMake" placeholder="Search make…"
+                                        autocomplete="off" role="combobox" aria-expanded="false"
+                                        aria-autocomplete="list" aria-controls="crqCarMakeList">
                                     <svg class="crq-search-chevron" width="14" height="14" viewBox="0 0 24 24"
                                         fill="none" stroke="currentColor" stroke-width="2.5">
                                         <polyline points="6 9 12 15 18 9" />
@@ -335,11 +356,13 @@
                                 </div>
                             </div>
                             <div class="crq-form-group">
-                                <label class="crq-label">Model <span class="required">*</span></label>
+                                <label class="crq-label" data-i18n="app.labelModel">Model <span
+                                        class="required">*</span></label>
                                 <div class="crq-searchable" id="crqCarModelWrap">
                                     <input class="crq-input crq-search-input" id="crqCarModel" type="text"
-                                        placeholder="Select make first…" autocomplete="off" disabled role="combobox"
-                                        aria-expanded="false" aria-autocomplete="list" aria-controls="crqCarModelList">
+                                        data-i18n-placeholder="app.searchModel" placeholder="Select make first…"
+                                        autocomplete="off" disabled role="combobox" aria-expanded="false"
+                                        aria-autocomplete="list" aria-controls="crqCarModelList">
                                     <svg class="crq-search-chevron" width="14" height="14" viewBox="0 0 24 24"
                                         fill="none" stroke="currentColor" stroke-width="2.5">
                                         <polyline points="6 9 12 15 18 9" />
@@ -348,12 +371,13 @@
                                 </div>
                             </div>
                             <div class="crq-form-group">
-                                <label class="crq-label">Year <span class="required">*</span></label>
+                                <label class="crq-label" data-i18n="app.labelYear">Year <span
+                                        class="required">*</span></label>
                                 <div class="crq-searchable" id="crqCarYearWrap">
                                     <input class="crq-input crq-search-input" id="crqCarYear" type="text"
-                                        inputmode="numeric" placeholder="Search year…" autocomplete="off"
-                                        role="combobox" aria-expanded="false" aria-autocomplete="list"
-                                        aria-controls="crqCarYearList">
+                                        inputmode="numeric" data-i18n-placeholder="app.searchYear"
+                                        placeholder="Search year…" autocomplete="off" role="combobox"
+                                        aria-expanded="false" aria-autocomplete="list" aria-controls="crqCarYearList">
                                     <svg class="crq-search-chevron" width="14" height="14" viewBox="0 0 24 24"
                                         fill="none" stroke="currentColor" stroke-width="2.5">
                                         <polyline points="6 9 12 15 18 9" />
@@ -362,9 +386,10 @@
                                 </div>
                             </div>
                             <div class="crq-form-group">
-                                <label class="crq-label" for="crqVin">VIN Number <small
+                                <label class="crq-label" for="crqVin" data-i18n="app.labelVin">VIN Number <small
                                         style="font-weight:400;color:var(--slate)">(optional)</small></label>
-                                <input class="crq-input" id="crqVin" type="text" placeholder="17-character VIN"
+                                <input class="crq-input" id="crqVin" type="text"
+                                    data-i18n-placeholder="app.vinPlaceholder" placeholder="17-character VIN"
                                     maxlength="17" autocomplete="off"
                                     style="text-transform:uppercase;letter-spacing:1px">
                             </div>
@@ -377,32 +402,33 @@
                     <div class="crq-form-card-header">
                         <div class="crq-step-badge" style="background:var(--gold)">2</div>
                         <div>
-                            <div class="crq-form-card-title">Part Details</div>
-                            <div class="crq-form-card-desc">Describe the part you need — be specific for better bids
+                            <div class="crq-form-card-title" data-i18n="app.step2">Part Details</div>
+                            <div class="crq-form-card-desc" data-i18n="app.step2Desc">Describe the part you need — be specific for better bids
                             </div>
                         </div>
                     </div>
                     <div class="crq-form-card-body">
                         <!-- Category -->
                         <div class="crq-form-group">
-                            <label class="crq-label" for="crqCategory">Category <small
+                            <label class="crq-label" for="crqCategory" data-i18n="app.labelCategory">Category <small
                                     style="font-weight:400;color:var(--slate)">(optional)</small></label>
                             <select class="crq-select" id="crqCategory">
-                                <option value="">— Select a category —</option>
+                                <option value="" data-i18n="app.selectCategory">— Select a category —</option>
                             </select>
                         </div>
                         <!-- Subcategory (hidden until category selected) -->
                         <div class="crq-form-group" id="crqSubcategoryGroup" style="display:none">
-                            <label class="crq-label" for="crqSubcategory">Subcategory <small
+                            <label class="crq-label" for="crqSubcategory" data-i18n="app.labelSubcategory">Subcategory <small
                                     style="font-weight:400;color:var(--slate)">(optional)</small></label>
                             <select class="crq-select" id="crqSubcategory">
-                                <option value="">— Select subcategory —</option>
+                                <option value="" data-i18n="app.selectSubcategory">— Select subcategory —</option>
                             </select>
                         </div>
                         <!-- Description -->
                         <div class="crq-form-group">
-                            <label class="crq-label" for="crqDesc">Description <span class="required">*</span></label>
+                            <label class="crq-label" for="crqDesc" data-i18n="app.labelDesc">Description <span class="required">*</span></label>
                             <textarea class="crq-textarea" id="crqDesc"
+                                data-i18n-placeholder="app.descPlaceholder"
                                 placeholder="Describe the part in detail. E.g.: Right front shock absorber for 2020 Toyota Camry 2.5L. Need genuine OEM or equivalent quality."
                                 maxlength="1000"></textarea>
                             <div class="crq-char-count" id="crqDescCount">0/1000</div>
@@ -472,12 +498,28 @@
                         </div>
                     </div>
                     <div class="crq-form-card-body">
+                        <!-- Zone / Area dropdown -->
+                        <div class="crq-form-group">
+                            <label class="crq-label">Area / Zone in Qatar</label>
+                            <div class="crq-searchable" id="crqZoneWrap">
+                                <input class="crq-input crq-search-input" id="crqZone" type="text"
+                                    placeholder="Search area… e.g. West Bay, Lusail, Al Wakra" autocomplete="off"
+                                    role="combobox" aria-expanded="false" aria-autocomplete="list"
+                                    aria-controls="crqZoneList">
+                                <svg class="crq-search-chevron" width="14" height="14" viewBox="0 0 24 24" fill="none"
+                                    stroke="currentColor" stroke-width="2.5">
+                                    <polyline points="6 9 12 15 18 9" />
+                                </svg>
+                                <div class="crq-dropdown-list" id="crqZoneList" role="listbox"></div>
+                            </div>
+                        </div>
+                        <!-- Building / Street detail -->
                         <div class="crq-form-group" style="margin-bottom:0">
-                            <label class="crq-label" for="crqAddress">Address in Qatar</label>
+                            <label class="crq-label" for="crqAddressDetail">Building / Street / Zone # <small
+                                    style="font-weight:400;color:var(--slate)">(optional)</small></label>
                             <div class="crq-input-wrap">
-                                <input class="crq-input" id="crqAddress" type="text"
-                                    placeholder="e.g. West Bay, Doha; Industrial Area; Al Wakra…"
-                                    autocomplete="street-address">
+                                <input class="crq-input" id="crqAddressDetail" type="text"
+                                    placeholder="e.g. Building 42, Street 900, Zone 56" autocomplete="street-address">
                                 <svg class="crq-input-icon" width="16" height="16" viewBox="0 0 24 24" fill="none"
                                     stroke="currentColor" stroke-width="2">
                                     <path d="M21 10c0 7-9 13-9 13s-9-6-9-13a9 9 0 0 1 18 0z" />
