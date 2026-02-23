@@ -389,7 +389,17 @@
             body: opts.body instanceof FormData ? opts.body : opts.body ? JSON.stringify(opts.body) : undefined,
         });
         const data = await res.json().catch(() => ({}));
-        if (!res.ok) throw new Error(data.error || data.message || 'Request failed');
+        if (!res.ok) {
+            const errMsg = data.error || data.message || 'Request failed';
+            // Handle expired/invalid token — auto-logout
+            if (res.status === 401 && /token_expired|jwt expired|invalid token|unauthorized/i.test(errMsg)) {
+                clearSession();
+                toast('info', 'Session expired — please sign in again.');
+                setTimeout(() => location.reload(), 1200);
+                throw new Error('Session expired');
+            }
+            throw new Error(errMsg);
+        }
         return data;
     }
 
