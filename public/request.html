@@ -322,19 +322,44 @@
                     <div class="crq-form-card-body">
                         <div style="display:grid;grid-template-columns:1fr 1fr;gap:16px" class="crq-vehicle-grid">
                             <div class="crq-form-group">
-                                <label class="crq-label" for="crqCarMake">Make <span class="required">*</span></label>
-                                <input class="crq-input" id="crqCarMake" type="text" placeholder="e.g. Toyota"
-                                    autocomplete="off">
+                                <label class="crq-label">Make <span class="required">*</span></label>
+                                <div class="crq-searchable" id="crqCarMakeWrap">
+                                    <input class="crq-input crq-search-input" id="crqCarMake" type="text"
+                                        placeholder="Search make…" autocomplete="off" role="combobox"
+                                        aria-expanded="false" aria-autocomplete="list" aria-controls="crqCarMakeList">
+                                    <svg class="crq-search-chevron" width="14" height="14" viewBox="0 0 24 24"
+                                        fill="none" stroke="currentColor" stroke-width="2.5">
+                                        <polyline points="6 9 12 15 18 9" />
+                                    </svg>
+                                    <div class="crq-dropdown-list" id="crqCarMakeList" role="listbox"></div>
+                                </div>
                             </div>
                             <div class="crq-form-group">
-                                <label class="crq-label" for="crqCarModel">Model <span class="required">*</span></label>
-                                <input class="crq-input" id="crqCarModel" type="text" placeholder="e.g. Camry"
-                                    autocomplete="off">
+                                <label class="crq-label">Model <span class="required">*</span></label>
+                                <div class="crq-searchable" id="crqCarModelWrap">
+                                    <input class="crq-input crq-search-input" id="crqCarModel" type="text"
+                                        placeholder="Select make first…" autocomplete="off" disabled role="combobox"
+                                        aria-expanded="false" aria-autocomplete="list" aria-controls="crqCarModelList">
+                                    <svg class="crq-search-chevron" width="14" height="14" viewBox="0 0 24 24"
+                                        fill="none" stroke="currentColor" stroke-width="2.5">
+                                        <polyline points="6 9 12 15 18 9" />
+                                    </svg>
+                                    <div class="crq-dropdown-list" id="crqCarModelList" role="listbox"></div>
+                                </div>
                             </div>
                             <div class="crq-form-group">
-                                <label class="crq-label" for="crqCarYear">Year <span class="required">*</span></label>
-                                <input class="crq-input" id="crqCarYear" type="number" placeholder="e.g. 2020"
-                                    min="1900" max="2028" autocomplete="off">
+                                <label class="crq-label">Year <span class="required">*</span></label>
+                                <div class="crq-searchable" id="crqCarYearWrap">
+                                    <input class="crq-input crq-search-input" id="crqCarYear" type="text"
+                                        inputmode="numeric" placeholder="Search year…" autocomplete="off"
+                                        role="combobox" aria-expanded="false" aria-autocomplete="list"
+                                        aria-controls="crqCarYearList">
+                                    <svg class="crq-search-chevron" width="14" height="14" viewBox="0 0 24 24"
+                                        fill="none" stroke="currentColor" stroke-width="2.5">
+                                        <polyline points="6 9 12 15 18 9" />
+                                    </svg>
+                                    <div class="crq-dropdown-list" id="crqCarYearList" role="listbox"></div>
+                                </div>
                             </div>
                             <div class="crq-form-group">
                                 <label class="crq-label" for="crqVin">VIN Number <small
@@ -515,6 +540,28 @@
     </div><!-- /#crqApp -->
 
     <!-- ════════════════════════════════════════════════════════════════
+     REQUEST DETAIL MODAL
+═══════════════════════════════════════════════════════════════════ -->
+    <div id="crqModalOverlay" class="crq-modal-overlay" role="dialog" aria-modal="true" aria-hidden="true">
+        <div class="crq-modal-backdrop" id="crqModalBackdrop"></div>
+        <div class="crq-modal">
+            <div class="crq-modal-header">
+                <h3 class="crq-modal-title" id="crqModalTitle">Request Details</h3>
+                <button class="crq-modal-close" id="crqModalClose" aria-label="Close modal">
+                    <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor"
+                        stroke-width="2.5">
+                        <line x1="18" y1="6" x2="6" y2="18" />
+                        <line x1="6" y1="6" x2="18" y2="18" />
+                    </svg>
+                </button>
+            </div>
+            <div class="crq-modal-body" id="crqModalBody">
+                <!-- Filled dynamically -->
+            </div>
+        </div>
+    </div>
+
+    <!-- ════════════════════════════════════════════════════════════════
      FOOTER (standard site footer section)
 ═══════════════════════════════════════════════════════════════════ -->
     <footer
@@ -535,10 +582,30 @@
     <!-- ════════════════════════════════════════════════════════════════
      SCRIPTS
 ═══════════════════════════════════════════════════════════════════ -->
-    <!-- Reuse the main site's mobile menu & nav scroll behaviour -->
-    <script src="/js/main.js" defer></script>
     <!-- Customer request logic -->
     <script src="/js/customer-request.js" defer></script>
+    <!-- Nav scroll + Mobile menu (self-contained, no main.js dependency) -->
+    <script>
+        document.addEventListener('DOMContentLoaded', function () {
+            // Nav scroll effect
+            var nav = document.getElementById('mainNav');
+            if (nav) window.addEventListener('scroll', function () {
+                nav.classList.toggle('scrolled', window.scrollY > 50);
+            });
+            // Mobile menu toggle
+            var btn = document.getElementById('mobileMenuBtn');
+            var overlay = document.getElementById('mobileMenuOverlay');
+            var close = document.getElementById('mobileMenuClose');
+            var backdrop = document.getElementById('mobileMenuBackdrop');
+            function openMenu() { if (overlay) { overlay.classList.add('active'); overlay.setAttribute('aria-hidden', 'false'); document.body.style.overflow = 'hidden'; } }
+            function closeMenu() { if (overlay) { overlay.classList.remove('active'); overlay.setAttribute('aria-hidden', 'true'); document.body.style.overflow = ''; } }
+            if (btn) btn.addEventListener('click', openMenu);
+            if (close) close.addEventListener('click', closeMenu);
+            if (backdrop) backdrop.addEventListener('click', closeMenu);
+            // Close on link click
+            document.querySelectorAll('.mobile-menu-link').forEach(function (l) { l.addEventListener('click', closeMenu); });
+        });
+    </script>
 
     <!-- Responsive grid tweak -->
     <style>

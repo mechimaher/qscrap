@@ -1,19 +1,8 @@
 /**
  * QScrap Customer Web Request — JavaScript
- * 
- * Handles: Auth (login + email-OTP signup), Request creation,
- * My Requests listing, bilingual support (EN/AR).
+ * v2.0 — Searchable dropdowns for vehicle + Request detail modal
  *
- * API contract aligned 100% with:
- *   POST /api/auth/login                → { phone_number, password }
- *   POST /api/auth/register-with-email  → { full_name, email, phone_number, password }
- *   POST /api/auth/verify-email-otp     → { full_name, email, phone_number, password, otp }
- *   POST /api/auth/resend-otp           → { email, full_name }
- *   POST /api/requests (multipart)      → car_make, car_model, car_year, vin_number?,
- *                                         part_description, part_category?, part_subcategory?,
- *                                         part_number?, condition_required, delivery_address_text?,
- *                                         images[]?, car_front_image?, car_rear_image?
- *   GET  /api/requests/my               → paginated list
+ * API contract 100% aligned with backend.
  */
 
 'use strict';
@@ -23,7 +12,71 @@
     // ─── Config ────────────────────────────────────────────────────────────────
     const API = '/api';
 
-    // ─── Part Categories (mirrors mobile categoryData.ts) ─────────────────────
+    // ─── Qatar-Market Car Makes & Models (2026 Edition) ───────────────────────
+    const CAR_DATA = {
+        'Toyota': ['Camry', 'Land Cruiser', 'Land Cruiser 300', 'Corolla', 'Hilux', 'RAV4', 'Prado', 'Yaris', 'Fortuner', 'C-HR', 'Rush', 'Avalon', 'Supra', 'GR86', 'bZ4X', 'Sequoia', 'Tundra', '4Runner', 'Highlander', 'Crown'],
+        'Lexus': ['ES', 'IS', 'LS', 'LX', 'GX', 'NX', 'RX', 'UX', 'RC', 'LC', 'LM', 'TX', 'RZ'],
+        'Nissan': ['Patrol', 'Patrol Nismo', 'X-Trail', 'Altima', 'Maxima', 'Kicks', 'Sunny', 'Pathfinder', 'Navara', 'GT-R', 'Z', 'Qashqai', 'Juke', 'Ariya', 'Sentra', 'Rogue'],
+        'Infiniti': ['QX80', 'QX60', 'QX55', 'QX50', 'Q50', 'Q60'],
+        'Honda': ['Accord', 'Civic', 'CR-V', 'HR-V', 'Pilot', 'Odyssey', 'City', 'ZR-V', 'Prologue', 'Passport'],
+        'Acura': ['MDX', 'RDX', 'TLX', 'Integra', 'ZDX'],
+        'Hyundai': ['Tucson', 'Santa Fe', 'Elantra', 'Sonata', 'Kona', 'Creta', 'Palisade', 'Ioniq 5', 'Ioniq 6', 'Staria', 'Venue', 'Accent', 'i10', 'i20', 'Stargazer'],
+        'Kia': ['Sportage', 'Seltos', 'K5', 'Sorento', 'Carnival', 'Telluride', 'EV6', 'EV9', 'Forte', 'Rio', 'Stinger', 'Niro', 'Soul', 'Picanto'],
+        'BMW': ['3 Series', '5 Series', '7 Series', 'X1', 'X3', 'X5', 'X6', 'X7', 'iX', 'i4', 'i5', 'i7', 'M3', 'M4', 'M5', 'Z4', '2 Series', '4 Series', '8 Series', 'XM'],
+        'Mercedes-Benz': ['C-Class', 'E-Class', 'S-Class', 'GLA', 'GLB', 'GLC', 'GLE', 'GLS', 'G-Class', 'A-Class', 'CLA', 'AMG GT', 'EQS', 'EQE', 'EQA', 'EQB', 'Maybach', 'V-Class'],
+        'Audi': ['A3', 'A4', 'A5', 'A6', 'A7', 'A8', 'Q3', 'Q5', 'Q7', 'Q8', 'e-tron', 'e-tron GT', 'RS3', 'RS5', 'RS6', 'RS7', 'TT', 'R8', 'Q4 e-tron', 'Q8 e-tron'],
+        'Volkswagen': ['Golf', 'Tiguan', 'Touareg', 'T-Roc', 'ID.4', 'ID.Buzz', 'Arteon', 'Passat', 'Polo', 'Jetta', 'Atlas', 'Taos', 'ID.7'],
+        'Porsche': ['Cayenne', 'Macan', 'Panamera', '911', '718 Boxster', '718 Cayman', 'Taycan'],
+        'Bentley': ['Continental GT', 'Flying Spur', 'Bentayga'],
+        'Rolls-Royce': ['Phantom', 'Ghost', 'Cullinan', 'Spectre', 'Dawn', 'Wraith'],
+        'Lamborghini': ['Urus', 'Huracán', 'Revuelto'],
+        'Ferrari': ['Roma', '296 GTB', 'SF90 Stradale', 'F8 Tributo', '812 Superfast', 'Purosangue', 'Daytona SP3'],
+        'Maserati': ['Ghibli', 'Levante', 'Quattroporte', 'MC20', 'Grecale', 'GranTurismo'],
+        'Aston Martin': ['DB12', 'Vantage', 'DBX', 'DBS'],
+        'McLaren': ['720S', '750S', 'Artura', 'GT'],
+        'GMC': ['Sierra', 'Yukon', 'Yukon XL', 'Terrain', 'Acadia', 'Canyon', 'Hummer EV'],
+        'Chevrolet': ['Tahoe', 'Suburban', 'Silverado', 'Traverse', 'Equinox', 'Blazer', 'Camaro', 'Corvette', 'Trax', 'Colorado', 'Malibu', 'Trailblazer'],
+        'Ford': ['Explorer', 'Expedition', 'F-150', 'Ranger', 'Bronco', 'Mustang', 'Escape', 'Edge', 'Maverick', 'Bronco Sport', 'Mustang Mach-E', 'F-150 Lightning', 'Everest'],
+        'Dodge': ['Charger', 'Challenger', 'Durango', 'Hornet'],
+        'Chrysler': ['300', 'Pacifica'],
+        'Jeep': ['Wrangler', 'Grand Cherokee', 'Grand Cherokee L', 'Gladiator', 'Compass', 'Renegade', 'Avenger', 'Wagoneer', 'Grand Wagoneer'],
+        'Cadillac': ['Escalade', 'CT5', 'CT4', 'XT4', 'XT5', 'XT6', 'Lyriq', 'Celestiq'],
+        'Lincoln': ['Navigator', 'Aviator', 'Corsair', 'Nautilus'],
+        'Genesis': ['G70', 'G80', 'G90', 'GV60', 'GV70', 'GV80', 'Electrified G80', 'Electrified GV70'],
+        'Volvo': ['XC40', 'XC60', 'XC90', 'S60', 'S90', 'V60', 'V90', 'EX30', 'EX90', 'C40 Recharge'],
+        'Land Rover': ['Range Rover', 'Range Rover Sport', 'Range Rover Velar', 'Range Rover Evoque', 'Defender', 'Discovery', 'Discovery Sport'],
+        'Jaguar': ['F-Pace', 'E-Pace', 'I-Pace', 'F-Type', 'XF', 'XE'],
+        'Mini': ['Cooper', 'Countryman', 'Clubman', 'Convertible', 'Paceman'],
+        'Peugeot': ['3008', '5008', '2008', '208', '308', '408', '508', 'Landtrek'],
+        'Renault': ['Duster', 'Koleos', 'Megane', 'Clio', 'Captur', 'Arkana', 'Austral'],
+        'Citroën': ['C5 Aircross', 'C3 Aircross', 'C3', 'C4', 'Berlingo'],
+        'Mitsubishi': ['Pajero', 'Outlander', 'L200', 'ASX', 'Eclipse Cross', 'Montero Sport', 'Xpander'],
+        'Mazda': ['CX-5', 'CX-30', 'CX-50', 'CX-60', 'CX-90', 'Mazda3', 'Mazda6', 'MX-5', 'MX-30'],
+        'Subaru': ['Outback', 'Forester', 'Crosstrek', 'WRX', 'Impreza', 'Solterra', 'BRZ', 'Ascent', 'Legacy'],
+        'Suzuki': ['Jimny', 'Vitara', 'S-Cross', 'Swift', 'Baleno', 'Ertiga', 'XL7', 'Fronx', 'Invicto'],
+        'Isuzu': ['D-Max', 'MU-X'],
+        'Fiat': ['500', 'Panda', 'Tipo', '500X', 'Topolino', 'Doblo'],
+        'MG': ['ZS', 'HS', '5', '4', 'Marvel R', 'Cyberster', 'Whale'],
+        'Changan': ['CS85', 'CS75 Plus', 'CS55 Plus', 'CS35 Plus', 'Uni-T', 'Uni-K', 'Uni-V', 'Alsvin', 'Eado', 'Hunter'],
+        'Haval': ['Jolion', 'H6', 'H9', 'Dargo', 'Big Dog'],
+        'Chery': ['Tiggo 7 Pro', 'Tiggo 8 Pro', 'Tiggo 4 Pro', 'Arrizo 6', 'Omoda 5', 'Jaecoo J7'],
+        'Geely': ['Coolray', 'Azkarra', 'Emgrand', 'Monjaro', 'Starray', 'Galaxy', 'Geometry'],
+        'BYD': ['Atto 3', 'Han', 'Tang', 'Seal', 'Dolphin', 'Song Plus', 'Yuan Plus', 'Destroyer 05'],
+        'GAC': ['GS3', 'GS4', 'GS8', 'Empow', 'Aion S', 'Aion Y', 'Aion V'],
+        'JAC': ['S2', 'S3', 'S4', 'S7', 'T8', 'JS4', 'e-JS1'],
+        'Tesla': ['Model 3', 'Model Y', 'Model S', 'Model X', 'Cybertruck'],
+    };
+
+    const CAR_MAKES = Object.keys(CAR_DATA).sort();
+
+    // Popular makes shown first in Qatar
+    const POPULAR_MAKES = ['Toyota', 'Nissan', 'Land Rover', 'Lexus', 'BMW', 'Mercedes-Benz', 'Hyundai', 'Kia', 'Honda', 'Porsche', 'GMC', 'Chevrolet', 'Ford', 'Audi', 'Volkswagen'];
+
+    // Year range (newest to oldest)
+    const YEARS = [];
+    for (let y = new Date().getFullYear() + 2; y >= 1990; y--) YEARS.push(String(y));
+
+    // ─── Part Categories ──────────────────────────────────────────────────────
     const PART_CATEGORIES = [
         'Engine & Components', 'Transmission & Drivetrain', 'Turbo & Supercharger',
         'Fuel System', 'Exhaust & Emission System', 'Cooling System',
@@ -41,69 +94,204 @@
     ];
 
     const PART_SUBCATEGORIES = {
-        'Engine & Components': ['Complete Engine Assembly', 'Cylinder Head', 'Engine Block (Short/Long)', 'Crankshaft', 'Camshaft', 'Pistons & Rings', 'Connecting Rods', 'Timing Chain/Belt', 'Valve Cover', 'Oil Pan', 'Intake Manifold', 'Exhaust Manifold', 'Engine Mount', 'Flywheel', 'Harmonic Balancer', 'Oil Pump', 'Water Pump'],
-        'Transmission & Drivetrain': ['Automatic Transmission', 'Manual Transmission', 'CVT Transmission', 'Dual-Clutch Transmission (DCT)', 'Transmission Control Module (TCM)', 'Torque Converter', 'Clutch Kit', 'Pressure Plate', 'Release Bearing', 'Driveshaft', 'CV Axle', 'Transfer Case', 'Propeller Shaft', 'Universal Joint', 'Shift Cable'],
-        'Turbo & Supercharger': ['Turbocharger Assembly', 'Supercharger', 'Intercooler', 'Wastegate', 'Blow-off Valve', 'Boost Controller', 'Turbo Manifold', 'Downpipe'],
-        'Fuel System': ['Fuel Pump', 'Fuel Injector', 'Fuel Tank', 'Fuel Rail', 'Fuel Pressure Regulator', 'Throttle Body', 'Fuel Filter', 'Fuel Cap', 'Fuel Filler Neck', 'Fuel Lines', 'Gas Pedal'],
-        'Exhaust & Emission System': ['Catalytic Converter', 'Muffler', 'Resonator', 'Exhaust Pipe', 'Header/Manifold', 'EGR Valve', 'DPF (Diesel Particle Filter)', 'SCR System (Urea)', 'Exhaust Flange', 'Tail Pipe'],
-        'Cooling System': ['Radiator', 'Water Pump', 'Thermostat', 'Radiator Fan', 'Cooling Fan Motor', 'Radiator Hose', 'Overflow Tank', 'Radiator Cap', 'Temperature Sensor'],
-        'Suspension & Steering': ['Shock Absorber', 'Strut Assembly', 'Coil Spring', 'Leaf Spring', 'Control Arm (Upper/Lower)', 'Ball Joint', 'Tie Rod End', 'Steering Rack', 'Power Steering Pump', 'Steering Column', 'Steering Wheel', 'Sway Bar', 'Sway Bar Link', 'Wheel Hub Assembly', 'Wheel Bearing'],
-        'Brakes & ABS': ['ABS Module', 'ABS Pump', 'Brake Caliper', 'Brake Rotor/Disc', 'Brake Pad', 'Brake Drum', 'Brake Shoe', 'Master Cylinder', 'Brake Booster', 'Brake Line', 'Wheel Speed Sensor'],
-        'Wheels & Tires': ['Alloy Wheel', 'Steel Wheel', 'Tire (New)', 'Tire (Used)', 'Spare Tire', 'TPMS Sensor', 'Wheel Center Cap', 'Lug Nuts'],
+        'Engine & Components': ['Complete Engine Assembly', 'Cylinder Head', 'Engine Block (Short/Long)', 'Crankshaft', 'Camshaft', 'Pistons & Rings', 'Timing Chain/Belt', 'Valve Cover', 'Oil Pan', 'Intake Manifold', 'Exhaust Manifold', 'Engine Mount', 'Flywheel', 'Oil Pump', 'Water Pump'],
+        'Transmission & Drivetrain': ['Automatic Transmission', 'Manual Transmission', 'CVT Transmission', 'Torque Converter', 'Clutch Kit', 'Driveshaft', 'CV Axle', 'Transfer Case'],
+        'Cooling System': ['Radiator', 'Water Pump', 'Thermostat', 'Radiator Fan', 'Cooling Fan Motor', 'Radiator Hose', 'Overflow Tank', 'Temperature Sensor'],
+        'Suspension & Steering': ['Shock Absorber', 'Strut Assembly', 'Coil Spring', 'Control Arm', 'Ball Joint', 'Tie Rod End', 'Steering Rack', 'Power Steering Pump', 'Steering Column', 'Sway Bar Link', 'Wheel Hub Assembly', 'Wheel Bearing'],
+        'Brakes & ABS': ['ABS Module', 'Brake Caliper', 'Brake Rotor/Disc', 'Brake Pad', 'Master Cylinder', 'Brake Booster', 'Brake Line', 'Wheel Speed Sensor'],
         'Lights & Lamps': ['Headlight Assembly', 'LED Headlight', 'Taillight Assembly', 'Fog Light', 'Turn Signal Light', 'DRL', 'License Plate Light'],
-        'Climate Control (HVAC)': ['A/C Compressor', 'Condenser', 'Evaporator Core', 'Heater Core', 'Blower Motor', 'HVAC Control Panel', 'Expansion Valve', 'Receiver Drier', 'Cabin Air Filter'],
-        'Airbags & SRS': ['Driver Airbag', 'Passenger Airbag', 'Side Airbag', 'Curtain Airbag', 'SRS Control Module', 'Airbag Clockspring'],
-        'Cameras & Sensors': ['Backup Camera', 'Front Camera', '360° Camera System', 'Parking Sensor', 'Rain Sensor', 'Light Sensor'],
+        'Climate Control (HVAC)': ['A/C Compressor', 'Condenser', 'Evaporator Core', 'Heater Core', 'Blower Motor', 'HVAC Control Panel', 'Cabin Air Filter'],
+        'Cameras & Sensors': ['Backup Camera', 'Front Camera', '360° Camera System', 'Parking Sensor', 'Rain Sensor'],
     };
 
     // ─── State ─────────────────────────────────────────────────────────────────
     let state = {
-        token: null,
-        userId: null,
-        userName: null,
-        userEmail: null,
-        userPhone: null,
-        // Auth form
-        authTab: 'login',   // 'login' | 'register' | 'otp'
-        regTemp: {},        // temp storage for otp step
-        otpTimer: null,
-        otpCountdown: 0,
-        // Request form
-        activeView: 'new',  // 'new' | 'requests'
+        token: null, userId: null, userName: null, userEmail: null, userPhone: null,
+        authTab: 'login',
+        regTemp: {},
+        otpTimer: null, otpCountdown: 0,
+        activeView: 'new',
         condition: 'any',
         quantity: 1,
-        images: [],         // File[]
-        // My Requests
+        images: [],
         myRequests: [],
         requestsLoading: false,
     };
 
-    // ─── DOM refs ──────────────────────────────────────────────────────────────
     let dom = {};
 
-    // ─── Init ──────────────────────────────────────────────────────────────────
-    function init() {
-        // Restore session
-        const stored = localStorage.getItem('crq_auth');
-        if (stored) {
-            try {
-                const s = JSON.parse(stored);
-                if (s.token && s.userId) {
-                    Object.assign(state, s);
-                }
-            } catch (_) { }
+    // ─── Searchable Dropdown Widget ────────────────────────────────────────────
+    function SearchableDropdown(inputId, listId, wrapId, items, opts = {}) {
+        const input = q('#' + inputId);
+        const list = q('#' + listId);
+        const wrap = q('#' + wrapId);
+        if (!input || !list || !wrap) return { getValue: () => '', setValue: () => { }, setItems: () => { } };
+
+        let currentItems = items || [];
+        let selectedValue = '';
+        let highlightIdx = -1;
+        const onSelect = opts.onSelect || (() => { });
+        const sectionHeader = opts.sectionHeader || null; // fn(item) => section label or null
+        const popularItems = opts.popularItems || [];
+
+        function render(filter) {
+            list.innerHTML = '';
+            const q = (filter || '').toLowerCase().trim();
+            let filtered = currentItems.filter(it => it.toLowerCase().includes(q));
+
+            if (!filtered.length) {
+                list.innerHTML = '<div class="crq-dd-empty">No results found</div>';
+                return;
+            }
+
+            // Show popular section if no filter and popularItems provided
+            if (!q && popularItems.length) {
+                list.innerHTML += '<div class="crq-dd-section">Popular in Qatar</div>';
+                popularItems.filter(p => currentItems.includes(p)).forEach((item, i) => {
+                    list.innerHTML += itemHtml(item, i);
+                });
+                list.innerHTML += '<div class="crq-dd-section">All Makes</div>';
+                const rest = filtered.filter(f => !popularItems.includes(f));
+                rest.forEach((item, i) => {
+                    list.innerHTML += itemHtml(item, popularItems.length + i);
+                });
+            } else {
+                filtered.forEach((item, i) => {
+                    list.innerHTML += itemHtml(item, i);
+                });
+            }
+
+            highlightIdx = -1;
+            bindItemClicks();
         }
 
+        function itemHtml(item, idx) {
+            const sel = item === selectedValue ? ' selected' : '';
+            return `<div class="crq-dropdown-item${sel}" data-value="${escAttr(item)}" data-idx="${idx}" role="option">${escHtml(item)}</div>`;
+        }
+
+        function bindItemClicks() {
+            list.querySelectorAll('.crq-dropdown-item').forEach(el => {
+                el.addEventListener('mousedown', (e) => {
+                    e.preventDefault();
+                    select(el.dataset.value);
+                });
+            });
+        }
+
+        function select(val) {
+            selectedValue = val;
+            input.value = val;
+            close();
+            onSelect(val);
+        }
+
+        function open() {
+            wrap.classList.add('open');
+            input.setAttribute('aria-expanded', 'true');
+            render(input.value !== selectedValue ? input.value : '');
+        }
+
+        function close() {
+            wrap.classList.remove('open');
+            input.setAttribute('aria-expanded', 'false');
+            // Restore selectedValue if user typed but didn't pick
+            if (input.value !== selectedValue && selectedValue) {
+                input.value = selectedValue;
+            }
+        }
+
+        function isOpen() { return wrap.classList.contains('open'); }
+
+        // Events
+        input.addEventListener('focus', () => { input.select(); open(); });
+        input.addEventListener('input', () => { open(); render(input.value); });
+        input.addEventListener('blur', () => { setTimeout(close, 150); });
+
+        input.addEventListener('keydown', (e) => {
+            const items = list.querySelectorAll('.crq-dropdown-item');
+            if (e.key === 'ArrowDown') {
+                e.preventDefault();
+                if (!isOpen()) open();
+                highlightIdx = Math.min(highlightIdx + 1, items.length - 1);
+                updateHighlight(items);
+            } else if (e.key === 'ArrowUp') {
+                e.preventDefault();
+                highlightIdx = Math.max(highlightIdx - 1, 0);
+                updateHighlight(items);
+            } else if (e.key === 'Enter') {
+                e.preventDefault();
+                if (highlightIdx >= 0 && items[highlightIdx]) {
+                    select(items[highlightIdx].dataset.value);
+                }
+            } else if (e.key === 'Escape') {
+                close();
+                input.blur();
+            }
+        });
+
+        function updateHighlight(items) {
+            items.forEach((el, i) => el.classList.toggle('highlighted', i === highlightIdx));
+            if (items[highlightIdx]) items[highlightIdx].scrollIntoView({ block: 'nearest' });
+        }
+
+        return {
+            getValue: () => selectedValue,
+            setValue: (v) => { selectedValue = v; input.value = v; },
+            setItems: (newItems) => {
+                currentItems = newItems;
+                selectedValue = '';
+                input.value = '';
+                render('');
+            },
+            enable: () => { input.disabled = false; input.placeholder = opts.placeholder || 'Search…'; },
+            disable: (ph) => { input.disabled = true; input.placeholder = ph || 'Select above first…'; selectedValue = ''; input.value = ''; },
+        };
+    }
+
+    // ─── Init ──────────────────────────────────────────────────────────────────
+    let ddMake, ddModel, ddYear;
+
+    function init() {
+        const stored = localStorage.getItem('crq_auth');
+        if (stored) {
+            try { const s = JSON.parse(stored); if (s.token && s.userId) Object.assign(state, s); } catch (_) { }
+        }
         bindDOM();
         renderAuthOrApp();
         populateCategories();
+        initSearchableDropdowns();
+    }
+
+    function initSearchableDropdowns() {
+        ddMake = SearchableDropdown('crqCarMake', 'crqCarMakeList', 'crqCarMakeWrap', CAR_MAKES, {
+            placeholder: 'Search make…',
+            popularItems: POPULAR_MAKES,
+            onSelect: (make) => {
+                const models = CAR_DATA[make] || [];
+                if (models.length) {
+                    ddModel.setItems(models);
+                    ddModel.enable();
+                } else {
+                    ddModel.disable('No models found');
+                }
+            }
+        });
+
+        ddModel = SearchableDropdown('crqCarModel', 'crqCarModelList', 'crqCarModelWrap', [], {
+            placeholder: 'Search model…',
+        });
+        ddModel.disable('Select make first…');
+
+        ddYear = SearchableDropdown('crqCarYear', 'crqCarYearList', 'crqCarYearWrap', YEARS, {
+            placeholder: 'Search year…',
+        });
     }
 
     function bindDOM() {
         dom = {
             authWrap: q('#crqAuthWrap'),
             appWrap: q('#crqApp'),
-            // Auth
             tabLogin: q('#crqTabLogin'),
             tabRegister: q('#crqTabRegister'),
             formLogin: q('#crqFormLogin'),
@@ -112,36 +300,25 @@
             alertLogin: q('#crqAlertLogin'),
             alertRegister: q('#crqAlertRegister'),
             alertOtp: q('#crqAlertOtp'),
-            // Login fields
             inpLoginPhone: q('#crqLoginPhone'),
             inpLoginPwd: q('#crqLoginPwd'),
             btnLogin: q('#crqBtnLogin'),
-            // Register fields
             inpRegName: q('#crqRegName'),
             inpRegEmail: q('#crqRegEmail'),
             inpRegPhone: q('#crqRegPhone'),
             inpRegPwd: q('#crqRegPwd'),
             btnRegister: q('#crqBtnRegister'),
-            // OTP
             otpEmailDisplay: q('#crqOtpEmail'),
             inpOtp: q('#crqOtpCode'),
             btnVerifyOtp: q('#crqBtnVerifyOtp'),
             btnResendOtp: q('#crqBtnResendOtp'),
             otpTimerDisplay: q('#crqOtpTimer'),
-            // App header
             userChipName: q('#crqUserName'),
             btnLogout: q('#crqBtnLogout'),
-            // View tabs
             viewTabNew: q('#crqViewTabNew'),
             viewTabRequests: q('#crqViewTabRequests'),
-            // Views
             viewNew: q('#crqViewNew'),
             viewRequests: q('#crqViewRequests'),
-            // Request form
-            inpCarMake: q('#crqCarMake'),
-            inpCarModel: q('#crqCarModel'),
-            inpCarYear: q('#crqCarYear'),
-            inpVin: q('#crqVin'),
             selCategory: q('#crqCategory'),
             selSubcategory: q('#crqSubcategory'),
             subGroup: q('#crqSubcategoryGroup'),
@@ -161,21 +338,23 @@
             photoCount: q('#crqPhotoCount'),
             btnSubmit: q('#crqBtnSubmit'),
             formAlert: q('#crqFormAlert'),
-            // Success
             successScreen: q('#crqSuccess'),
             btnNewAfterSuccess: q('#crqBtnNewAfterSuccess'),
             btnViewAfterSuccess: q('#crqBtnViewAfterSuccess'),
-            // Requests list
             requestsList: q('#crqRequestsList'),
-            // App nudge
             appNudge: q('#crqAppNudge'),
             btnDismissNudge: q('#crqBtnDismissNudge'),
+            // Modal
+            modalOverlay: q('#crqModalOverlay'),
+            modalBackdrop: q('#crqModalBackdrop'),
+            modalClose: q('#crqModalClose'),
+            modalTitle: q('#crqModalTitle'),
+            modalBody: q('#crqModalBody'),
         };
     }
 
     // ─── helpers ───────────────────────────────────────────────────────────────
     function q(sel) { return document.querySelector(sel); }
-
     function setLoading(btn, loading, label) {
         if (!btn) return;
         btn.disabled = loading;
@@ -183,20 +362,8 @@
             ? '<svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" class="crq-spin-icon"><path d="M21 12a9 9 0 11-6.219-8.56"/></svg> Please wait…'
             : label;
     }
-
-    function showAlert(el, type, msg) {
-        if (!el) return;
-        el.className = 'crq-alert ' + type;
-        el.textContent = msg;
-        el.style.display = 'block';
-    }
-
-    function hideAlert(el) {
-        if (!el) return;
-        el.style.display = 'none';
-        el.textContent = '';
-    }
-
+    function showAlert(el, type, msg) { if (!el) return; el.className = 'crq-alert ' + type; el.textContent = msg; el.style.display = 'block'; }
+    function hideAlert(el) { if (!el) return; el.style.display = 'none'; el.textContent = ''; }
     function toast(type, msg) {
         const wrap = q('#crqToastWrap');
         if (!wrap) return;
@@ -206,54 +373,34 @@
         wrap.appendChild(t);
         setTimeout(() => t.remove(), 4500);
     }
-
-    function saveSession() {
-        localStorage.setItem('crq_auth', JSON.stringify({
-            token: state.token,
-            userId: state.userId,
-            userName: state.userName,
-            userEmail: state.userEmail,
-            userPhone: state.userPhone,
-        }));
-    }
-
-    function clearSession() {
-        localStorage.removeItem('crq_auth');
-        state.token = null;
-        state.userId = null;
-        state.userName = null;
-        state.userEmail = null;
-        state.userPhone = null;
-    }
+    function saveSession() { localStorage.setItem('crq_auth', JSON.stringify({ token: state.token, userId: state.userId, userName: state.userName, userEmail: state.userEmail, userPhone: state.userPhone })); }
+    function clearSession() { localStorage.removeItem('crq_auth'); state.token = null; state.userId = null; state.userName = null; state.userEmail = null; state.userPhone = null; }
+    function escHtml(s) { return String(s).replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;').replace(/"/g, '&quot;'); }
+    function escAttr(s) { return String(s).replace(/"/g, '&quot;').replace(/'/g, '&#39;'); }
 
     async function apiFetch(path, opts = {}) {
         const headers = { ...(opts.headers || {}) };
         if (state.token) headers['Authorization'] = 'Bearer ' + state.token;
         const isFormData = opts.body instanceof FormData;
         if (!isFormData) headers['Content-Type'] = 'application/json';
-
         const res = await fetch(API + path, {
             ...opts,
             headers,
             body: opts.body instanceof FormData ? opts.body : opts.body ? JSON.stringify(opts.body) : undefined,
         });
-
         const data = await res.json().catch(() => ({}));
         if (!res.ok) throw new Error(data.error || data.message || 'Request failed');
         return data;
     }
 
-    // ─── Render auth vs app ────────────────────────────────────────────────────
+    // ─── Auth / App rendering ──────────────────────────────────────────────────
     function renderAuthOrApp() {
         if (state.token && state.userId) {
             dom.authWrap.style.display = 'none';
             dom.appWrap.classList.add('visible');
             if (dom.userChipName) dom.userChipName.textContent = state.userName || 'Customer';
             bindAppEvents();
-            // Show nudge once
-            if (!localStorage.getItem('crq_nudge_dismissed') && dom.appNudge) {
-                dom.appNudge.style.display = 'flex';
-            }
+            if (!localStorage.getItem('crq_nudge_dismissed') && dom.appNudge) dom.appNudge.style.display = 'flex';
         } else {
             dom.authWrap.style.display = 'flex';
             dom.appWrap.classList.remove('visible');
@@ -262,11 +409,10 @@
         }
     }
 
-    // ─── Auth events ───────────────────────────────────────────────────────────
+    // ─── Auth ──────────────────────────────────────────────────────────────────
     function bindAuthEvents() {
         if (dom.tabLogin) dom.tabLogin.addEventListener('click', () => switchAuthTab('login'));
         if (dom.tabRegister) dom.tabRegister.addEventListener('click', () => switchAuthTab('register'));
-
         if (dom.btnLogin) dom.btnLogin.addEventListener('click', handleLogin);
         if (dom.btnRegister) dom.btnRegister.addEventListener('click', handleRegister);
         if (dom.btnVerifyOtp) dom.btnVerifyOtp.addEventListener('click', handleVerifyOtp);
@@ -275,205 +421,104 @@
 
     function switchAuthTab(tab) {
         state.authTab = tab;
-        const isLogin = tab === 'login';
-        if (dom.tabLogin) dom.tabLogin.classList.toggle('active', isLogin);
-        if (dom.tabRegister) dom.tabRegister.classList.toggle('active', !isLogin && tab !== 'otp');
+        if (dom.tabLogin) dom.tabLogin.classList.toggle('active', tab === 'login');
+        if (dom.tabRegister) dom.tabRegister.classList.toggle('active', tab === 'register');
         if (dom.formLogin) dom.formLogin.style.display = tab === 'login' ? 'block' : 'none';
         if (dom.formRegister) dom.formRegister.style.display = tab === 'register' ? 'block' : 'none';
         if (dom.formOtp) dom.formOtp.style.display = tab === 'otp' ? 'block' : 'none';
-        hideAlert(dom.alertLogin);
-        hideAlert(dom.alertRegister);
-        hideAlert(dom.alertOtp);
+        hideAlert(dom.alertLogin); hideAlert(dom.alertRegister); hideAlert(dom.alertOtp);
     }
 
     async function handleLogin() {
         hideAlert(dom.alertLogin);
-        const phone = dom.inpLoginPhone?.value.trim();
-        const pwd = dom.inpLoginPwd?.value;
-        if (!phone || !pwd) {
-            showAlert(dom.alertLogin, 'error', 'Phone number and password are required.');
-            return;
-        }
+        const phone = dom.inpLoginPhone?.value.trim(), pwd = dom.inpLoginPwd?.value;
+        if (!phone || !pwd) return showAlert(dom.alertLogin, 'error', 'Phone number and password are required.');
         setLoading(dom.btnLogin, true, '');
         try {
-            const data = await apiFetch('/auth/login', {
-                method: 'POST',
-                body: { phone_number: phone, password: pwd }
-            });
-            if (data.userType && data.userType !== 'customer') {
-                showAlert(dom.alertLogin, 'error', 'This portal is for customers only. Garages use the garage dashboard.');
-                return;
-            }
-            state.token = data.token;
-            state.userId = data.userId;
-            state.userName = data.full_name || data.name || '';
-            state.userPhone = phone;
-            saveSession();
-            renderAuthOrApp();
-        } catch (err) {
-            showAlert(dom.alertLogin, 'error', err.message || 'Login failed. Please check your credentials.');
-        } finally {
-            setLoading(dom.btnLogin, false, 'Sign In →');
-        }
+            const data = await apiFetch('/auth/login', { method: 'POST', body: { phone_number: phone, password: pwd } });
+            if (data.userType && data.userType !== 'customer') { showAlert(dom.alertLogin, 'error', 'This portal is for customers only.'); return; }
+            state.token = data.token; state.userId = data.userId; state.userName = data.full_name || data.name || ''; state.userPhone = phone;
+            saveSession(); renderAuthOrApp();
+        } catch (err) { showAlert(dom.alertLogin, 'error', err.message || 'Login failed.'); }
+        finally { setLoading(dom.btnLogin, false, 'Sign In →'); }
     }
 
     async function handleRegister() {
         hideAlert(dom.alertRegister);
-        const full_name = dom.inpRegName?.value.trim();
-        const email = dom.inpRegEmail?.value.trim().toLowerCase();
-        const phone_number = dom.inpRegPhone?.value.trim();
-        const password = dom.inpRegPwd?.value;
-
-        if (!full_name || !email || !phone_number || !password) {
-            showAlert(dom.alertRegister, 'error', 'All fields are required.');
-            return;
-        }
-        if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)) {
-            showAlert(dom.alertRegister, 'error', 'Please enter a valid email address.');
-            return;
-        }
-        if (password.length < 6) {
-            showAlert(dom.alertRegister, 'error', 'Password must be at least 6 characters.');
-            return;
-        }
-
+        const full_name = dom.inpRegName?.value.trim(), email = dom.inpRegEmail?.value.trim().toLowerCase();
+        const phone_number = dom.inpRegPhone?.value.trim(), password = dom.inpRegPwd?.value;
+        if (!full_name || !email || !phone_number || !password) return showAlert(dom.alertRegister, 'error', 'All fields are required.');
+        if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)) return showAlert(dom.alertRegister, 'error', 'Please enter a valid email address.');
+        if (password.length < 6) return showAlert(dom.alertRegister, 'error', 'Password must be at least 6 characters.');
         setLoading(dom.btnRegister, true, '');
         try {
-            await apiFetch('/auth/register-with-email', {
-                method: 'POST',
-                body: { full_name, email, phone_number, password }
-            });
-            // Store for OTP step
+            await apiFetch('/auth/register-with-email', { method: 'POST', body: { full_name, email, phone_number, password } });
             state.regTemp = { full_name, email, phone_number, password };
             if (dom.otpEmailDisplay) dom.otpEmailDisplay.textContent = email;
-            switchAuthTab('otp');
-            startOtpTimer(120);
-        } catch (err) {
-            showAlert(dom.alertRegister, 'error', err.message || 'Registration failed. Please try again.');
-        } finally {
-            setLoading(dom.btnRegister, false, 'Create Account →');
-        }
+            switchAuthTab('otp'); startOtpTimer(120);
+        } catch (err) { showAlert(dom.alertRegister, 'error', err.message || 'Registration failed.'); }
+        finally { setLoading(dom.btnRegister, false, 'Create Account →'); }
     }
 
     async function handleVerifyOtp() {
         hideAlert(dom.alertOtp);
         const otp = dom.inpOtp?.value.trim();
-        if (!otp || otp.length < 4) {
-            showAlert(dom.alertOtp, 'error', 'Please enter the 6-digit verification code.');
-            return;
-        }
+        if (!otp || otp.length < 4) return showAlert(dom.alertOtp, 'error', 'Please enter the 6-digit verification code.');
         const { full_name, email, phone_number, password } = state.regTemp;
         setLoading(dom.btnVerifyOtp, true, '');
         try {
-            const data = await apiFetch('/auth/verify-email-otp', {
-                method: 'POST',
-                body: { full_name, email, phone_number, password, otp }
-            });
+            const data = await apiFetch('/auth/verify-email-otp', { method: 'POST', body: { full_name, email, phone_number, password, otp } });
             clearOtpTimer();
-            state.token = data.token;
-            state.userId = data.userId;
-            state.userName = full_name;
-            state.userEmail = email;
-            state.userPhone = phone_number;
-            state.regTemp = {};
-            saveSession();
-            renderAuthOrApp();
-        } catch (err) {
-            showAlert(dom.alertOtp, 'error', err.message || 'Invalid code. Please try again.');
-        } finally {
-            setLoading(dom.btnVerifyOtp, false, 'Verify & Create Account →');
-        }
+            state.token = data.token; state.userId = data.userId; state.userName = full_name; state.userEmail = email; state.userPhone = phone_number; state.regTemp = {};
+            saveSession(); renderAuthOrApp();
+        } catch (err) { showAlert(dom.alertOtp, 'error', err.message || 'Invalid code.'); }
+        finally { setLoading(dom.btnVerifyOtp, false, 'Verify & Create Account →'); }
     }
 
     async function handleResendOtp() {
         const { email, full_name } = state.regTemp;
         if (!email) return;
-        hideAlert(dom.alertOtp);
-        dom.btnResendOtp.disabled = true;
-        try {
-            await apiFetch('/auth/resend-otp', { method: 'POST', body: { email, full_name } });
-            showAlert(dom.alertOtp, 'success', 'Verification code resent. Check your email.');
-            startOtpTimer(120);
-        } catch (err) {
-            showAlert(dom.alertOtp, 'error', err.message || 'Could not resend. Please wait and try again.');
-            dom.btnResendOtp.disabled = false;
-        }
+        hideAlert(dom.alertOtp); dom.btnResendOtp.disabled = true;
+        try { await apiFetch('/auth/resend-otp', { method: 'POST', body: { email, full_name } }); showAlert(dom.alertOtp, 'success', 'Verification code resent.'); startOtpTimer(120); }
+        catch (err) { showAlert(dom.alertOtp, 'error', err.message || 'Could not resend.'); dom.btnResendOtp.disabled = false; }
     }
 
-    function startOtpTimer(seconds) {
-        clearOtpTimer();
-        state.otpCountdown = seconds;
-        dom.btnResendOtp.disabled = true;
-        if (dom.otpTimerDisplay) dom.otpTimerDisplay.textContent = `(${seconds}s)`;
+    function startOtpTimer(s) {
+        clearOtpTimer(); state.otpCountdown = s; dom.btnResendOtp.disabled = true;
+        if (dom.otpTimerDisplay) dom.otpTimerDisplay.textContent = `(${s}s)`;
         state.otpTimer = setInterval(() => {
             state.otpCountdown--;
             if (dom.otpTimerDisplay) dom.otpTimerDisplay.textContent = state.otpCountdown > 0 ? `(${state.otpCountdown}s)` : '';
-            if (state.otpCountdown <= 0) {
-                clearOtpTimer();
-                if (dom.btnResendOtp) dom.btnResendOtp.disabled = false;
-            }
+            if (state.otpCountdown <= 0) { clearOtpTimer(); if (dom.btnResendOtp) dom.btnResendOtp.disabled = false; }
         }, 1000);
     }
+    function clearOtpTimer() { if (state.otpTimer) { clearInterval(state.otpTimer); state.otpTimer = null; } }
 
-    function clearOtpTimer() {
-        if (state.otpTimer) { clearInterval(state.otpTimer); state.otpTimer = null; }
-    }
-
-    // ─── App events ────────────────────────────────────────────────────────────
+    // ─── App Events ────────────────────────────────────────────────────────────
     function bindAppEvents() {
-        // Logout
-        if (dom.btnLogout) dom.btnLogout.addEventListener('click', () => {
-            clearSession();
-            location.reload();
-        });
-
-        // View tabs
+        if (dom.btnLogout) dom.btnLogout.addEventListener('click', () => { clearSession(); location.reload(); });
         if (dom.viewTabNew) dom.viewTabNew.addEventListener('click', () => switchView('new'));
         if (dom.viewTabRequests) dom.viewTabRequests.addEventListener('click', () => switchView('requests'));
-
-        // Category → subcategory cascade
         if (dom.selCategory) dom.selCategory.addEventListener('change', onCategoryChange);
-
-        // Condition pills
-        [dom.condAny, dom.condNew, dom.condUsed].forEach(el => {
-            if (el) el.addEventListener('click', () => setCondition(el.dataset.value));
-        });
-
-        // Quantity stepper
+        [dom.condAny, dom.condNew, dom.condUsed].forEach(el => { if (el) el.addEventListener('click', () => setCondition(el.dataset.value)); });
         if (dom.qtyMinus) dom.qtyMinus.addEventListener('click', () => setQty(state.quantity - 1));
         if (dom.qtyPlus) dom.qtyPlus.addEventListener('click', () => setQty(state.quantity + 1));
-
-        // Char counter
-        if (dom.inpDesc) dom.inpDesc.addEventListener('input', () => {
-            const len = dom.inpDesc.value.length;
-            if (dom.descCount) dom.descCount.textContent = len + '/1000';
-            if (len > 1000) dom.inpDesc.value = dom.inpDesc.value.slice(0, 1000);
-        });
-
-        // Photo upload
+        if (dom.inpDesc) dom.inpDesc.addEventListener('input', () => { const len = dom.inpDesc.value.length; if (dom.descCount) dom.descCount.textContent = len + '/1000'; if (len > 1000) dom.inpDesc.value = dom.inpDesc.value.slice(0, 1000); });
         if (dom.photoInput) dom.photoInput.addEventListener('change', onPhotoSelect);
         if (dom.photoZone) {
             dom.photoZone.addEventListener('dragover', e => { e.preventDefault(); dom.photoZone.classList.add('drag-over'); });
             dom.photoZone.addEventListener('dragleave', () => dom.photoZone.classList.remove('drag-over'));
-            dom.photoZone.addEventListener('drop', e => {
-                e.preventDefault();
-                dom.photoZone.classList.remove('drag-over');
-                addPhotos([...e.dataTransfer.files].filter(f => f.type.startsWith('image/')));
-            });
+            dom.photoZone.addEventListener('drop', e => { e.preventDefault(); dom.photoZone.classList.remove('drag-over'); addPhotos([...e.dataTransfer.files].filter(f => f.type.startsWith('image/'))); });
         }
-
-        // Submit
         if (dom.btnSubmit) dom.btnSubmit.addEventListener('click', handleSubmit);
-
-        // Success actions
         if (dom.btnNewAfterSuccess) dom.btnNewAfterSuccess.addEventListener('click', resetForm);
         if (dom.btnViewAfterSuccess) dom.btnViewAfterSuccess.addEventListener('click', () => { resetForm(); switchView('requests'); });
+        if (dom.btnDismissNudge) dom.btnDismissNudge.addEventListener('click', () => { if (dom.appNudge) dom.appNudge.style.display = 'none'; localStorage.setItem('crq_nudge_dismissed', '1'); });
 
-        // App nudge dismiss
-        if (dom.btnDismissNudge) dom.btnDismissNudge.addEventListener('click', () => {
-            if (dom.appNudge) dom.appNudge.style.display = 'none';
-            localStorage.setItem('crq_nudge_dismissed', '1');
-        });
+        // Modal
+        if (dom.modalClose) dom.modalClose.addEventListener('click', closeModal);
+        if (dom.modalBackdrop) dom.modalBackdrop.addEventListener('click', closeModal);
+        document.addEventListener('keydown', (e) => { if (e.key === 'Escape') closeModal(); });
     }
 
     function switchView(view) {
@@ -486,15 +531,11 @@
         if (!isNew && !state.requestsLoading) loadMyRequests();
     }
 
-    // ─── Form logic ────────────────────────────────────────────────────────────
+    // ─── Form ──────────────────────────────────────────────────────────────────
     function populateCategories() {
         if (!dom.selCategory) return;
         dom.selCategory.innerHTML = '<option value="">— Select category (optional) —</option>';
-        PART_CATEGORIES.forEach(cat => {
-            const opt = document.createElement('option');
-            opt.value = opt.textContent = cat;
-            dom.selCategory.appendChild(opt);
-        });
+        PART_CATEGORIES.forEach(cat => { const o = document.createElement('option'); o.value = o.textContent = cat; dom.selCategory.appendChild(o); });
     }
 
     function onCategoryChange() {
@@ -502,154 +543,86 @@
         const subs = PART_SUBCATEGORIES[cat] || [];
         if (subs.length && dom.selSubcategory && dom.subGroup) {
             dom.selSubcategory.innerHTML = '<option value="">— Select subcategory (optional) —</option>';
-            subs.forEach(s => {
-                const opt = document.createElement('option');
-                opt.value = opt.textContent = s;
-                dom.selSubcategory.appendChild(opt);
-            });
+            subs.forEach(s => { const o = document.createElement('option'); o.value = o.textContent = s; dom.selSubcategory.appendChild(o); });
             dom.subGroup.style.display = 'block';
-        } else if (dom.subGroup) {
-            dom.subGroup.style.display = 'none';
-        }
+        } else if (dom.subGroup) { dom.subGroup.style.display = 'none'; }
     }
 
-    function setCondition(val) {
-        state.condition = val;
-        [dom.condAny, dom.condNew, dom.condUsed].forEach(el => {
-            if (el) el.classList.toggle('active', el.dataset.value === val);
-        });
-    }
-
-    function setQty(n) {
-        state.quantity = Math.max(1, Math.min(99, n));
-        if (dom.qtyVal) dom.qtyVal.textContent = state.quantity;
-        if (dom.qtyMinus) dom.qtyMinus.disabled = state.quantity <= 1;
-    }
-
-    function onPhotoSelect(e) {
-        addPhotos([...e.target.files]);
-        e.target.value = ''; // allow re-select same file
-    }
-
-    function addPhotos(files) {
-        const remaining = 5 - state.images.length;
-        const toAdd = files.slice(0, remaining);
-        toAdd.forEach(f => state.images.push(f));
-        renderPhotoGrid();
-        if (dom.photoCount) dom.photoCount.textContent = `${state.images.length}/5 photos`;
-    }
-
+    function setCondition(val) { state.condition = val;[dom.condAny, dom.condNew, dom.condUsed].forEach(el => { if (el) el.classList.toggle('active', el.dataset.value === val); }); }
+    function setQty(n) { state.quantity = Math.max(1, Math.min(99, n)); if (dom.qtyVal) dom.qtyVal.textContent = state.quantity; if (dom.qtyMinus) dom.qtyMinus.disabled = state.quantity <= 1; }
+    function onPhotoSelect(e) { addPhotos([...e.target.files]); e.target.value = ''; }
+    function addPhotos(files) { const rem = 5 - state.images.length; files.slice(0, rem).forEach(f => state.images.push(f)); renderPhotoGrid(); if (dom.photoCount) dom.photoCount.textContent = `${state.images.length}/5 photos`; }
     function renderPhotoGrid() {
         if (!dom.photoGrid) return;
         dom.photoGrid.innerHTML = '';
         state.images.forEach((file, i) => {
             const url = URL.createObjectURL(file);
-            const thumb = document.createElement('div');
-            thumb.className = 'crq-photo-thumb';
-            thumb.innerHTML = `<img src="${url}" alt="Photo ${i + 1}">
-                <button class="crq-photo-remove" data-idx="${i}" aria-label="Remove photo">×</button>`;
-            dom.photoGrid.appendChild(thumb);
+            const t = document.createElement('div'); t.className = 'crq-photo-thumb';
+            t.innerHTML = `<img src="${url}" alt="Photo ${i + 1}"><button class="crq-photo-remove" data-idx="${i}" aria-label="Remove photo">×</button>`;
+            dom.photoGrid.appendChild(t);
         });
         dom.photoGrid.querySelectorAll('.crq-photo-remove').forEach(btn => {
-            btn.addEventListener('click', (e) => {
-                e.stopPropagation();
-                state.images.splice(parseInt(btn.dataset.idx), 1);
-                renderPhotoGrid();
-                if (dom.photoCount) dom.photoCount.textContent = `${state.images.length}/5 photos`;
-            });
+            btn.addEventListener('click', (e) => { e.stopPropagation(); state.images.splice(parseInt(btn.dataset.idx), 1); renderPhotoGrid(); if (dom.photoCount) dom.photoCount.textContent = `${state.images.length}/5 photos`; });
         });
     }
 
     // ─── Submit ────────────────────────────────────────────────────────────────
     async function handleSubmit() {
         hideAlert(dom.formAlert);
-
-        const car_make = dom.inpCarMake?.value.trim();
-        const car_model = dom.inpCarModel?.value.trim();
-        const car_year = dom.inpCarYear?.value.trim();
+        const car_make = ddMake ? ddMake.getValue() : q('#crqCarMake')?.value.trim();
+        const car_model = ddModel ? ddModel.getValue() : q('#crqCarModel')?.value.trim();
+        const car_year = ddYear ? ddYear.getValue() : q('#crqCarYear')?.value.trim();
         const part_description = dom.inpDesc?.value.trim();
 
-        // Required field validation
-        if (!car_make) return showErr('Car make is required (e.g. Toyota).');
-        if (!car_model) return showErr('Car model is required (e.g. Camry).');
-        if (!car_year) return showErr('Car year is required.');
+        if (!car_make) return showErr('Please select a car make.');
+        if (!car_model) return showErr('Please select a car model.');
+        if (!car_year) return showErr('Please select a year.');
         const yearNum = parseInt(car_year, 10);
-        if (isNaN(yearNum) || yearNum < 1900 || yearNum > new Date().getFullYear() + 2) {
-            return showErr('Please enter a valid car year.');
-        }
-        if (!part_description || part_description.length < 10) {
-            return showErr('Part description must be at least 10 characters.');
-        }
+        if (isNaN(yearNum) || yearNum < 1900 || yearNum > new Date().getFullYear() + 2) return showErr('Please select a valid car year.');
+        if (!part_description || part_description.length < 10) return showErr('Part description must be at least 10 characters.');
 
-        const vin_number = dom.inpVin?.value.trim();
-        if (vin_number && !/^[A-HJ-NPR-Z0-9]{17}$/i.test(vin_number)) {
-            return showErr('VIN must be exactly 17 alphanumeric characters (no I, O, Q).');
-        }
+        const vin_number = q('#crqVin')?.value.trim();
+        if (vin_number && !/^[A-HJ-NPR-Z0-9]{17}$/i.test(vin_number)) return showErr('VIN must be exactly 17 alphanumeric characters.');
 
         setLoading(dom.btnSubmit, true, '');
-
         try {
             const fd = new FormData();
             fd.append('car_make', car_make);
             fd.append('car_model', car_model);
             fd.append('car_year', String(yearNum));
             if (vin_number) fd.append('vin_number', vin_number.toUpperCase());
-
-            // Part details
             let finalDesc = part_description;
             if (state.quantity > 1) finalDesc += `\n\nQuantity: ${state.quantity} pcs`;
             fd.append('part_description', finalDesc);
-            const cat = dom.selCategory?.value;
-            const sub = dom.selSubcategory?.value;
+            const cat = dom.selCategory?.value, sub = dom.selSubcategory?.value;
             if (cat) fd.append('part_category', cat);
             if (sub) fd.append('part_subcategory', sub);
             const partNum = dom.inpPartNum?.value.trim();
             if (partNum) fd.append('part_number', partNum);
             fd.append('condition_required', state.condition);
-
             const addr = dom.inpAddress?.value.trim();
             if (addr) fd.append('delivery_address_text', addr);
-
-            // Photos (field name: images[])
             state.images.forEach(f => fd.append('images', f));
-
-            const result = await apiFetch('/requests', {
-                method: 'POST',
-                body: fd
-            });
-
+            await apiFetch('/requests', { method: 'POST', body: fd });
             showSuccessScreen();
-        } catch (err) {
-            showErr(err.message || 'Failed to submit request. Please try again.');
-        } finally {
-            setLoading(dom.btnSubmit, false, '');
-        }
+        } catch (err) { showErr(err.message || 'Failed to submit request.'); }
+        finally { setLoading(dom.btnSubmit, false, '<svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><line x1="22" y1="2" x2="11" y2="13"/><polygon points="22 2 15 22 11 13 2 9 22 2"/></svg> Submit Request'); }
     }
 
-    function showErr(msg) {
-        showAlert(dom.formAlert, 'error', msg);
-        dom.formAlert?.scrollIntoView({ behavior: 'smooth', block: 'center' });
-    }
+    function showErr(msg) { showAlert(dom.formAlert, 'error', msg); dom.formAlert?.scrollIntoView({ behavior: 'smooth', block: 'center' }); }
 
     function showSuccessScreen() {
-        if (dom.viewNew) dom.viewNew.querySelector('.crq-form-areas').style.display = 'none';
-        if (dom.successScreen) {
-            dom.successScreen.classList.add('visible');
-            dom.successScreen.scrollIntoView({ behavior: 'smooth', block: 'center' });
-        }
+        if (dom.viewNew) { const a = dom.viewNew.querySelector('.crq-form-areas'); if (a) a.style.display = 'none'; }
+        if (dom.successScreen) { dom.successScreen.classList.add('visible'); dom.successScreen.scrollIntoView({ behavior: 'smooth', block: 'center' }); }
         toast('success', '🎉 Request submitted! Garages are reviewing it now.');
     }
 
     function resetForm() {
-        // Reset state
-        state.condition = 'any';
-        state.quantity = 1;
-        state.images = [];
-        // Reset DOM
-        if (dom.inpCarMake) dom.inpCarMake.value = '';
-        if (dom.inpCarModel) dom.inpCarModel.value = '';
-        if (dom.inpCarYear) dom.inpCarYear.value = '';
-        if (dom.inpVin) dom.inpVin.value = '';
+        state.condition = 'any'; state.quantity = 1; state.images = [];
+        if (ddMake) ddMake.setValue('');
+        if (ddModel) { ddModel.disable('Select make first…'); }
+        if (ddYear) ddYear.setValue('');
+        if (q('#crqVin')) q('#crqVin').value = '';
         if (dom.selCategory) { dom.selCategory.value = ''; onCategoryChange(); }
         if (dom.inpDesc) dom.inpDesc.value = '';
         if (dom.descCount) dom.descCount.textContent = '0/1000';
@@ -658,13 +631,9 @@
         if (dom.photoGrid) dom.photoGrid.innerHTML = '';
         if (dom.photoCount) dom.photoCount.textContent = '0/5 photos';
         if (dom.qtyVal) dom.qtyVal.textContent = '1';
-        setCondition('any');
-        hideAlert(dom.formAlert);
+        setCondition('any'); hideAlert(dom.formAlert);
         if (dom.successScreen) dom.successScreen.classList.remove('visible');
-        if (dom.viewNew) {
-            const areas = dom.viewNew.querySelector('.crq-form-areas');
-            if (areas) areas.style.display = 'block';
-        }
+        if (dom.viewNew) { const a = dom.viewNew.querySelector('.crq-form-areas'); if (a) a.style.display = 'block'; }
     }
 
     // ─── My Requests ───────────────────────────────────────────────────────────
@@ -678,27 +647,14 @@
             state.myRequests = requests;
             renderRequestsList(requests);
         } catch (err) {
-            dom.requestsList.innerHTML = `<div class="crq-empty">
-                <div class="crq-empty-icon">⚠️</div>
-                <div class="crq-empty-title">Could not load requests</div>
-                <div class="crq-empty-text">${err.message}</div>
-            </div>`;
-        } finally {
-            state.requestsLoading = false;
-        }
+            dom.requestsList.innerHTML = `<div class="crq-empty"><div class="crq-empty-icon">⚠️</div><div class="crq-empty-title">Could not load requests</div><div class="crq-empty-text">${escHtml(err.message)}</div></div>`;
+        } finally { state.requestsLoading = false; }
     }
 
     function renderRequestsList(requests) {
         if (!dom.requestsList) return;
         if (!requests.length) {
-            dom.requestsList.innerHTML = `<div class="crq-empty">
-                <div class="crq-empty-icon">📋</div>
-                <div class="crq-empty-title">No requests yet</div>
-                <div class="crq-empty-text">Submit your first parts request and get bids from verified garages.</div>
-                <button class="crq-btn-primary" style="max-width:220px;margin:0 auto" onclick="document.getElementById('crqViewTabNew').click()">
-                    Request a Part →
-                </button>
-            </div>`;
+            dom.requestsList.innerHTML = `<div class="crq-empty"><div class="crq-empty-icon">📋</div><div class="crq-empty-title">No requests yet</div><div class="crq-empty-text">Submit your first parts request and get bids from verified garages.</div></div>`;
             return;
         }
         dom.requestsList.innerHTML = requests.map(r => {
@@ -708,38 +664,114 @@
             const date = new Date(r.created_at).toLocaleDateString('en-GB', { day: '2-digit', month: 'short', year: 'numeric' });
             const car = `${r.car_year} ${r.car_make} ${r.car_model}`;
             const desc = r.part_description ? r.part_description.substring(0, 120) : '';
-            return `<div class="crq-request-card" id="rcrd-${r.request_id}">
+            return `<div class="crq-request-card" data-rid="${r.request_id}">
                 <div class="crq-request-card-top">
-                    <div>
-                        <div class="crq-request-car">${escHtml(car)}</div>
-                        <div class="crq-request-desc">${escHtml(desc)}</div>
-                    </div>
+                    <div><div class="crq-request-car">${escHtml(car)}</div><div class="crq-request-desc">${escHtml(desc)}</div></div>
                     <span class="crq-status-pill ${statusClass}">${statusLabel}</span>
                 </div>
                 <div class="crq-request-meta">
-                    <span class="crq-request-meta-item">
-                        <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="4" width="18" height="18" rx="2"/><line x1="16" y1="2" x2="16" y2="6"/><line x1="8" y1="2" x2="8" y2="6"/><line x1="3" y1="10" x2="21" y2="10"/></svg>
-                        ${date}
-                    </span>
+                    <span class="crq-request-meta-item"><svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="4" width="18" height="18" rx="2"/><line x1="16" y1="2" x2="16" y2="6"/><line x1="8" y1="2" x2="8" y2="6"/><line x1="3" y1="10" x2="21" y2="10"/></svg> ${date}</span>
                     ${r.part_category ? `<span class="crq-request-meta-item">${escHtml(r.part_category)}</span>` : ''}
                     ${bids > 0 ? `<span class="crq-bid-badge">🏷️ ${bids} bid${bids !== 1 ? 's' : ''}</span>` : ''}
                 </div>
             </div>`;
         }).join('');
+
+        // Bind click to open modal
+        dom.requestsList.querySelectorAll('.crq-request-card').forEach(card => {
+            card.addEventListener('click', () => {
+                const rid = card.dataset.rid;
+                const req = state.myRequests.find(r => String(r.request_id) === String(rid));
+                if (req) openRequestModal(req);
+            });
+        });
     }
 
-    function escHtml(s) {
-        return String(s).replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;').replace(/"/g, '&quot;');
+    // ─── Request Detail Modal ──────────────────────────────────────────────────
+    function openRequestModal(r) {
+        if (!dom.modalOverlay || !dom.modalBody) return;
+
+        const car = `${r.car_year} ${r.car_make} ${r.car_model}`;
+        const date = new Date(r.created_at).toLocaleDateString('en-GB', { day: '2-digit', month: 'short', year: 'numeric', hour: '2-digit', minute: '2-digit' });
+        const statusClass = { active: 'active', pending: 'active', completed: 'completed', cancelled: 'cancelled', expired: 'expired' }[r.status] || 'expired';
+        const statusLabel = { active: 'Active', pending: 'Active', completed: 'Completed', cancelled: 'Cancelled', expired: 'Expired' }[r.status] || r.status;
+        const bids = r.bid_count || r.bids_count || 0;
+        const images = r.image_urls || r.images || [];
+
+        if (dom.modalTitle) dom.modalTitle.textContent = car;
+
+        let html = `
+            <div class="crq-detail-row">
+                <div class="crq-detail-label">Status</div>
+                <div class="crq-detail-value"><span class="crq-status-pill ${statusClass}">${statusLabel}</span></div>
+            </div>
+            <div class="crq-detail-row">
+                <div class="crq-detail-label">Vehicle</div>
+                <div class="crq-detail-value"><strong>${escHtml(car)}</strong>${r.vin_number ? '<br><small style="color:var(--slate)">VIN: ' + escHtml(r.vin_number) + '</small>' : ''}</div>
+            </div>
+            <div class="crq-detail-row">
+                <div class="crq-detail-label">Part</div>
+                <div class="crq-detail-value">${escHtml(r.part_description || '—')}</div>
+            </div>`;
+
+        if (r.part_category) html += `
+            <div class="crq-detail-row">
+                <div class="crq-detail-label">Category</div>
+                <div class="crq-detail-value">${escHtml(r.part_category)}${r.part_subcategory ? ' → ' + escHtml(r.part_subcategory) : ''}</div>
+            </div>`;
+
+        if (r.part_number) html += `
+            <div class="crq-detail-row">
+                <div class="crq-detail-label">Part #</div>
+                <div class="crq-detail-value" style="font-family:monospace">${escHtml(r.part_number)}</div>
+            </div>`;
+
+        html += `
+            <div class="crq-detail-row">
+                <div class="crq-detail-label">Condition</div>
+                <div class="crq-detail-value">${escHtml(r.condition_required === 'any' ? 'Any Condition' : r.condition_required === 'new' ? 'New Only' : r.condition_required === 'used' ? 'Used Only' : (r.condition_required || 'Any'))}</div>
+            </div>`;
+
+        if (r.delivery_address_text) html += `
+            <div class="crq-detail-row">
+                <div class="crq-detail-label">Delivery</div>
+                <div class="crq-detail-value">${escHtml(r.delivery_address_text)}</div>
+            </div>`;
+
+        html += `
+            <div class="crq-detail-row">
+                <div class="crq-detail-label">Bids</div>
+                <div class="crq-detail-value">${bids > 0 ? `<span class="crq-bid-badge">🏷️ ${bids} bid${bids !== 1 ? 's' : ''}</span>` : '<span style="color:var(--slate)">No bids yet — garages are reviewing</span>'}</div>
+            </div>
+            <div class="crq-detail-row">
+                <div class="crq-detail-label">Created</div>
+                <div class="crq-detail-value">${date}</div>
+            </div>`;
+
+        if (images.length) {
+            html += `
+            <div class="crq-detail-row">
+                <div class="crq-detail-label">Photos</div>
+                <div class="crq-detail-value"><div class="crq-detail-photos">
+                    ${images.map(url => `<img class="crq-detail-photo" src="${escAttr(url)}" alt="Part photo" loading="lazy">`).join('')}
+                </div></div>
+            </div>`;
+        }
+
+        dom.modalBody.innerHTML = html;
+        dom.modalOverlay.classList.add('visible');
+        dom.modalOverlay.setAttribute('aria-hidden', 'false');
+        document.body.style.overflow = 'hidden';
+    }
+
+    function closeModal() {
+        if (!dom.modalOverlay) return;
+        dom.modalOverlay.classList.remove('visible');
+        dom.modalOverlay.setAttribute('aria-hidden', 'true');
+        document.body.style.overflow = '';
     }
 
     // ─── Boot ──────────────────────────────────────────────────────────────────
-    if (document.readyState === 'loading') {
-        document.addEventListener('DOMContentLoaded', init);
-    } else {
-        init();
-    }
-
-    // Expose for inline handlers
+    if (document.readyState === 'loading') { document.addEventListener('DOMContentLoaded', init); } else { init(); }
     window.crqSwitchAuthTab = switchAuthTab;
-
 })();
