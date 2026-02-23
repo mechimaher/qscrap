@@ -640,6 +640,42 @@ body {
     pointer-events: none;
 }
 
+/* GPS Button */
+.crq-gps-btn {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    width: 100%;
+    padding: 12px;
+    background: var(--maroon-50);
+    color: var(--qatar-maroon);
+    border: 1px dashed var(--qatar-maroon);
+    border-radius: var(--radius-md);
+    font-size: 14px;
+    font-weight: 600;
+    cursor: pointer;
+    transition: all 0.2s;
+    margin-bottom: 8px;
+}
+
+.crq-gps-btn:hover:not(:disabled) {
+    background: var(--maroon-100);
+}
+
+.crq-gps-btn:disabled {
+    opacity: 0.6;
+    cursor: not-allowed;
+}
+
+.crq-gps-result {
+    font-size: 13px;
+    padding: 8px 12px;
+    background: var(--success-light);
+    border-radius: var(--radius-sm);
+    margin-bottom: 8px;
+    color: var(--success-dark);
+}
+
 /* ===== SUBMIT BAR ===== */
 .crq-submit-bar {
     background: var(--white);
