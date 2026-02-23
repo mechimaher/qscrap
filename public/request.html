@@ -1,0 +1,557 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+
+    <title>Request a Car Part — QScrap Qatar | New, Used & OEM Parts</title>
+    <meta name="description"
+        content="Request any automotive spare part in Qatar. Compare bids from 50+ verified garages, pay securely, and get same-day delivery across Doha.">
+    <meta name="robots" content="index, follow">
+    <link rel="canonical" href="https://www.qscrap.qa/request.html">
+    <meta name="theme-color" content="#8D1B3D">
+
+    <!-- Open Graph -->
+    <meta property="og:type" content="website">
+    <meta property="og:title" content="Request a Car Part — QScrap Qatar">
+    <meta property="og:description"
+        content="Get bids from verified garages for any car part in Qatar. Same-day delivery across Doha.">
+    <meta property="og:url" content="https://www.qscrap.qa/request.html">
+
+    <!-- Fonts -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800;900&display=swap"
+        rel="stylesheet">
+    <link rel="icon" type="image/x-icon" href="/favicon.ico">
+
+    <!-- Design System -->
+    <link rel="stylesheet" href="/css/design-tokens.css">
+    <link rel="stylesheet" href="/css/main.css">
+    <link rel="stylesheet" href="/css/customer-request.css">
+
+    <!-- Spinner keyframe for btn -->
+    <style>
+        .crq-spin-icon {
+            animation: crq-btn-spin 0.8s linear infinite;
+            stroke: currentColor;
+        }
+
+        @keyframes crq-btn-spin {
+            to {
+                transform: rotate(360deg);
+            }
+        }
+    </style>
+</head>
+
+<body>
+
+    <!-- ╔══════════════ MAIN NAV (identical to index.html) ══════════════╗ -->
+    <nav class="nav" id="mainNav">
+        <div class="nav-container">
+            <a href="/" class="nav-logo">
+                <img src="/assets/images/qscrap-logo.png?v=2026" alt="QScrap Logo" id="navLogo">
+            </a>
+            <div class="nav-links">
+                <a href="/#how-it-works" class="nav-link">How It Works</a>
+                <a href="/#gallery" class="nav-link">Gallery</a>
+                <a href="/partners.html" class="nav-link">For Businesses</a>
+                <a href="/about.html" class="nav-link">About</a>
+            </div>
+            <!-- Language Switcher -->
+            <div class="lang-switcher" id="langSwitcher">
+                <button class="lang-btn active" data-lang="en" aria-label="English"><span
+                        class="lang-text">EN</span></button>
+                <span class="lang-divider">|</span>
+                <button class="lang-btn" data-lang="ar" aria-label="العربية"><span class="lang-text">AR</span></button>
+            </div>
+            <!-- Request CTA in nav -->
+            <a href="/request.html" class="nav-cta" style="background:var(--qatar-maroon);color:#fff;">
+                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5">
+                    <circle cx="12" cy="12" r="10" />
+                    <line x1="12" y1="8" x2="12" y2="16" />
+                    <line x1="8" y1="12" x2="16" y2="12" />
+                </svg>
+                <span>Request a Part</span>
+            </a>
+            <button class="mobile-menu-btn" id="mobileMenuBtn" aria-label="Toggle Menu">
+                <span></span><span></span><span></span>
+            </button>
+        </div>
+    </nav>
+
+    <!-- ╔══════════════ MOBILE MENU (identical to index.html) ══════════════╗ -->
+    <div class="mobile-menu-overlay" id="mobileMenuOverlay" aria-hidden="true">
+        <div class="mobile-menu-backdrop" id="mobileMenuBackdrop"></div>
+        <div class="mobile-menu-panel" id="mobileMenuPanel" role="dialog" aria-modal="true"
+            aria-label="Mobile navigation menu">
+            <div class="mobile-menu-header">
+                <a href="/" class="mobile-menu-logo"><img src="/assets/images/qscrap-logo.png?v=2026"
+                        alt="QScrap Logo"></a>
+                <button class="mobile-menu-close" id="mobileMenuClose" aria-label="Close menu">
+                    <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                        <line x1="18" y1="6" x2="6" y2="18" />
+                        <line x1="6" y1="6" x2="18" y2="18" />
+                    </svg>
+                </button>
+            </div>
+            <nav class="mobile-menu-nav">
+                <a href="/#how-it-works" class="mobile-menu-link">How It Works</a>
+                <a href="/#gallery" class="mobile-menu-link">Gallery</a>
+                <a href="/partners.html" class="mobile-menu-link">For Businesses</a>
+                <a href="/about.html" class="mobile-menu-link">About</a>
+            </nav>
+            <div class="mobile-menu-footer">
+                <div class="mobile-lang-switcher">
+                    <button class="mobile-lang-btn active" data-lang="en">English</button>
+                    <button class="mobile-lang-btn" data-lang="ar">العربية</button>
+                </div>
+                <a href="/request.html" class="mobile-menu-cta">
+                    <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                        <circle cx="12" cy="12" r="10" />
+                        <line x1="12" y1="8" x2="12" y2="16" />
+                        <line x1="8" y1="12" x2="16" y2="12" />
+                    </svg>
+                    <span>Request a Part</span>
+                </a>
+            </div>
+        </div>
+    </div>
+
+    <!-- ╔══════════════ TOAST WRAPPER ══════════════╗ -->
+    <div id="crqToastWrap" class="crq-toast-wrap" aria-live="polite"></div>
+
+    <!-- ════════════════════════════════════════════════════════════════
+     AUTH SCREEN — shown when not logged in
+═══════════════════════════════════════════════════════════════════ -->
+    <div id="crqAuthWrap" class="crq-auth-wrap">
+        <div class="crq-auth-card" role="main">
+            <div class="crq-auth-logo">
+                <img src="/assets/images/qscrap-logo.png?v=2026" alt="QScrap">
+            </div>
+            <h1 class="crq-auth-title">Request a Car Part</h1>
+            <p class="crq-auth-subtitle">Sign in or create a free account to get started</p>
+
+            <!-- Tabs -->
+            <div class="crq-tabs" role="tablist">
+                <button class="crq-tab active" id="crqTabLogin" role="tab" aria-selected="true">Sign In</button>
+                <button class="crq-tab" id="crqTabRegister" role="tab" aria-selected="false">Create Account</button>
+            </div>
+
+            <!-- ── LOGIN FORM ── -->
+            <div id="crqFormLogin">
+                <div id="crqAlertLogin" class="crq-alert" role="alert"></div>
+
+                <div class="crq-form-group">
+                    <label class="crq-label" for="crqLoginPhone">Phone Number <span class="required">*</span></label>
+                    <input class="crq-input" id="crqLoginPhone" type="tel"
+                        placeholder="+974 XXXX XXXX or 8-digit number" autocomplete="tel" spellcheck="false">
+                </div>
+                <div class="crq-form-group">
+                    <label class="crq-label" for="crqLoginPwd">Password <span class="required">*</span></label>
+                    <input class="crq-input" id="crqLoginPwd" type="password" placeholder="Your password"
+                        autocomplete="current-password">
+                </div>
+
+                <button class="crq-btn-primary" id="crqBtnLogin" type="button">
+                    Sign In →
+                </button>
+            </div>
+
+            <!-- ── REGISTER FORM ── -->
+            <div id="crqFormRegister" style="display:none">
+                <div id="crqAlertRegister" class="crq-alert" role="alert"></div>
+
+                <div class="crq-form-group">
+                    <label class="crq-label" for="crqRegName">Full Name <span class="required">*</span></label>
+                    <input class="crq-input" id="crqRegName" type="text" placeholder="Your full name"
+                        autocomplete="name">
+                </div>
+                <div class="crq-form-group">
+                    <label class="crq-label" for="crqRegEmail">Email Address <span class="required">*</span></label>
+                    <input class="crq-input" id="crqRegEmail" type="email" placeholder="you@email.com"
+                        autocomplete="email" spellcheck="false">
+                    <small style="color:var(--slate);font-size:12px;margin-top:4px;display:block">
+                        We'll send a verification code to this email.
+                    </small>
+                </div>
+                <div class="crq-form-group">
+                    <label class="crq-label" for="crqRegPhone">Phone Number <span class="required">*</span></label>
+                    <input class="crq-input" id="crqRegPhone" type="tel" placeholder="+974 XXXX XXXX or 8-digit number"
+                        autocomplete="tel">
+                </div>
+                <div class="crq-form-group">
+                    <label class="crq-label" for="crqRegPwd">Password <span class="required">*</span></label>
+                    <input class="crq-input" id="crqRegPwd" type="password" placeholder="Minimum 6 characters"
+                        autocomplete="new-password">
+                </div>
+
+                <button class="crq-btn-primary" id="crqBtnRegister" type="button">
+                    Create Account →
+                </button>
+            </div>
+
+            <!-- ── OTP VERIFICATION FORM ── -->
+            <div id="crqFormOtp" style="display:none">
+                <div id="crqAlertOtp" class="crq-alert" role="alert"></div>
+                <div class="crq-otp-info">
+                    📧 Verification code sent to <strong id="crqOtpEmail"></strong>
+                </div>
+
+                <div class="crq-form-group">
+                    <label class="crq-label" for="crqOtpCode">Verification Code <span class="required">*</span></label>
+                    <div class="crq-otp-row">
+                        <input class="crq-input" id="crqOtpCode" type="text" inputmode="numeric" pattern="[0-9]*"
+                            placeholder="Enter 6-digit code" maxlength="6" autocomplete="one-time-code">
+                        <button class="crq-btn-resend" id="crqBtnResendOtp" type="button" disabled>
+                            Resend <span id="crqOtpTimer"></span>
+                        </button>
+                    </div>
+                </div>
+
+                <button class="crq-btn-primary" id="crqBtnVerifyOtp" type="button">
+                    Verify & Create Account →
+                </button>
+                <button
+                    style="margin-top:12px;width:100%;background:none;border:none;font-size:13px;color:var(--slate);cursor:pointer;"
+                    onclick="crqSwitchAuthTab('register')">
+                    ← Back
+                </button>
+            </div>
+        </div>
+    </div>
+
+    <!-- ════════════════════════════════════════════════════════════════
+     CUSTOMER APP — shown when logged in
+═══════════════════════════════════════════════════════════════════ -->
+    <div id="crqApp" class="crq-app" role="main" aria-label="QScrap Customer Portal">
+
+        <!-- Breadcrumb -->
+        <div class="crq-breadcrumb">
+            <a href="/">Home</a>
+            <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                <polyline points="9 18 15 12 9 6" />
+            </svg>
+            <span>Request a Part</span>
+        </div>
+        <div style="height:16px"></div>
+
+        <!-- ── App Nudge (download app) ── -->
+        <div id="crqAppNudge" class="crq-app-nudge" style="display:none" role="banner">
+            <div class="crq-app-nudge-icon">📱</div>
+            <div>
+                <div class="crq-app-nudge-title">Get more on the QScrap app</div>
+                <div class="crq-app-nudge-text">Push notifications for bids, live delivery tracking, and camera photo
+                    uploads.</div>
+            </div>
+            <button id="crqBtnDismissNudge" class="crq-app-nudge-dismiss">Download App</button>
+        </div>
+
+        <!-- ── Section Header ── -->
+        <div class="crq-section-hdr">
+            <div>
+                <div class="crq-section-title">Auto Parts Portal</div>
+                <div class="crq-section-subtitle">Request a part or track your existing requests</div>
+            </div>
+            <div class="crq-user-chip">
+                <div class="crq-user-chip-avatar" id="crqUserAvatar">C</div>
+                <span id="crqUserName">Customer</span>
+                <button id="crqBtnLogout"
+                    style="background:none;border:none;color:var(--slate);cursor:pointer;font-size:12px;padding:0 0 0 6px;"
+                    title="Sign out">
+                    Sign out
+                </button>
+            </div>
+        </div>
+
+        <!-- ── View Tabs ── -->
+        <div class="crq-view-tabs" role="tablist">
+            <button class="crq-view-tab active" id="crqViewTabNew" role="tab" aria-selected="true">
+                <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5">
+                    <circle cx="12" cy="12" r="10" />
+                    <line x1="12" y1="8" x2="12" y2="16" />
+                    <line x1="8" y1="12" x2="16" y2="12" />
+                </svg>
+                New Request
+            </button>
+            <button class="crq-view-tab" id="crqViewTabRequests" role="tab" aria-selected="false">
+                <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5">
+                    <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z" />
+                    <polyline points="14 2 14 8 20 8" />
+                    <line x1="16" y1="13" x2="8" y2="13" />
+                    <line x1="16" y1="17" x2="8" y2="17" />
+                    <polyline points="10 9 9 9 8 9" />
+                </svg>
+                My Requests
+            </button>
+        </div>
+
+        <!-- ══════════ VIEW: NEW REQUEST ══════════ -->
+        <div id="crqViewNew">
+
+            <!-- Global form alert -->
+            <div id="crqFormAlert" class="crq-alert" role="alert" style="margin-bottom:20px"></div>
+
+            <!-- Success screen -->
+            <div id="crqSuccess" class="crq-success" role="status" aria-live="polite">
+                <div class="crq-success-icon">✅</div>
+                <h2 class="crq-success-title">Request Submitted!</h2>
+                <p class="crq-success-text">Your request is live. Verified garages are reviewing it now and will submit
+                    bids within hours.</p>
+                <div class="crq-success-actions">
+                    <button class="crq-btn-secondary" id="crqBtnNewAfterSuccess">Request Another Part</button>
+                    <button class="crq-btn-primary" id="crqBtnViewAfterSuccess" style="max-width:200px">
+                        View My Requests →
+                    </button>
+                </div>
+            </div>
+
+            <div class="crq-form-areas">
+
+                <!-- ── STEP 1: VEHICLE ── -->
+                <div class="crq-form-card">
+                    <div class="crq-form-card-header">
+                        <div class="crq-step-badge">1</div>
+                        <div>
+                            <div class="crq-form-card-title">Your Vehicle</div>
+                            <div class="crq-form-card-desc">Tell us about the car that needs the part</div>
+                        </div>
+                    </div>
+                    <div class="crq-form-card-body">
+                        <div style="display:grid;grid-template-columns:1fr 1fr;gap:16px" class="crq-vehicle-grid">
+                            <div class="crq-form-group">
+                                <label class="crq-label" for="crqCarMake">Make <span class="required">*</span></label>
+                                <input class="crq-input" id="crqCarMake" type="text" placeholder="e.g. Toyota"
+                                    autocomplete="off">
+                            </div>
+                            <div class="crq-form-group">
+                                <label class="crq-label" for="crqCarModel">Model <span class="required">*</span></label>
+                                <input class="crq-input" id="crqCarModel" type="text" placeholder="e.g. Camry"
+                                    autocomplete="off">
+                            </div>
+                            <div class="crq-form-group">
+                                <label class="crq-label" for="crqCarYear">Year <span class="required">*</span></label>
+                                <input class="crq-input" id="crqCarYear" type="number" placeholder="e.g. 2020"
+                                    min="1900" max="2028" autocomplete="off">
+                            </div>
+                            <div class="crq-form-group">
+                                <label class="crq-label" for="crqVin">VIN Number <small
+                                        style="font-weight:400;color:var(--slate)">(optional)</small></label>
+                                <input class="crq-input" id="crqVin" type="text" placeholder="17-character VIN"
+                                    maxlength="17" autocomplete="off"
+                                    style="text-transform:uppercase;letter-spacing:1px">
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- ── STEP 2: PART DETAILS ── -->
+                <div class="crq-form-card">
+                    <div class="crq-form-card-header">
+                        <div class="crq-step-badge" style="background:var(--gold)">2</div>
+                        <div>
+                            <div class="crq-form-card-title">Part Details</div>
+                            <div class="crq-form-card-desc">Describe the part you need — be specific for better bids
+                            </div>
+                        </div>
+                    </div>
+                    <div class="crq-form-card-body">
+                        <!-- Category -->
+                        <div class="crq-form-group">
+                            <label class="crq-label" for="crqCategory">Category <small
+                                    style="font-weight:400;color:var(--slate)">(optional)</small></label>
+                            <select class="crq-select" id="crqCategory">
+                                <option value="">— Select a category —</option>
+                            </select>
+                        </div>
+                        <!-- Subcategory (hidden until category selected) -->
+                        <div class="crq-form-group" id="crqSubcategoryGroup" style="display:none">
+                            <label class="crq-label" for="crqSubcategory">Subcategory <small
+                                    style="font-weight:400;color:var(--slate)">(optional)</small></label>
+                            <select class="crq-select" id="crqSubcategory">
+                                <option value="">— Select subcategory —</option>
+                            </select>
+                        </div>
+                        <!-- Description -->
+                        <div class="crq-form-group">
+                            <label class="crq-label" for="crqDesc">Description <span class="required">*</span></label>
+                            <textarea class="crq-textarea" id="crqDesc"
+                                placeholder="Describe the part in detail. E.g.: Right front shock absorber for 2020 Toyota Camry 2.5L. Need genuine OEM or equivalent quality."
+                                maxlength="1000"></textarea>
+                            <div class="crq-char-count" id="crqDescCount">0/1000</div>
+                        </div>
+                        <!-- Part number + Quantity in a row -->
+                        <div style="display:grid;grid-template-columns:1fr auto;gap:16px;align-items:start"
+                            class="crq-pnum-qty">
+                            <div class="crq-form-group" style="margin-bottom:0">
+                                <label class="crq-label" for="crqPartNum">Part Number <small
+                                        style="font-weight:400;color:var(--slate)">(optional)</small></label>
+                                <input class="crq-input" id="crqPartNum" type="text"
+                                    placeholder="OEM or aftermarket part #" autocomplete="off">
+                            </div>
+                            <div class="crq-form-group" style="margin-bottom:0">
+                                <label class="crq-label">Quantity</label>
+                                <div class="crq-qty-row">
+                                    <button class="crq-qty-btn" id="crqQtyMinus" aria-label="Decrease quantity"
+                                        disabled>−</button>
+                                    <span class="crq-qty-val" id="crqQtyVal">1</span>
+                                    <button class="crq-qty-btn" id="crqQtyPlus"
+                                        aria-label="Increase quantity">+</button>
+                                </div>
+                            </div>
+                        </div>
+                        <!-- Condition -->
+                        <div class="crq-form-group" style="margin-top:20px">
+                            <label class="crq-label">Part Condition Preference</label>
+                            <div class="crq-condition-row">
+                                <button class="crq-condition-pill active" id="crqCondAny" data-value="any">
+                                    <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor"
+                                        stroke-width="2">
+                                        <polyline points="20 6 9 17 4 12" />
+                                    </svg>
+                                    Any Condition
+                                </button>
+                                <button class="crq-condition-pill" id="crqCondNew" data-value="new">
+                                    <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor"
+                                        stroke-width="2">
+                                        <path
+                                            d="M12 2l3.09 6.26L22 9.27l-5 4.87 1.18 6.88L12 17.77l-6.18 3.25L7 14.14 2 9.27l6.91-1.01L12 2z" />
+                                    </svg>
+                                    New Only
+                                </button>
+                                <button class="crq-condition-pill" id="crqCondUsed" data-value="used">
+                                    <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor"
+                                        stroke-width="2">
+                                        <path
+                                            d="M17 8C8 10 5.9 16.17 3.82 19.95C3.54 20.5 4.03 21.13 4.65 21.01l1.36-.27A3 3 0 0 0 8 18v-2a2 2 0 0 1 2-2h5.37A2 2 0 0 0 17 11.98" />
+                                        <path d="M5 8h2l2-5 3.5 10 2-4z" />
+                                    </svg>
+                                    Used Only
+                                </button>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- ── STEP 3: DELIVERY ADDRESS ── -->
+                <div class="crq-form-card">
+                    <div class="crq-form-card-header">
+                        <div class="crq-step-badge" style="background:var(--success)">3</div>
+                        <div>
+                            <div class="crq-form-card-title">Delivery Address <small
+                                    style="font-weight:400;font-size:13px;color:var(--slate)">(optional)</small></div>
+                            <div class="crq-form-card-desc">Where should we deliver? Helps garages provide accurate
+                                delivery quotes</div>
+                        </div>
+                    </div>
+                    <div class="crq-form-card-body">
+                        <div class="crq-form-group" style="margin-bottom:0">
+                            <label class="crq-label" for="crqAddress">Address in Qatar</label>
+                            <div class="crq-input-wrap">
+                                <input class="crq-input" id="crqAddress" type="text"
+                                    placeholder="e.g. West Bay, Doha; Industrial Area; Al Wakra…"
+                                    autocomplete="street-address">
+                                <svg class="crq-input-icon" width="16" height="16" viewBox="0 0 24 24" fill="none"
+                                    stroke="currentColor" stroke-width="2">
+                                    <path d="M21 10c0 7-9 13-9 13s-9-6-9-13a9 9 0 0 1 18 0z" />
+                                    <circle cx="12" cy="10" r="3" />
+                                </svg>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- ── STEP 4: PHOTOS ── -->
+                <div class="crq-form-card">
+                    <div class="crq-form-card-header">
+                        <div class="crq-step-badge" style="background:var(--charcoal)">4</div>
+                        <div>
+                            <div class="crq-form-card-title">Photos <small
+                                    style="font-weight:400;font-size:13px;color:var(--slate)">(optional)</small></div>
+                            <div class="crq-form-card-desc">Upload up to 5 photos of the damaged part or area — helps
+                                garages match exactly</div>
+                        </div>
+                    </div>
+                    <div class="crq-form-card-body">
+                        <div class="crq-photo-zone" id="crqPhotoZone" role="button" aria-label="Upload photos">
+                            <input type="file" id="crqPhotoInput" accept="image/*" multiple aria-label="Select photos">
+                            <div class="crq-photo-zone-icon">📷</div>
+                            <div class="crq-photo-zone-text">Click to upload or drag &amp; drop</div>
+                            <div class="crq-photo-zone-hint">JPG, PNG, WebP — up to 5 photos</div>
+                        </div>
+                        <div id="crqPhotoGrid" class="crq-photo-grid"></div>
+                        <div style="text-align:right;font-size:12px;color:var(--slate-light);margin-top:8px"
+                            id="crqPhotoCount">0/5 photos</div>
+                    </div>
+
+                    <!-- Submit bar inside last card -->
+                    <div class="crq-submit-bar">
+                        <div class="crq-submit-hint">
+                            <strong>Free to request.</strong> Garages compete for your business.
+                        </div>
+                        <button class="crq-submit-btn" id="crqBtnSubmit" type="button">
+                            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor"
+                                stroke-width="2.5">
+                                <line x1="22" y1="2" x2="11" y2="13" />
+                                <polygon points="22 2 15 22 11 13 2 9 22 2" />
+                            </svg>
+                            Submit Request
+                        </button>
+                    </div>
+                </div>
+
+            </div><!-- /.crq-form-areas -->
+        </div><!-- /#crqViewNew -->
+
+        <!-- ══════════ VIEW: MY REQUESTS ══════════ -->
+        <div id="crqViewRequests" style="display:none">
+            <div class="crq-requests-list" id="crqRequestsList">
+                <div class="crq-spinner"></div>
+            </div>
+        </div>
+
+    </div><!-- /#crqApp -->
+
+    <!-- ════════════════════════════════════════════════════════════════
+     FOOTER (standard site footer section)
+═══════════════════════════════════════════════════════════════════ -->
+    <footer
+        style="background:var(--black);color:var(--slate-light);text-align:center;padding:28px 24px;font-size:13px;margin-top:64px">
+        <a href="/" style="display:inline-block;margin-bottom:14px">
+            <img src="/assets/images/qscrap-logo.png?v=2026" alt="QScrap"
+                style="height:32px;filter:brightness(0) invert(1);opacity:0.7">
+        </a>
+        <p style="margin-bottom:8px">© 2026 QScrap Services &amp; Trading L.L.C. — Doha, Qatar</p>
+        <div style="display:flex;gap:20px;justify-content:center;flex-wrap:wrap">
+            <a href="/terms.html" style="color:var(--slate-light);text-decoration:none">Terms of Service</a>
+            <a href="/privacy.html" style="color:var(--slate-light);text-decoration:none">Privacy Policy</a>
+            <a href="/refund.html" style="color:var(--slate-light);text-decoration:none">Refund Policy</a>
+            <a href="/partners.html" style="color:var(--slate-light);text-decoration:none">For Businesses</a>
+        </div>
+    </footer>
+
+    <!-- ════════════════════════════════════════════════════════════════
+     SCRIPTS
+═══════════════════════════════════════════════════════════════════ -->
+    <!-- Reuse the main site's mobile menu & nav scroll behaviour -->
+    <script src="/js/main.js" defer></script>
+    <!-- Customer request logic -->
+    <script src="/js/customer-request.js" defer></script>
+
+    <!-- Responsive grid tweak -->
+    <style>
+        @media (max-width: 520px) {
+            .crq-vehicle-grid {
+                grid-template-columns: 1fr !important;
+            }
+
+            .crq-pnum-qty {
+                grid-template-columns: 1fr !important;
+            }
+        }
+    </style>
+</body>
+
+</html>
