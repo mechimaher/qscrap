@@ -145,36 +145,6 @@ let autoRefreshInterval = null;
 let lastActivityTime = Date.now();
 let notifications = [];
 
-// Theme Management
-function initTheme() {
-    const savedTheme = localStorage.getItem('theme');
-    const prefersDark = window.matchMedia('(prefers-color-scheme: dark)').matches;
-
-    // Use saved theme, or system preference, or default to dark
-    const theme = savedTheme || (prefersDark ? 'dark' : 'light');
-    setTheme(theme);
-}
-
-function setTheme(theme) {
-    document.documentElement.setAttribute('data-theme', theme);
-    localStorage.setItem('theme', theme);
-
-    // Update label text
-    const label = document.getElementById('themeLabel');
-    if (label) {
-        label.textContent = theme === 'light' ? 'Light Mode' : 'Dark Mode';
-    }
-}
-
-function toggleTheme() {
-    const current = document.documentElement.getAttribute('data-theme');
-    const newTheme = current === 'light' ? 'dark' : 'light';
-    setTheme(newTheme);
-}
-
-// Initialize theme immediately (before DOM fully loads)
-initTheme();
-
 // Initialize app
 if (token) {
     showDashboard();
