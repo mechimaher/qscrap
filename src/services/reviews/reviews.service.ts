@@ -13,10 +13,10 @@ export class ReviewsService {
         return { reviews: reviewsResult.rows, stats: statsResult.rows[0] };
     }
 
-    async getMyReviews(garageId: string) {
-        const result = await this.pool.query(`SELECT r.review_id, r.overall_rating, r.part_quality_rating, r.communication_rating, r.delivery_rating, r.review_text, r.created_at, r.moderation_status, LEFT(u.full_name, 1) || '***' as customer_initial, o.order_number FROM order_reviews r JOIN users u ON r.customer_id = u.user_id LEFT JOIN orders o ON r.order_id = o.order_id WHERE r.garage_id = $1 AND r.moderation_status = 'approved' ORDER BY r.created_at DESC`, [garageId]);
+    async getMyReviews(garageId: string, limit: number, offset: number) {
+        const result = await this.pool.query(`SELECT r.review_id, r.overall_rating, r.part_quality_rating, r.communication_rating, r.delivery_rating, r.review_text, r.created_at, r.moderation_status, LEFT(u.full_name, 1) || '***' as customer_initial, o.order_number FROM order_reviews r JOIN users u ON r.customer_id = u.user_id LEFT JOIN orders o ON r.order_id = o.order_id WHERE r.garage_id = $1 AND r.moderation_status = 'approved' ORDER BY r.created_at DESC LIMIT $2 OFFSET $3`, [garageId, limit, offset]);
         const statsResult = await this.pool.query(`SELECT COUNT(*) as total_reviews, ROUND(AVG(overall_rating)::numeric, 1) as avg_rating FROM order_reviews WHERE garage_id = $1 AND moderation_status = 'approved'`, [garageId]);
-        return { reviews: result.rows, stats: statsResult.rows[0] };
+        return { reviews: result.rows, stats: statsResult.rows[0], total: parseInt(statsResult.rows[0]?.total_reviews || '0') };
     }
 
     async getPendingReviews(limit: number, offset: number) {

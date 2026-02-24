@@ -2032,7 +2032,8 @@ async function confirmCancelOrder() {
 
 // ===== LOAD MY REVIEWS (Garage sees reviews about them) =====
 async function loadMyReviews(page = 1) {
-    reviewsPage = page;
+    const safePage = Math.max(1, Number(page) || 1);
+    reviewsPage = safePage;
     const summaryEl = document.getElementById('reviewsSummary');
     const listEl = document.getElementById('reviewsList');
 
@@ -2040,7 +2041,7 @@ async function loadMyReviews(page = 1) {
     listEl.innerHTML = '';
 
     try {
-        const res = await fetch(`${API_URL}/reviews/my?page=${page}&limit=${REVIEWS_PAGE_SIZE}`, {
+        const res = await fetch(`${API_URL}/reviews/my?page=${safePage}&limit=${REVIEWS_PAGE_SIZE}`, {
             headers: { 'Authorization': `Bearer ${token}` }
         });
         const data = await res.json();
@@ -5773,7 +5774,7 @@ function refreshCurrentSection(silent = false) {
             loadEarnings();
             break;
         case 'reviews':
-            loadReviews();
+            loadMyReviews(reviewsPage);
             break;
         case 'profile':
             loadProfile();

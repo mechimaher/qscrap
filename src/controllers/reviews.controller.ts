@@ -22,8 +22,11 @@ export const getGarageReviews = async (req: AuthRequest, res: Response) => {
 
 export const getMyReviews = async (req: AuthRequest, res: Response) => {
     try {
-        const result = await reviewsService.getMyReviews(req.user!.userId);
-        res.json(result);
+        const page = Math.max(parseInt(req.query.page as string) || 1, 1);
+        const limit = Math.min(100, Math.max(parseInt(req.query.limit as string) || 10, 1));
+        const offset = (page - 1) * limit;
+        const result = await reviewsService.getMyReviews(req.user!.userId, limit, offset);
+        res.json({ ...result, pagination: { page, limit, total: result.total, pages: Math.ceil(result.total / limit) } });
     } catch (err) {
         res.status(500).json({ error: getErrorMessage(err) });
     }
