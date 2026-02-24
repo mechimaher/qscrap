@@ -54,6 +54,88 @@ describe('Auth Middleware', () => {
             expect(mockResponse.status).not.toHaveBeenCalled();
         });
 
+        it('should reject token with missing userId claim', () => {
+            const mockToken = 'missing.userid.token';
+            mockRequest.headers = {
+                authorization: `Bearer ${mockToken}`
+            };
+
+            (jwt.verify as jest.Mock).mockReturnValue({
+                userType: 'customer'
+            });
+
+            authenticate(mockRequest as AuthRequest, mockResponse as Response, mockNext);
+
+            expect(mockResponse.status).toHaveBeenCalledWith(401);
+            expect(mockResponse.json).toHaveBeenCalledWith({
+                error: 'invalid_token_claims',
+                message: 'Token is missing required claims'
+            });
+            expect(mockNext).not.toHaveBeenCalled();
+        });
+
+        it('should reject token with missing userType claim', () => {
+            const mockToken = 'missing.usertype.token';
+            mockRequest.headers = {
+                authorization: `Bearer ${mockToken}`
+            };
+
+            (jwt.verify as jest.Mock).mockReturnValue({
+                userId: 'test-user-id'
+            });
+
+            authenticate(mockRequest as AuthRequest, mockResponse as Response, mockNext);
+
+            expect(mockResponse.status).toHaveBeenCalledWith(401);
+            expect(mockResponse.json).toHaveBeenCalledWith({
+                error: 'invalid_token_claims',
+                message: 'Token is missing required claims'
+            });
+            expect(mockNext).not.toHaveBeenCalled();
+        });
+
+        it('should reject token with non-string userId claim', () => {
+            const mockToken = 'numeric.userid.token';
+            mockRequest.headers = {
+                authorization: `Bearer ${mockToken}`
+            };
+
+            (jwt.verify as jest.Mock).mockReturnValue({
+                userId: 123,
+                userType: 'customer'
+            });
+
+            authenticate(mockRequest as AuthRequest, mockResponse as Response, mockNext);
+
+            expect(mockResponse.status).toHaveBeenCalledWith(401);
+            expect(mockResponse.json).toHaveBeenCalledWith({
+                error: 'invalid_token_claims',
+                message: 'Token is missing required claims'
+            });
+            expect(mockNext).not.toHaveBeenCalled();
+        });
+
+        it('should reject token with empty string userId claim', () => {
+            const mockToken = 'empty.userid.token';
+            mockRequest.headers = {
+                authorization: `Bearer ${mockToken}`
+            };
+
+            (jwt.verify as jest.Mock).mockReturnValue({
+                userId: '',
+                userType: 'customer'
+            });
+
+            authenticate(mockRequest as AuthRequest, mockResponse as Response, mockNext);
+
+            expect(mockResponse.status).toHaveBeenCalledWith(401);
+            expect(mockResponse.json).toHaveBeenCalledWith({
+                error: 'invalid_token_claims',
+                message: 'Token is missing required claims'
+            });
+            expect(mockNext).not.toHaveBeenCalled();
+        });
+
         it('should reject request with no authorization header', () => {
             mockRequest.headers = {};
 

@@ -59,7 +59,7 @@ export const validateCsrfToken = (req: Request, res: Response, next: NextFunctio
 
     // Skip for public routes (Login, Register, Public Config)
     // Note: req.path is the path AFTER the mount point (e.g., '/auth/login' not '/api/auth/login')
-    const publicRoutes = ['/auth/login', '/auth/register', '/auth/register/garage', '/v1/config/public', '/config/public'];
+    const publicRoutes = ['/auth/login', '/auth/register', '/auth/register/garage', '/auth/refresh', '/auth/register-with-email', '/auth/verify-email-otp', '/auth/resend-otp', '/v1/config/public', '/config/public'];
     if (publicRoutes.some(route => req.path.startsWith(route))) {
         return next();
     }
@@ -100,7 +100,7 @@ export const validateOrigin = (req: Request, res: Response, next: NextFunction) 
 
     // Skip for public routes (Login, Register, Public Config)
     // Note: req.path is the path AFTER the mount point (e.g., '/auth/login' not '/api/auth/login')
-    const publicRoutes = ['/auth/login', '/auth/register', '/auth/register/garage', '/v1/config/public', '/config/public'];
+    const publicRoutes = ['/auth/login', '/auth/register', '/auth/register/garage', '/auth/refresh', '/auth/register-with-email', '/auth/verify-email-otp', '/auth/resend-otp', '/v1/config/public', '/config/public'];
     if (publicRoutes.some(route => req.path.startsWith(route))) {
         return next();
     }

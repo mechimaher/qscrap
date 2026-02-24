@@ -725,6 +725,7 @@
             inpOtp: q('#crqOtpCode'),
             btnVerifyOtp: q('#crqBtnVerifyOtp'),
             btnResendOtp: q('#crqBtnResendOtp'),
+            btnBackToRegister: q('#crqBtnBackToRegister'),
             otpTimerDisplay: q('#crqOtpTimer'),
             userChipName: q('#crqUserName'),
             btnLogout: q('#crqBtnLogout'),
@@ -843,6 +844,7 @@
         if (dom.btnRegister) dom.btnRegister.addEventListener('click', handleRegister);
         if (dom.btnVerifyOtp) dom.btnVerifyOtp.addEventListener('click', handleVerifyOtp);
         if (dom.btnResendOtp) dom.btnResendOtp.addEventListener('click', handleResendOtp);
+        if (dom.btnBackToRegister) dom.btnBackToRegister.addEventListener('click', () => switchAuthTab('register'));
     }
 
     function switchAuthTab(tab) {
@@ -1321,5 +1323,21 @@
 
     // ─── Boot ──────────────────────────────────────────────────────────────────
     if (document.readyState === 'loading') { document.addEventListener('DOMContentLoaded', init); } else { init(); }
-    window.crqSwitchAuthTab = switchAuthTab;
+
+    // Navigation and Mobile Menu
+    document.addEventListener('DOMContentLoaded', function () {
+        var nav = document.getElementById('mainNav');
+        if (nav) window.addEventListener('scroll', function () { nav.classList.toggle('scrolled', window.scrollY > 50); });
+
+        var btn = document.getElementById('mobileMenuBtn');
+        var overlay = document.getElementById('mobileMenuOverlay');
+        var close = document.getElementById('mobileMenuClose');
+        var backdrop = document.getElementById('mobileMenuBackdrop');
+        function openMenu() { if (overlay) { overlay.classList.add('active'); overlay.setAttribute('aria-hidden', 'false'); document.body.style.overflow = 'hidden'; } }
+        function closeMenu() { if (overlay) { overlay.classList.remove('active'); overlay.setAttribute('aria-hidden', 'true'); document.body.style.overflow = ''; } }
+        if (btn) btn.addEventListener('click', openMenu);
+        if (close) close.addEventListener('click', closeMenu);
+        if (backdrop) backdrop.addEventListener('click', closeMenu);
+        document.querySelectorAll('.mobile-menu-link').forEach(function (l) { l.addEventListener('click', closeMenu); });
+    });
 })();

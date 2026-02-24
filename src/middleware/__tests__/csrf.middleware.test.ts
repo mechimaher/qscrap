@@ -1,5 +1,5 @@
 import { Request, Response } from 'express';
-import { strictValidateOrigin, validateOrigin } from '../csrf.middleware';
+import { validateOrigin } from '../csrf.middleware';
 
 type MockResponse = Response & {
     status: jest.Mock;
@@ -16,7 +16,9 @@ const createMockResponse = (): MockResponse => {
 const createRequest = (overrides: Partial<Request> = {}): Request => {
     const base: Partial<Request> = {
         method: 'POST',
-        headers: {}
+        headers: {},
+        path: '/some/protected/route',
+        cookies: {}
     };
     return { ...base, ...overrides } as Request;
 };
@@ -67,12 +69,12 @@ describe('CSRF origin middleware', () => {
         expect(res.status).not.toHaveBeenCalled();
     });
 
-    it('skips origin validation for authenticated bearer requests', () => {
+    it('skips origin validation for public auth routes', () => {
         process.env.NODE_ENV = 'production';
         const req = createRequest({
+            path: '/auth/login',
             headers: {
-                origin: 'https://evil.example',
-                authorization: 'Bearer token'
+                origin: 'https://evil.example'
             }
         });
         const res = createMockResponse();
@@ -84,33 +86,35 @@ describe('CSRF origin middleware', () => {
         expect(res.status).not.toHaveBeenCalled();
     });
 
-    it('strict mode requires origin/referer on state-changing requests', () => {
+    it('blocks malicious origin on non-public routes in production', () => {
         process.env.NODE_ENV = 'production';
         const req = createRequest({
-            headers: {}
-        });
-        const res = createMockResponse();
-        const next = jest.fn();
-
-        strictValidateOrigin(req, res, next);
-
-        expect(res.status).toHaveBeenCalledWith(403);
-        expect(next).not.toHaveBeenCalled();
-    });
-
-    it('strict mode blocks malicious referer prefixes', () => {
-        process.env.NODE_ENV = 'production';
-        const req = createRequest({
+            path: '/orders/create',
             headers: {
-                referer: 'https://qscrap.qa.attacker.com/steal'
+                origin: 'https://evil.example'
             }
         });
         const res = createMockResponse();
         const next = jest.fn();
 
-        strictValidateOrigin(req, res, next);
+        validateOrigin(req, res, next);
 
         expect(res.status).toHaveBeenCalledWith(403);
         expect(next).not.toHaveBeenCalled();
+    });
+
+    it('allows requests without origin header in production (same-origin)', () => {
+        process.env.NODE_ENV = 'production';
+        const req = createRequest({
+            path: '/orders/create',
+            headers: {}
+        });
+        const res = createMockResponse();
+        const next = jest.fn();
+
+        validateOrigin(req, res, next);
+
+        expect(next).toHaveBeenCalledTimes(1);
+        expect(res.status).not.toHaveBeenCalled();
     });
 });

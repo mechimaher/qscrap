@@ -31,19 +31,7 @@
     <link rel="stylesheet" href="/css/main.css">
     <link rel="stylesheet" href="/css/customer-request.css?v=2.1">
 
-    <!-- Spinner keyframe for btn -->
-    <style>
-        .crq-spin-icon {
-            animation: crq-btn-spin 0.8s linear infinite;
-            stroke: currentColor;
-        }
 
-        @keyframes crq-btn-spin {
-            to {
-                transform: rotate(360deg);
-            }
-        }
-    </style>
 </head>
 
 <body>
@@ -228,9 +216,9 @@
                 <button class="crq-btn-primary" id="crqBtnVerifyOtp" type="button" data-i18n="auth.verifyBtn">
                     Verify & Create Account →
                 </button>
-                <button
+                <button id="crqBtnBackToRegister"
                     style="margin-top:12px;width:100%;background:none;border:none;font-size:13px;color:var(--slate);cursor:pointer;"
-                    onclick="crqSwitchAuthTab('register')" data-i18n="auth.back">
+                    data-i18n="auth.back">
                     ← Back
                 </button>
             </div>
@@ -654,42 +642,7 @@
      SCRIPTS
 ═══════════════════════════════════════════════════════════════════ -->
     <!-- Customer request logic -->
-    <script src="/js/customer-request.js?v=2.1" defer></script>
-    <!-- Nav scroll + Mobile menu (self-contained, no main.js dependency) -->
-    <script>
-        document.addEventListener('DOMContentLoaded', function () {
-            // Nav scroll effect
-            var nav = document.getElementById('mainNav');
-            if (nav) window.addEventListener('scroll', function () {
-                nav.classList.toggle('scrolled', window.scrollY > 50);
-            });
-            // Mobile menu toggle
-            var btn = document.getElementById('mobileMenuBtn');
-            var overlay = document.getElementById('mobileMenuOverlay');
-            var close = document.getElementById('mobileMenuClose');
-            var backdrop = document.getElementById('mobileMenuBackdrop');
-            function openMenu() { if (overlay) { overlay.classList.add('active'); overlay.setAttribute('aria-hidden', 'false'); document.body.style.overflow = 'hidden'; } }
-            function closeMenu() { if (overlay) { overlay.classList.remove('active'); overlay.setAttribute('aria-hidden', 'true'); document.body.style.overflow = ''; } }
-            if (btn) btn.addEventListener('click', openMenu);
-            if (close) close.addEventListener('click', closeMenu);
-            if (backdrop) backdrop.addEventListener('click', closeMenu);
-            // Close on link click
-            document.querySelectorAll('.mobile-menu-link').forEach(function (l) { l.addEventListener('click', clonu); });
-        });
-    </script>
-
-    <!-- Responsive grid tweak -->
-    <style>
-        @media (max-width: 520px) {
-            .crq-vehicle-grid {
-                grid-template-columns: 1fr !important;
-            }
-
-            .crq-pnum-qty {
-                grid-template-columns: 1fr !important;
-            }
-        }
-    </style>
+    <script src="/js/customer-request.js?v=2.2" defer></script>
 </body>
 
 </html>

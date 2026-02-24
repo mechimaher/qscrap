@@ -27,6 +27,18 @@ export const authenticate = (req: AuthRequest, res: Response, next: NextFunction
 
     try {
         const payload = jwt.verify(token, getJwtSecret()) as AuthPayload;
+
+        // Validate required claims exist and are strings
+        if (
+            !payload.userId || typeof payload.userId !== 'string' ||
+            !payload.userType || typeof payload.userType !== 'string'
+        ) {
+            return res.status(401).json({
+                error: 'invalid_token_claims',
+                message: 'Token is missing required claims'
+            });
+        }
+
         req.user = payload;
         next();
     } catch (err: any) {

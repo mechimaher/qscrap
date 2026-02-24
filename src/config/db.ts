@@ -73,18 +73,52 @@ if (process.env.DB_READ_REPLICA_HOST) {
 // ERROR HANDLING
 // ============================================
 
+// Circuit breaker state for pool health and observability
+let consecutiveErrors = 0;
+const MAX_CONSECUTIVE_ERRORS = 5;
+const ALERT_THRESHOLD = 3;
+const BASE_BACKOFF_MS = 1000;
+const MAX_BACKOFF_MS = 30000;
+let lastErrorTimestamp: string | null = null;
+
+const getBackoffDelay = (errorCount: number): number => {
+    if (errorCount <= 0) { return 0; }
+    return Math.min(BASE_BACKOFF_MS * Math.pow(2, errorCount - 1), MAX_BACKOFF_MS);
+};
+
 pool.on('error', (err) => {
-    logger.error('Unexpected error on idle client', { error: err.message, stack: err.stack });
-    // In production, log to monitoring service instead of exiting
-    if (process.env.NODE_ENV === 'production') {
-        logger.error('Critical database error - monitoring should alert');
-    } else {
-        process.exit(-1);
+    consecutiveErrors++;
+    lastErrorTimestamp = new Date().toISOString();
+    const nextRetryDelayMs = getBackoffDelay(consecutiveErrors);
+
+    logger.error('Database pool error', {
+        error: err.message,
+        stack: err.stack,
+        consecutiveErrors,
+        nextRetryDelayMs,
+        poolStats: getPoolStats()
+    });
+
+    if (consecutiveErrors >= ALERT_THRESHOLD) {
+        logger.error('CIRCUIT_BREAKER: Database error threshold reached', {
+            consecutiveErrors,
+            threshold: ALERT_THRESHOLD,
+            nextRetryDelayMs
+        });
     }
 });
 
 pool.on('connect', () => {
-    logger.db('New client connected to pool');
+    if (consecutiveErrors > 0) {
+        logger.info('Database pool recovered', {
+            consecutiveErrors,
+            lastErrorTimestamp
+        });
+    }
+
+    consecutiveErrors = 0;
+    lastErrorTimestamp = null;
+    logger.db('Client connected to pool');
 });
 
 // ============================================
@@ -122,6 +156,21 @@ export const getPoolStats = () => {
             idle: readReplicaPool.idleCount,
             waiting: readReplicaPool.waitingCount
         } : null
+    };
+};
+
+/**
+ * Circuit breaker health for monitoring and alerting
+ */
+export const getPoolHealth = () => {
+    return {
+        healthy: consecutiveErrors < MAX_CONSECUTIVE_ERRORS,
+        consecutiveErrors,
+        alertThreshold: ALERT_THRESHOLD,
+        maxConsecutiveErrors: MAX_CONSECUTIVE_ERRORS,
+        nextRetryDelayMs: getBackoffDelay(consecutiveErrors),
+        lastErrorTimestamp,
+        ...getPoolStats()
     };
 };
 

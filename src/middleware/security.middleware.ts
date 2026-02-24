@@ -12,8 +12,9 @@ export const securityMiddleware = helmet({
             defaultSrc: ["'self'"],
             styleSrc: ["'self'", "'unsafe-inline'", "https://fonts.googleapis.com", "https://cdn.jsdelivr.net", "https://unpkg.com"],
             fontSrc: ["'self'", "https://fonts.gstatic.com", "https://cdn.jsdelivr.net"],
-            scriptSrc: ["'self'", "'unsafe-inline'", "https://unpkg.com", "https://cdn.jsdelivr.net", "https://cdn.socket.io", "https://static.cloudflareinsights.com", "https://maps.googleapis.com", "https://js.stripe.com", "https://browser.sentry-cdn.com"],
-            scriptSrcAttr: ["'unsafe-inline'"], // Allow inline event handlers
+            scriptSrc: ["'self'", "https://unpkg.com", "https://cdn.jsdelivr.net", "https://cdn.socket.io", "https://static.cloudflareinsights.com", "https://maps.googleapis.com", "https://js.stripe.com", "https://browser.sentry-cdn.com"],
+            // TODO: Remove 'unsafe-inline' after dashboard onclick refactor (150+ handlers)
+            scriptSrcAttr: ["'unsafe-inline'"],
             imgSrc: ["'self'", "data:", "blob:", "https:"],
             connectSrc: ["'self'", "ws:", "wss:", "https://cdn.socket.io", "https://unpkg.com", "https://cdn.jsdelivr.net", "https://*.tile.openstreetmap.org", "https://*.basemaps.cartocdn.com", "https://maps.googleapis.com", "https://api.stripe.com", "https://*.sentry.io", "https://browser.sentry-cdn.com"],
             frameSrc: ["https://js.stripe.com", "https://hooks.stripe.com"],
