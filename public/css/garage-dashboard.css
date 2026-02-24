@@ -4035,66 +4035,7 @@ kbd {
     }
 }
 
-/* ============================================
-   Analytics Module - Premium Feature Styles
-   ============================================ */
-
-/* Upgrade Prompt */
-.upgrade-prompt {
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    min-height: 400px;
-    text-align: center;
-}
-
-.upgrade-content {
-    max-width: 480px;
-    padding: 48px;
-    background: var(--bg-card);
-    border: 1px solid var(--border);
-    border-radius: 24px;
-    box-shadow: 0 20px 60px rgba(0, 0, 0, 0.2);
-}
-
-.upgrade-content h2 {
-    font-size: 24px;
-    margin: 20px 0 12px;
-}
-
-.upgrade-content p {
-    color: var(--text-secondary);
-    margin-bottom: 24px;
-}
-
-.upgrade-features {
-    display: grid;
-    grid-template-columns: 1fr 1fr;
-    gap: 12px;
-    text-align: left;
-    margin-bottom: 24px;
-}
-
-.upgrade-features .feature {
-    display: flex;
-    align-items: center;
-    gap: 8px;
-    font-size: 14px;
-    color: var(--text-secondary);
-}
-
-.upgrade-features .feature i {
-    color: var(--success);
-}
-
-/* Analytics Cards */
-.charts-grid .card,
-#customerInsightsCard {
-    background: var(--bg-card);
-    border: 1px solid var(--border);
-    border-radius: 16px;
-    overflow: hidden;
-}
+/* Reusable section card styles */
 
 .card-header {
     padding: 16px 20px;
@@ -4112,41 +4053,6 @@ kbd {
 
 .card-body {
     padding: 20px;
-}
-
-/* Performance Stats */
-.perf-stat {
-    text-align: center;
-    padding: 16px;
-    background: var(--bg-secondary);
-    border-radius: 12px;
-}
-
-.perf-value {
-    font-size: 28px;
-    font-weight: 700;
-}
-
-.perf-label {
-    font-size: 12px;
-    color: var(--text-secondary);
-    margin-top: 4px;
-}
-
-/* Header Actions */
-.header-actions {
-    display: flex;
-    align-items: center;
-    gap: 12px;
-}
-
-.header-actions select {
-    padding: 8px 12px;
-    background: var(--input-bg);
-    border: 1px solid var(--border);
-    border-radius: 8px;
-    color: var(--text-primary);
-    font-size: 14px;
 }
 
 /* Mobile Menu Toggle - Explicitly hidden on desktop */
