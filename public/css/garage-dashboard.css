@@ -3993,7 +3993,7 @@ kbd {
     }
 }
 
-@media (max-width: 768px) {
+@media (max-width: 1024px) {
     .top-header {
         left: 0;
         padding: 0 16px;

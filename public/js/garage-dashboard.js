@@ -15,6 +15,14 @@ if (token && userType && userType !== 'garage') {
 let socket = null;
 let requests = [];
 
+// ===== SOCKET CLEANUP (Prevent memory leak on long sessions) =====
+window.addEventListener('beforeunload', () => {
+    if (socket) {
+        socket.removeAllListeners();
+        socket.disconnect();
+    }
+});
+
 // ===== SECURITY UTILITIES =====
 /**
  * Escape HTML to prevent XSS attacks
@@ -35,6 +43,34 @@ function escapeJSString(text) {
         .replace(/\n/g, '\\n')
         .replace(/\r/g, '\\r')
         .replace(/\t/g, '\\t');
+}
+
+/**
+ * Fetch with timeout - prevents UI hang on slow/dead network
+ * @param {string} url - URL to fetch
+ * @param {object} options - Fetch options
+ * @param {number} timeout - Timeout in ms (default: 10000)
+ */
+function fetchWithTimeout(url, options = {}, timeout = 10000) {
+    return Promise.race([
+        fetch(url, options),
+        new Promise((_, reject) =>
+            setTimeout(() => reject(new Error('Request timeout')), timeout)
+        )
+    ]);
+}
+
+/**
+ * Debounce utility - prevents API spam on rapid filter changes
+ * @param {function} fn - Function to debounce
+ * @param {number} delay - Delay in ms
+ */
+function debounce(fn, delay = 300) {
+    let timer;
+    return (...args) => {
+        clearTimeout(timer);
+        timer = setTimeout(() => fn(...args), delay);
+    };
 }
 
 let ignoredRequests = JSON.parse(localStorage.getItem('ignoredRequests') || '[]');
@@ -573,12 +609,7 @@ async function showDashboard() {
         loadOrders(); // Refresh to show returning_to_garage status
     });
 
-    // Dispute resolved notification - part may be returning
-    socket.on('dispute_resolved', (data) => {
-        playNotificationSound('info');
-        showToast(data.notification || `Dispute for Order #${data.order_number} resolved.`, 'info');
-        loadOrders(); // Refresh orders
-    });
+    // NOTE: dispute_resolved handler already registered at line 523 — duplicate removed (Feb 2026 audit)
 
     // Return driver assigned - driver is on the way with the part
     socket.on('return_driver_assigned', (data) => {
@@ -738,15 +769,15 @@ function renderRequests() {
     // Recent Orders section on dashboard is populated by loadDashboard/loadOrders
 }
 
-// Filter requests - now triggers server reload
-function filterRequests() {
+// Filter requests - now triggers server reload (debounced to prevent API spam)
+const filterRequests = debounce(function() {
     loadRequests(1);
-}
+}, 300);
 
-// Sort requests based on selected option
-function sortRequests() {
+// Sort requests based on selected option (debounced to prevent API spam)
+const sortRequests = debounce(function() {
     loadRequests(1);
-}
+}, 300);
 
 
 // Clear all request filters
@@ -1549,7 +1580,7 @@ async function loadOrders() {
                 // Disputed orders - show Review Dispute button
                 actionsHtml = `
                             <div class="order-actions">
-                                <button class="btn-status dispute" onclick="reviewDisputeForOrder('${o.order_id}')" style="background: linear-gradient(135deg, #f59e0b 0%, #d97706 100%);">
+                                <button class="btn-status dispute" onclick="event.stopPropagation(); reviewDisputeForOrder('${o.order_id}')" style="background: linear-gradient(135deg, #f59e0b 0%, #d97706 100%);">
                                     <i class="bi bi-exclamation-triangle"></i> Review Dispute
                                 </button>
                             </div>
@@ -1562,13 +1593,13 @@ async function loadOrders() {
                 const transition = garageAllowedTransitions[o.order_status];
                 actionsHtml = `
                             <div class="order-actions">
-                                <button class="btn-cancel" onclick="openCancelOrderModal('${o.order_id}')" title="Cancel this order">
+                                <button class="btn-cancel" onclick="event.stopPropagation(); openCancelOrderModal('${o.order_id}')" title="Cancel this order">
                                     <i class="bi bi-x-circle"></i> Cancel
                                 </button>
                                 <button class="btn-outline-sm" onclick="event.stopPropagation(); printPackingSlip('${o.order_id}')" title="Print packing slip" style="padding: 6px 10px; font-size: 12px; border: 1px solid var(--text-muted); color: var(--text-secondary); background: transparent; border-radius: 6px; cursor: pointer; transition: all 0.2s;" onmouseover="this.style.background='var(--bg-tertiary)';" onmouseout="this.style.background='transparent';">
                                     <i class="bi bi-printer"></i> Print
                                 </button>
-                                <button class="btn-status next" onclick="updateOrderStatus('${o.order_id}', '${transition.next}')">
+                                <button class="btn-status next" onclick="event.stopPropagation(); updateOrderStatus('${o.order_id}', '${transition.next}')">
                                     <i class="bi bi-check-circle"></i> ${transition.label}
                                 </button>
                             </div>
@@ -1648,7 +1679,7 @@ async function loadOrders() {
                                 ${thumbnail ? `<img src="${thumbnail}" alt="Part" style="width: 60px; height: 60px; object-fit: cover; border-radius: 8px; flex-shrink: 0;">` : '<div style="width: 60px; height: 60px; background: var(--bg-tertiary); border-radius: 8px; display: flex; align-items: center; justify-content: center; flex-shrink: 0;"><i class="bi bi-image" style="color: var(--text-muted);"></i></div>'}
                                 <div style="flex: 1; min-width: 0;">
                                     <div style="color: var(--text-secondary); font-size: 14px; font-weight: 600;">
-                                        ${o.car_make} ${o.car_model} - ${o.part_category || o.part_description?.slice(0, 30) || 'Part'}
+                                        ${escapeHTML(o.car_make || '')} ${escapeHTML(o.car_model || '')} - ${escapeHTML(o.part_category || o.part_description?.slice(0, 30) || 'Part')}
                                     </div>
                                     ${o.part_description && o.part_category ? `<div style="font-size: 12px; color: var(--text-muted); margin-top: 2px;">${escapeHTML(o.part_description.slice(0, 35))}</div>` : ''}
                                     <div style="font-weight: 600; margin-top: 4px;">${o.part_price} QAR</div>
@@ -2965,7 +2996,8 @@ async function updateOrderStatus(orderId, newStatus) {
 
 function switchSection(section) {
     document.querySelectorAll('.nav-item').forEach(i => i.classList.remove('active'));
-    document.querySelector(`[data-section="${section}"]`).classList.add('active');
+    const navItem = document.querySelector(`[data-section="${section}"]`);
+    if (navItem) navItem.classList.add('active');
 
     // Handle hyphenated section names
     const sectionIdMap = {
@@ -2973,8 +3005,11 @@ function switchSection(section) {
     };
     const sectionId = sectionIdMap[section] || section.charAt(0).toUpperCase() + section.slice(1);
 
+    const sectionEl = document.getElementById('section' + sectionId);
+    if (!sectionEl) return; // Guard: section doesn't exist
+
     document.querySelectorAll('.section').forEach(s => s.classList.remove('active'));
-    document.getElementById('section' + sectionId).classList.add('active');
+    sectionEl.classList.add('active');
 
     // Refresh data based on section
     if (section === 'requests') loadRequests();
@@ -2986,7 +3021,6 @@ function switchSection(section) {
     if (section === 'reviews') loadMyReviews();
     if (section === 'profile') loadProfile();
     if (section === 'pending-actions') { loadPendingCounterOffers(); loadPendingDisputes(); }
-    if (section === 'quick-services') { loadQuickServicesSettings(); loadQuickServicesRequests(); }
 }
 
 // Ignore/Skip request - now persists to database (per-garage) with 5-second undo
@@ -3339,7 +3373,10 @@ function getTimeAgo(date) {
 function showToast(message, type = 'success') {
     const toast = document.createElement('div');
     toast.className = `toast ${type}`;
-    toast.innerHTML = `<i class="bi bi-${type === 'success' ? 'check-circle' : type === 'error' ? 'x-circle' : 'exclamation-triangle'}"></i> ${message}`;
+    const icon = document.createElement('i');
+    icon.className = `bi bi-${type === 'success' ? 'check-circle' : type === 'error' ? 'x-circle' : 'exclamation-triangle'}`;
+    toast.appendChild(icon);
+    toast.appendChild(document.createTextNode(' ' + message));
     document.getElementById('toastContainer').appendChild(toast);
     setTimeout(() => toast.remove(), 4000);
 }
@@ -4739,8 +4776,8 @@ function renderSearchResults(results) {
                  style="padding: 10px 12px; cursor: pointer; display: flex; justify-content: space-between; align-items: center; border-bottom: 1px solid var(--border);"
                  onmouseover="this.style.background='var(--bg-hover)'" onmouseout="this.style.background=''">
                 <div>
-                    <div style="font-weight: 600; color: var(--accent);">#${o.order_number}</div>
-                    <div style="font-size: 12px; color: var(--text-secondary);">${o.car_make} ${o.car_model} - ${o.part_description?.slice(0, 25) || ''}</div>
+                    <div style="font-weight: 600; color: var(--accent);">#${escapeHTML(o.order_number || '')}</div>
+                    <div style="font-size: 12px; color: var(--text-secondary);">${escapeHTML(o.car_make || '')} ${escapeHTML(o.car_model || '')} - ${escapeHTML(o.part_description?.slice(0, 25) || '')}</div>
                 </div>
                 <span class="order-status ${o.order_status?.replace('_', '-')}" style="font-size: 10px;">${o.order_status}</span>
             </div>
@@ -4755,8 +4792,8 @@ function renderSearchResults(results) {
                  style="padding: 10px 12px; cursor: pointer; display: flex; justify-content: space-between; align-items: center; border-bottom: 1px solid var(--border);"
                  onmouseover="this.style.background='var(--bg-hover)'" onmouseout="this.style.background=''">
                 <div>
-                    <div style="font-weight: 600;">${r.car_make} ${r.car_model}</div>
-                    <div style="font-size: 12px; color: var(--text-secondary);">${r.part_description?.slice(0, 35) || ''}</div>
+                    <div style="font-weight: 600;">${escapeHTML(r.car_make || '')} ${escapeHTML(r.car_model || '')}</div>
+                    <div style="font-size: 12px; color: var(--text-secondary);">${escapeHTML(r.part_description?.slice(0, 35) || '')}</div>
                 </div>
                 <span style="font-size: 11px; color: var(--text-muted);">${r.status}</span>
             </div>
