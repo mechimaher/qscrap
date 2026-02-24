@@ -157,11 +157,11 @@ document.getElementById('loginForm').addEventListener('submit', async (e) => {
     const password = document.getElementById('loginPassword').value;
 
     try {
-        const res = await fetch(`${API_URL}/auth/login`, {
+        const res = await fetchWithTimeout(`${API_URL}/auth/login`, {
             method: 'POST',
             headers: { 'Content-Type': 'application/json' },
             body: JSON.stringify({ phone_number: phone, password })
-        });
+        }, 15000); // 15s timeout for login
         const data = await res.json();
 
         if (data.token) {
@@ -180,7 +180,7 @@ document.getElementById('loginForm').addEventListener('submit', async (e) => {
             showToast(data.error || 'Login failed', 'error');
         }
     } catch (err) {
-        showToast('Connection error', 'error');
+        showToast(err.message === 'Request timeout' ? 'Login request timed out. Please check your connection.' : 'Connection error', 'error');
     }
 });
 
@@ -615,9 +615,9 @@ async function showDashboard() {
 
 async function loadStats() {
     try {
-        const res = await fetch(`${API_URL}/dashboard/garage/stats`, {
+        const res = await fetchWithTimeout(`${API_URL}/dashboard/garage/stats`, {
             headers: { 'Authorization': `Bearer ${token}` }
-        });
+        }, 10000); // 10s timeout for stats
         const data = await res.json();
         // Dashboard stats loaded
 
@@ -707,9 +707,9 @@ async function loadRequests(page = 1) {
     const sort = document.getElementById('requestSortOption')?.value || 'newest';
 
     try {
-        const res = await fetch(`${API_URL}/requests/pending?page=${page}&limit=${REQUESTS_PAGE_SIZE}&urgency=${urgency}&condition=${condition}&sort=${sort}`, {
+        const res = await fetchWithTimeout(`${API_URL}/requests/pending?page=${page}&limit=${REQUESTS_PAGE_SIZE}&urgency=${urgency}&condition=${condition}&sort=${sort}`, {
             headers: { 'Authorization': `Bearer ${token}` }
-        });
+        }, 10000); // 10s timeout for requests
         const data = await res.json();
         // Handle both old array format and new wrapped format
         requests = Array.isArray(data) ? data : (data.requests || []);
@@ -965,9 +965,9 @@ const BIDS_PAGE_SIZE = 20;
 async function loadBids(page = 1) {
     currentBidsPage = page;
     try {
-        const res = await fetch(`${API_URL}/bids/my?page=${page}&limit=${BIDS_PAGE_SIZE}`, {
+        const res = await fetchWithTimeout(`${API_URL}/bids/my?page=${page}&limit=${BIDS_PAGE_SIZE}`, {
             headers: { 'Authorization': `Bearer ${token}` }
-        });
+        }, 10000); // 10s timeout for bids
         const data = await res.json();
 
         // Handle both old array format and new paginated format
@@ -1509,9 +1509,9 @@ function generateOrderTimeline(status) {
 
 async function loadOrders() {
     try {
-        const res = await fetch(`${API_URL}/orders/my`, {
+        const res = await fetchWithTimeout(`${API_URL}/orders/my`, {
             headers: { 'Authorization': `Bearer ${token}` }
-        });
+        }, 10000); // 10s timeout for orders
         const data = await res.json();
         // Handle both old array format and new wrapped format
         const orders = Array.isArray(data) ? data : (data.orders || []);
