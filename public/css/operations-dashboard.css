@@ -788,7 +788,7 @@ body {
 }
 
 /* ===== Bulk Action Bar (Phase 1.2) ===== */
-.bulk-action-bar {
+.bulk-action-bar, .batch-action-bar {
     position: sticky;
     bottom: 0;
     background: var(--bg-secondary);
@@ -815,7 +815,7 @@ body {
     }
 }
 
-.bulk-action-info {
+.bulk-action-info, .batch-action-info {
     display: flex;
     align-items: center;
     gap: 8px;
@@ -824,19 +824,19 @@ body {
     color: var(--text-primary);
 }
 
-.bulk-action-info i {
+.bulk-action-info i, .batch-action-info i {
     color: var(--success);
     font-size: 18px;
 }
 
-.bulk-action-buttons {
+.bulk-action-buttons, .batch-action-buttons {
     display: flex;
     gap: 12px;
     align-items: center;
 }
 
-.bulk-action-buttons #bulkExecuteBtn {
-    min-width: 120px;
+.bulk-action-buttons #bulkExecuteBtn, .batch-action-buttons #batchSendBtn {
+    min-width: 160px;
 }
 
 @media (max-width: 768px) {

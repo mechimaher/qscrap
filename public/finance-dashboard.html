@@ -390,6 +390,41 @@
                         </tbody>
                     </table>
                 </div>
+                
+                <!-- Batch Action Bar (P1 UX Feature) -->
+                <div id="batchActionBar" class="batch-action-bar" style="display: none;">
+                    <div class="batch-action-info">
+                        <i class="bi bi-check2-square"></i>
+                        <span id="selectedPayoutCount">0</span> payouts selected
+                        <span id="selectedPayoutTotal" style="margin-left: 12px; font-weight: 700; color: var(--accent);">0 QAR</span>
+                    </div>
+                    <div class="batch-action-buttons">
+                        <button class="btn btn-primary" onclick="openBatchPaymentModal()" id="batchSendBtn">
+                            <i class="bi bi-send"></i> Send Batch Payment
+                        </button>
+                        <button class="btn btn-ghost" onclick="clearBatchSelection()">
+                            <i class="bi bi-x-circle"></i> Clear Selection
+                        </button>
+                    </div>
+                </div>
+                
+                <!-- Payment Templates Section (P1 UX Feature) -->
+                <div class="content-card" style="margin-top: 20px; background: rgba(16, 185, 129, 0.05); border: 1px solid var(--success);">
+                    <div class="content-header">
+                        <h3 class="content-title"><i class="bi bi-file-earmark-check" style="color: var(--success);"></i> Saved Payment Templates</h3>
+                        <button class="btn btn-sm btn-success" onclick="openNewTemplateModal()">
+                            <i class="bi bi-plus-circle"></i> New Template
+                        </button>
+                    </div>
+                    <div id="templatesList" style="padding: 16px;">
+                        <div style="text-align: center; color: var(--text-muted); padding: 20px;">
+                            <i class="bi bi-inbox" style="font-size: 32px; margin-bottom: 12px;"></i>
+                            <p>No saved templates yet</p>
+                            <p style="font-size: 12px;">Save garage payment details to auto-fill future payments</p>
+                        </div>
+                    </div>
+                </div>
+                
                 <div id="pendingPagination"></div>
             </section>
 

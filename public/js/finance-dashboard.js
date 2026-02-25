@@ -421,6 +421,9 @@ async function loadPendingPayouts(page = 1) {
     } catch (err) {
         console.error('Failed to load pending payouts:', err);
     }
+    
+    // Load payment templates (P1 UX Feature)
+    loadPaymentTemplates();
 }
 
 // ==========================================
@@ -473,40 +476,6 @@ async function loadInWarrantyPayouts() {
     }
 }
 
-function toggleSelectAll(type) {
-    const checked = document.getElementById(`selectAll${type.charAt(0).toUpperCase() + type.slice(1)}`).checked;
-    document.querySelectorAll(`.payout-checkbox`).forEach(cb => cb.checked = checked);
-}
-
-async function processBulkPayouts() {
-    const selected = [...document.querySelectorAll('.payout-checkbox:checked')].map(cb => cb.dataset.payoutId);
-    if (selected.length === 0) {
-        showToast('Select at least one payout', 'error');
-        return;
-    }
-
-    // Confirmation dialog
-    if (!confirm(`Process ${selected.length} payout(s)?\n\nThis will send payments to the selected garages and notify them.`)) {
-        return;
-    }
-
-    // Calculate total amount
-    let totalAmount = 0;
-    selected.forEach(id => {
-        const row = document.querySelector(`.payout-checkbox[data-payout-id="${id}"]`)?.closest('tr');
-        if (row) {
-            const amountCell = row.querySelectorAll('td')[5];
-            if (amountCell) {
-                const amountText = amountCell.textContent.replace(/[^\d.]/g, '');
-                totalAmount += parseFloat(amountText) || 0;
-            }
-        }
-    });
-
-    // Open bulk payment modal
-    openBulkPaymentModal(selected, totalAmount);
-}
-
 function openBulkPaymentModal(payoutIds, totalAmount) {
     // Update modal content for bulk
     document.getElementById('spPayoutId').value = payoutIds.join(',');
@@ -529,6 +498,42 @@ async function submitSendPayment() {
         return;
     }
 
+    // ===== DUPLICATE PAYMENT DETECTION (P0 Security) =====
+    // Check if this exact payment was sent recently (same garage, amount, within 24h)
+    const checkPayoutIds = payoutIdValue.includes(',') ? payoutIdValue.split(',') : [payoutIdValue];
+    
+    for (const pid of checkPayoutIds) {
+        const row = document.querySelector(`.payout-checkbox[data-payout-id="${pid}"]`)?.closest('tr');
+        if (row) {
+            const garageName = row.querySelector('td:nth-child(2)')?.textContent?.trim() || '';
+            const amountText = row.querySelectorAll('td')[5]?.textContent.replace(/[^\d.]/g, '') || '0';
+            const amount = parseFloat(amountText);
+            
+            // Check recent payments to same garage with same amount
+            const recentPayments = JSON.parse(localStorage.getItem('recentPayments') || '[]');
+            const duplicate = recentPayments.find(p => 
+                p.garageName === garageName && 
+                Math.abs(p.amount - amount) < 0.01 && 
+                (Date.now() - p.timestamp) < 24 * 60 * 60 * 1000 // 24 hours
+            );
+            
+            if (duplicate) {
+                const confirmDuplicate = confirm(
+                    `⚠️ DUPLICATE PAYMENT DETECTED!\n\n` +
+                    `A payment of ${formatCurrency(amount)} to ${garageName} was sent ${new Date(duplicate.timestamp).toLocaleString()}.\n\n` +
+                    `Are you sure you want to send this payment again?\n\n` +
+                    `Click OK to proceed, Cancel to stop.`
+                );
+                
+                if (!confirmDuplicate) {
+                    showToast('Payment cancelled - possible duplicate', 'warning');
+                    return;
+                }
+            }
+        }
+    }
+    // =======================================================
+    
     // Check if bulk or single
     const payoutIds = payoutIdValue.includes(',') ? payoutIdValue.split(',') : [payoutIdValue];
 
@@ -548,6 +553,29 @@ async function submitSendPayment() {
                 closeSendPaymentModal();
                 loadPendingPayouts();
                 loadBadges();
+                
+                // ===== TRACK PAYMENT FOR DUPLICATE DETECTION =====
+                const row = document.querySelector(`.payout-checkbox[data-payout-id="${payoutIdValue}"]`)?.closest('tr');
+                if (row) {
+                    const garageName = row.querySelector('td:nth-child(2)')?.textContent?.trim() || '';
+                    const amountText = row.querySelectorAll('td')[5]?.textContent.replace(/[^\d.]/g, '') || '0';
+                    const amount = parseFloat(amountText);
+                    
+                    const recentPayments = JSON.parse(localStorage.getItem('recentPayments') || '[]');
+                    recentPayments.push({
+                        payoutId: payoutIdValue,
+                        garageName,
+                        amount,
+                        reference,
+                        timestamp: Date.now()
+                    });
+                    
+                    // Keep only last 48 hours of payments
+                    const cutoff = Date.now() - 48 * 60 * 60 * 1000;
+                    const filtered = recentPayments.filter(p => p.timestamp > cutoff);
+                    localStorage.setItem('recentPayments', JSON.stringify(filtered));
+                }
+                // ==================================================
             } else {
                 showToast(data.error || 'Failed to send payment', 'error');
             }
@@ -1546,7 +1574,212 @@ function handlePayoutCheckbox(payoutId, checked) {
  */
 function updateSelectedCount() {
     const count = selectedPayoutIds.size;
-    // Could show a "Send X Selected" button if needed
+    
+    // Update batch action bar
+    const actionBar = document.getElementById('batchActionBar');
+    const countEl = document.getElementById('selectedPayoutCount');
+    const totalEl = document.getElementById('selectedPayoutTotal');
+    
+    if (count > 0) {
+        // Calculate total amount
+        let total = 0;
+        selectedPayoutIds.forEach(id => {
+            const row = document.querySelector(`.payout-checkbox[data-payout-id="${id}"]`)?.closest('tr');
+            if (row) {
+                const amountText = row.querySelectorAll('td')[6]?.textContent.replace(/[^\d.]/g, '') || '0';
+                total += parseFloat(amountText) || 0;
+            }
+        });
+        
+        if (actionBar) actionBar.style.display = 'flex';
+        if (countEl) countEl.textContent = count;
+        if (totalEl) totalEl.textContent = formatCurrency(total);
+    } else {
+        if (actionBar) actionBar.style.display = 'none';
+        if (countEl) countEl.textContent = '0';
+        if (totalEl) totalEl.textContent = '0 QAR';
+    }
+}
+
+/**
+ * Clear batch selection
+ */
+function clearBatchSelection() {
+    selectedPayoutIds.clear();
+    document.querySelectorAll('.payout-checkbox').forEach(cb => cb.checked = false);
+    const selectAll = document.getElementById('selectAllPending');
+    if (selectAll) selectAll.checked = false;
+    updateSelectedCount();
+}
+
+/**
+ * Open batch payment modal
+ */
+function openBatchPaymentModal() {
+    if (selectedPayoutIds.size === 0) {
+        showToast('Select at least one payout', 'error');
+        return;
+    }
+    
+    // Calculate total
+    let total = 0;
+    selectedPayoutIds.forEach(id => {
+        const row = document.querySelector(`.payout-checkbox[data-payout-id="${id}"]`)?.closest('tr');
+        if (row) {
+            const amountText = row.querySelectorAll('td')[6]?.textContent.replace(/[^\d.]/g, '') || '0';
+            total += parseFloat(amountText) || 0;
+        }
+    });
+    
+    // Open send payment modal with batch info
+    document.getElementById('spPayoutId').value = Array.from(selectedPayoutIds).join(',');
+    document.getElementById('spGarageName').textContent = `${selectedPayoutIds.size} garages (batch)`;
+    document.getElementById('spAmount').textContent = formatCurrency(total);
+    document.getElementById('spPaymentMethod').value = '';
+    document.getElementById('spReference').value = '';
+    document.getElementById('spNotes').value = 'Batch payment processing';
+    
+    const modal = document.getElementById('sendPaymentModal');
+    modal.style.display = 'flex';
+    modal.classList.add('active');
+}
+
+// ==========================================
+// PAYMENT TEMPLATES (P1 UX Feature)
+// ==========================================
+
+/**
+ * Load saved payment templates
+ */
+function loadPaymentTemplates() {
+    const templates = JSON.parse(localStorage.getItem('paymentTemplates') || '[]');
+    const container = document.getElementById('templatesList');
+    
+    if (!container) return;
+    
+    if (templates.length === 0) {
+        container.innerHTML = `
+            <div style="text-align: center; color: var(--text-muted); padding: 20px;">
+                <i class="bi bi-inbox" style="font-size: 32px; margin-bottom: 12px;"></i>
+                <p>No saved templates yet</p>
+                <p style="font-size: 12px;">Save garage payment details to auto-fill future payments</p>
+            </div>
+        `;
+        return;
+    }
+    
+    container.innerHTML = `
+        <div style="display: grid; grid-template-columns: repeat(auto-fill, minmax(300px, 1fr)); gap: 12px;">
+            ${templates.map(t => `
+                <div style="border: 1px solid var(--border); border-radius: 8px; padding: 12px; background: var(--bg-secondary);">
+                    <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 8px;">
+                        <strong style="color: var(--text-primary);">${t.garageName}</strong>
+                        <div style="display: flex; gap: 4px;">
+                            <button class="btn btn-sm btn-ghost" onclick="useTemplate('${t.id}')" title="Use this template">
+                                <i class="bi bi-play-circle"></i>
+                            </button>
+                            <button class="btn btn-sm btn-ghost" onclick="editTemplate('${t.id}')" title="Edit template">
+                                <i class="bi bi-pencil"></i>
+                            </button>
+                            <button class="btn btn-sm btn-danger" onclick="deleteTemplate('${t.id}')" title="Delete template">
+                                <i class="bi bi-trash"></i>
+                            </button>
+                        </div>
+                    </div>
+                    <div style="font-size: 12px; color: var(--text-secondary); margin-bottom: 4px;">
+                        <i class="bi bi-bank"></i> ${t.paymentMethod}
+                    </div>
+                    <div style="font-size: 12px; color: var(--text-secondary);">
+                        <i class="bi bi-upc-scan"></i> ${t.reference || 'N/A'}
+                    </div>
+                </div>
+            `).join('')}
+        </div>
+    `;
+}
+
+/**
+ * Open new template modal
+ */
+function openNewTemplateModal() {
+    const garageName = prompt('Enter garage name for this template:');
+    if (!garageName) return;
+    
+    const paymentMethod = prompt('Payment method (e.g., Bank Transfer, Cash, Mobile Transfer):');
+    if (!paymentMethod) return;
+    
+    const reference = prompt('Default reference/prefix (optional):') || '';
+    
+    const template = {
+        id: 'template_' + Date.now(),
+        garageName,
+        paymentMethod,
+        reference,
+        createdAt: Date.now()
+    };
+    
+    const templates = JSON.parse(localStorage.getItem('paymentTemplates') || '[]');
+    templates.push(template);
+    localStorage.setItem('paymentTemplates', JSON.stringify(templates));
+    
+    loadPaymentTemplates();
+    showToast('Template saved!', 'success');
+}
+
+/**
+ * Use template to auto-fill payment
+ */
+function useTemplate(templateId) {
+    const templates = JSON.parse(localStorage.getItem('paymentTemplates') || '[]');
+    const template = templates.find(t => t.id === templateId);
+    
+    if (!template) {
+        showToast('Template not found', 'error');
+        return;
+    }
+    
+    // Auto-fill payment form
+    document.getElementById('spPaymentMethod').value = template.paymentMethod;
+    document.getElementById('spReference').value = template.reference || '';
+    document.getElementById('spNotes').value = `Payment via template: ${template.garageName}`;
+    
+    showToast(`Template loaded: ${template.garageName}`, 'success');
+}
+
+/**
+ * Edit template
+ */
+function editTemplate(templateId) {
+    const templates = JSON.parse(localStorage.getItem('paymentTemplates') || '[]');
+    const template = templates.find(t => t.id === templateId);
+    
+    if (!template) return;
+    
+    const newMethod = prompt('Update payment method:', template.paymentMethod);
+    if (!newMethod) return;
+    
+    const newRef = prompt('Update reference:', template.reference);
+    
+    template.paymentMethod = newMethod;
+    template.reference = newRef || '';
+    
+    localStorage.setItem('paymentTemplates', JSON.stringify(templates));
+    loadPaymentTemplates();
+    showToast('Template updated!', 'success');
+}
+
+/**
+ * Delete template
+ */
+function deleteTemplate(templateId) {
+    if (!confirm('Delete this template?')) return;
+    
+    const templates = JSON.parse(localStorage.getItem('paymentTemplates') || '[]');
+    const filtered = templates.filter(t => t.id !== templateId);
+    localStorage.setItem('paymentTemplates', JSON.stringify(filtered));
+    
+    loadPaymentTemplates();
+    showToast('Template deleted', 'info');
 }
 
 /**
