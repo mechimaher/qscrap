@@ -2358,56 +2358,94 @@ async function loadActiveDeliveries() {
 
 function renderActiveDeliveries(deliveries) {
     const tbody = document.getElementById('activeDeliveriesTable');
-    tbody.innerHTML = deliveries.map(d => `
-                <tr>
-                    <td>${d.order_number}</td>
-                    <td>
-                        ${d.driver_name ? `
-                            <strong>${d.driver_name}</strong><br>
-                            <span style="color: var(--text-muted); font-size: 12px;">${d.vehicle_type || ''} - ${d.vehicle_plate || ''}</span>
-                        ` : `
-                            <em style="color: var(--warning);">No driver assigned</em><br>
-                            <span style="font-size: 11px; color: var(--danger);">Needs assignment!</span>
-                        `}
-                    </td>
-                    <td>
-                        ${d.customer_name}<br>
-                        <a href="tel:${d.customer_phone}" style="color: var(--accent); font-size: 12px;">${d.customer_phone}</a>
-                    </td>
-                    <td><span class="status-badge ${d.order_status || d.assignment_status}">${d.order_status || d.assignment_status || 'in_transit'}</span></td>
-                    <td>
-                        ${d.current_lat && d.current_lng ?
-            `<span style="color: var(--success);"><i class="bi bi-geo-alt-fill"></i> ${parseFloat(d.current_lat).toFixed(4)}, ${parseFloat(d.current_lng).toFixed(4)}</span>`
-            : '<span style="color: var(--text-muted);">No GPS</span>'}
-                    </td>
-                    <td>
-                        ${d.assignment_id ? `
-                            <div style="display: flex; gap: 4px; flex-wrap: wrap;">
-                                <button class="btn btn-sm" onclick="markAsDelivered('${d.assignment_id}', '${d.order_number}')" 
-                                        style="padding: 4px 8px; font-size: 11px; background: var(--success);">
-                                    <i class="bi bi-check-circle"></i> Delivered
-                                </button>
-                                <button class="btn btn-sm" onclick="openReassignModal('${d.assignment_id}', '${d.order_number}', '${d.driver_name || ''}')" 
-                                        style="padding: 4px 8px; font-size: 11px; background: var(--warning); color: #000;"
-                                        title="Emergency driver reassignment">
-                                    <i class="bi bi-arrow-left-right"></i> Reassign
-                                </button>
-                            </div>
-                        ` : `
-                            <div style="display: flex; gap: 4px; flex-wrap: wrap;">
-                                <button class="btn btn-sm" onclick="markOrderDelivered('${d.order_id}', '${d.order_number}')" 
-                                        style="padding: 4px 8px; font-size: 11px; background: var(--success);">
-                                    <i class="bi bi-check-circle"></i> Delivered
-                                </button>
-                                <button class="btn btn-sm" onclick="openUnifiedAssignmentModal('${d.order_id}', '${d.order_number}', 'delivery')" 
-                                        style="padding: 4px 8px; font-size: 11px; background: var(--accent);">
-                                    <i class="bi bi-person-plus"></i> Assign
-                                </button>
-                            </div>
-                        `}
-                    </td>
-                </tr>
-            `).join('');
+    tbody.innerHTML = deliveries.map(d => {
+        // ===== GPS PING STATUS (NEW FEATURE) =====
+        const lastPing = d.last_location_update ? new Date(d.last_location_update) : null;
+        const now = new Date();
+        const minutesAgo = lastPing ? Math.floor((now - lastPing) / 60000) : null;
+        
+        // Determine ping status with color coding
+        let pingStatus = 'unknown';
+        let pingLabel = 'No signal';
+        let pingColor = '#6b7280'; // gray
+        let pingTitle = 'No GPS data available';
+        
+        if (minutesAgo !== null) {
+            pingTitle = lastPing.toLocaleString();
+            if (minutesAgo < 5) {
+                pingStatus = 'live';
+                pingLabel = `${minutesAgo}m`;
+                pingColor = '#10b981'; // green - live tracking
+            } else if (minutesAgo < 30) {
+                pingStatus = 'recent';
+                pingLabel = `${minutesAgo}m`;
+                pingColor = '#f59e0b'; // amber - recent but not live
+            } else {
+                pingStatus = 'stale';
+                pingLabel = `${minutesAgo}m`;
+                pingColor = '#ef4444'; // red - stale, may need attention
+            }
+        }
+        // =========================================
+        
+        const statusClass = {
+            'assigned': 'pending',
+            'picked_up': 'in-transit',
+            'in_transit': 'in-transit'
+        }[d.status] || 'pending';
+        
+        return `
+            <tr>
+                <td><strong>#${d.order_number || '-'}</strong></td>
+                <td>
+                    ${d.driver_name ? `
+                        <strong>${d.driver_name}</strong><br>
+                        <span style="color: var(--text-muted); font-size: 12px;">${d.vehicle_type || ''} - ${d.vehicle_plate || ''}</span>
+                    ` : `
+                        <em style="color: var(--warning);">No driver assigned</em><br>
+                        <span style="font-size: 11px; color: var(--danger);">Needs assignment!</span>
+                    `}
+                </td>
+                <td>
+                    ${d.customer_name || '-'}<br>
+                    <a href="tel:${d.customer_phone}" style="color: var(--accent); font-size: 12px;">${d.customer_phone || ''}</a>
+                </td>
+                <td><span class="status-badge ${statusClass}">${(d.order_status || d.assignment_status || 'in_transit').replace(/_/g, ' ')}</span></td>
+                <td>
+                    <div style="display: flex; align-items: center; gap: 6px;" title="${pingTitle}">
+                        <span style="width: 8px; height: 8px; border-radius: 50%; background: ${pingColor}; display: inline-block; ${pingStatus === 'live' ? 'animation: pulse 2s infinite;' : ''}"></span>
+                        <span style="color: ${pingColor}; font-weight: 600; font-size: 13px;">${pingLabel}</span>
+                    </div>
+                </td>
+                <td>
+                    ${d.assignment_id ? `
+                        <div style="display: flex; gap: 4px; flex-wrap: wrap;">
+                            <button class="btn btn-sm" onclick="markAsDelivered('${d.assignment_id}', '${d.order_number}')"
+                                    style="padding: 4px 8px; font-size: 11px; background: var(--success);">
+                                <i class="bi bi-check-circle"></i> Delivered
+                            </button>
+                            <button class="btn btn-sm" onclick="openReassignModal('${d.assignment_id}', '${d.order_number}', '${d.driver_name || ''}')"
+                                    style="padding: 4px 8px; font-size: 11px; background: var(--warning); color: #000;"
+                                    title="Emergency driver reassignment">
+                                <i class="bi bi-arrow-left-right"></i> Reassign
+                            </button>
+                        </div>
+                    ` : `
+                        <div style="display: flex; gap: 4px; flex-wrap: wrap;">
+                            <button class="btn btn-sm" onclick="markOrderDelivered('${d.order_id}', '${d.order_number}')"
+                                    style="padding: 4px 8px; font-size: 11px; background: var(--success);">
+                                <i class="bi bi-check-circle"></i> Delivered
+                            </button>
+                            <button class="btn btn-sm" onclick="openUnifiedAssignmentModal('${d.order_id}', '${d.order_number}', 'delivery')"
+                                    style="padding: 4px 8px; font-size: 11px; background: var(--accent);">
+                                <i class="bi bi-person-plus"></i> Assign
+                            </button>
+                        </div>
+                    `}
+                </td>
+            </tr>
+        `;
+    }).join('');
 }
 
 function initDeliveryMap(deliveries) {
