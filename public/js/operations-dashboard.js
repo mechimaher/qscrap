@@ -1408,7 +1408,7 @@ async function loadReturns() {
 
 async function assignReturnDriver(assignmentId, orderNumber) {
     if (availableDrivers.length === 0) {
-        await loadDrivers();
+        await loadDriversList();
         if (availableDrivers.length === 0) {
             showToast('No available drivers', 'error');
             return;
@@ -1469,7 +1469,7 @@ async function submitReturnAssignment(assignmentId) {
             showToast('Return driver assigned!', 'success');
             document.getElementById('returnAssignModal').remove();
             loadReturns();
-            loadDrivers();
+            loadDriversList();
         } else {
             showToast(data.error || 'Failed to assign driver', 'error');
         }
@@ -1576,6 +1576,16 @@ async function openUnifiedAssignmentModal(orderId, orderNumber, type = 'collecti
         const driverCards = drivers.slice(0, 5).map((d, idx) => {
             const isFirst = idx === 0;
             const borderColor = isFirst ? '#22c55e' : 'var(--border-color)';
+
+            // Fix for numeric string or null rating_average
+            let ratingDisplay = 'N/A';
+            if (d.rating_average != null) {
+                const parsedRating = parseFloat(d.rating_average);
+                if (!isNaN(parsedRating)) {
+                    ratingDisplay = parsedRating.toFixed(1);
+                }
+            }
+
             return `
                 <div class="driver-card" onclick="document.getElementById('unifiedDriverSelect').value='${d.driver_id}'" 
                      style="display: flex; align-items: center; gap: 12px; padding: 12px; border: 2px solid ${borderColor}; border-radius: 8px; margin-bottom: 8px; cursor: pointer; transition: all 0.2s; ${isFirst ? 'background: rgba(34, 197, 94, 0.1);' : ''}"
@@ -1585,7 +1595,7 @@ async function openUnifiedAssignmentModal(orderId, orderNumber, type = 'collecti
                     </div>
                     <div style="flex: 1;">
                         <div style="font-weight: 600; color: var(--text-primary);">${escapeHTML(d.full_name)} ${isFirst ? '<i class="bi bi-star-fill" style="color:#f59e0b"></i>' : ''}</div>
-                        <div style="font-size: 12px; color: var(--text-muted);">${d.vehicle_type || 'Car'} • ${d.total_deliveries || 0} deliveries • <i class="bi bi-star-fill" style="color:#f59e0b;font-size:10px"></i> ${d.rating_average?.toFixed(1) || 'N/A'}</div>
+                        <div style="font-size: 12px; color: var(--text-muted);">${d.vehicle_type || 'Car'} • ${d.total_deliveries || 0} deliveries • <i class="bi bi-star-fill" style="color:#f59e0b;font-size:10px"></i> ${ratingDisplay}</div>
                     </div>
                     <div>
                         ${getDistanceBadge(d.distance_km)}
@@ -1617,7 +1627,7 @@ async function openUnifiedAssignmentModal(orderId, orderNumber, type = 'collecti
         console.error('Error loading ranked drivers:', err);
         // Fallback to standard drivers list
         if (availableDrivers.length === 0) {
-            await loadDrivers();
+            await loadDriversList();
         }
 
         if (availableDrivers.length === 0) {
@@ -2747,6 +2757,9 @@ async function loadDriversList() {
             headers: { 'Authorization': `Bearer ${token}` }
         });
         const data = await res.json();
+
+        // Populate availableDrivers array (legacy fallback used by modals)
+        availableDrivers = data.drivers || [];
 
         const table = document.getElementById('driversTable');
         if (data.drivers && data.drivers.length > 0) {
