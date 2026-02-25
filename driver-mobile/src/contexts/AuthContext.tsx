@@ -120,8 +120,8 @@ export function AuthProvider({ children }: { children: ReactNode }) {
 
     const logout = async () => {
         try {
-            // Stop tracking location
-            await locationService.stopTracking().catch(console.error);
+            // CRITICAL: Stop location tracking BEFORE logout to prevent battery drain
+            await locationService.cleanup().catch(console.error);
 
             // Set status to offline before logout
             try {

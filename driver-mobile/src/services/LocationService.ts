@@ -86,6 +86,23 @@ class LocationService {
         const isStarted = await Location.hasStartedLocationUpdatesAsync(LOCATION_TASK_NAME);
         if (isStarted) {
             await Location.stopLocationUpdatesAsync(LOCATION_TASK_NAME);
+            console.log('[LocationService] Stopped location tracking');
+        }
+    }
+
+    /**
+     * Complete cleanup - use on logout to prevent battery drain
+     * Stops tracking AND unregisters the background task
+     */
+    async cleanup() {
+        // First stop tracking
+        await this.stopTracking();
+        
+        // Then unregister the task completely
+        const isRegistered = await TaskManager.isTaskRegisteredAsync(LOCATION_TASK_NAME);
+        if (isRegistered) {
+            await TaskManager.unregisterTaskAsync(LOCATION_TASK_NAME);
+            console.log('[LocationService] Unregistered background task');
         }
     }
 }

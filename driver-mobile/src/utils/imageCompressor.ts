@@ -26,18 +26,22 @@ const DEFAULT_POD_OPTIONS: CompressionOptions = {
 
 /**
  * Compress a POD photo to reduce file size while maintaining quality
+ * Includes automatic size validation and progressive compression
+ * 
  * @param uri - Local image URI to compress
  * @param options - Compression options (optional)
- * @returns Compressed image URI
+ * @returns Compressed image URI with metadata
  * 
  * @example
- * const compressed = await compressPODPhoto(cameraUri);
- * formData.append('photo', { uri: compressed });
+ * const result = await compressPODPhoto(cameraUri);
+ * if (result.success && result.sizeKB < 500) {
+ *     formData.append('photo', { uri: result.uri });
+ * }
  */
 export const compressPODPhoto = async (
     uri: string,
     options: CompressionOptions = DEFAULT_POD_OPTIONS
-): Promise<string> => {
+): Promise<{ uri: string; sizeKB: number; success: boolean; error?: string }> => {
     try {
         const config = { ...DEFAULT_POD_OPTIONS, ...options };
 
@@ -62,18 +66,51 @@ export const compressPODPhoto = async (
             }
         );
 
+        // Validate size
+        const sizeKB = await estimateFileSize(result.uri);
+        
+        log('[POD Compressor] First pass:', { sizeKB, width: result.width, height: result.height });
+        
+        // If still too large (>500KB), compress more aggressively
+        if (sizeKB > 500) {
+            log('[POD Compressor] File too large, compressing more...');
+            const result2 = await ImageManipulator.manipulateAsync(
+                result.uri,
+                [{ resize: { width: 1280 } }],
+                { compress: 0.5 }
+            );
+            
+            const finalSizeKB = await estimateFileSize(result2.uri);
+            log('[POD Compressor] Second pass:', { sizeKB: finalSizeKB });
+            
+            return {
+                uri: result2.uri,
+                sizeKB: finalSizeKB,
+                success: true,
+            };
+        }
+
         log('[POD Compressor] Compressed:', {
             original: uri,
             compressed: result.uri,
-            width: result.width,
-            height: result.height,
+            sizeKB,
         });
 
-        return result.uri;
+        return {
+            uri: result.uri,
+            sizeKB,
+            success: true,
+        };
     } catch (error) {
         logError('[POD Compressor] Error:', error);
         // Return original image if compression fails
-        return uri;
+        const originalSize = await estimateFileSize(uri);
+        return {
+            uri,
+            sizeKB: originalSize,
+            success: false,
+            error: error instanceof Error ? error.message : 'Compression failed',
+        };
     }
 };
 

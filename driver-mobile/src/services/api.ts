@@ -2,6 +2,7 @@
 import { API_BASE_URL, API_ENDPOINTS } from '../config/api';
 export { API_ENDPOINTS };
 import * as SecureStore from 'expo-secure-store';
+import { log, warn, error as logError } from '../utils/logger';
 
 
 // Token Storage Keys
@@ -103,7 +104,7 @@ class DriverApiService {
     private async withTimeout<T>(promise: Promise<T>, timeoutMs: number, fallback: T): Promise<T> {
         return new Promise((resolve) => {
             const timer = setTimeout(() => {
-                console.warn(`[API] SecureStore operation timed out after ${timeoutMs}ms, using fallback`);
+                warn(`[API] SecureStore operation timed out after ${timeoutMs}ms, using fallback`);
                 resolve(fallback);
             }, timeoutMs);
 
@@ -114,7 +115,7 @@ class DriverApiService {
                 })
                 .catch((error) => {
                     clearTimeout(timer);
-                    console.warn('[API] SecureStore error:', error);
+                    warn('[API] SecureStore error:', error);
                     resolve(fallback);
                 });
         });
@@ -132,7 +133,7 @@ class DriverApiService {
             );
             return this.token;
         } catch (error) {
-            console.error('[API] getToken error:', error);
+            logError('[API] getToken error:', error);
             return null;
         }
     }
@@ -147,7 +148,7 @@ class DriverApiService {
                 undefined
             );
         } catch (error) {
-            console.warn('[API] Failed to persist token, continuing with in-memory only:', error);
+            warn('[API] Failed to persist token, continuing with in-memory only:', error);
         }
     }
 
@@ -427,6 +428,21 @@ class DriverApiService {
                 signature_base64: signatureBase64,
                 notes,
                 payment_method: paymentMethod
+            }),
+        });
+    }
+
+    async sendSOS(location: {
+        latitude: number;
+        longitude: number;
+        accuracy: number;
+        timestamp: string;
+    }): Promise<{ success: boolean; message: string }> {
+        return this.request(API_ENDPOINTS.SEND_SOS, {
+            method: 'POST',
+            body: JSON.stringify({
+                location,
+                timestamp: new Date().toISOString(),
             }),
         });
     }

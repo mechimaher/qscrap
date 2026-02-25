@@ -41,4 +41,7 @@ export const API_ENDPOINTS = {
     // Chat
     MESSAGES: '/chat/messages',
     CHAT_HISTORY: (orderId: string) => `/chat/order/${orderId}`,
+
+    // Driver SOS
+    SEND_SOS: '/driver/sos',
 };
