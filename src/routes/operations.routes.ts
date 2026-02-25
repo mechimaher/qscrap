@@ -1,7 +1,6 @@
 import { Router } from 'express';
 import { authenticate } from '../middleware/auth.middleware';
-import logger from '../utils/logger';
-import { authorizeOperations } from '../middleware/authorize.middleware';
+import { authorizeOperationsDashboard } from '../middleware/authorize.middleware';
 import {
     getDashboardStats,
     getOrders,
@@ -23,19 +22,21 @@ import {
     getUserDetails,
     suspendUser,
     activateUser,
-    getGarages
+    getGarages,
+    bulkOrderAction
 } from '../controllers/operations.controller';
 import {
     getReturns,
     approveReturn,
-    rejectReturn
+    rejectReturn,
+    assignReturnDriver
 } from '../controllers/operations-returns.controller';
 
 const router = Router();
 
 // All operations routes require authentication AND operations authorization
 router.use(authenticate);
-router.use(authorizeOperations);
+router.use(authorizeOperationsDashboard);
 
 // Dashboard & Analytics
 router.get('/dashboard/stats', getDashboardStats);
@@ -49,6 +50,7 @@ router.get('/orders/:order_id', getOrderDetails);
 router.patch('/orders/:order_id/status', updateOrderStatus);
 router.post('/orders/:order_id/collect', collectOrder);
 router.post('/orders/:order_id/cancel', cancelOrderByOperations); // Cancel order (admin cleanup)
+router.post('/orders/bulk', bulkOrderAction); // Bulk order operations (NEW)
 
 // Disputes
 router.get('/disputes', getDisputes);
@@ -61,6 +63,7 @@ router.post('/escalations/:escalation_id/resolve', resolveEscalation);
 
 // Return Assignments
 router.get('/returns', getReturns);
+router.post('/returns/:return_id/assign-driver', assignReturnDriver); // Assign driver to return part
 
 // Approve return request (BRAIN v3.0)
 router.post('/returns/:return_id/approve', approveReturn);
@@ -83,4 +86,3 @@ router.post('/jobs/auto-complete', triggerAutoComplete); // Manually trigger 48h
 router.get('/garages', getGarages);
 
 export default router;
-

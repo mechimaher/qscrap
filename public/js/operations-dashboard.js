@@ -120,8 +120,6 @@ function logoutAndRetry() {
 }
 
 let currentOrderStatus = 'all';
-let currentDisputeStatus = 'pending';
-let currentUserType = 'customer';
 
 // Login
 document.getElementById('loginForm').addEventListener('submit', async (e) => {
@@ -210,26 +208,6 @@ async function showDashboard() {
         });
     });
 
-    // Dispute tabs
-    document.querySelectorAll('#disputeTabs .tab').forEach(tab => {
-        tab.addEventListener('click', () => {
-            document.querySelectorAll('#disputeTabs .tab').forEach(t => t.classList.remove('active'));
-            tab.classList.add('active');
-            currentDisputeStatus = tab.dataset.status;
-            loadDisputes();
-        });
-    });
-
-    // User tabs
-    document.querySelectorAll('#userTabs .tab').forEach(tab => {
-        tab.addEventListener('click', () => {
-            document.querySelectorAll('#userTabs .tab').forEach(t => t.classList.remove('active'));
-            tab.classList.add('active');
-            currentUserType = tab.dataset.type;
-            loadUsers();
-        });
-    });
-
     // Load initial data
     await loadStats();
     await loadOrders();
@@ -280,8 +258,8 @@ function setupSocketListeners() {
         loadStats();
         loadOrders();
     });
-    socket.on('dispute_created', () => { loadStats(); loadDisputes(); });
-    socket.on('dispute_resolved', () => { loadStats(); loadDisputes(); });
+    socket.on('dispute_created', () => { loadStats(); });
+    socket.on('dispute_resolved', () => { loadStats(); });
     socket.on('new_order', () => { loadStats(); loadOrders(); });
 
     // Order cancelled by customer/garage - CRITICAL for ops awareness
@@ -324,73 +302,26 @@ function setupSocketListeners() {
     // Payment/Payout Real-time Events
     socket.on('payment_confirmed', (data) => {
         showToast(data.notification || 'Garage confirmed payment receipt!', 'success');
-        // Refresh finance data if on finance section
-        const activeSection = document.querySelector('.section.active');
-        if (activeSection && activeSection.id === 'sectionFinance') {
-            loadFinance();
-        }
     });
 
     socket.on('payment_disputed', (data) => {
         showToast(data.notification || 'A payment has been disputed!', 'warning');
-        const activeSection = document.querySelector('.section.active');
-        if (activeSection && activeSection.id === 'sectionFinance') {
-            loadFinance();
-        }
     });
 
     socket.on('payout_completed', (data) => {
         showToast(data.notification || 'Payout completed!', 'success');
         loadStats();
-        const activeSection = document.querySelector('.section.active');
-        if (activeSection && activeSection.id === 'sectionFinance') {
-            loadFinance();
-        }
-        // Decrease finance badge when payout is completed
-        const badge = document.getElementById('financeBadge');
-        if (badge) {
-            const currentCount = parseInt(badge.textContent) || 0;
-            if (currentCount > 1) {
-                badge.textContent = currentCount - 1;
-            } else {
-                badge.textContent = '0';
-                badge.style.display = 'none';
-            }
-        }
     });
 
     // NEW: Payout pending notification - shows finance badge
     socket.on('payout_pending', (data) => {
         showToast(data.notification || 'New payout pending for garage', 'warning');
-        // Update the finance badge
-        const badge = document.getElementById('financeBadge');
-        if (badge) {
-            const currentCount = parseInt(badge.textContent) || 0;
-            badge.textContent = currentCount + 1;
-            badge.style.display = 'inline-flex';
-        }
-        // Refresh finance data if on finance section
-        const activeSection = document.querySelector('.section.active');
-        if (activeSection && activeSection.id === 'sectionFinance') {
-            loadFinance();
-        }
+        loadStats();
     });
 
     // NEW: Review moderation notification
     socket.on('new_review_pending', (data) => {
         showToast(data.notification || 'New review submitted - pending moderation', 'info');
-        // Update the reviews badge
-        const badge = document.getElementById('reviewModerationBadge');
-        if (badge) {
-            const currentCount = parseInt(badge.textContent) || 0;
-            badge.textContent = currentCount + 1;
-            badge.style.display = 'inline-flex';
-        }
-        // Refresh review moderation if on that section
-        const activeSection = document.querySelector('.section.active');
-        if (activeSection && activeSection.id === 'sectionReviewModeration') {
-            loadReviewModeration();
-        }
     });
 
     // Driver status change notification (available/busy/offline)
@@ -420,6 +351,7 @@ function setupSocketListeners() {
             const currentCount = parseInt(badge.textContent) || 0;
             badge.textContent = currentCount + 1;
             badge.style.display = 'inline-flex';
+            updateBadge('deliveryTabBadge', currentCount + 1);
         }
         // Refresh delivery data if on delivery section
         const activeSection = document.querySelector('.section.active');
@@ -428,10 +360,6 @@ function setupSocketListeners() {
         }
     });
 
-    // Initialize support socket listeners
-    if (typeof initSupportSocketListeners === 'function') {
-        initSupportSocketListeners();
-    }
     // Initialize support socket listeners
     if (typeof initSupportSocketListeners === 'function') {
         initSupportSocketListeners();
@@ -467,23 +395,50 @@ function showMobileChat() {
 }
 
 function switchSection(section) {
+    // Whitelist of available sections
+    const availableSections = new Set(['overview', 'orders', 'delivery', 'escalations', 'reports', 'fraud']);
+    const resolvedSection = availableSections.has(section) ? section : 'overview';
+
+    // Update nav items
     document.querySelectorAll('.nav-item').forEach(i => i.classList.remove('active'));
-    const navItem = document.querySelector(`[data-section="${section}"]`);
+    const navItem = document.querySelector(`[data-section="${resolvedSection}"]`);
     if (navItem) navItem.classList.add('active');
 
+    // Update section visibility
     document.querySelectorAll('.section').forEach(s => s.classList.remove('active'));
-    const sectionEl = document.getElementById('section' + section.charAt(0).toUpperCase() + section.slice(1));
+    const sectionEl = document.getElementById('section' + resolvedSection.charAt(0).toUpperCase() + resolvedSection.slice(1));
     if (sectionEl) sectionEl.classList.add('active');
 
     // Load section data
-    if (section === 'orders') loadOrders();
-    if (section === 'escalations') loadEscalations();
-    if (section === 'users') loadUsers();
-    if (section === 'finance') loadFinance();
-    if (section === 'delivery') { loadDeliveryData(); loadDeliveryHistory(); }
-    if (section === 'analytics') loadAnalytics();
-    if (section === 'reports') loadReports();
-    if (section === 'reviewModeration') loadReviewModeration();
+    switch (resolvedSection) {
+        case 'overview':
+            loadStats();
+            loadRecentOrders();
+            break;
+        case 'orders':
+            loadOrders();
+            loadGarageFilter();
+            break;
+        case 'delivery':
+            loadDeliveryData();
+            loadDeliveryHistory();
+            break;
+        case 'escalations':
+            loadEscalations();
+            break;
+        case 'reports':
+            loadReports();
+            break;
+        case 'fraud':
+            loadFraudSection();
+            break;
+        default:
+            // Fallback to overview
+            loadStats();
+    }
+
+    // Update header greeting based on time
+    updateGreeting();
 }
 
 async function loadStats() {
@@ -527,6 +482,7 @@ async function loadStats() {
             updateBadge('disputesBadge', parseInt(s.pending_disputes) + parseInt(s.contested_disputes));
             updateBadge('ordersBadge', s.active_orders);
             updateBadge('deliveryBadge', s.in_transit || 0);
+            updateBadge('deliveryTabBadge', s.in_transit || 0);
 
             // Escalations stats and badge
             const pendingEscalations = parseInt(s.pending_escalations) || 0;
@@ -615,7 +571,7 @@ function getOrderActions(order) {
         case 'refunded':
             return `<span class="status-badge refunded" style="font-size: 11px;">Refunded</span>`;
         case 'disputed':
-            return `<button class="btn btn-warning btn-sm" onclick="switchSection('disputes')" title="View dispute"><i class="bi bi-exclamation-circle"></i></button>`;
+            return `<button class="btn btn-warning btn-sm" onclick="viewOrder('${o.order_id}')" title="View dispute"><i class="bi bi-exclamation-circle"></i></button>`;
         default:
             if (status?.startsWith('cancelled')) {
                 return `<span class="status-badge cancelled" style="font-size: 11px;">Cancelled</span>`;
@@ -671,6 +627,113 @@ let orderFilters = {
     dateTo: '',
     garageId: ''
 };
+
+// ===== BULK OPERATIONS (Phase 1.2) =====
+let selectedOrderIds = new Set();
+
+// Toggle select all orders on current page
+function toggleSelectAllOrders(checked) {
+    const checkboxes = document.querySelectorAll('.order-checkbox');
+    checkboxes.forEach(cb => {
+        cb.checked = checked;
+        if (checked) {
+            selectedOrderIds.add(cb.dataset.orderId);
+        } else {
+            selectedOrderIds.delete(cb.dataset.orderId);
+        }
+    });
+    updateBulkActionBar();
+}
+
+// Update bulk action bar visibility and count
+function updateBulkActionBar() {
+    const actionBar = document.getElementById('bulkActionBar');
+    const countLabel = document.getElementById('selectedCount');
+
+    if (!actionBar || !countLabel) return;
+
+    if (selectedOrderIds.size > 0) {
+        actionBar.style.display = 'flex';
+        countLabel.textContent = selectedOrderIds.size;
+    } else {
+        actionBar.style.display = 'none';
+    }
+}
+
+// Clear bulk selection
+function clearBulkSelection() {
+    selectedOrderIds.clear();
+    document.querySelectorAll('.order-checkbox, #selectAllOrders').forEach(cb => {
+        cb.checked = false;
+    });
+    updateBulkActionBar();
+}
+
+// Execute bulk action
+async function executeBulkAction() {
+    const action = document.getElementById('bulkActionSelect').value;
+
+    if (!action || selectedOrderIds.size === 0) {
+        showToast('Please select an action and orders', 'error');
+        return;
+    }
+
+    const btn = document.getElementById('bulkExecuteBtn');
+    const originalHtml = btn.innerHTML;
+    btn.disabled = true;
+    btn.innerHTML = '<i class="bi bi-hourglass-split"></i> Processing...';
+
+    try {
+        const res = await fetch(`${API_URL}/operations/orders/bulk`, {
+            method: 'POST',
+            headers: {
+                'Authorization': `Bearer ${token}`,
+                'Content-Type': 'application/json'
+            },
+            body: JSON.stringify({
+                order_ids: Array.from(selectedOrderIds),
+                action: action
+            })
+        });
+
+        const data = await res.json();
+
+        if (res.ok) {
+            const { success_count, failed_count, errors } = data;
+
+            if (success_count > 0) {
+                showToast(`Bulk action completed: ${success_count} successful, ${failed_count} failed`, 'success');
+
+                // Show errors if any
+                if (errors && errors.length > 0) {
+                    const errorMessages = errors.slice(0, 3).map(e =>
+                        `Order #${e.order_number || e.order_id}: ${e.error}`
+                    ).join('; ');
+                    if (errors.length > 3) {
+                        errorMessages.push(`... and ${errors.length - 3} more`);
+                    }
+                    showToast(errorMessages, 'warning');
+                }
+
+                // Refresh orders
+                clearBulkSelection();
+                loadOrders(currentOrdersPage);
+                loadStats();
+            } else {
+                showToast('No orders were updated. Check order status requirements.', 'warning');
+            }
+        } else {
+            showToast(data.error || 'Bulk action failed', 'error');
+        }
+    } catch (err) {
+        console.error('Bulk action error:', err);
+        showToast('Connection error', 'error');
+    } finally {
+        btn.disabled = false;
+        btn.innerHTML = originalHtml;
+    }
+}
+// ========================================
 
 // Debounce timer for search
 let searchDebounceTimer = null;
@@ -842,7 +905,7 @@ async function loadOrders(page = 1) {
             refunded: 'Refunded',
             cancelled_by_customer: 'Cancelled (Customer)',
             cancelled_by_garage: 'Cancelled (Garage)',
-            cancelled_by_operations: 'Cancelled (Ops)'
+            cancelled_by_ops: 'Cancelled (Ops)'
         };
 
         const statusClass = {
@@ -861,34 +924,32 @@ async function loadOrders(page = 1) {
             refunded: 'refunded',
             cancelled_by_customer: 'cancelled',
             cancelled_by_garage: 'cancelled',
-            cancelled_by_operations: 'cancelled'
+            cancelled_by_ops: 'cancelled'
         };
 
         if (data.orders && data.orders.length) {
-            // Helper function to determine row highlighting class
-            // Highlights rows that need operator attention (e.g., no driver assigned)
-            const getRowClass = (order) => {
-                const status = order.order_status;
-                switch (status) {
-                    case 'pending_payment': return 'needs-attention-red';  // Stuck order, needs cancellation
-                    case 'confirmed': return 'needs-attention-amber';  // Awaiting garage action
-                    case 'disputed': return 'needs-attention-red';     // Urgent: dispute needs resolution
-                    case 'ready_for_pickup':
-                        // Only highlight if NO driver assigned yet (same driver does pickup + delivery)
-                        return !order.driver_id ? 'needs-attention-green' : '';
-                    default: return '';
-                }
-            };
-
             // Orders table - with loyalty discount transparency
             document.getElementById('ordersTable').innerHTML = data.orders.map(o => {
                 const hasDiscount = parseFloat(o.loyalty_discount) > 0;
                 const discountBadge = hasDiscount
                     ? `<span style="display:inline-block; background:#10B981; color:white; font-size:10px; padding:2px 6px; border-radius:4px; margin-left:4px;" title="Loyalty Discount: -${o.loyalty_discount} QAR"><i class="bi bi-gift"></i> -${o.loyalty_discount}</span>`
                     : '';
+
+                // Add stuck order indicator
+                const stuckIndicator = isOrderStuck(o)
+                    ? `<i class="bi bi-exclamation-circle" style="color: #ef4444; margin-left: 8px;" title="${getStuckReason(o)}"></i>`
+                    : '';
+
                 return `
                         <tr class="${getRowClass(o)}">
-                            <td><a href="#" onclick="viewOrder('${o.order_id}'); return false;" style="color: var(--accent); text-decoration: none; font-weight: 600;">#${o.order_number || o.order_id.slice(0, 8)}</a></td>
+                            <td>
+                                <input type="checkbox" 
+                                       class="order-checkbox" 
+                                       data-order-id="${o.order_id}"
+                                       onchange="updateBulkActionBar()"
+                                       title="Select for bulk action">
+                            </td>
+                            <td><a href="#" onclick="viewOrder('${o.order_id}'); return false;" style="color: var(--accent); text-decoration: none; font-weight: 600;">#${o.order_number || o.order_id.slice(0, 8)}</a>${stuckIndicator}</td>
                             <td>${escapeHTML(o.customer_name)}<br><small style="color: var(--text-muted);">${escapeHTML(o.customer_phone)}</small></td>
                             <td>${escapeHTML(o.garage_name)}</td>
                             <td>${escapeHTML(o.car_make)} ${escapeHTML(o.car_model)}<br><small style="color: var(--text-muted);">${escapeHTML(o.part_description?.slice(0, 30))}...</small></td>
@@ -1208,211 +1269,8 @@ function formatTimeAgo(dateStr) {
 }
 
 
-// View User Detail Modal
-async function viewUser(userId, userType) {
-    try {
-        const res = await fetch(`${API_URL}/operations/users/${userId}`, {
-            headers: { 'Authorization': `Bearer ${token}` }
-        });
-        const data = await res.json();
-
-        if (!res.ok) {
-            showToast(data.error || 'Failed to load user', 'error');
-            return;
-        }
-
-        const u = data.user;
-        const isGarage = u.user_type === 'garage' || u.garage_name;
-        const name = isGarage ? u.garage_name : u.full_name;
-        const contact = u.phone || u.phone_number || 'N/A';
-        const email = u.email || 'N/A';
-        const suspended = u.is_suspended ? '<span class="status-badge cancelled">Suspended</span>' : '<span class="status-badge completed">Active</span>';
-
-        // Build orders table
-        let ordersHtml = '<p style="color: var(--text-muted);">No orders</p>';
-        if (data.orders && data.orders.length) {
-            ordersHtml = data.orders.map(o => `
-                        <div style="padding: 8px 0; border-bottom: 1px solid var(--border-color);">
-                            <strong>#${o.order_number}</strong> - ${o.part_description?.slice(0, 30)}...
-                            <span class="status-badge ${o.order_status}" style="margin-left: 10px;">${o.order_status}</span>
-                        </div>
-                    `).join('');
-        }
-
-        // Create modal
-        const modal = document.createElement('div');
-        modal.id = 'userDetailModal';
-        modal.className = 'modal-overlay active';
-        modal.innerHTML = `
-                    <div class="modal-container" style="max-width: 600px;">
-                        <div class="modal-header">
-                            <h2><i class="bi bi-person"></i> ${name}</h2>
-                            <button class="modal-close" onclick="document.getElementById('userDetailModal').remove()"><i class="bi bi-x-lg"></i></button>
-                        </div>
-                        <div class="modal-body">
-                            <div class="info-card" style="margin-bottom: 20px;">
-                                <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 15px;">
-                                    <div>
-                                        <p style="color: var(--text-muted); margin-bottom: 5px;">Type</p>
-                                        <p style="font-weight: 500;">? 'Garage' : 'Customer'}</p>
-                                    </div>
-                                    <div>
-                                        <p style="color: var(--text-muted); margin-bottom: 5px;">Status</p>
-                                        <p>${suspended}</p>
-                                    </div>
-                                    <div>
-                                        <p style="color: var(--text-muted); margin-bottom: 5px;">Phone</p>
-                                        <p style="font-weight: 500;">${contact}</p>
-                                    </div>
-                                    <div>
-                                        <p style="color: var(--text-muted); margin-bottom: 5px;">Email</p>
-                                        <p style="font-weight: 500;">${email}</p>
-                                    </div>
-                                    ${isGarage ? `
-                                        <div>
-                                            <p style="color: var(--text-muted); margin-bottom: 5px;">Address</p>
-                                            <p style="font-weight: 500;">${u.address || 'N/A'}</p>
-                                        </div>
-                                        <div>
-                                            <p style="color: var(--text-muted); margin-bottom: 5px;">Rating</p>
-                                            <p style="font-weight: 500;">${u.rating_average || 0} (${u.rating_count || 0})</p>
-                                        </div>
-                                    ` : ''}
-                                </div>
-                            </div>
-                            
-                            <h4 style="margin-bottom: 10px;"><i class="bi bi-box-seam"></i> Recent Orders</h4>
-                            <div style="max-height: 200px; overflow-y: auto; border: 1px solid var(--border-color); border-radius: 8px; padding: 10px;">
-                                ${ordersHtml}
-                            </div>
-                        </div>
-                        <div class="modal-footer" style="display: flex; gap: 10px; justify-content: flex-end; padding: 20px; border-top: 1px solid var(--border-color);">
-                            ${u.is_suspended
-                ? `<button class="btn btn-success" onclick="activateUser('${userId}')"><i class="bi bi-check-circle"></i> Activate</button>`
-                : `<button class="btn btn-danger" onclick="suspendUser('${userId}')"><i class="bi bi-slash-circle"></i> Suspend</button>`
-            }
-                            <button class="btn btn-ghost" onclick="document.getElementById('userDetailModal').remove()">Close</button>
-                        </div>
-                    </div>
-                `;
-        document.body.appendChild(modal);
-    } catch (err) {
-        console.error('viewUser Error:', err);
-        showToast('Connection error', 'error');
-    }
-}
-
-async function suspendUser(userId) {
-    QScrapModal.prompt({
-        title: 'Suspend User',
-        message: 'Provide a reason for suspension (optional):',
-        inputType: 'textarea',
-        placeholder: 'Suspension reason...',
-        confirmText: 'Suspend',
-        variant: 'danger',
-        onConfirm: async (reason) => {
-            try {
-                const res = await fetch(`${API_URL}/operations/users/${userId}/suspend`, {
-                    method: 'POST',
-                    headers: { 'Authorization': `Bearer ${token}`, 'Content-Type': 'application/json' },
-                    body: JSON.stringify({ reason: reason || 'Suspended by operations team' })
-                });
-                const data = await res.json();
-                if (res.ok) {
-                    showToast(data.message || 'User suspended', 'success');
-                    document.getElementById('userDetailModal')?.remove();
-                    loadUsers();
-                } else {
-                    showToast(data.error || 'Failed to suspend user', 'error');
-                }
-            } catch (err) {
-                showToast('Connection error', 'error');
-            }
-        }
-    });
-}
-
-async function activateUser(userId) {
-    try {
-        const res = await fetch(`${API_URL}/operations/users/${userId}/activate`, {
-            method: 'POST',
-            headers: { 'Authorization': `Bearer ${token}` }
-        });
-        const data = await res.json();
-        if (res.ok) {
-            showToast(data.message || 'User activated', 'success');
-            document.getElementById('userDetailModal')?.remove();
-            loadUsers();
-        } else {
-            showToast(data.error || 'Failed to activate user', 'error');
-        }
-    } catch (err) {
-        showToast('Connection error', 'error');
-    }
-}
-
-
-let currentAnalyticsPeriod = '7d';
-
-async function loadAnalytics() {
-    try {
-        const res = await fetch(`${API_URL}/operations/analytics?period=${currentAnalyticsPeriod}`, {
-            headers: { 'Authorization': `Bearer ${token}` }
-        });
-        const data = await res.json();
-
-        // Update stats
-        document.getElementById('analyticsTotalRevenue').textContent = parseFloat(data.orders.total_revenue || 0).toLocaleString() + ' QAR';
-        document.getElementById('analyticsNetRevenue').textContent = parseFloat(data.orders.net_revenue || 0).toLocaleString() + ' QAR';
-        document.getElementById('analyticsTotalOrders').textContent = data.orders.total_orders || 0;
-        document.getElementById('analyticsCompleted').textContent = data.orders.completed || 0;
-
-        // Update disputes
-        document.getElementById('analyticsDisputesTotal').textContent = data.disputes.total_disputes || 0;
-        document.getElementById('analyticsDisputesPending').textContent = data.disputes.pending || 0;
-        document.getElementById('analyticsDisputesResolved').textContent = data.disputes.resolved || 0;
-        document.getElementById('analyticsRefundsApproved').textContent = data.disputes.refunds_approved || 0;
-        document.getElementById('analyticsRefundsDenied').textContent = data.disputes.refunds_denied || 0;
-
-        // Top garages table
-        if (data.top_garages && data.top_garages.length) {
-            document.getElementById('topGaragesTable').innerHTML = data.top_garages.map(g => `
-                        <tr>
-                            <td><strong>${g.garage_name}</strong></td>
-                            <td>${g.order_count}</td>
-                            <td>${parseFloat(g.total_revenue || 0).toLocaleString()} QAR</td>
-                        </tr>
-                    `).join('');
-        } else {
-            document.getElementById('topGaragesTable').innerHTML = '<tr><td colspan="3" class="empty-state">No data</td></tr>';
-        }
-
-        // Top parts table
-        if (data.top_parts && data.top_parts.length) {
-            document.getElementById('topPartsTable').innerHTML = data.top_parts.map(p => `
-                        <tr>
-                            <td>${p.part_description}</td>
-                            <td>${p.request_count}</td>
-                        </tr>
-                    `).join('');
-        } else {
-            document.getElementById('topPartsTable').innerHTML = '<tr><td colspan="2" class="empty-state">No data</td></tr>';
-        }
-    } catch (err) {
-        console.error('Failed to load analytics:', err);
-    }
-}
-
-// Period tabs for Finance section
-document.getElementById('periodTabs')?.addEventListener('click', e => {
-    if (e.target.classList.contains('tab')) {
-        document.querySelectorAll('#periodTabs .tab').forEach(t => t.classList.remove('active'));
-        e.target.classList.add('active');
-        currentAnalyticsPeriod = e.target.dataset.period;
-        loadAnalytics();
-    }
-});
-
+// viewUser, suspendUser, activateUser — removed (2026-02-25) — Admin Dashboard owns user management
+// ANALYTICS — removed (2026-02-25) — Replaced by Reports section
 // Delivery Management Functions
 let availableDrivers = [];
 
@@ -1422,88 +1280,7 @@ let currentDeliveryOrdersPage = 1;
 const DELIVERY_PAGE_SIZE = 20;
 
 
-// Load Drivers with pagination
-async function loadDrivers(page = 1) {
-    currentDriversPage = page;
-    try {
-        const res = await fetch(`${API_URL}/delivery/drivers?page=${page}&limit=${DELIVERY_PAGE_SIZE}`, {
-            headers: { 'Authorization': `Bearer ${token}` }
-        });
-        const data = await res.json();
-
-        // Store available drivers for assignment modals
-        availableDrivers = (data.drivers || []).filter(d => d.status === 'available');
-
-        if (data.drivers && data.drivers.length) {
-            document.getElementById('driversTable').innerHTML = data.drivers.map(d => {
-                const toggleBtn = d.status === 'available'
-                    ? `<button class="btn btn-sm" style="background: var(--warning); color: white; padding: 4px 10px;" onclick="toggleDriverStatus('${d.driver_id}', 'busy')" title="Mark as Busy"><i class="bi bi-pause-circle"></i></button>`
-                    : `<button class="btn btn-sm" style="background: var(--success); color: white; padding: 4px 10px;" onclick="toggleDriverStatus('${d.driver_id}', 'available')" title="Mark as Available"><i class="bi bi-play-circle"></i></button>`;
-                return `
-                    <tr>
-                        <td><strong>${escapeHTML(d.full_name)}</strong><br><small style="color: var(--text-muted);">${d.vehicle_type || 'car'} - ${d.vehicle_plate || 'N/A'}</small></td>
-                        <td><span class="status-badge ${d.status}">${d.status}</span></td>
-                        <td>${toggleBtn}</td>
-                    </tr>
-                `;
-            }).join('');
-        } else {
-            document.getElementById('driversTable').innerHTML = '<tr><td colspan="3" class="empty-state">No drivers found. Contact Admin to add drivers.</td></tr>';
-        }
-
-        // Render pagination
-        if (data.pagination && data.pagination.pages > 1) {
-            renderPagination('driversPagination', data.pagination, 'loadDrivers');
-        } else {
-            const paginationEl = document.getElementById('driversPagination');
-            if (paginationEl) paginationEl.innerHTML = '';
-        }
-    } catch (err) {
-        console.error('Failed to load drivers:', err);
-    }
-}
-
-// Load Delivery Orders with pagination  
-async function loadDeliveryOrders(page = 1) {
-    currentDeliveryOrdersPage = page;
-    try {
-        const res = await fetch(`${API_URL}/delivery/orders?page=${page}&limit=${DELIVERY_PAGE_SIZE}`, {
-            headers: { 'Authorization': `Bearer ${token}` }
-        });
-        const data = await res.json();
-
-        if (data.orders && data.orders.length) {
-            document.getElementById('deliveryOrdersTable').innerHTML = data.orders.map(o => {
-                const rowClass = !o.driver_name ? 'needs-attention-green' : '';
-                const statusLabel = o.driver_name ? `Assigned to ${escapeHTML(o.driver_name)}` : o.order_status;
-                const actionBtn = o.driver_name
-                    ? `<span class="status-badge in_transit">Assigned</span>`
-                    : `<button class="btn btn-primary btn-sm" onclick="openUnifiedAssignmentModal('${o.order_id}', '${o.order_number}', 'delivery')"><i class="bi bi-person-plus"></i> Assign</button>`;
-                return `
-                    <tr class="${rowClass}">
-                        <td><strong>#${o.order_number}</strong></td>
-                        <td>${escapeHTML(o.part_description)}</td>
-                        <td><span class="status-badge ${o.order_status}">${statusLabel}</span></td>
-                        <td>${actionBtn}</td>
-                    </tr>
-                `;
-            }).join('');
-        } else {
-            document.getElementById('deliveryOrdersTable').innerHTML = '<tr><td colspan="4" class="empty-state">No orders ready for pickup</td></tr>';
-        }
-
-        // Render pagination
-        if (data.pagination && data.pagination.pages > 1) {
-            renderPagination('deliveryOrdersPagination', data.pagination, 'loadDeliveryOrders');
-        } else {
-            const paginationEl = document.getElementById('deliveryOrdersPagination');
-            if (paginationEl) paginationEl.innerHTML = '';
-        }
-    } catch (err) {
-        console.error('Failed to load delivery orders:', err);
-    }
-}
-
+// loadDrivers, loadDeliveryOrders — removed (2026-02-25) — Superseded by loadDriversList, loadCollectionOrders
 // Toggle driver status (Operations manual control)
 
 // Delivery History
@@ -2083,8 +1860,9 @@ async function viewOrder(orderId) {
             const actionsDiv = document.getElementById('modalDisputeActions');
             if (dispute.status === 'pending' || dispute.status === 'contested') {
                 actionsDiv.style.display = 'flex';
+                // Backend expects: 'refund_approved' or 'dispute_rejected' (NOT refund_denied/declined)
                 document.getElementById('btnApproveRefund').onclick = () => resolveDisputeFromModal('refund_approved');
-                document.getElementById('btnDenyRefund').onclick = () => resolveDisputeFromModal('refund_denied');
+                document.getElementById('btnDenyRefund').onclick = () => resolveDisputeFromModal('dispute_rejected');
             } else {
                 actionsDiv.style.display = 'none';
             }
@@ -2169,14 +1947,15 @@ async function resolveDisputeFromModal(resolution) {
         return;
     }
 
+    // Backend expects: 'refund_approved' or 'dispute_rejected'
     const confirmMsg = resolution === 'refund_approved'
         ? 'Are you sure you want to approve this refund?'
-        : 'Are you sure you want to deny this refund?';
+        : 'Are you sure you want to reject this dispute? (Customer will not receive a refund)';
 
     QScrapModal.confirm({
-        title: resolution === 'refund_approved' ? 'Approve Refund' : 'Deny Refund',
+        title: resolution === 'refund_approved' ? 'Approve Refund' : 'Reject Dispute',
         message: confirmMsg,
-        confirmText: resolution === 'refund_approved' ? 'Approve' : 'Deny',
+        confirmText: resolution === 'refund_approved' ? 'Approve' : 'Reject',
         variant: resolution === 'refund_approved' ? 'success' : 'danger',
         onConfirm: async () => {
             await resolveDispute(currentModalDisputeId, resolution, true);
@@ -2255,7 +2034,6 @@ async function resolveDispute(disputeId, resolution, skipConfirm = false) {
             }
 
             showToast(msg, 'success');
-            loadDisputes(); // Reload to show updated status
             loadStats();
         } else {
             console.error('Resolve dispute error:', data);
@@ -2286,15 +2064,236 @@ async function resolveDispute(disputeId, resolution, skipConfirm = false) {
     }
 }
 
-// Logout function
+// ===== STUCK ORDER DETECTION (Phase 1.3) =====
+// Time thresholds for detecting stuck orders (also used by attention widget)
+const STUCK_THRESHOLDS = {
+    pending_payment: 30 * 60 * 1000,      // 30 minutes
+    confirmed: 2 * 60 * 60 * 1000,        // 2 hours
+    preparing: 4 * 60 * 60 * 1000,        // 4 hours
+    ready_for_pickup: 2 * 60 * 60 * 1000, // 2 hours without driver
+    in_transit: 4 * 60 * 60 * 1000        // 4 hours
+};
+
+// Check if order is stuck
+function isOrderStuck(order) {
+    const status = order.order_status;
+    const threshold = STUCK_THRESHOLDS[status];
+    if (!threshold) return false;
+
+    const now = new Date().getTime();
+    const updatedAt = new Date(order.updated_at).getTime();
+    const timeInStatus = now - updatedAt;
+
+    return timeInStatus > threshold;
+}
+
+// Get stuck reason with time
+function getStuckReason(order) {
+    const status = order.order_status;
+    const now = new Date().getTime();
+    const updatedAt = new Date(order.updated_at).getTime();
+    const hoursInStatus = Math.floor((now - updatedAt) / (60 * 60 * 1000));
+
+    switch (status) {
+        case 'pending_payment':
+            return `Stuck in pending payment for ${hoursInStatus}h`;
+        case 'confirmed':
+            return `Awaiting garage action for ${hoursInStatus}h`;
+        case 'preparing':
+            return `Preparing for ${hoursInStatus}h`;
+        case 'ready_for_pickup':
+            return order.driver_id
+                ? `Driver assigned ${hoursInStatus}h ago`
+                : `No driver assigned for ${hoursInStatus}h`;
+        case 'in_transit':
+            return `In transit for ${hoursInStatus}h`;
+        default:
+            return 'Requires review';
+    }
+}
+// ============================================
 function logout() {
+    // Clear all intervals
+    if (window.dashboardRefreshInterval) clearInterval(window.dashboardRefreshInterval);
+    if (window.attentionWidgetInterval) clearInterval(window.attentionWidgetInterval);
+    if (window.dateTimeInterval) clearInterval(window.dateTimeInterval);
+    if (window.autoCompleteInterval) clearInterval(window.autoCompleteInterval);
+
+    // Clear all timeouts
+    if (window.searchDebounceTimer) clearTimeout(window.searchDebounceTimer);
+    if (window.globalSearchTimeout) clearTimeout(window.globalSearchTimeout);
+
+    // Disconnect socket
+    if (socket) {
+        // Remove all listeners before disconnecting
+        socket.removeAllListeners('connect');
+        socket.removeAllListeners('disconnect');
+        socket.removeAllListeners('order_status_updated');
+        socket.removeAllListeners('delivery_status_updated');
+        socket.removeAllListeners('dispute_created');
+        socket.removeAllListeners('dispute_resolved');
+        socket.removeAllListeners('new_order');
+        socket.removeAllListeners('order_cancelled');
+        socket.removeAllListeners('new_return_request');
+        socket.removeAllListeners('order_collected');
+        socket.removeAllListeners('order_ready_for_pickup');
+        socket.removeAllListeners('payment_confirmed');
+        socket.removeAllListeners('payment_disputed');
+        socket.removeAllListeners('payout_completed');
+        socket.removeAllListeners('payout_pending');
+        socket.removeAllListeners('new_review_pending');
+        socket.removeAllListeners('driver_status_changed');
+        socket.removeAllListeners('ticket_updated');
+        socket.removeAllListeners('return_assignment_created');
+        socket.disconnect();
+        socket = null;
+    }
+
+    // Clear auth state
     localStorage.removeItem('opsToken');
+    localStorage.removeItem('opsUserName');
+    localStorage.removeItem('opsUserPhone');
     token = null;
-    if (socket) socket.disconnect();
+
+    // Hide app, show login
     document.getElementById('app').style.display = 'none';
     document.getElementById('loginScreen').style.display = 'flex';
+
+    // Clear any open modals
+    document.querySelectorAll('.modal-overlay').forEach(modal => modal.remove());
+
+    // Reset to overview section
+    currentOrderStatus = 'all';
+    currentDisputeStatus = 'pending';
+    currentUserType = 'customer';
+
     showToast('Logged out successfully', 'success');
 }
+
+// ===== ORDERS NEEDING ATTENTION WIDGET (Phase 1.6) =====
+async function loadAttentionWidget() {
+    const container = document.getElementById('attentionWidgetContent');
+    const countBadge = document.getElementById('attentionCount');
+
+    if (!container) return; // Widget not on page
+
+    try {
+        // Get recent orders and filter for attention-needed
+        const res = await fetch(`${API_URL}/operations/orders?status=all&limit=100`, {
+            headers: { 'Authorization': `Bearer ${token}` }
+        });
+        const data = await res.json();
+
+        const orders = data.orders || [];
+        const attentionItems = [];
+
+        // Filter orders needing attention
+        for (const order of orders) {
+            const status = order.order_status;
+            const now = new Date().getTime();
+            const updatedAt = new Date(order.updated_at).getTime();
+            const hoursInStatus = Math.floor((now - updatedAt) / (60 * 60 * 1000));
+
+            let priority = null;
+            let reason = '';
+
+            // Check for stuck orders
+            if (isOrderStuck(order)) {
+                if (status === 'pending_payment') {
+                    priority = 'urgent';
+                    reason = `Stuck in pending payment for ${hoursInStatus}h`;
+                } else if (status === 'ready_for_pickup' && !order.driver_id) {
+                    priority = 'urgent';
+                    reason = `No driver assigned for ${hoursInStatus}h`;
+                } else if (status === 'disputed') {
+                    priority = 'urgent';
+                    reason = `Dispute pending for ${hoursInStatus}h`;
+                } else if (['confirmed', 'preparing', 'in_transit'].includes(status)) {
+                    priority = 'high';
+                    reason = getStuckReason(order);
+                }
+            }
+
+            // Check for other attention-needed states
+            if (!priority && status === 'ready_for_pickup' && !order.driver_id) {
+                priority = 'high';
+                reason = 'Ready for pickup - needs driver assignment';
+            }
+
+            if (priority) {
+                attentionItems.push({
+                    order_id: order.order_id,
+                    order_number: order.order_number,
+                    priority,
+                    reason,
+                    updated_at: order.updated_at,
+                    status
+                });
+            }
+        }
+
+        // Sort by priority (urgent first, then high)
+        attentionItems.sort((a, b) => {
+            const priorityOrder = { urgent: 0, high: 1, normal: 2 };
+            return priorityOrder[a.priority] - priorityOrder[b.priority];
+        });
+
+        // Update count badge
+        if (countBadge) {
+            countBadge.textContent = attentionItems.length;
+            countBadge.style.display = attentionItems.length > 0 ? 'inline-block' : 'none';
+        }
+
+        // Render widget
+        if (attentionItems.length === 0) {
+            container.innerHTML = `
+                <div style="padding: 30px; text-align: center; color: var(--success);">
+                    <i class="bi bi-check-circle" style="font-size: 40px; margin-bottom: 12px;"></i>
+                    <p style="font-size: 15px; font-weight: 600;">All caught up!</p>
+                    <p style="color: var(--text-muted); font-size: 13px;">No orders need immediate attention</p>
+                </div>
+            `;
+        } else {
+            container.innerHTML = `
+                <div style="max-height: 350px; overflow-y: auto;">
+                    ${attentionItems.slice(0, 10).map(item => `
+                        <div style="padding: 12px 16px; border-bottom: 1px solid var(--border); display: flex; align-items: center; justify-content: space-between; ${item.priority === 'urgent' ? 'background: rgba(239, 68, 68, 0.05);' : ''}">
+                            <div style="flex: 1;">
+                                <div style="font-weight: 600; margin-bottom: 4px;">
+                                    <a href="#" onclick="viewOrder('${item.order_id}'); return false;" style="color: var(--accent);">
+                                        #${item.order_number}
+                                    </a>
+                                    ${item.priority === 'urgent' ? '<span class="status-badge urgent" style="margin-left: 8px; font-size: 10px;">URGENT</span>' : ''}
+                                    ${item.priority === 'high' ? '<span class="status-badge" style="margin-left: 8px; font-size: 10px; background: #f59e0b; color: white;">HIGH</span>' : ''}
+                                </div>
+                                <div style="font-size: 12px; color: var(--text-muted);">
+                                    <i class="bi bi-info-circle"></i> ${item.reason}
+                                    <br>
+                                    <i class="bi bi-clock"></i> Updated ${timeAgo(item.updated_at)}
+                                </div>
+                            </div>
+                            <button class="btn btn-sm btn-primary" onclick="viewOrder('${item.order_id}')" style="padding: 6px 12px; margin-left: 12px;">
+                                Review
+                            </button>
+                        </div>
+                    `).join('')}
+                </div>
+                ${attentionItems.length > 10 ? `<div style="padding: 12px; text-align: center; border-top: 1px solid var(--border); color: var(--text-muted); font-size: 13px;">+ ${attentionItems.length - 10} more orders</div>` : ''}
+                <div style="padding: 12px; border-top: 1px solid var(--border); text-align: center;">
+                    <button class="btn btn-ghost btn-sm" onclick="switchSection('orders')">
+                        View All Orders <i class="bi bi-arrow-right"></i>
+                    </button>
+                </div>
+            `;
+        }
+    } catch (err) {
+        console.error('Failed to load attention widget:', err);
+        if (container) {
+            container.innerHTML = `<div style="padding: 20px; text-align: center; color: var(--danger);">Failed to load attention widget</div>`;
+        }
+    }
+}
+// ============================================
 
 function showToast(message, type = 'success') {
     const toast = document.createElement('div');
@@ -2376,7 +2375,7 @@ function renderActiveDeliveries(deliveries) {
                                         style="padding: 4px 8px; font-size: 11px; background: var(--success);">
                                     <i class="bi bi-check-circle"></i> Delivered
                                 </button>
-                                <button class="btn btn-sm" onclick="openDriverAssignModal('${d.order_id}', ${JSON.stringify(d).replace(/"/g, '&quot;')})" 
+                                <button class="btn btn-sm" onclick="openUnifiedAssignmentModal('${d.order_id}', '${d.order_number}', 'delivery')" 
                                         style="padding: 4px 8px; font-size: 11px; background: var(--accent);">
                                     <i class="bi bi-person-plus"></i> Assign
                                 </button>
@@ -2530,11 +2529,8 @@ async function loadDeliveryStats() {
 
             // Update delivery nav badge with total pending items
             const totalPending = (data.stats.pending_pickup || 0) + (data.stats.qc_passed || 0);
-            const deliveryBadge = document.getElementById('deliveryBadge');
-            if (deliveryBadge) {
-                deliveryBadge.textContent = totalPending;
-                deliveryBadge.style.display = totalPending > 0 ? 'flex' : 'none';
-            }
+            updateBadge('deliveryBadge', totalPending);
+            updateBadge('deliveryTabBadge', totalPending);
         }
     } catch (e) {
         console.error('Failed to load delivery stats:', e);
@@ -2790,7 +2786,8 @@ async function submitCollectOrder(orderId) {
     btn.innerHTML = '<i class="bi bi-hourglass-split"></i> Collecting...';
 
     try {
-        const res = await fetch(`${API_URL}/delivery/collect/${orderId}`, {
+        // Use new assign-collection endpoint (collect endpoint is deprecated - returns 410)
+        const res = await fetch(`${API_URL}/delivery/assign-collection/${orderId}`, {
             method: 'POST',
             headers: {
                 'Authorization': `Bearer ${token}`,
@@ -2804,13 +2801,13 @@ async function submitCollectOrder(orderId) {
         const data = await res.json();
 
         if (res.ok) {
-            showToast(`Order ${data.order_number || ''} collected!`, 'success');
+            showToast(`Order ${data.order_number || ''} collection assigned!`, 'success');
             document.getElementById('collectOrderModal').remove();
             loadDeliveryData();
             loadStats();
             loadOrders();
         } else {
-            showToast(data.error || 'Failed to collect order', 'error');
+            showToast(data.error || 'Failed to assign collection', 'error');
             btn.disabled = false;
             btn.innerHTML = '<i class="bi bi-check-lg"></i> Collect Order';
         }
@@ -2932,518 +2929,9 @@ async function submitDeliveryAssignment(orderId) {
     }
 }
 
-// ===== USER MANAGEMENT =====
-let allUsers = [];
-
-async function loadUsers() {
-    try {
-        // Load user stats
-        const statsRes = await fetch(`${API_URL}/operations/users/stats`, {
-            headers: { 'Authorization': `Bearer ${token}` }
-        });
-        const statsData = await statsRes.json();
-
-        if (statsData.stats) {
-            document.getElementById('totalUsers').textContent = statsData.stats.total_customers || 0;
-            document.getElementById('totalGarages').textContent = statsData.stats.total_garages || 0;
-            document.getElementById('newUsersThisMonth').textContent = statsData.stats.new_this_month || 0;
-            document.getElementById('suspendedUsers').textContent = statsData.stats.suspended || 0;
-        }
-
-        // Load users list
-        const usersRes = await fetch(`${API_URL}/operations/users`, {
-            headers: { 'Authorization': `Bearer ${token}` }
-        });
-        const usersData = await usersRes.json();
-
-        if (usersData.users) {
-            allUsers = usersData.users;
-            renderUsersTable(allUsers);
-        }
-
-        // Load garages
-        loadGarages();
-    } catch (err) {
-        console.error('Failed to load users:', err);
-    }
-}
-
-function renderUsersTable(users) {
-    const tbody = document.getElementById('usersTable');
-
-    if (!users || users.length === 0) {
-        tbody.innerHTML = '<tr><td colspan="6" class="empty-state">No users found</td></tr>';
-        return;
-    }
-
-    tbody.innerHTML = users.map(u => `
-        <tr>
-            <td>${u.full_name || '-'}</td>
-            <td>${u.phone_number}</td>
-            <td><span class="badge ${u.user_type}">${u.user_type}</span></td>
-            <td>${new Date(u.created_at).toLocaleDateString()}</td>
-            <td>
-                <span class="status-badge ${u.is_active ? 'active' : 'suspended'}">
-                    ${u.is_active ? 'Active' : 'Suspended'}
-                </span>
-            </td>
-            <td>
-                ${u.is_active ?
-            `<button class="btn btn-sm btn-danger" onclick="suspendUser('${u.user_id}')">
-                        <i class="bi bi-ban"></i> Suspend
-                    </button>` :
-            `<button class="btn btn-sm btn-success" onclick="activateUser('${u.user_id}')">
-                        <i class="bi bi-check"></i> Activate
-                    </button>`
-        }
-            </td>
-        </tr>
-    `).join('');
-}
-
-function searchUsers() {
-    const query = document.getElementById('userSearchInput').value.toLowerCase();
-    const filtered = allUsers.filter(u =>
-        (u.full_name && u.full_name.toLowerCase().includes(query)) ||
-        (u.phone_number && u.phone_number.includes(query))
-    );
-    renderUsersTable(filtered);
-}
-
-async function loadGarages() {
-    try {
-        const res = await fetch(`${API_URL}/operations/garages`, {
-            headers: { 'Authorization': `Bearer ${token}` }
-        });
-        const data = await res.json();
-
-        const tbody = document.getElementById('garagesTable');
-
-        if (!data.garages || data.garages.length === 0) {
-            tbody.innerHTML = '<tr><td colspan="6" class="empty-state">No garages found</td></tr>';
-            return;
-        }
-
-        tbody.innerHTML = data.garages.map(g => `
-            <tr>
-                <td><strong>${g.garage_name}</strong></td>
-                <td>${g.owner_name || '-'}</td>
-                <td>
-                    ${g.average_rating ?
-                `<span class="rating"><i class="bi bi-star-fill"></i> ${parseFloat(g.average_rating).toFixed(1)}</span>` :
-                '<span class="text-muted">No ratings</span>'
-            }
-                </td>
-                <td>${g.total_orders || 0}</td>
-                <td>
-                    <span class="badge ${g.subscription_status || 'none'}">
-                        ${g.plan_name || 'No Plan'}
-                    </span>
-                </td>
-                <td>
-                    ${g.is_verified ?
-                `<span class="status-badge verified"><i class="bi bi-patch-check"></i> Verified</span>` :
-                `<button class="btn btn-sm btn-primary" onclick="verifyGarage('${g.garage_id}')">
-                            <i class="bi bi-patch-check"></i> Verify
-                        </button>`
-            }
-                </td>
-            </tr>
-        `).join('');
-    } catch (err) {
-        console.error('Failed to load garages:', err);
-    }
-}
-
-
-async function verifyGarage(garageId) {
-    try {
-        const res = await fetch(`${API_URL}/operations/garages/${garageId}/verify`, {
-            method: 'POST',
-            headers: { 'Authorization': `Bearer ${token}` }
-        });
-        if (res.ok) {
-            showToast('Garage verified!', 'success');
-            loadGarages();
-        }
-    } catch (err) {
-        showToast('Failed to verify garage', 'error');
-    }
-}
-
-// ===== FINANCE MANAGEMENT =====
-async function loadFinance() {
-    try {
-        // Load finance stats
-        const statsRes = await fetch(`${API_URL}/finance/stats`, {
-            headers: { 'Authorization': `Bearer ${token}` }
-        });
-        const statsData = await statsRes.json();
-
-        if (statsData.stats) {
-            const s = statsData.stats;
-            document.getElementById('financeTotalRevenue').textContent = `${s.total_revenue || 0} QAR`;
-            document.getElementById('financePendingPayouts').textContent = `${s.pending_payouts || 0} QAR`;
-            document.getElementById('financeProcessingPayouts').textContent = `${s.processing_payouts || 0} QAR`;
-            document.getElementById('financeCompletedPayouts').textContent = `${s.completed_payouts || 0} QAR`;
-        }
-
-        // Load pending payouts
-        loadPendingPayouts();
-        loadTransactions();
-    } catch (err) {
-        console.error('Failed to load finance data:', err);
-    }
-}
-
-// Pagination state for finance
-let currentPendingPayoutsPage = 1;
-const PENDING_PAYOUTS_PER_PAGE = 20;
-
-async function loadPendingPayouts(page = 1) {
-    currentPendingPayoutsPage = page;
-    try {
-        const res = await fetch(`${API_URL}/finance/payouts?status=pending,on_hold&page=${page}&limit=${PENDING_PAYOUTS_PER_PAGE}`, {
-            headers: { 'Authorization': `Bearer ${token}` }
-        });
-        const data = await res.json();
-
-        const tbody = document.getElementById('pendingPayoutsTable');
-
-        if (!data.payouts || data.payouts.length === 0) {
-            tbody.innerHTML = '<tr><td colspan="7" class="empty-state">No pending payouts</td></tr>';
-            document.getElementById('pendingPayoutsPagination').innerHTML = '';
-            return;
-        }
-
-        tbody.innerHTML = data.payouts.map(p => {
-            const isHeld = p.payout_status === 'on_hold' || p.payout_status === 'hold';
-            const reason = (p.failure_reason || 'No reason').replace(/"/g, '&quot;');
-            const statusBadge = isHeld
-                ? `<span class="badge badge-warning" title="${reason}" style="background-color: #f59e0b; color: white;">On Hold</span>`
-                : '<span class="badge badge-info">Pending</span>';
-
-            const rowStyle = isHeld ? 'background-color: #fff7ed !important; border-left: 4px solid #f59e0b;' : '';
-
-            return `
-            <tr style="${rowStyle}">
-                <td>
-                    <strong>${p.garage_name || '-'}</strong>
-                    ${isHeld ? `<div style="font-size: 11px; color: #d97706; margin-top: 4px; font-weight: 600;"><i class="bi bi-exclamation-triangle-fill"></i> ${reason}</div>` : ''}
-                </td>
-                <td>${p.order_number || '-'}</td>
-                <td>${parseFloat(p.gross_amount).toLocaleString()} QAR</td>
-                <td>${parseFloat(p.commission_amount).toLocaleString()} QAR</td>
-                <td><strong>${parseFloat(p.net_amount).toLocaleString()} QAR</strong></td>
-                <td>
-                    ${statusBadge}
-                    <div style="font-size: 11px; color: var(--text-muted); margin-top: 2px;">
-                        ${p.scheduled_for ? new Date(p.scheduled_for).toLocaleDateString() : '-'}
-                    </div>
-                </td>
-                <td>
-                    ${isHeld ? `
-                        <button class="btn btn-sm" onclick="releasePayout('${p.payout_id}')" title="Release Hold" style="background-color: #059669; color: white; border: none; padding: 6px 12px; font-weight: 600;">
-                            <i class="bi bi-play-fill"></i> Release
-                        </button>
-                    ` : `
-                        <button class="btn btn-sm btn-success" onclick="openSendPaymentModal('${p.payout_id}', '${p.garage_name || ''}', '${p.order_number || ''}', ${p.net_amount})">
-                            <i class="bi bi-send-check"></i> Send
-                        </button>
-                        <button class="btn btn-sm btn-warning" onclick="holdPayout('${p.payout_id}')" title="Put on hold">
-                            <i class="bi bi-pause"></i>
-                        </button>
-                    `}
-                </td>
-            </tr>
-            `;
-        }).join('');
-
-        // Render pagination controls
-        // Note: data returned from getPayouts includes page, limit, total. 
-        // We construct pagination object manually if needed or use data directly if it matches the format.
-        // The backend returns: { payouts: [], total: number, page: number, limit: number }
-        // Our utility expects { page, pages, total, limit } or similar.
-        // Actually utility expects { page, pages, total }
-        const pages = Math.ceil(data.total / PENDING_PAYOUTS_PER_PAGE);
-        if (pages > 1) {
-            renderPagination('pendingPayoutsPagination', {
-                page: Number(data.page),
-                pages: pages,
-                total: data.total
-            }, 'loadPendingPayouts');
-        } else {
-            document.getElementById('pendingPayoutsPagination').innerHTML = '';
-        }
-
-    } catch (err) {
-        console.error('Failed to load pending payouts:', err);
-    }
-}
-
-// ==========================================
-// UNIFIED DISPUTES MODULE
-// Handles both Order Disputes (customer) and Payment Disputes (garage)
-// ==========================================
-
-let currentDisputeTab = 'order'; // 'order' or 'payment'
-
-async function loadDisputes() {
-    // Load stats
-    await loadDisputeStats();
-
-    // Load current tab data
-    if (currentDisputeTab === 'order') {
-        await loadOrderDisputes();
-    } else {
-        await loadPaymentDisputesData();
-    }
-}
-
-async function loadDisputeStats() {
-    try {
-        // Get order disputes count
-        const orderRes = await fetch(`${API_URL}/operations/disputes?status=pending&limit=1`, {
-            headers: { 'Authorization': `Bearer ${token}` }
-        });
-        const orderData = await orderRes.json();
-
-        // Get payment disputes count
-        const paymentRes = await fetch(`${API_URL}/finance/payouts?status=disputed`, {
-            headers: { 'Authorization': `Bearer ${token}` }
-        });
-        const paymentData = await paymentRes.json();
-
-        const orderCount = orderData.pagination?.total || 0;
-        const paymentCount = paymentData.payouts?.length || 0;
-        const totalOpen = orderCount + paymentCount;
-
-        // Update stats
-        document.getElementById('disputesTotalOpen').textContent = totalOpen;
-        document.getElementById('disputesOrderCount').textContent = orderCount;
-        document.getElementById('disputesPaymentCount').textContent = paymentCount;
-
-        // Update nav badge
-        const badge = document.getElementById('disputesBadge');
-        if (badge) {
-            badge.textContent = totalOpen;
-            badge.style.display = totalOpen > 0 ? 'inline-block' : 'none';
-        }
-
-        // Update tab badges
-        document.getElementById('orderDisputesTabBadge').textContent = orderCount;
-        document.getElementById('paymentDisputesTabBadge').textContent = paymentCount;
-    } catch (err) {
-        console.error('Failed to load dispute stats:', err);
-    }
-}
-
-async function loadOrderDisputes() {
-    const tbody = document.getElementById('orderDisputesTable');
-    if (!tbody) return;
-
-    try {
-        tbody.innerHTML = '<tr><td colspan="7" class="empty-state">Loading...</td></tr>';
-
-        const res = await fetch(`${API_URL}/operations/disputes?status=pending`, {
-            headers: { 'Authorization': `Bearer ${token}` }
-        });
-        const data = await res.json();
-
-        if (!res.ok) throw new Error(data.error);
-
-        const disputes = data.disputes || [];
-
-        if (disputes.length === 0) {
-            tbody.innerHTML = '<tr><td colspan="7" class="empty-state"><i class="bi bi-check-circle" style="font-size: 32px; color: var(--success);"></i><p>No pending order disputes</p></td></tr>';
-            return;
-        }
-
-        tbody.innerHTML = disputes.map(d => `
-            <tr>
-                <td><strong>${d.order_number || '-'}</strong></td>
-                <td>${d.customer_name || 'Customer'}</td>
-                <td>${d.part_description?.substring(0, 30) || '-'}${d.part_description?.length > 30 ? '...' : ''}</td>
-                <td><span class="badge badge-warning">${(d.reason || '').replace(/_/g, ' ')}</span></td>
-                <td><strong style="color: var(--accent);">${parseFloat(d.refund_amount || 0).toLocaleString()} QAR</strong></td>
-                <td>${d.created_at ? new Date(d.created_at).toLocaleDateString() : '-'}</td>
-                <td>
-                    <div style="display: flex; gap: 6px;">
-                        <button class="btn btn-sm btn-success" onclick="resolveOrderDisputeAction('${d.dispute_id}', 'refund_approved', ${d.refund_amount || 0})" title="Approve Refund">
-                            <i class="bi bi-check-lg"></i> Approve
-                        </button>
-                        <button class="btn btn-sm btn-danger" onclick="resolveOrderDisputeAction('${d.dispute_id}', 'refund_declined', 0)" title="Reject Dispute">
-                            <i class="bi bi-x-lg"></i> Reject
-                        </button>
-                    </div>
-                </td>
-            </tr>
-            `).join('');
-    } catch (err) {
-        console.error('Failed to load order disputes:', err);
-        tbody.innerHTML = `<tr><td colspan="7" class="empty-state" style="color: var(--danger);">Error: ${err.message}</td></tr>`;
-    }
-}
-
-async function loadPaymentDisputesData() {
-    const tbody = document.getElementById('paymentDisputesTable');
-    if (!tbody) return;
-
-    try {
-        tbody.innerHTML = '<tr><td colspan="6" class="empty-state">Loading...</td></tr>';
-
-        const res = await fetch(`${API_URL}/finance/payouts?status=disputed`, {
-            headers: { 'Authorization': `Bearer ${token}` }
-        });
-        const data = await res.json();
-
-        if (!res.ok) throw new Error(data.error);
-
-        const payouts = data.payouts || [];
-
-        if (payouts.length === 0) {
-            tbody.innerHTML = '<tr><td colspan="6" class="empty-state"><i class="bi bi-check-circle" style="font-size: 32px; color: var(--success);"></i><p>No payment disputes</p></td></tr>';
-            return;
-        }
-
-        tbody.innerHTML = payouts.map(p => `
-            <tr style="background: rgba(239, 68, 68, 0.03);">
-                <td><strong>${p.garage_name || '-'}</strong></td>
-                <td>${p.order_number || '-'}</td>
-                <td><strong style="color: var(--danger);">${parseFloat(p.net_amount).toLocaleString()} QAR</strong></td>
-                <td style="max-width: 200px;">
-                    <span title="${(p.failure_reason || '').replace(/"/g, '&quot;')}" style="color: var(--text-secondary); font-size: 13px;">
-                        ${(p.failure_reason || 'No reason').substring(0, 40)}${(p.failure_reason || '').length > 40 ? '...' : ''}
-                    </span>
-                </td>
-                <td>${p.created_at ? new Date(p.created_at).toLocaleDateString() : '-'}</td>
-                <td>
-                    <div style="display: flex; gap: 6px;">
-                        <button class="btn btn-sm btn-success" onclick="resolvePaymentDisputeAction('${p.payout_id}', 'resent_payment', '${p.net_amount}')" title="Resend Payment">
-                            <i class="bi bi-arrow-repeat"></i> Resend
-                        </button>
-                        <button class="btn btn-sm btn-primary" onclick="resolvePaymentDisputeAction('${p.payout_id}', 'confirmed_received', '${p.net_amount}')" title="Mark as Received">
-                            <i class="bi bi-check-lg"></i> Confirmed
-                        </button>
-                        <button class="btn btn-sm btn-danger" onclick="resolvePaymentDisputeAction('${p.payout_id}', 'cancelled', '${p.net_amount}')" title="Cancel">
-                            <i class="bi bi-x-lg"></i>
-                        </button>
-                    </div>
-                </td>
-            </tr>
-            `).join('');
-    } catch (err) {
-        console.error('Failed to load payment disputes:', err);
-        tbody.innerHTML = `<tr><td colspan="6" class="empty-state" style="color: var(--danger);">Error: ${err.message}</td></tr>`;
-    }
-}
-
-function switchDisputeTab(tab) {
-    currentDisputeTab = tab;
-
-    // Update tab styles
-    document.querySelectorAll('.dispute-tab').forEach(t => t.classList.remove('active'));
-    document.querySelector(`[data-dispute-tab="${tab}"]`).classList.add('active');
-
-    // Show/hide tables
-    document.getElementById('orderDisputesPanel').style.display = tab === 'order' ? 'block' : 'none';
-    document.getElementById('paymentDisputesPanel').style.display = tab === 'payment' ? 'block' : 'none';
-
-    // Load data
-    if (tab === 'order') {
-        loadOrderDisputes();
-    } else {
-        loadPaymentDisputesData();
-    }
-}
-
-async function resolveOrderDisputeAction(disputeId, resolution, refundAmount) {
-    const resolutionLabels = {
-        refund_approved: `Approve refund of ${refundAmount} QAR to customer?`,
-        refund_declined: 'Reject this dispute? Customer will not receive a refund.'
-    };
-
-    QScrapModal.prompt({
-        title: resolution === 'refund_approved' ? 'Approve Refund' : 'Reject Dispute',
-        message: resolutionLabels[resolution] || 'Proceed with this action?',
-        inputType: 'textarea',
-        placeholder: 'Resolution notes (optional)...',
-        confirmText: resolution === 'refund_approved' ? 'Approve Refund' : 'Reject Dispute',
-        variant: resolution === 'refund_approved' ? 'success' : 'danger',
-        onConfirm: async (notes) => {
-            try {
-                const res = await fetch(`${API_URL}/operations/disputes/${disputeId}/resolve`, {
-                    method: 'POST',
-                    headers: {
-                        'Authorization': `Bearer ${token}`,
-                        'Content-Type': 'application/json'
-                    },
-                    body: JSON.stringify({
-                        resolution: resolution,
-                        refund_amount: refundAmount,
-                        notes: notes || ''
-                    })
-                });
-                const data = await res.json();
-                if (res.ok) {
-                    showToast('Dispute resolved successfully', 'success');
-                    loadDisputes();
-                } else {
-                    showToast(data.error || 'Failed to resolve dispute', 'error');
-                }
-            } catch (err) {
-                console.error('Resolve order dispute error:', err);
-                showToast('Failed to resolve dispute', 'error');
-            }
-        }
-    });
-}
-
-async function resolvePaymentDisputeAction(payoutId, resolution, amount) {
-    const resolutionLabels = {
-        resent_payment: `Resend payment of ${amount} QAR? (Garage will need to confirm again)`,
-        confirmed_received: 'Mark as received? (Garage already confirmed they got it)',
-        cancelled: 'Cancel this payout permanently?'
-    };
-
-    const variantMap = { resent_payment: 'warning', confirmed_received: 'success', cancelled: 'danger' };
-
-    QScrapModal.prompt({
-        title: 'Resolve Payment Dispute',
-        message: resolutionLabels[resolution] || 'Proceed with this action?',
-        inputType: 'textarea',
-        placeholder: 'Resolution notes (optional)...',
-        confirmText: 'Confirm',
-        variant: variantMap[resolution] || 'primary',
-        onConfirm: async (notes) => {
-            try {
-                const res = await fetch(`${API_URL}/finance/payouts/${payoutId}/resolve-dispute`, {
-                    method: 'POST',
-                    headers: {
-                        'Authorization': `Bearer ${token}`,
-                        'Content-Type': 'application/json'
-                    },
-                    body: JSON.stringify({
-                        resolution: resolution,
-                        notes: notes || '',
-                        resend_payment: resolution === 'resent_payment'
-                    })
-                });
-                const data = await res.json();
-                if (res.ok) {
-                    showToast(`Payment dispute resolved: ${resolution.replace(/_/g, ' ')}`, 'success');
-                    loadDisputes();
-                } else {
-                    showToast(data.error || 'Failed to resolve dispute', 'error');
-                }
-            } catch (err) {
-                console.error('Resolve payment dispute error:', err);
-                showToast('Failed to resolve dispute', 'error');
-            }
-        }
-    });
-}
-
+// USER MANAGEMENT + GARAGES — removed (2026-02-25) — Admin Dashboard owns these
+// FINANCE MANAGEMENT — removed (2026-02-25) — Finance is in /finance-dashboard.html
+// UNIFIED DISPUTES MODULE — removed (2026-02-25) — Disputes handled via order modal
 // ==========================================
 // SEND PAYMENT MODAL FUNCTIONS
 // ==========================================
@@ -3501,8 +2989,7 @@ async function submitSendPayment() {
         if (res.ok) {
             showToast('Payment marked as sent! Awaiting garage confirmation.', 'success');
             closeSendPaymentModal();
-            loadPendingPayouts();
-            loadFinance();
+            // Finance refresh removed — Finance lives in /finance-dashboard.html
         } else {
             showToast(data.error || 'Failed to send payment', 'error');
         }
@@ -3513,350 +3000,8 @@ async function submitSendPayment() {
 }
 
 
-// Pagination state for transactions
-let currentTransactionsPage = 1;
-const TRANSACTIONS_PER_PAGE = 20;
-
-async function loadTransactions(page = 1) {
-    currentTransactionsPage = page;
-    try {
-        const res = await fetch(`${API_URL}/finance/transactions?page=${page}&limit=${TRANSACTIONS_PER_PAGE}`, {
-            headers: { 'Authorization': `Bearer ${token}` }
-        });
-        const data = await res.json();
-
-        const tbody = document.getElementById('transactionsTable');
-
-        if (!data.transactions || data.transactions.length === 0) {
-            tbody.innerHTML = '<tr><td colspan="6" class="empty-state">No transactions yet</td></tr>';
-            document.getElementById('transactionsPagination').innerHTML = '';
-            return;
-        }
-
-        tbody.innerHTML = data.transactions.map(t => {
-            // Robust check for held status - normalize to lowercase and remove spaces/underscores
-            const statusNorm = (t.status || '').toLowerCase().replace(/[\s_-]/g, '');
-            const isHeld = statusNorm === 'onhold' || statusNorm === 'hold';
-            const rowStyle = isHeld ? 'background-color: #fff7ed !important; border-left: 4px solid #f59e0b;' : '';
-            const statusBadge = isHeld
-                ? `<span class="badge badge-warning" style="background-color: #f59e0b; color: white;">On Hold</span>`
-                : `<span class="status-badge ${t.status}">${t.status}</span>`;
-
-            return `
-            <tr style="${rowStyle}">
-                <td>${new Date(t.created_at).toLocaleDateString()}
-                    <div style="font-size: 11px; color: var(--text-muted);">${new Date(t.created_at).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}</div>
-                </td>
-                <td><span class="badge ${t.transaction_type}">${t.transaction_type}</span></td>
-                <td>${t.order_number || '-'}</td>
-                <td>${t.garage_name || '-'}</td>
-                <td><strong>${t.amount} QAR</strong></td>
-                <td>
-                    ${statusBadge}
-                    ${isHeld ? `
-                        <div style="margin-top: 5px;">
-                            <button class="btn btn-sm" onclick="releasePayout('${t.id}')" title="Release Hold" style="background-color: #059669; color: white; border: none; padding: 4px 10px; font-weight: 600; font-size: 11px;">
-                                <i class="bi bi-play-fill"></i> Release
-                            </button>
-                        </div>
-                    ` : ''}
-                </td>
-            </tr>
-        `;
-        }).join('');
-
-        // Render pagination controls
-        if (data.pagination) {
-            renderPagination('transactionsPagination', data.pagination, 'loadTransactions');
-        } else {
-            document.getElementById('transactionsPagination').innerHTML = '';
-        }
-    } catch (err) {
-        console.error('Failed to load transactions:', err);
-    }
-}
-
-async function processPayout(payoutId) {
-    QScrapModal.confirm({
-        title: 'Process Payout',
-        message: 'Process this payout? Payment will be sent to the garage.',
-        confirmText: 'Process',
-        variant: 'success',
-        onConfirm: async () => {
-            try {
-                const res = await fetch(`${API_URL}/finance/payouts/${payoutId}/process`, {
-                    method: 'POST',
-                    headers: { 'Authorization': `Bearer ${token}` }
-                });
-                if (res.ok) {
-                    showToast('Payout processed!', 'success');
-                    loadFinance();
-                } else {
-                    const data = await res.json();
-                    showToast(data.error || 'Failed to process payout', 'error');
-                }
-            } catch (err) {
-                showToast('Connection error', 'error');
-            }
-        }
-    });
-}
-
-async function holdPayout(payoutId) {
-    QScrapModal.prompt({
-        title: 'Hold Payout',
-        message: 'Provide a reason for holding this payout:',
-        inputType: 'textarea',
-        placeholder: 'Reason for hold...',
-        required: true,
-        confirmText: 'Hold Payout',
-        variant: 'warning',
-        onConfirm: async (reason) => {
-            if (!reason || !reason.trim()) {
-                showToast('Reason is required', 'error');
-                return;
-            }
-            try {
-                const res = await fetch(`${API_URL}/finance/payouts/${payoutId}/hold`, {
-                    method: 'POST',
-                    headers: {
-                        'Authorization': `Bearer ${token}`,
-                        'Content-Type': 'application/json'
-                    },
-                    body: JSON.stringify({ reason })
-                });
-                if (res.ok) {
-                    showToast('Payout held', 'success');
-                    loadFinance();
-                } else {
-                    const data = await res.json();
-                    showToast(data.error || 'Failed to hold payout', 'error');
-                }
-            } catch (err) {
-                showToast('Failed to hold payout', 'error');
-            }
-        }
-    });
-}
-
-async function releasePayout(payoutId) {
-    QScrapModal.confirm({
-        title: 'Release Payout',
-        message: 'Release this payout back to pending status?',
-        confirmText: 'Release',
-        variant: 'warning',
-        onConfirm: async () => {
-            try {
-                const res = await fetch(`${API_URL}/finance/payouts/${payoutId}/release`, {
-                    method: 'POST',
-                    headers: {
-                        'Authorization': `Bearer ${token}`,
-                        'Content-Type': 'application/json'
-                    },
-                    body: JSON.stringify({})
-                });
-                if (res.ok) {
-                    showToast('Payout released', 'success');
-                    loadFinance();
-                } else {
-                    const data = await res.json();
-                    showToast(data.error || 'Failed to release payout', 'error');
-                }
-            } catch (err) {
-                showToast('Failed to release payout', 'error');
-            }
-        }
-    });
-}
-
-// ============================================
-// SUPPORT TICKET LOGIC (OPERATIONS)
-// ============================================
-
-let activeOpsTicketId = null;
-
-async function loadOpsTickets() {
-    try {
-        const res = await fetch(`${API_URL}/support/tickets`, {
-            headers: { 'Authorization': `Bearer ${token}` }
-        });
-        const data = await res.json();
-
-        // Handle paginated response format {tickets: [...]} or legacy array format
-        const tickets = Array.isArray(data) ? data : (data.tickets || []);
-        const container = document.getElementById('supportTicketList');
-
-        if (tickets.length === 0) {
-            container.innerHTML = '<div style="padding: 20px; text-align: center; color: var(--text-secondary);">No active tickets</div>';
-            return;
-        }
-
-        container.innerHTML = tickets.map(t => {
-            const lastMsg = t.last_message ? t.last_message.message_text || t.last_message : 'No messages';
-            const activeClass = activeOpsTicketId === t.ticket_id ? 'active' : '';
-            return `
-            <div class="ticket-item ${activeClass}" onclick="viewOpsTicket('${t.ticket_id}', '${escapeHTML(t.subject || '')}', '${escapeHTML(t.customer_name || '')}', '${t.status}', '${t.order_id || ''}')">
-                <div class="ticket-header">
-                    <span class="ticket-subject">${escapeHTML(t.subject || 'No Subject')}</span>
-                    <span class="ticket-status status-${t.status}">${t.status}</span>
-                </div>
-                <div class="ticket-meta">
-                    <span>${escapeHTML(t.customer_name || 'Unknown')}</span>
-                    <span>${new Date(t.created_at).toLocaleDateString()}</span>
-                </div>
-                <div class="ticket-preview">${escapeHTML(String(lastMsg).slice(0, 50))}</div>
-                ${t.order_id ? `<div class="ticket-meta" style="margin-top: 4px; color: var(--accent);"><i class="bi bi-box-seam"></i> Order #${t.order_id.substring(0, 8)}</div>` : ''}
-            </div>
-            `;
-        }).join('');
-
-        // Update support badge
-        updateBadge('supportBadge', tickets.filter(t => t.status === 'open').length);
-
-    } catch (err) {
-        console.error('Failed to load tickets:', err);
-        showToast('Failed to load tickets', 'error');
-    }
-}
-
-async function viewOpsTicket(ticketId, subject, customerName, status, orderId) {
-    activeOpsTicketId = ticketId;
-    document.getElementById('emptyChatState').style.display = 'none';
-    document.getElementById('activeTicketView').style.display = 'flex';
-
-    document.getElementById('opsTicketSubject').textContent = subject;
-    document.getElementById('opsTicketCustomer').textContent = customerName;
-    document.getElementById('opsTicketOrder').textContent = orderId && orderId !== 'null' ? `#${orderId.substring(0, 8)}` : 'No Order';
-    document.getElementById('opsTicketStatus').value = status;
-
-    loadOpsTicketMessages(ticketId);
-    socket.emit('join_ticket', ticketId);
-
-    // Refresh list to update active selection style
-    loadOpsTickets();
-}
-
-async function loadOpsTicketMessages(ticketId) {
-    const container = document.getElementById('opsChatMessages');
-    container.innerHTML = '<div style="display: flex; justify-content: center; padding: 20px;"><div class="spinner"></div></div>';
-
-    try {
-        const res = await fetch(`${API_URL}/support/tickets/${ticketId}/messages`, {
-            headers: { 'Authorization': `Bearer ${token}` }
-        });
-        const messages = await res.json();
-
-        container.innerHTML = messages.map(m => {
-            const isAdmin = m.sender_type === 'admin';
-            return `
-                <div class="message ${isAdmin ? 'admin' : 'customer'}">
-                    ${m.message_text}
-                    <div class="message-time">
-                        ${m.sender_name || (isAdmin ? 'Me' : 'Customer')} • ${new Date(m.created_at).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}
-                    </div>
-                </div>
-            `;
-        }).join('');
-        container.scrollTop = container.scrollHeight;
-    } catch (err) {
-        container.innerHTML = 'Failed to load messages';
-    }
-}
-
-async function sendOpsMessage() {
-    if (!activeOpsTicketId) return;
-    const input = document.getElementById('opsChatInput');
-    const message = input.value.trim();
-    if (!message) return;
-
-    try {
-        const res = await fetch(`${API_URL}/support/tickets/${activeOpsTicketId}/messages`, {
-            method: 'POST',
-            headers: {
-                'Authorization': `Bearer ${token}`,
-                'Content-Type': 'application/json'
-            },
-            body: JSON.stringify({ message_text: message })
-        });
-
-        if (res.ok) {
-            input.value = '';
-            // New message will come via socket
-        }
-    } catch (err) {
-        showToast('Failed to send message', 'error');
-    }
-}
-
-async function updateTicketStatus(status) {
-    if (!activeOpsTicketId) return;
-    try {
-        const res = await fetch(`${API_URL}/support/tickets/${activeOpsTicketId}/status`, {
-            method: 'PATCH',
-            headers: {
-                'Authorization': `Bearer ${token}`,
-                'Content-Type': 'application/json'
-            },
-            body: JSON.stringify({ status })
-        });
-
-        if (res.ok) {
-            showToast('Ticket status updated', 'success');
-            loadOpsTickets();
-        }
-    } catch (err) {
-        showToast('Failed to update status', 'error');
-    }
-}
-
-// Socket Listeners (Operations) - Initialize after socket is ready
-function initSupportSocketListeners() {
-    if (!socket) return;
-
-    socket.on('new_ticket', (data) => {
-        showToast(`New Ticket: ${data.ticket.subject}`, 'info');
-        loadOpsTickets();
-        if (typeof loadStats === 'function') loadStats();
-    });
-
-    socket.on('support_reply', (data) => {
-        if (activeOpsTicketId === data.ticket_id) {
-            showToast('New customer reply', 'info');
-            loadOpsTicketMessages(data.ticket_id); // Reload messages to see update
-        } else {
-            showToast('New customer reply', 'info');
-            loadOpsTickets();
-        }
-    });
-
-    socket.on('new_message', (message) => {
-        if (activeOpsTicketId === message.ticket_id) {
-            const container = document.getElementById('opsChatMessages');
-            const isAdmin = message.sender_type === 'admin';
-
-            container.insertAdjacentHTML('beforeend', `
-                <div class="message ${isAdmin ? 'admin' : 'customer'}">
-                    ${message.message_text}
-                    <div class="message-time">
-                        ${isAdmin ? 'Me' : 'Customer'} • ${new Date(message.created_at).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}
-                    </div>
-                </div>
-            `);
-            container.scrollTop = container.scrollHeight;
-
-            loadOpsTickets(); // Update list preview
-        }
-    });
-}
-
-// Monkey patch switchSection
-const originalSwitchSection = window.switchSection || switchSection;
-window.switchSection = function (section) {
-    if (originalSwitchSection) originalSwitchSection(section);
-    if (section === 'support') loadOpsTickets();
-};
-
-// ============================================
+// loadTransactions, processPayout, holdPayout, releasePayout — removed (2026-02-25) — Finance is in /finance-dashboard.html
+// SUPPORT TICKET LOGIC — removed (2026-02-25) — Support is in /support-dashboard.html
 // GLOBAL SEARCH
 // ============================================
 let globalSearchTimeout = null;
@@ -3938,10 +3083,10 @@ function renderSearchResults(results) {
                  style="padding: 10px 12px; cursor: pointer; display: flex; justify-content: space-between; align-items: center; border-bottom: 1px solid var(--border);"
                  onmouseover="this.style.background='var(--bg-hover)'" onmouseout="this.style.background=''">
                 <div>
-                    <div style="font-weight: 600; color: var(--accent);">#${o.order_number}</div>
-                    <div style="font-size: 12px; color: var(--text-secondary);">${o.car_make} ${o.car_model} - ${o.part_description?.slice(0, 30) || ''}</div>
+                    <div style="font-weight: 600; color: var(--accent);">#${escapeHTML(o.order_number || '')}</div>
+                    <div style="font-size: 12px; color: var(--text-secondary);">${escapeHTML((o.car_make || '') + ' ' + (o.car_model || ''))} - ${escapeHTML((o.part_description || '').slice(0, 30))}</div>
                 </div>
-                <span class="order-status ${o.order_status?.replace('_', '-') || ''}" style="font-size: 10px;">${o.order_status || ''}</span>
+                <span class="order-status ${escapeHTML(o.order_status?.replace('_', '-') || '')}" style="font-size: 10px;">${escapeHTML(o.order_status || '')}</span>
             </div>
         `).join('');
     }
@@ -3950,14 +3095,14 @@ function renderSearchResults(results) {
     if (results.users && results.users.length > 0) {
         html += `<div style="padding: 8px 12px; font-size: 11px; font-weight: 600; color: var(--text-muted); text-transform: uppercase; margin-top: 8px;">Users</div>`;
         html += results.users.slice(0, 5).map(u => `
-            <div class="search-result-item" onclick="switchSection('users'); searchResultsDiv.style.display='none';"
+            <div class="search-result-item" onclick="searchOrdersByText('${encodeURIComponent(u.full_name || '')}'); searchResultsDiv.style.display='none';"
                  style="padding: 10px 12px; cursor: pointer; display: flex; justify-content: space-between; align-items: center; border-bottom: 1px solid var(--border);"
                  onmouseover="this.style.background='var(--bg-hover)'" onmouseout="this.style.background=''">
                 <div>
-                    <div style="font-weight: 600;">${u.full_name}</div>
-                    <div style="font-size: 12px; color: var(--text-secondary);">${u.email} | ${u.phone_number}</div>
+                    <div style="font-weight: 600;">${escapeHTML(u.full_name || '')}</div>
+                    <div style="font-size: 12px; color: var(--text-secondary);">${escapeHTML(u.email || '')} | ${escapeHTML(u.phone_number || '')}</div>
                 </div>
-                <span style="font-size: 11px; color: var(--text-muted);">${u.user_type}</span>
+                <span style="font-size: 11px; color: var(--text-muted);">${escapeHTML(u.user_type || '')}</span>
             </div>
         `).join('');
     }
@@ -3966,14 +3111,14 @@ function renderSearchResults(results) {
     if (results.disputes && results.disputes.length > 0) {
         html += `<div style="padding: 8px 12px; font-size: 11px; font-weight: 600; color: var(--text-muted); text-transform: uppercase; margin-top: 8px;">Disputes</div>`;
         html += results.disputes.slice(0, 5).map(d => `
-            <div class="search-result-item" onclick="switchSection('disputes'); searchResultsDiv.style.display='none';"
+            <div class="search-result-item" onclick="viewOrder('${d.order_id}'); searchResultsDiv.style.display='none';"
                  style="padding: 10px 12px; cursor: pointer; display: flex; justify-content: space-between; align-items: center; border-bottom: 1px solid var(--border);"
                  onmouseover="this.style.background='var(--bg-hover)'" onmouseout="this.style.background=''">
                 <div>
-                    <div style="font-weight: 600;">#${d.order_number}</div>
-                    <div style="font-size: 12px; color: var(--text-secondary);">${d.reason} - ${d.customer_name}</div>
+                    <div style="font-weight: 600;">#${escapeHTML(d.order_number || '')}</div>
+                    <div style="font-size: 12px; color: var(--text-secondary);">${escapeHTML(d.reason || '')} - ${escapeHTML(d.customer_name || '')}</div>
                 </div>
-                <span class="status-badge ${d.status}" style="font-size: 10px;">${d.status}</span>
+                <span class="status-badge ${escapeHTML(d.status || '')}" style="font-size: 10px;">${escapeHTML(d.status || '')}</span>
             </div>
         `).join('');
     }
@@ -3986,16 +3131,25 @@ function renderSearchResults(results) {
                  style="padding: 10px 12px; cursor: pointer; display: flex; justify-content: space-between; align-items: center; border-bottom: 1px solid var(--border);"
                  onmouseover="this.style.background='var(--bg-hover)'" onmouseout="this.style.background=''">
                 <div>
-                    <div style="font-weight: 600;">${r.car_make} ${r.car_model}</div>
-                    <div style="font-size: 12px; color: var(--text-secondary);">${r.part_description?.slice(0, 40) || ''}</div>
+                    <div style="font-weight: 600;">${escapeHTML((r.car_make || '') + ' ' + (r.car_model || ''))}</div>
+                    <div style="font-size: 12px; color: var(--text-secondary);">${escapeHTML((r.part_description || '').slice(0, 40))}</div>
                 </div>
-                <span style="font-size: 11px; color: var(--text-muted);">${r.status}</span>
+                <span style="font-size: 11px; color: var(--text-muted);">${escapeHTML(r.status || '')}</span>
             </div>
         `).join('');
     }
 
     searchResultsDiv.innerHTML = html;
     searchResultsDiv.style.display = 'block';
+}
+
+function searchOrdersByText(encodedQuery) {
+    const query = decodeURIComponent(encodedQuery || '');
+    switchSection('orders');
+    const input = document.getElementById('orderSearch');
+    if (input) input.value = query;
+    orderFilters.search = query;
+    loadOrders();
 }
 
 // ==========================================
@@ -4440,254 +3594,9 @@ function loadReports() {
 }
 
 
-async function processAllPayouts() {
-    QScrapModal.confirm({
-        title: 'Process All Payouts',
-        message: 'Process all pending payouts now? This will send payments to all garages with pending payouts.',
-        confirmText: 'Process All',
-        variant: 'danger',
-        onConfirm: async () => {
-
-            showToast('Processing all payouts...', 'info');
-
-            try {
-                // Get all pending payouts
-                const res = await fetch(`${API_URL}/finance/payouts?status=pending`, {
-                    headers: { 'Authorization': `Bearer ${token}` }
-                });
-                const data = await res.json();
-
-                if (!data.payouts || data.payouts.length === 0) {
-                    showToast('No pending payouts to process', 'info');
-                    return;
-                }
-
-                let successCount = 0;
-                let failCount = 0;
-                const batchId = `BATCH-${Date.now()}`;
-
-                for (let i = 0; i < data.payouts.length; i++) {
-                    const payout = data.payouts[i];
-                    try {
-                        const sendRes = await fetch(`${API_URL}/finance/payouts/${payout.payout_id}/send`, {
-                            method: 'POST',
-                            headers: {
-                                'Authorization': `Bearer ${token}`,
-                                'Content-Type': 'application/json'
-                            },
-                            body: JSON.stringify({
-                                payout_method: 'bank_transfer',
-                                payout_reference: `${batchId}-${i + 1}`,
-                                notes: 'Bulk processed by operations'
-                            })
-                        });
-
-                        if (sendRes.ok) {
-                            successCount++;
-                        } else {
-                            const errData = await sendRes.json();
-                            console.error(`Payout ${payout.payout_id} failed:`, errData.error);
-                            failCount++;
-                        }
-                    } catch (err) {
-                        console.error(`Payout ${payout.payout_id} error:`, err);
-                        failCount++;
-                    }
-                }
-
-                if (successCount > 0) {
-                    showToast(`${successCount} payment(s) sent successfully!${failCount > 0 ? ` (${failCount} failed)` : ''}`, 'success');
-                } else {
-                    showToast('Failed to process payouts', 'error');
-                }
-
-                loadFinance(); // Refresh
-            } catch (err) {
-                console.error('Process all payouts error:', err);
-                showToast('Failed to process payouts', 'error');
-            }
-        }
-    });
-}
-// ========================================
-// REVIEW MODERATION
-// ========================================
-
-// Pagination state
-let currentReviewsPage = 1;
-const REVIEWS_PER_PAGE = 20;
-let currentReviewStatus = 'pending';
-
-async function loadReviewModeration(arg1, arg2) {
-    let status = currentReviewStatus;
-    let page = 1;
-
-    // Handle "page only" call from pagination (e.g. loadReviewModeration(2))
-    if (typeof arg1 === 'number') {
-        page = arg1;
-        // status remains currentReviewStatus
-    } else if (typeof arg1 === 'string') {
-        // Handle "status only" or "status + page" call (e.g. loadReviewModeration('approved'))
-        status = arg1;
-        page = typeof arg2 === 'number' ? arg2 : 1;
-    }
-
-    currentReviewStatus = status;
-    currentReviewsPage = page;
-    const tbody = document.getElementById('reviewModerationTable');
-    tbody.innerHTML = '<tr><td colspan="6" class="empty-state"><i class="bi bi-hourglass-split"></i> Loading...</td></tr>';
-
-    try {
-        const endpoint = status === 'pending'
-            ? `${API_URL}/reviews/pending?page=${page}&limit=${REVIEWS_PER_PAGE}`
-            : `${API_URL}/reviews/all?status=${status}&page=${page}&limit=${REVIEWS_PER_PAGE}`;
-
-        const res = await fetch(endpoint, {
-            headers: { 'Authorization': `Bearer ${token}` }
-        });
-        const data = await res.json();
-
-        const reviews = data.pending_reviews || data.reviews || [];
-
-        // Update badge
-        if (status === 'pending') {
-            const badge = document.getElementById('reviewModerationBadge');
-            if (badge) {
-                // Total count might be in pagination data if available, otherwise array length
-                const count = data.pagination ? data.pagination.total : reviews.length;
-                badge.textContent = count;
-                badge.style.display = count > 0 ? 'inline-flex' : 'none';
-            }
-        }
-
-        if (reviews.length === 0) {
-            tbody.innerHTML = `<tr><td colspan="6" class="empty-state">No ${status} reviews</td></tr>`;
-            document.getElementById('reviewsPagination').innerHTML = '';
-            return;
-        }
-
-        tbody.innerHTML = reviews.map(r => `
-            <tr>
-                <td>${r.customer_name || 'Customer'}</td>
-                <td>${r.garage_name || 'Garage'}</td>
-                <td>
-                    <div style="display: flex; gap: 2px;">
-                        ${[1, 2, 3, 4, 5].map(i => `<i class="bi bi-star${i <= r.overall_rating ? '-fill' : ''}" style="color: #f59e0b; font-size: 12px;"></i>`).join('')}
-                    </div>
-                </td>
-                <td style="max-width: 300px;">
-                    <div style="white-space: nowrap; overflow: hidden; text-overflow: ellipsis;" title="${(r.review_text || '').replace(/"/g, '&quot;')}">
-                        ${r.review_text ? `"${r.review_text.substring(0, 100)}${r.review_text.length > 100 ? '...' : ''}"` : '<span style="color: var(--text-muted);">No text</span>'}
-                    </div>
-                </td>
-                <td>${new Date(r.created_at).toLocaleDateString()}</td>
-                <td>
-                    ${status === 'pending' ? `
-                        <div style="display: flex; gap: 8px;">
-                            <button onclick="approveReview('${r.review_id}')" class="btn-sm btn-success" title="Approve">
-                                <i class="bi bi-check-lg"></i>
-                            </button>
-                            <button onclick="openRejectReviewModal('${r.review_id}')" class="btn-sm btn-danger" title="Reject">
-                                <i class="bi bi-x-lg"></i>
-                            </button>
-                        </div>
-                    ` : `
-                        <span class="badge badge-${r.moderation_status === 'approved' ? 'success' : 'danger'}">
-                            ${r.moderation_status}
-                        </span>
-                    `}
-                </td>
-            </tr>
-        `).join('');
-
-        // Render pagination controls
-        if (data.pagination) {
-            renderPagination('reviewsPagination', data.pagination, 'loadReviewModeration');
-        }
-    } catch (err) {
-        console.error('Load review moderation error:', err);
-        tbody.innerHTML = '<tr><td colspan="6" class="empty-state" style="color: var(--danger);">Failed to load reviews</td></tr>';
-    }
-}
-
-async function approveReview(reviewId) {
-    try {
-        const res = await fetch(`${API_URL}/reviews/${reviewId}/moderate`, {
-            method: 'POST',
-            headers: {
-                'Authorization': `Bearer ${token}`,
-                'Content-Type': 'application/json'
-            },
-            body: JSON.stringify({ action: 'approve' })
-        });
-
-        if (res.ok) {
-            showToast('Review approved and now visible', 'success');
-            loadReviewModeration();
-        } else {
-            const data = await res.json();
-            showToast(data.error || 'Failed to approve', 'error');
-        }
-    } catch (err) {
-        console.error('Approve review error:', err);
-        showToast('Failed to approve review', 'error');
-    }
-}
-
-function openRejectReviewModal(reviewId) {
-    QScrapModal.prompt({
-        title: 'Reject Review',
-        message: 'Enter rejection reason (required for transparency):',
-        inputType: 'textarea',
-        placeholder: 'Rejection reason...',
-        required: true,
-        confirmText: 'Reject Review',
-        variant: 'danger',
-        onConfirm: (reason) => {
-            if (reason && reason.trim()) {
-                rejectReview(reviewId, reason.trim());
-            }
-        }
-    });
-}
-
-async function rejectReview(reviewId, reason) {
-    try {
-        const res = await fetch(`${API_URL}/reviews/${reviewId}/moderate`, {
-            method: 'POST',
-            headers: {
-                'Authorization': `Bearer ${token}`,
-                'Content-Type': 'application/json'
-            },
-            body: JSON.stringify({ action: 'reject', rejection_reason: reason })
-        });
-
-        if (res.ok) {
-            showToast('Review rejected', 'success');
-            loadReviewModeration();
-        } else {
-            const data = await res.json();
-            showToast(data.error || 'Failed to reject', 'error');
-        }
-    } catch (err) {
-        console.error('Reject review error:', err);
-        showToast('Failed to reject review', 'error');
-    }
-}
-
-// Review Tabs
-document.addEventListener('DOMContentLoaded', () => {
-    const reviewTabs = document.getElementById('reviewTabs');
-    if (reviewTabs) {
-        reviewTabs.addEventListener('click', (e) => {
-            if (e.target.classList.contains('tab')) {
-                reviewTabs.querySelectorAll('.tab').forEach(t => t.classList.remove('active'));
-                e.target.classList.add('active');
-                loadReviewModeration(e.target.dataset.status);
-            }
-        });
-    }
-});
+// processAllPayouts — removed (2026-02-25) — Finance is in /finance-dashboard.html
+// REVIEW MODERATION — removed (2026-02-25)
+// No HTML section exists. Review moderation is not an operations function.
 
 // ===== DRIVER REASSIGNMENT (Emergency) =====
 
@@ -4879,6 +3788,7 @@ async function updateAllBadges() {
             updateBadge('ordersBadge', s.active_orders || 0);
             updateBadge('disputesBadge', (parseInt(s.pending_disputes) || 0) + (parseInt(s.contested_disputes) || 0));
             updateBadge('deliveryBadge', s.ready_for_pickup || 0);
+            updateBadge('deliveryTabBadge', s.ready_for_pickup || 0);
         }
 
         // Update finance badge (pending payouts) - use shared function
@@ -4993,6 +3903,11 @@ function startAutoRefresh() {
         if (document.visibilityState === 'visible' && !document.querySelector('.modal:not([style*="display: none"])')) {
             refreshCurrentSection();
             loadHeaderNotifications();
+            // Refresh attention widget if on overview
+            const activeSection = document.querySelector('.section.active');
+            if (activeSection && activeSection.id === 'sectionOverview') {
+                loadAttentionWidget();
+            }
         }
     }, 30000);
 }
@@ -5017,8 +3932,8 @@ function setupKeyboardShortcuts() {
             return;
         }
 
-        // Section navigation (1-8) - quality section removed
-        const sections = ['overview', 'orders', 'delivery', 'disputes', 'reviewModeration', 'support', 'users', 'finance'];
+        // Section navigation (1-6)
+        const sections = ['overview', 'orders', 'delivery', 'escalations', 'reports', 'fraud'];
         if (e.key >= '1' && e.key <= '9' && !e.ctrlKey && !e.metaKey && !e.altKey) {
             const index = parseInt(e.key) - 1;
             if (sections[index]) {
@@ -5113,7 +4028,7 @@ async function loadRecentOrders() {
             refunded: 'Refunded',
             cancelled_by_customer: 'Cancelled (Customer)',
             cancelled_by_garage: 'Cancelled (Garage)',
-            cancelled_by_operations: 'Cancelled (Ops)'
+            cancelled_by_ops: 'Cancelled (Ops)'
         };
 
         const statusClass = {
@@ -5131,7 +4046,7 @@ async function loadRecentOrders() {
             refunded: 'refunded',
             cancelled_by_customer: 'cancelled',
             cancelled_by_garage: 'cancelled',
-            cancelled_by_operations: 'cancelled'
+            cancelled_by_ops: 'cancelled'
         };
 
         const table = document.getElementById('recentOrdersTable');
@@ -5180,21 +4095,17 @@ function refreshCurrentSection() {
             break;
         case 'delivery':
             loadDeliveryData();
+            loadDeliveryHistory();
+            loadReturns();
             break;
-        case 'disputes':
-            loadDisputes();
+        case 'escalations':
+            loadEscalations();
             break;
-        case 'reviewModeration':
-            loadReviewModeration();
+        case 'reports':
+            loadReports();
             break;
-        case 'support':
-            loadSupportTickets();
-            break;
-        case 'users':
-            loadUsers();
-            break;
-        case 'finance':
-            loadFinance();
+        case 'fraud':
+            loadFraudSection();
             break;
         default:
             loadStats();
@@ -5433,6 +4344,8 @@ async function loadFraudStats() {
 /**
  * Load return requests pending review
  */
+const returnRequestPhotoMap = new Map();
+
 async function loadReturnRequests() {
     const tbody = document.getElementById('returnRequestsTable');
     if (!tbody) return;
@@ -5449,6 +4362,10 @@ async function loadReturnRequests() {
 
         const data = await res.json();
         const requests = data.return_requests || [];
+        returnRequestPhotoMap.clear();
+        requests.forEach(r => {
+            returnRequestPhotoMap.set(r.return_id, Array.isArray(r.photo_urls) ? r.photo_urls : []);
+        });
 
         if (requests.length === 0) {
             tbody.innerHTML = '<tr><td colspan="7" class="empty-state"><i class="bi bi-check-circle" style="font-size: 24px; color: var(--success);"></i><p>No pending return requests</p></td></tr>';
@@ -5491,6 +4408,71 @@ async function loadReturnRequests() {
         console.error('Failed to load return requests:', err);
         tbody.innerHTML = '<tr><td colspan="7" class="empty-state" style="color: var(--danger);">Connection error</td></tr>';
     }
+}
+
+function viewReturnPhotos(returnId) {
+    const urls = (returnRequestPhotoMap.get(returnId) || [])
+        .map(url => String(url || '').trim())
+        .filter(url => /^https?:\/\//i.test(url) || url.startsWith('/'));
+
+    if (urls.length === 0) {
+        showToast('No photos available for this return', 'warning');
+        return;
+    }
+
+    const existing = document.getElementById('returnPhotosModal');
+    if (existing) existing.remove();
+
+    const modal = document.createElement('div');
+    modal.id = 'returnPhotosModal';
+    modal.className = 'modal-overlay active';
+
+    const container = document.createElement('div');
+    container.className = 'modal-container';
+    container.style.maxWidth = '900px';
+
+    const header = document.createElement('div');
+    header.className = 'modal-header';
+    header.innerHTML = `
+        <h2><i class="bi bi-images"></i> Return Photos</h2>
+        <button class="modal-close" onclick="document.getElementById('returnPhotosModal').remove()">&times;</button>
+    `;
+
+    const body = document.createElement('div');
+    body.className = 'modal-body';
+    body.style.padding = '16px';
+
+    const grid = document.createElement('div');
+    grid.style.display = 'grid';
+    grid.style.gridTemplateColumns = 'repeat(auto-fit, minmax(180px, 1fr))';
+    grid.style.gap = '12px';
+
+    urls.forEach((url, idx) => {
+        const card = document.createElement('a');
+        card.href = url;
+        card.target = '_blank';
+        card.rel = 'noopener noreferrer';
+        card.style.display = 'block';
+        card.style.border = '1px solid var(--border)';
+        card.style.borderRadius = '8px';
+        card.style.overflow = 'hidden';
+
+        const img = document.createElement('img');
+        img.src = url;
+        img.alt = `Return photo ${idx + 1}`;
+        img.style.width = '100%';
+        img.style.height = '180px';
+        img.style.objectFit = 'cover';
+
+        card.appendChild(img);
+        grid.appendChild(card);
+    });
+
+    body.appendChild(grid);
+    container.appendChild(header);
+    container.appendChild(body);
+    modal.appendChild(container);
+    document.body.appendChild(modal);
 }
 
 /**
@@ -5734,28 +4716,5 @@ async function loadGaragePenalties() {
         tbody.innerHTML = '<tr><td colspan="6" class="empty-state" style="color: var(--danger);">Connection error</td></tr>';
     }
 }
-
-// Add fraud section to section switching (extend the existing switchSection)
-const fraudSwitchHandler = window.switchSection;
-window.switchSection = function (section) {
-    // Call existing handler for non-fraud sections
-    if (fraudSwitchHandler && section !== 'fraud') {
-        fraudSwitchHandler(section);
-    }
-
-    // Handle fraud section
-    if (section === 'fraud') {
-        document.querySelectorAll('.section').forEach(s => s.classList.remove('active'));
-        document.querySelectorAll('.nav-item').forEach(n => n.classList.remove('active'));
-
-        const fraudSection = document.getElementById('sectionFraud');
-        if (fraudSection) fraudSection.classList.add('active');
-
-        const fraudNav = document.querySelector('[data-section="fraud"]');
-        if (fraudNav) fraudNav.classList.add('active');
-
-        loadFraudSection();
-    }
-};
 
 console.log('Operations Dashboard - v4.0 BRAIN Compliant (Fraud Prevention)');

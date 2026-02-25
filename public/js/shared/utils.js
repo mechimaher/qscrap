@@ -287,4 +287,118 @@ window.setButtonLoading = setButtonLoading;
 
 // ===== UI UTILITIES =====
 
+/**
+ * DOMPurify-like sanitization using browser's built-in capabilities
+ * Provides additional layer of XSS protection beyond escapeHTML
+ * @param {string} dirty - Untrusted HTML string
+ * @returns {string} - Sanitized HTML safe for innerHTML
+ */
+function sanitizeHTML(dirty) {
+    if (!dirty) return '';
 
+    // Create a template element
+    const template = document.createElement('template');
+    template.innerHTML = dirty;
+
+    // Remove dangerous elements
+    const dangerous = ['script', 'iframe', 'object', 'embed', 'form', 'input', 'textarea'];
+    dangerous.forEach(tag => {
+        const elements = template.content.querySelectorAll(tag);
+        elements.forEach(el => el.remove());
+    });
+
+    // Remove dangerous attributes (event handlers, javascript: URLs)
+    const allElements = template.content.querySelectorAll('*');
+    allElements.forEach(el => {
+        const attributes = Array.from(el.attributes);
+        attributes.forEach(attr => {
+            const name = attr.name.toLowerCase();
+            const value = attr.value;
+
+            // Remove event handlers (onclick, onerror, onload, etc.)
+            if (name.startsWith('on')) {
+                el.removeAttribute(name);
+            }
+
+            // Remove javascript: URLs
+            if (['href', 'src', 'action'].includes(name)) {
+                if (value.trim().toLowerCase().startsWith('javascript:')) {
+                    el.removeAttribute(name);
+                }
+            }
+
+            // Remove style attribute (can contain expressions)
+            if (name === 'style') {
+                el.removeAttribute(name);
+            }
+        });
+    });
+
+    return template.innerHTML;
+}
+
+/**
+ * Create safe HTML string from user data
+ * Use this when you MUST use innerHTML (template literals)
+ * @param {string} text - User-provided text
+ * @returns {string} - Escaped text safe for embedding in HTML
+ */
+function safeHTML(text) {
+    if (!text) return '';
+    return String(text)
+        .replace(/&/g, '&amp;')
+        .replace(/</g, '&lt;')
+        .replace(/>/g, '&gt;')
+        .replace(/"/g, '&quot;')
+        .replace(/'/g, '&#039;');
+}
+
+/**
+ * Validate and sanitize user input
+ * @param {string} input - User input
+ * @param {Object} options - Validation options
+ * @returns {{valid: boolean, sanitized: string, error?: string}}
+ */
+function sanitizeInput(input, options = {}) {
+    const {
+        maxLength = 1000,
+        allowHTML = false,
+        trim = true,
+        required = false
+    } = options;
+
+    if (!input || (trim && !input.trim())) {
+        if (required) {
+            return { valid: false, sanitized: '', error: 'This field is required' };
+        }
+        return { valid: true, sanitized: '' };
+    }
+
+    let sanitized = trim ? input.trim() : input;
+
+    // Enforce max length
+    if (sanitized.length > maxLength) {
+        sanitized = sanitized.slice(0, maxLength);
+    }
+
+    // Escape HTML if not allowed
+    if (!allowHTML) {
+        sanitized = escapeHTML(sanitized);
+    } else {
+        sanitized = sanitizeHTML(sanitized);
+    }
+
+    return { valid: true, sanitized };
+}
+
+// Export new security utilities
+window.QScrapUtils = {
+    ...window.QScrapUtils,
+    sanitizeHTML,
+    safeHTML,
+    sanitizeInput
+};
+
+window.sanitizeHTML = sanitizeHTML;
+window.safeHTML = safeHTML;
+window.sanitizeInput = sanitizeInput;

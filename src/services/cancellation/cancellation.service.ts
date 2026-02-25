@@ -1399,9 +1399,10 @@ export class CancellationService {
             }
 
             // Update order status
+            // NOTE: Using 'cancelled_by_ops' to match database schema enum
             await client.query(
-                `UPDATE orders 
-                 SET order_status = 'cancelled_by_operations',
+                `UPDATE orders
+                 SET order_status = 'cancelled_by_ops',
                      cancellation_reason = $2,
                      cancelled_by = $3,
                      cancelled_at = NOW(),
@@ -1412,9 +1413,9 @@ export class CancellationService {
 
             // Log status change
             await client.query(
-                `INSERT INTO order_status_history 
+                `INSERT INTO order_status_history
                  (order_id, old_status, new_status, changed_by, changed_by_type, reason)
-                 VALUES ($1, $2, 'cancelled_by_operations', $3, 'operations', $4)`,
+                 VALUES ($1, $2, 'cancelled_by_ops', $3, 'operations', $4)`,
                 [orderId, previousStatus, operationsUserId, reason]
             );
 
@@ -1562,20 +1563,40 @@ export class CancellationService {
             SELECT 
                 o.order_id, o.order_number, o.order_status, o.payment_status,
                 o.total_amount, o.delivery_fee, o.created_at, o.updated_at,
-                c.full_name as customer_name, c.phone_number as customer_phone,
-                g.garage_name, g.phone_number as garage_phone,
-                EXTRACT(EPOCH FROM (NOW() - o.created_at)) / 3600 as hours_old
+                cu.full_name as customer_name, cu.phone_number as customer_phone,
+                g.garage_name, gu.phone_number as garage_phone,
+                EXTRACT(EPOCH FROM (NOW() - COALESCE(o.updated_at, o.created_at))) / 3600 as hours_old,
+                CASE
+                    WHEN o.order_status = 'pending_payment' THEN 'payment_timeout'
+                    WHEN o.order_status = 'ready_for_pickup' AND COALESCE(da.active_assignments, 0) = 0 THEN 'pickup_unassigned'
+                    WHEN o.order_status = 'in_transit' THEN 'delivery_stale'
+                    WHEN o.payment_status = 'failed' THEN 'payment_failed'
+                    ELSE 'stuck'
+                END as attention_reason
             FROM orders o
-            LEFT JOIN customers c ON o.customer_id = c.customer_id
+            LEFT JOIN users cu ON o.customer_id = cu.user_id
             LEFT JOIN garages g ON o.garage_id = g.garage_id
+            LEFT JOIN users gu ON g.garage_id = gu.user_id
+            LEFT JOIN LATERAL (
+                SELECT COUNT(*) as active_assignments
+                FROM delivery_assignments da
+                WHERE da.order_id = o.order_id
+                  AND da.status IN ('assigned', 'picked_up', 'in_transit')
+            ) da ON true
             WHERE 
                 -- Payment abandoned (pending_payment for > 2 hours)
                 (o.order_status = 'pending_payment' AND o.created_at < NOW() - INTERVAL '2 hours')
-                -- Stuck in processing (> 24 hours)
-                OR (o.order_status IN ('pending_driver', 'driver_assigned') AND o.created_at < NOW() - INTERVAL '24 hours')
+                -- Ready for pickup too long without active assignment
+                OR (
+                    o.order_status = 'ready_for_pickup'
+                    AND COALESCE(da.active_assignments, 0) = 0
+                    AND COALESCE(o.updated_at, o.created_at) < NOW() - INTERVAL '3 hours'
+                )
+                -- Stale in-transit orders
+                OR (o.order_status = 'in_transit' AND COALESCE(o.updated_at, o.created_at) < NOW() - INTERVAL '12 hours')
                 -- Failed payment never recovered
                 OR (o.payment_status = 'failed' AND o.updated_at < NOW() - INTERVAL '1 hour')
-            ORDER BY o.created_at ASC
+            ORDER BY hours_old DESC
             LIMIT 50
         `);
 

@@ -675,6 +675,7 @@ body {
 .status-badge.cancelled,
 .status-badge.cancelled_by_customer,
 .status-badge.cancelled_by_garage,
+.status-badge.cancelled_by_ops,
 .status-badge.cancelled_by_operations {
     background: rgba(107, 114, 128, 0.15);
     color: #6b7280;
@@ -785,6 +786,83 @@ body {
 .data-table tr.needs-attention-blue td:first-child {
     padding-left: 20px;
 }
+
+/* ===== Bulk Action Bar (Phase 1.2) ===== */
+.bulk-action-bar {
+    position: sticky;
+    bottom: 0;
+    background: var(--bg-secondary);
+    border: 2px solid var(--accent);
+    border-radius: 12px;
+    padding: 16px 20px;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    box-shadow: 0 -4px 12px rgba(0,0,0,0.1);
+    z-index: 100;
+    animation: slideUp 0.3s ease-out;
+    margin-top: 16px;
+}
+
+@keyframes slideUp {
+    from {
+        transform: translateY(20px);
+        opacity: 0;
+    }
+    to {
+        transform: translateY(0);
+        opacity: 1;
+    }
+}
+
+.bulk-action-info {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    font-weight: 600;
+    font-size: 14px;
+    color: var(--text-primary);
+}
+
+.bulk-action-info i {
+    color: var(--success);
+    font-size: 18px;
+}
+
+.bulk-action-buttons {
+    display: flex;
+    gap: 12px;
+    align-items: center;
+}
+
+.bulk-action-buttons #bulkExecuteBtn {
+    min-width: 120px;
+}
+
+@media (max-width: 768px) {
+    .bulk-action-bar {
+        flex-direction: column;
+        gap: 12px;
+        padding: 12px 16px;
+    }
+    
+    .bulk-action-info {
+        width: 100%;
+        justify-content: center;
+    }
+    
+    .bulk-action-buttons {
+        width: 100%;
+        justify-content: center;
+        flex-wrap: wrap;
+    }
+    
+    .bulk-action-buttons #bulkActionSelect {
+        width: 100%;
+        min-width: 150px;
+    }
+}
+/* ====================================== */
 
 /* ===== Buttons ===== */
 .btn {

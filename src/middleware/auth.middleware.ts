@@ -5,6 +5,7 @@ import { getJwtSecret } from '../config/security';
 interface AuthPayload {
     userId: string;
     userType: string;
+    staffRole?: string;
 }
 
 export interface AuthRequest extends Request {
@@ -36,6 +37,13 @@ export const authenticate = (req: AuthRequest, res: Response, next: NextFunction
             return res.status(401).json({
                 error: 'invalid_token_claims',
                 message: 'Token is missing required claims'
+            });
+        }
+
+        if (payload.staffRole !== undefined && typeof payload.staffRole !== 'string') {
+            return res.status(401).json({
+                error: 'invalid_token_claims',
+                message: 'Token has invalid staffRole claim'
             });
         }
 

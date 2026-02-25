@@ -14,7 +14,7 @@ export class OrderManagementService {
      * Get orders with filters and pagination
      */
     async getOrders(filters: OrderFilters): Promise<{ orders: OrderWithDetails[]; pagination: PaginationMetadata }> {
-        const { status, search, page = 1, limit = 20 } = filters;
+        const { status, search, from, to, garage_id, page = 1, limit = 20 } = filters;
         const offset = (page - 1) * limit;
 
         let query = `
@@ -55,6 +55,22 @@ export class OrderManagementService {
             paramIndex++;
         }
 
+        // Date range filters
+        if (from) {
+            query += ` AND DATE(o.created_at) >= $${paramIndex++}`;
+            params.push(from);
+        }
+        if (to) {
+            query += ` AND DATE(o.created_at) <= $${paramIndex++}`;
+            params.push(to);
+        }
+
+        // Garage filter
+        if (garage_id) {
+            query += ` AND o.garage_id = $${paramIndex++}`;
+            params.push(garage_id);
+        }
+
         query += ` ORDER BY o.created_at DESC LIMIT $${paramIndex++} OFFSET $${paramIndex}`;
         params.push(limit, offset);
 
@@ -84,6 +100,23 @@ export class OrderManagementService {
         if (search) {
             countQuery += ` AND (o.order_number ILIKE $${countParamIndex} OR u.full_name ILIKE $${countParamIndex} OR pr.part_description ILIKE $${countParamIndex})`;
             countParams.push(`%${search}%`);
+            countParamIndex++;
+        }
+
+        // Date range filters for count
+        if (from) {
+            countQuery += ` AND DATE(o.created_at) >= $${countParamIndex++}`;
+            countParams.push(from);
+        }
+        if (to) {
+            countQuery += ` AND DATE(o.created_at) <= $${countParamIndex++}`;
+            countParams.push(to);
+        }
+
+        // Garage filter for count
+        if (garage_id) {
+            countQuery += ` AND o.garage_id = $${countParamIndex++}`;
+            countParams.push(garage_id);
         }
 
         const countResult = await this.pool.query(countQuery, countParams);
@@ -307,6 +340,124 @@ export class OrderManagementService {
                 order_id: orderId,
                 order_number: order.order_number,
                 new_status: 'collected'
+            };
+        } catch (err) {
+            await client.query('ROLLBACK');
+            throw err;
+        } finally {
+            client.release();
+        }
+    }
+
+    /**
+     * Bulk update orders (mark collected, mark delivered, etc.)
+     */
+    async bulkUpdateOrders(
+        orderIds: string[],
+        action: string,
+        staffId: string,
+        driverId?: string
+    ): Promise<{ success_count: number; failed_count: number; errors: any[] }> {
+        const client = await this.pool.connect();
+        let successCount = 0;
+        const errors = [];
+
+        try {
+            await client.query('BEGIN');
+
+            for (const orderId of orderIds) {
+                try {
+                    // Get current order
+                    const orderResult = await client.query(
+                        'SELECT order_status, order_number FROM orders WHERE order_id = $1',
+                        [orderId]
+                    );
+
+                    if (orderResult.rows.length === 0) {
+                        errors.push({ order_id: orderId, error: 'Order not found' });
+                        continue;
+                    }
+
+                    const currentStatus = orderResult.rows[0].order_status;
+                    const orderNumber = orderResult.rows[0].order_number;
+                    let newStatus: string | null = null;
+
+                    // Determine new status based on action
+                    switch (action) {
+                        case 'mark_collected':
+                            if (currentStatus === 'ready_for_pickup') {
+                                newStatus = 'collected';
+                            } else {
+                                errors.push({ 
+                                    order_id: orderId, 
+                                    order_number: orderNumber,
+                                    error: `Invalid status transition: ${currentStatus} → collected` 
+                                });
+                                continue;
+                            }
+                            break;
+
+                        case 'mark_delivered':
+                            if (currentStatus === 'in_transit') {
+                                newStatus = 'delivered';
+                            } else {
+                                errors.push({ 
+                                    order_id: orderId, 
+                                    order_number: orderNumber,
+                                    error: `Invalid status transition: ${currentStatus} → delivered` 
+                                });
+                                continue;
+                            }
+                            break;
+
+                        case 'assign_driver':
+                            if (!driverId) {
+                                errors.push({ order_id: orderId, error: 'driver_id required' });
+                                continue;
+                            }
+                            // Update driver assignment
+                            await client.query(
+                                'UPDATE orders SET driver_id = $1, updated_at = NOW() WHERE order_id = $2',
+                                [driverId, orderId]
+                            );
+                            successCount++;
+                            continue;
+
+                        default:
+                            errors.push({ order_id: orderId, error: `Unknown action: ${action}` });
+                            continue;
+                    }
+
+                    if (newStatus) {
+                        await client.query(
+                            `UPDATE orders SET order_status = $1, updated_at = NOW() WHERE order_id = $2`,
+                            [newStatus, orderId]
+                        );
+
+                        // Record in history
+                        await client.query(
+                            `INSERT INTO order_status_history 
+                             (order_id, old_status, new_status, changed_by, changed_by_type, reason)
+                             VALUES ($1, $2, $3, $4, 'operations', 'Bulk update')`,
+                            [orderId, currentStatus, newStatus, staffId]
+                        );
+
+                        successCount++;
+                    }
+                } catch (err) {
+                    errors.push({ 
+                        order_id: orderId, 
+                        error: err instanceof Error ? err.message : 'Unknown error' 
+                    });
+                }
+            }
+
+            await client.query('COMMIT');
+
+            return {
+                success_count: successCount,
+                failed_count: errors.length,
+                errors
             };
         } catch (err) {
             await client.query('ROLLBACK');

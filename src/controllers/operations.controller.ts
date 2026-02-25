@@ -94,6 +94,15 @@ interface CollectOrderBody {
     notes?: string;
 }
 
+interface BulkOrderActionBody {
+    action?: string;
+    order_ids?: unknown;
+    notes?: string;
+    reason?: string;
+    refund_type?: 'full' | 'partial' | 'none' | string;
+    partial_refund_amount?: number | string;
+}
+
 interface ResolveDisputeBody {
     resolution?: string;
     refund_amount?: number | string;
@@ -210,6 +219,9 @@ export const getAnalytics = async (_req: AuthRequest, res: Response) => {
 export const getOrders = async (req: AuthRequest, res: Response) => {
     const status = toQueryString(req.query.status);
     const search = toQueryString(req.query.search);
+    const from = toQueryString(req.query.from);  // Date filter (frontend contract)
+    const to = toQueryString(req.query.to);      // Date filter (frontend contract)
+    const garage_id = toQueryString(req.query.garage_id); // Garage filter (frontend contract)
     const page = req.query.page;
     const limit = req.query.limit;
 
@@ -217,6 +229,9 @@ export const getOrders = async (req: AuthRequest, res: Response) => {
         const result = await orderService.getOrders({
             status,
             search,
+            from,
+            to,
+            garage_id,
             page: parseOptionalInt(page),
             limit: parseOptionalInt(limit)
         });
@@ -226,6 +241,102 @@ export const getOrders = async (req: AuthRequest, res: Response) => {
         logControllerError('[OPERATIONS] getOrders error:', err);
         res.status(500).json({ error: getErrorMessage(err) });
     }
+};
+
+export const bulkOrderAction = async (req: AuthRequest, res: Response) => {
+    const body = req.body as unknown as BulkOrderActionBody;
+    const staffId = getUserId(req);
+
+    if (!staffId) {
+        return res.status(401).json({ error: 'Unauthorized' });
+    }
+
+    const action = typeof body.action === 'string' ? body.action : '';
+    const allowedActions = new Set(['mark_collected', 'mark_delivered', 'cancel_orders']);
+    if (!allowedActions.has(action)) {
+        return res.status(400).json({ error: 'Invalid action. Allowed: mark_collected, mark_delivered, cancel_orders' });
+    }
+
+    const rawOrderIds = Array.isArray(body.order_ids) ? body.order_ids : [];
+    const orderIds = [...new Set(
+        rawOrderIds
+            .filter((id): id is string => typeof id === 'string')
+            .map(id => id.trim())
+            .filter(Boolean)
+    )].slice(0, 100);
+
+    if (orderIds.length === 0) {
+        return res.status(400).json({ error: 'order_ids must be a non-empty array of order IDs' });
+    }
+
+    const notes = typeof body.notes === 'string' ? body.notes.trim() : '';
+    const reason = typeof body.reason === 'string' ? body.reason.trim() : 'Bulk cancellation by operations';
+    const refundType = body.refund_type === 'full' || body.refund_type === 'partial' || body.refund_type === 'none'
+        ? body.refund_type
+        : 'none';
+    const partialRefundAmount = toOptionalNumber(body.partial_refund_amount);
+
+    const successes: Array<{ order_id: string; result?: unknown }> = [];
+    const failures: Array<{ order_id: string; error: string }> = [];
+
+    for (const orderId of orderIds) {
+        try {
+            if (action === 'mark_collected') {
+                const result = await orderService.collectOrder(
+                    orderId,
+                    staffId,
+                    notes || 'Bulk action: marked as collected by operations'
+                );
+                successes.push({ order_id: orderId, result });
+            } else if (action === 'mark_delivered') {
+                const result = await orderService.updateOrderStatus(
+                    orderId,
+                    'delivered',
+                    staffId,
+                    notes || 'Bulk action: marked as delivered by operations'
+                );
+                successes.push({ order_id: orderId, result });
+            } else {
+                const result = await cancellationService.cancelOrderByOperations(
+                    orderId,
+                    staffId,
+                    reason,
+                    {
+                        refund_type: refundType,
+                        partial_refund_amount: partialRefundAmount,
+                        notify_customer: false,
+                        notify_garage: false
+                    }
+                );
+                successes.push({ order_id: orderId, result });
+            }
+        } catch (err) {
+            failures.push({ order_id: orderId, error: getErrorMessage(err) });
+        }
+    }
+
+    try {
+        await dashboardService.invalidateCache();
+    } catch (cacheErr) {
+        logControllerError('[OPERATIONS] bulkOrderAction cache invalidation failed:', cacheErr);
+    }
+
+    logger.info('[OPERATIONS] Bulk order action executed', {
+        action,
+        requested_count: orderIds.length,
+        success_count: successes.length,
+        failed_count: failures.length,
+        executed_by: staffId
+    });
+
+    res.json({
+        action,
+        total: orderIds.length,
+        success_count: successes.length,
+        failed_count: failures.length,
+        successes,
+        failures
+    });
 };
 
 export const getOrderDetails = async (req: AuthRequest, res: Response) => {

@@ -303,6 +303,25 @@
                     </div>
                 </div>
 
+                <!-- Needs Attention Widget -->
+                <div class="content-card" style="margin-bottom: 20px;">
+                    <div class="content-header">
+                        <h3 class="content-title"><i class="bi bi-exclamation-triangle"></i> Needs Attention</h3>
+                        <button class="btn btn-ghost btn-sm" onclick="loadAttentionWidget()">
+                            <i class="bi bi-arrow-clockwise"></i> Refresh
+                        </button>
+                    </div>
+                    <div id="attentionWidgetSummary" style="margin-bottom: 10px; color: var(--text-secondary); font-size: 13px;">
+                        Loading stuck orders...
+                    </div>
+                    <div id="attentionWidgetList"></div>
+                    <div style="margin-top: 10px;">
+                        <button class="btn btn-ghost btn-sm" onclick="switchSection('orders')" style="width: 100%;">
+                            <i class="bi bi-arrow-right"></i> View All Orders
+                        </button>
+                    </div>
+                </div>
+
                 <!-- Recent Activity -->
                 <div class="content-card">
                     <div class="content-header">
@@ -431,6 +450,9 @@
                     <table class="data-table">
                         <thead>
                             <tr>
+                                <th style="width: 40px;">
+                                    <input type="checkbox" id="selectAllOrders" onchange="toggleSelectAllOrders(this.checked)">
+                                </th>
                                 <th>Order #</th>
                                 <th>Customer</th>
                                 <th>Garage</th>
@@ -444,6 +466,28 @@
                         </tbody>
                     </table>
                 </div>
+                
+                <!-- Bulk Action Bar (Phase 1.2) -->
+                <div id="bulkActionBar" class="bulk-action-bar" style="display: none;">
+                    <div class="bulk-action-info">
+                        <i class="bi bi-check-circle-fill"></i>
+                        <span id="selectedCount">0</span> orders selected
+                    </div>
+                    <div class="bulk-action-buttons">
+                        <select id="bulkActionSelect" class="form-control" style="width: auto; min-width: 200px;">
+                            <option value="">Select action...</option>
+                            <option value="mark_collected">Mark as Collected</option>
+                            <option value="mark_delivered">Mark as Delivered</option>
+                        </select>
+                        <button class="btn btn-primary" onclick="executeBulkAction()" id="bulkExecuteBtn">
+                            <i class="bi bi-play-circle"></i> Execute
+                        </button>
+                        <button class="btn btn-ghost" onclick="clearBulkSelection()">
+                            <i class="bi bi-x-circle"></i> Clear
+                        </button>
+                    </div>
+                </div>
+                
                 <!-- Pagination Container -->
                 <div id="ordersPagination"></div>
             </section>
@@ -578,7 +622,7 @@
                     <!-- Collection tab removed (2026-02-01) - duplicates Orders section functionality -->
                     <div class="tab" data-panel="deliveryPanelDelivery">
                         <i class="bi bi-box-arrow-up"></i> Delivery
-                        <span class="nav-badge" id="deliveryBadge" style="display: none;">0</span>
+                        <span class="nav-badge" id="deliveryTabBadge" style="display: none;">0</span>
                     </div>
                     <div class="tab" data-panel="deliveryPanelActive">
                         <i class="bi bi-truck"></i> Active
@@ -1219,11 +1263,9 @@
                     <div class="shortcut-item"><kbd>1</kbd> <span>Overview</span></div>
                     <div class="shortcut-item"><kbd>2</kbd> <span>Orders</span></div>
                     <div class="shortcut-item"><kbd>3</kbd> <span>Delivery</span></div>
-                    <div class="shortcut-item"><kbd>4</kbd> <span>Disputes</span></div>
-                    <div class="shortcut-item"><kbd>5</kbd> <span>Reviews</span></div>
-                    <div class="shortcut-item"><kbd>6</kbd> <span>Support</span></div>
-                    <div class="shortcut-item"><kbd>7</kbd> <span>Users</span></div>
-                    <div class="shortcut-item"><kbd>8</kbd> <span>Finance</span></div>
+                    <div class="shortcut-item"><kbd>4</kbd> <span>Escalations</span></div>
+                    <div class="shortcut-item"><kbd>5</kbd> <span>Reports</span></div>
+                    <div class="shortcut-item"><kbd>6</kbd> <span>Fraud</span></div>
                 </div>
                 <div class="shortcuts-section">
                     <h4>Actions</h4>

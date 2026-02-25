@@ -24,6 +24,9 @@ export interface DashboardStats {
 export interface OrderFilters {
     status?: string;
     search?: string;
+    from?: string;      // From date (YYYY-MM-DD)
+    to?: string;        // To date (YYYY-MM-DD)
+    garage_id?: string; // Filter by garage
     page?: number;
     limit?: number;
 }
