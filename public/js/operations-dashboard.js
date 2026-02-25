@@ -2111,6 +2111,30 @@ function getStuckReason(order) {
             return 'Requires review';
     }
 }
+
+// Helper function to determine row highlighting class
+// Highlights rows that need operator attention (e.g., no driver assigned)
+function getRowClass(order) {
+    const status = order.order_status;
+
+    // Check if stuck (HIGH PRIORITY)
+    if (isOrderStuck(order)) {
+        if (status === 'pending_payment') return 'needs-attention-red';
+        if (status === 'ready_for_pickup' && !order.driver_id) return 'needs-attention-red';
+        if (status === 'disputed') return 'needs-attention-red';
+        return 'needs-attention-amber';
+    }
+
+    // Original logic for non-stuck orders
+    switch (status) {
+        case 'pending_payment': return 'needs-attention-red';
+        case 'confirmed': return 'needs-attention-amber';
+        case 'disputed': return 'needs-attention-red';
+        case 'ready_for_pickup':
+            return !order.driver_id ? 'needs-attention-green' : '';
+        default: return '';
+    }
+}
 // ============================================
 function logout() {
     // Clear all intervals
