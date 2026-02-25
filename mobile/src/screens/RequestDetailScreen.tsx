@@ -165,8 +165,7 @@ export default function RequestDetailScreen() {
                                 partPrice: Number(data.final_price),
                                 deliveryFee: deliveryFee,
                                 partDescription: request?.part_description || '',
-                                orderId: data.order_id,
-                                _cacheKey: `payment_${data.bid_id}_${Date.now()}`
+                                _cacheKey: `payment_${data.bid_id}_${data.order_id || 'new'}_${Date.now()}`
                             });
                         }
                     }

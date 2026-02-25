@@ -18,10 +18,26 @@ import { Colors, Spacing, BorderRadius, FontSizes, Shadows } from '../constants'
 
 const { width } = Dimensions.get('window');
 
+// Type definitions for section structure
+interface SectionHighlight {
+    type: 'gold' | 'primary';
+    text: string;
+}
+
+interface SectionBase {
+    num: number;
+    title: string;
+    icon: string;
+    content?: string;
+    items?: string[];
+    footnote?: string;
+    highlight?: SectionHighlight;
+}
+
 // ============================================
 // LEGAL CONTENT — English
 // ============================================
-const SECTIONS_EN = [
+const SECTIONS_EN: SectionBase[] = [
     {
         num: 1,
         title: 'Acceptance of Terms',
@@ -140,7 +156,7 @@ const SECTIONS_EN = [
 // ============================================
 // LEGAL CONTENT — Arabic
 // ============================================
-const SECTIONS_AR = [
+const SECTIONS_AR: SectionBase[] = [
     {
         num: 1,
         title: 'قبول الشروط',

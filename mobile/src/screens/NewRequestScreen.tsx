@@ -37,6 +37,7 @@ import SearchableDropdown from '../components/SearchableDropdown';
 import PartSpecsCard from '../components/request/PartSpecsCard';
 import PhotoUploadSection from '../components/request/PhotoUploadSection';
 import { PART_CATEGORIES, PART_SUBCATEGORIES } from '../constants/categoryData';
+import { compressImage } from '../utils/imageCompressor';
 
 type NavigationProp = NativeStackNavigationProp<RootStackParamList>;
 type NewRequestRouteProp = RouteProp<RootStackParamList, 'NewRequest'>;
@@ -216,8 +217,21 @@ export default function NewRequestScreen() {
         });
 
         if (!result.canceled && result.assets) {
-            const newImages = result.assets.map(asset => asset.uri);
-            setImages(prev => [...prev, ...newImages].slice(0, 5));
+            // Compress images before adding to state
+            const compressedImages = await Promise.all(
+                result.assets.map(async asset => {
+                    try {
+                        return await compressImage(asset.uri, {
+                            maxWidth: 1920,
+                            quality: 0.7,
+                            format: 'jpeg',
+                        });
+                    } catch (error) {
+                        return asset.uri; // Fallback to original
+                    }
+                })
+            );
+            setImages(prev => [...prev, ...compressedImages].slice(0, 5));
             Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success);
         }
     };
@@ -235,7 +249,16 @@ export default function NewRequestScreen() {
         });
 
         if (!result.canceled && result.assets[0]) {
-            setImages(prev => [...prev, result.assets[0].uri].slice(0, 5));
+            try {
+                const compressed = await compressImage(result.assets[0].uri, {
+                    maxWidth: 1920,
+                    quality: 0.7,
+                    format: 'jpeg',
+                });
+                setImages(prev => [...prev, compressed].slice(0, 5));
+            } catch (error) {
+                setImages(prev => [...prev, result.assets[0].uri].slice(0, 5));
+            }
             Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success);
         }
     };
@@ -258,7 +281,16 @@ export default function NewRequestScreen() {
             allowsEditing: true,
         });
         if (!result.canceled && result.assets[0]) {
-            setCarFrontImage(result.assets[0].uri);
+            try {
+                const compressed = await compressImage(result.assets[0].uri, {
+                    maxWidth: 1920,
+                    quality: 0.7,
+                    format: 'jpeg',
+                });
+                setCarFrontImage(compressed);
+            } catch (error) {
+                setCarFrontImage(result.assets[0].uri);
+            }
             Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success);
         }
     };
@@ -275,7 +307,16 @@ export default function NewRequestScreen() {
             allowsEditing: true,
         });
         if (!result.canceled && result.assets[0]) {
-            setCarRearImage(result.assets[0].uri);
+            try {
+                const compressed = await compressImage(result.assets[0].uri, {
+                    maxWidth: 1920,
+                    quality: 0.7,
+                    format: 'jpeg',
+                });
+                setCarRearImage(compressed);
+            } catch (error) {
+                setCarRearImage(result.assets[0].uri);
+            }
             Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success);
         }
     };
@@ -288,7 +329,16 @@ export default function NewRequestScreen() {
         }
         const result = await ImagePicker.launchCameraAsync({ quality: 0.8, allowsEditing: true });
         if (!result.canceled && result.assets[0]) {
-            setCarFrontImage(result.assets[0].uri);
+            try {
+                const compressed = await compressImage(result.assets[0].uri, {
+                    maxWidth: 1920,
+                    quality: 0.7,
+                    format: 'jpeg',
+                });
+                setCarFrontImage(compressed);
+            } catch (error) {
+                setCarFrontImage(result.assets[0].uri);
+            }
             Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success);
         }
     };
@@ -301,7 +351,16 @@ export default function NewRequestScreen() {
         }
         const result = await ImagePicker.launchCameraAsync({ quality: 0.8, allowsEditing: true });
         if (!result.canceled && result.assets[0]) {
-            setCarRearImage(result.assets[0].uri);
+            try {
+                const compressed = await compressImage(result.assets[0].uri, {
+                    maxWidth: 1920,
+                    quality: 0.7,
+                    format: 'jpeg',
+                });
+                setCarRearImage(compressed);
+            } catch (error) {
+                setCarRearImage(result.assets[0].uri);
+            }
             Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success);
         }
     };

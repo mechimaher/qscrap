@@ -24,6 +24,7 @@ import { Spacing, BorderRadius, FontSizes, Shadows, Colors as ThemeColors } from
 import { AuthStackParamList } from '../../../App';
 import { rtlFlexDirection, rtlTextAlign } from '../../utils/rtl';
 import { Ionicons } from '@expo/vector-icons';
+import { BiometricLogin } from '../../components/BiometricLogin';
 
 type LoginScreenNavigationProp = NativeStackNavigationProp<AuthStackParamList, 'Login'>;
 const { width } = Dimensions.get('window');
@@ -221,6 +222,13 @@ export default function LoginScreen() {
                         <TouchableOpacity style={[styles.forgotPassword, isRTL && { alignSelf: 'flex-start' }]} accessibilityRole="button" accessibilityLabel={t('auth.forgotPassword')}>
                             <Text style={[styles.forgotPasswordText, { color: colors.primary }]}>{t('auth.forgotPassword')}</Text>
                         </TouchableOpacity>
+
+                        {/* Biometric Login - Premium Quick Access */}
+                        <BiometricLogin
+                            onSuccess={() => {
+                                // Navigation handled by AuthContext
+                            }}
+                        />
 
                         <TouchableOpacity
                             style={[styles.loginButton, isLoading && styles.loginButtonDisabled]}

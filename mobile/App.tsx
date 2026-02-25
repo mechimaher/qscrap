@@ -25,6 +25,7 @@ import { SocketProvider, useSocketContext } from './src/hooks/useSocket';
 import { Colors } from './src/constants/theme';
 import NotificationOverlay from './src/components/NotificationOverlay';
 import { ToastProvider } from './src/components/Toast';
+import OfflineBanner from './src/components/OfflineBanner';
 import { Address } from './src/services/api';
 import { BadgeCountsProvider, useBadgeCounts } from './src/hooks/useBadgeCounts';
 
@@ -490,6 +491,7 @@ function ThemedApp() {
     <>
       <StatusBar style={isDarkMode ? 'light' : 'dark'} />
       <RootNavigator />
+      <OfflineBanner />
     </>
   );
 }
