@@ -27,6 +27,7 @@ import { Colors, Spacing, BorderRadius, FontSize, Shadows } from '../constants/t
 import * as Haptics from 'expo-haptics';
 import { offlineQueue } from '../services/OfflineQueue';
 import { executeWithOfflineFallback } from '../utils/syncHelper';
+import { compressPODPhoto } from '../utils/imageCompressor';
 import { useI18n } from '../i18n';
 
 type WizardStep = 'photo' | 'payment' | 'success';
@@ -130,7 +131,17 @@ export default function ProofOfDeliveryScreen() {
                 quality: 0.5,
                 base64: false,
             });
-            setPhotoUri(photo?.uri || null);
+            
+            if (photo?.uri) {
+                // Compress photo before storing (60-80% size reduction)
+                Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
+                const compressedUri = await compressPODPhoto(photo.uri, {
+                    maxWidth: 1920,
+                    quality: 0.7,
+                    format: 'jpeg',
+                });
+                setPhotoUri(compressedUri);
+            }
         } catch (error) {
             Alert.alert("Error", "Failed to take photo");
         }

@@ -6,7 +6,9 @@
     "start": "expo start",
     "android": "expo run:android",
     "ios": "expo run:ios",
-    "web": "expo start --web"
+    "web": "expo start --web",
+    "test": "jest --verbose",
+    "test:coverage": "jest --verbose --coverage"
   },
   "dependencies": {
     "@expo/vector-icons": "^15.0.3",
@@ -23,6 +25,7 @@
     "expo-device": "~8.0.10",
     "expo-file-system": "^19.0.21",
     "expo-haptics": "~15.0.8",
+    "expo-image-manipulator": "~14.0.8",
     "expo-image-picker": "~17.0.10",
     "expo-linear-gradient": "~15.0.8",
     "expo-local-authentication": "~17.0.8",
@@ -55,6 +58,7 @@
     "@types/react-native-maps": "^0.24.2",
     "babel-preset-expo": "^54.0.9",
     "eas-cli": "^16.31.0",
+    "jest-expo": "^54.0.17",
     "typescript": "~5.9.2"
   },
   "private": true
