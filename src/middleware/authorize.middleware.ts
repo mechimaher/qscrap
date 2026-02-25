@@ -25,6 +25,7 @@ export const authorizeOperations = (req: AuthRequest, res: Response, next: NextF
  * - admin
  * - operations
  * - staff with operations role
+ * - finance (for viewing order stats needed for payout processing)
  */
 export const authorizeOperationsDashboard = (req: AuthRequest, res: Response, next: NextFunction) => {
     if (!req.user) {
@@ -34,8 +35,9 @@ export const authorizeOperationsDashboard = (req: AuthRequest, res: Response, ne
     const isAdmin = req.user.userType === 'admin';
     const isOperations = req.user.userType === 'operations';
     const isOperationsStaff = req.user.userType === 'staff' && req.user.staffRole === 'operations';
+    const isFinance = req.user.userType === 'finance';
 
-    if (!isAdmin && !isOperations && !isOperationsStaff) {
+    if (!isAdmin && !isOperations && !isOperationsStaff && !isFinance) {
         logger.warn('Unauthorized operations dashboard access attempt', {
             userId: req.user.userId,
             userType: req.user.userType,
@@ -44,7 +46,7 @@ export const authorizeOperationsDashboard = (req: AuthRequest, res: Response, ne
         });
 
         return res.status(403).json({
-            error: 'Access denied. Operations dashboard is restricted to admin, operations, or operations staff.'
+            error: 'Access denied. Operations dashboard is restricted to admin, operations, operations staff, or finance.'
         });
     }
 
