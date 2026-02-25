@@ -800,7 +800,7 @@ async function loadGarageFilter() {
         const select = document.getElementById('orderGarageFilter');
         if (!select || select.options.length > 1) return; // Already loaded
 
-        const res = await fetch(`${API_URL}/admin/garages?status=approved&limit=100`, {
+        const res = await fetch(`${API_URL}/operations/garages?status=approved&limit=100`, {
             headers: { 'Authorization': `Bearer ${token}` }
         });
         const data = await res.json();
