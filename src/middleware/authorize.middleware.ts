@@ -8,6 +8,7 @@ import logger from '../utils/logger';
  * 
  * Allows: admin, operations, support, staff, and finance
  * Finance needs access for payout processing workflows
+ * Also allows staff with finance role
  */
 export const authorizeOperations = (req: AuthRequest, res: Response, next: NextFunction) => {
     if (!req.user) {
@@ -15,7 +16,12 @@ export const authorizeOperations = (req: AuthRequest, res: Response, next: NextF
     }
 
     const allowedUserTypes = ['admin', 'operations', 'support', 'staff', 'finance'];
-    if (!allowedUserTypes.includes(req.user.userType)) {
+    
+    // Allow finance users directly or staff with finance role
+    const isFinance = req.user.userType === 'finance' || 
+                      (req.user.userType === 'staff' && req.user.staffRole === 'finance');
+    
+    if (!allowedUserTypes.includes(req.user.userType) && !isFinance) {
         return res.status(403).json({ error: 'Access denied. Operations role required.' });
     }
 
@@ -28,7 +34,7 @@ export const authorizeOperations = (req: AuthRequest, res: Response, next: NextF
  * - admin
  * - operations
  * - staff with operations role
- * - finance (for viewing order stats needed for payout processing)
+ * - finance (userType or staff with finance role)
  */
 export const authorizeOperationsDashboard = (req: AuthRequest, res: Response, next: NextFunction) => {
     if (!req.user) {
@@ -38,7 +44,7 @@ export const authorizeOperationsDashboard = (req: AuthRequest, res: Response, ne
     const isAdmin = req.user.userType === 'admin';
     const isOperations = req.user.userType === 'operations';
     const isOperationsStaff = req.user.userType === 'staff' && req.user.staffRole === 'operations';
-    const isFinance = req.user.userType === 'finance';
+    const isFinance = req.user.userType === 'finance' || (req.user.userType === 'staff' && req.user.staffRole === 'finance');
 
     if (!isAdmin && !isOperations && !isOperationsStaff && !isFinance) {
         logger.warn('Unauthorized operations dashboard access attempt', {
