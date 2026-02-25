@@ -2363,13 +2363,13 @@ function renderActiveDeliveries(deliveries) {
         const lastPing = d.last_location_update ? new Date(d.last_location_update) : null;
         const now = new Date();
         const minutesAgo = lastPing ? Math.floor((now - lastPing) / 60000) : null;
-        
+
         // Determine ping status with color coding
         let pingStatus = 'unknown';
         let pingLabel = 'No signal';
         let pingColor = '#6b7280'; // gray
         let pingTitle = 'No GPS data available';
-        
+
         if (minutesAgo !== null) {
             pingTitle = lastPing.toLocaleString();
             if (minutesAgo < 5) {
@@ -2387,13 +2387,13 @@ function renderActiveDeliveries(deliveries) {
             }
         }
         // =========================================
-        
+
         const statusClass = {
             'assigned': 'pending',
             'picked_up': 'in-transit',
             'in_transit': 'in-transit'
         }[d.status] || 'pending';
-        
+
         return `
             <tr>
                 <td><strong>#${d.order_number || '-'}</strong></td>
@@ -2412,10 +2412,19 @@ function renderActiveDeliveries(deliveries) {
                 </td>
                 <td><span class="status-badge ${statusClass}">${(d.order_status || d.assignment_status || 'in_transit').replace(/_/g, ' ')}</span></td>
                 <td>
-                    <div style="display: flex; align-items: center; gap: 6px;" title="${pingTitle}">
-                        <span style="width: 8px; height: 8px; border-radius: 50%; background: ${pingColor}; display: inline-block; ${pingStatus === 'live' ? 'animation: pulse 2s infinite;' : ''}"></span>
-                        <span style="color: ${pingColor}; font-weight: 600; font-size: 13px;">${pingLabel}</span>
-                    </div>
+                    ${d.driver_lat && d.driver_lng ? `
+                        <a href="https://www.google.com/maps?q=${d.driver_lat},${d.driver_lng}" target="_blank" rel="noopener"
+                           style="display: flex; align-items: center; gap: 6px; text-decoration: none; cursor: pointer;" title="${pingTitle} — Click to view on map">
+                            <span style="width: 8px; height: 8px; border-radius: 50%; background: ${pingColor}; display: inline-block; ${pingStatus === 'live' ? 'animation: pulse 2s infinite;' : ''}"></span>
+                            <span style="color: ${pingColor}; font-weight: 600; font-size: 13px;">${pingLabel}</span>
+                            <i class="bi bi-box-arrow-up-right" style="font-size: 10px; color: var(--text-muted);"></i>
+                        </a>
+                    ` : `
+                        <div style="display: flex; align-items: center; gap: 6px;" title="${pingTitle}">
+                            <span style="width: 8px; height: 8px; border-radius: 50%; background: ${pingColor}; display: inline-block;"></span>
+                            <span style="color: ${pingColor}; font-weight: 600; font-size: 13px;">${pingLabel}</span>
+                        </div>
+                    `}
                 </td>
                 <td>
                     ${d.assignment_id ? `
