@@ -264,6 +264,15 @@ export const ar = {
         resendCode: 'إعادة إرسال الرمز',
         resendWait: 'يرجى الانتظار {{seconds}} ثانية',
         wrongEmail: 'البريد خاطئ؟ ارجع وقم بتغييره',
+        // المصادقة البيومترية
+        quickLogin: 'تسجيل سريع',
+        biometricLogin: 'تسجيل الدخول باستخدام {{type}}',
+        biometricNotAvailable: 'المصادقة البيومترية غير متاحة على هذا الجهاز',
+        biometricFailed: 'فشلت المصادقة البيومترية. يرجى استخدام كلمة المرور.',
+        biometricPrompt: 'تسجيل الدخول إلى كيو سكراب',
+        usePasscode: 'استخدام رمز المرور',
+        enableBiometric: 'تفعيل {{type}}',
+        biometricSetup: 'إعداد {{type}} لتسجيل دخول أسرع',
     },
 
     // =============================================

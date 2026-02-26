@@ -263,6 +263,15 @@ export const en = {
         resendCode: 'Resend Code',
         resendWait: 'Please wait {{seconds}}s',
         wrongEmail: 'Wrong email? Go back and change it',
+        // Biometric Authentication
+        quickLogin: 'Quick Login',
+        biometricLogin: 'Login with {{type}}',
+        biometricNotAvailable: 'Biometric authentication is not available on this device',
+        biometricFailed: 'Biometric authentication failed. Please use your password.',
+        biometricPrompt: 'Login to QScrap',
+        usePasscode: 'Use Passcode',
+        enableBiometric: 'Enable {{type}}',
+        biometricSetup: 'Set up {{type}} for faster login',
     },
 
     // =============================================
@@ -768,6 +777,24 @@ export const en = {
         gpsFailed: 'Failed to get GPS location',
         enableLocationPermission: 'Please enable location permission',
         popularAreas: 'Popular Areas',
+        // Address labels
+        labels: {
+            home: 'Home',
+            office: 'Office',
+            work: 'Work',
+            other: 'Other'
+        },
+        // Qatar zones
+        zones: {
+            alSadd: 'Al Sadd',
+            thePearl: 'The Pearl',
+            westBay: 'West Bay',
+            lusail: 'Lusail',
+            alWakra: 'Al Wakra',
+            alRayyan: 'Al Rayyan',
+            alDuhail: 'Al Duhail',
+            industrialArea: 'Industrial Area'
+        },
     },
 
     // =============================================

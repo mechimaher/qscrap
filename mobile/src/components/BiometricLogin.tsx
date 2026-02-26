@@ -165,7 +165,7 @@ export const BiometricLogin: React.FC<BiometricLoginProps> = ({
                     {t('auth.quickLogin')}
                 </Text>
                 <Text style={[styles.subtitle, { color: '#666' }]}>
-                    {biometricType || ''}
+                    {biometricType ? t('auth.biometricLogin', { type: biometricType }) : ''}
                 </Text>
             </View>
             {isLoading && (

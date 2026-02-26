@@ -224,11 +224,13 @@ export default function LoginScreen() {
                         </TouchableOpacity>
 
                         {/* Biometric Login - Premium Quick Access */}
-                        <BiometricLogin
-                            onSuccess={() => {
-                                // Navigation handled by AuthContext
-                            }}
-                        />
+                        <View style={styles.biometricContainer}>
+                            <BiometricLogin
+                                onSuccess={() => {
+                                    // Navigation handled by AuthContext
+                                }}
+                            />
+                        </View>
 
                         <TouchableOpacity
                             style={[styles.loginButton, isLoading && styles.loginButtonDisabled]}
@@ -416,6 +418,10 @@ const styles = StyleSheet.create({
     forgotPasswordText: {
         fontSize: FontSizes.sm,
         fontWeight: '600',
+    },
+    biometricContainer: {
+        marginBottom: Spacing.md,
+        marginTop: Spacing.sm,
     },
     loginButton: {
         borderRadius: BorderRadius.xl,
