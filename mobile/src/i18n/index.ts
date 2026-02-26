@@ -76,9 +76,9 @@ export function getTranslationWithParams(
 ): string {
     let text = getTranslation(lang, path);
 
-    // Replace all {{key}} placeholders
+    // Replace all {{key}} placeholders (escape curly braces for regex)
     Object.entries(params).forEach(([key, value]) => {
-        text = text.replace(new RegExp(`{{${key}}}`, 'g'), String(value));
+        text = text.replace(new RegExp(`\\{\\{${key}\\}\\}`, 'g'), String(value));
     });
 
     return text;

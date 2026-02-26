@@ -83,6 +83,8 @@ export const ar = {
         unknown: 'حدث خطأ غير معروف',
         gallery: 'المعرض',
         camera: 'الكاميرا',
+        notNow: 'ليس الآن',
+        enable: 'تفعيل',
         // مفاتيح تفاصيل الطلب
         order: 'طلب',
         current: 'الحالي',
@@ -273,6 +275,7 @@ export const ar = {
         usePasscode: 'استخدام رمز المرور',
         enableBiometric: 'تفعيل {{type}}',
         biometricSetup: 'إعداد {{type}} لتسجيل دخول أسرع',
+        biometricSetupMessage: 'هل ترغب في تفعيل التسجيل السريع باستخدام {{type}} للوصول الأسرع؟',
     },
 
     // =============================================

@@ -82,6 +82,8 @@ export const en = {
         unknown: 'Unknown error occurred',
         gallery: 'Gallery',
         camera: 'Camera',
+        notNow: 'Not Now',
+        enable: 'Enable',
         // Order Details common keys
         order: 'Order',
         current: 'Current',
@@ -272,6 +274,7 @@ export const en = {
         usePasscode: 'Use Passcode',
         enableBiometric: 'Enable {{type}}',
         biometricSetup: 'Set up {{type}} for faster login',
+        biometricSetupMessage: 'Would you like to enable Quick Login with {{type}} for faster access?',
     },
 
     // =============================================

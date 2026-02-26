@@ -106,15 +106,15 @@ export default function LoginScreen() {
             if (!isBiometricEnabled) {
                 setTimeout(() => {
                     Alert.alert(
-                        t('auth.biometricSetup'),
-                        'Would you like to enable Quick Login with Face ID/Touch ID for faster access?',
+                        t('auth.biometricSetup', { type: Platform.OS === 'ios' ? 'Face ID' : 'Fingerprint' }),
+                        t('auth.biometricSetupMessage', { type: Platform.OS === 'ios' ? 'Face ID' : 'Fingerprint' }),
                         [
                             {
-                                text: 'Not Now',
+                                text: t('common.notNow'),
                                 style: 'cancel',
                             },
                             {
-                                text: 'Enable',
+                                text: t('common.enable'),
                                 onPress: async () => {
                                     await api.saveBiometricCredentials(phone, password);
                                     Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success);
