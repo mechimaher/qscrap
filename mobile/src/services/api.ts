@@ -7,6 +7,9 @@ import * as SecureStore from 'expo-secure-store';
 const TOKEN_KEY = 'qscrap_token';
 const REFRESH_TOKEN_KEY = 'qscrap_refresh_token';
 const USER_KEY = 'qscrap_user';
+const BIOMETRIC_PHONE = 'qscrap_biometric_phone';
+const BIOMETRIC_PASSWORD = 'qscrap_biometric_password';
+const BIOMETRIC_ENABLED = 'qscrap_biometric_enabled';
 
 // Types
 export interface User {
@@ -269,6 +272,67 @@ class ApiService {
         await SecureStore.deleteItemAsync(TOKEN_KEY);
         await SecureStore.deleteItemAsync(REFRESH_TOKEN_KEY);
         await SecureStore.deleteItemAsync(USER_KEY);
+    }
+
+    // ========== Biometric Authentication ==========
+    
+    async saveBiometricCredentials(phone: string, password: string): Promise<void> {
+        try {
+            await SecureStore.setItemAsync(BIOMETRIC_PHONE, phone);
+            await SecureStore.setItemAsync(BIOMETRIC_PASSWORD, password);
+            await SecureStore.setItemAsync(BIOMETRIC_ENABLED, 'true');
+            log('[API] Biometric credentials saved');
+        } catch (error) {
+            warn('[API] Failed to save biometric credentials:', error);
+        }
+    }
+
+    async getBiometricCredentials(): Promise<{ phone: string; password: string } | null> {
+        try {
+            const enabled = await SecureStore.getItemAsync(BIOMETRIC_ENABLED);
+            if (enabled !== 'true') {
+                return null;
+            }
+            
+            const phone = await SecureStore.getItemAsync(BIOMETRIC_PHONE);
+            const password = await SecureStore.getItemAsync(BIOMETRIC_PASSWORD);
+            
+            if (phone && password) {
+                return { phone, password };
+            }
+            return null;
+        } catch (error) {
+            warn('[API] Failed to get biometric credentials:', error);
+            return null;
+        }
+    }
+
+    async clearBiometricCredentials(): Promise<void> {
+        try {
+            await SecureStore.deleteItemAsync(BIOMETRIC_PHONE);
+            await SecureStore.deleteItemAsync(BIOMETRIC_PASSWORD);
+            await SecureStore.deleteItemAsync(BIOMETRIC_ENABLED);
+            log('[API] Biometric credentials cleared');
+        } catch (error) {
+            warn('[API] Failed to clear biometric credentials:', error);
+        }
+    }
+
+    async isBiometricEnabled(): Promise<boolean> {
+        try {
+            const enabled = await SecureStore.getItemAsync(BIOMETRIC_ENABLED);
+            return enabled === 'true';
+        } catch {
+            return false;
+        }
+    }
+
+    async setBiometricEnabled(enabled: boolean): Promise<void> {
+        try {
+            await SecureStore.setItemAsync(BIOMETRIC_ENABLED, enabled ? 'true' : 'false');
+        } catch (error) {
+            warn('[API] Failed to set biometric enabled:', error);
+        }
     }
 
     async serverLogout(): Promise<void> {

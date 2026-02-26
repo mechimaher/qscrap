@@ -17,6 +17,8 @@ import { Ionicons } from '@expo/vector-icons';
 import * as Haptics from 'expo-haptics';
 import { Colors, Spacing, FontSizes, BorderRadius, Shadows } from '../constants/theme';
 import { useTranslation } from '../contexts/LanguageContext';
+import { useAuth } from '../contexts/AuthContext';
+import { api } from '../services/api';
 import { rtlFlexDirection } from '../utils/rtl';
 
 // Try to import expo-local-authentication (may not be installed yet)
@@ -37,6 +39,7 @@ export const BiometricLogin: React.FC<BiometricLoginProps> = ({
     onFail,
 }) => {
     const { t, isRTL } = useTranslation();
+    const { login } = useAuth();
     const [hasHardware, setHasHardware] = useState(false);
     const [isEnrolled, setIsEnrolled] = useState(false);
     const [biometricType, setBiometricType] = useState<string | null>(null);
@@ -118,9 +121,35 @@ export const BiometricLogin: React.FC<BiometricLoginProps> = ({
 
             if (result.success) {
                 Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success);
-                // For security, biometric just confirms identity
-                // User still needs to login with credentials if not already logged in
-                onSuccess?.();
+                
+                // Retrieve stored credentials and auto-login
+                const credentials = await api.getBiometricCredentials();
+                
+                if (credentials?.phone && credentials?.password) {
+                    // Auto-login with stored credentials
+                    const loginResult = await login(credentials.phone, credentials.password);
+                    
+                    if (loginResult.success) {
+                        onSuccess?.();
+                    } else {
+                        // Login failed - clear biometric credentials
+                        await api.clearBiometricCredentials();
+                        Alert.alert(
+                            t('common.error'),
+                            'Login failed. Please login manually with your password.',
+                            [{ text: t('common.ok') }]
+                        );
+                        onFail?.();
+                    }
+                } else {
+                    // No credentials stored
+                    Alert.alert(
+                        t('common.error'),
+                        'No biometric credentials found. Please login manually.',
+                        [{ text: t('common.ok') }]
+                    );
+                    onFail?.();
+                }
             } else {
                 Haptics.notificationAsync(Haptics.NotificationFeedbackType.Error);
                 onFail?.();

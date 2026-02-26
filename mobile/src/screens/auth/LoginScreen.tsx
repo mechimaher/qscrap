@@ -25,6 +25,8 @@ import { AuthStackParamList } from '../../../App';
 import { rtlFlexDirection, rtlTextAlign } from '../../utils/rtl';
 import { Ionicons } from '@expo/vector-icons';
 import { BiometricLogin } from '../../components/BiometricLogin';
+import { api } from '../../services/api';
+import { Alert } from 'react-native';
 
 type LoginScreenNavigationProp = NativeStackNavigationProp<AuthStackParamList, 'Login'>;
 const { width } = Dimensions.get('window');
@@ -98,6 +100,30 @@ export default function LoginScreen() {
             Haptics.notificationAsync(Haptics.NotificationFeedbackType.Error);
         } else {
             Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success);
+            
+            // Prompt to enable biometric login (only if not already enabled)
+            const isBiometricEnabled = await api.isBiometricEnabled();
+            if (!isBiometricEnabled) {
+                setTimeout(() => {
+                    Alert.alert(
+                        t('auth.biometricSetup'),
+                        'Would you like to enable Quick Login with Face ID/Touch ID for faster access?',
+                        [
+                            {
+                                text: 'Not Now',
+                                style: 'cancel',
+                            },
+                            {
+                                text: 'Enable',
+                                onPress: async () => {
+                                    await api.saveBiometricCredentials(phone, password);
+                                    Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success);
+                                },
+                            },
+                        ]
+                    );
+                }, 500);
+            }
         }
     };
 
