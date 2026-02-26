@@ -141,7 +141,6 @@ export default function LoginScreen() {
                                 resizeMode="cover"
                             />
                         </Animated.View>
-                        <Text style={styles.logoText}>QSCRAP</Text>
                         <View style={styles.driverBadge}>
                             <Text style={styles.driverBadgeText}>DRIVER</Text>
                         </View>
@@ -302,15 +301,6 @@ const styles = StyleSheet.create({
         borderRadius: 28,
         borderWidth: 3,
         borderColor: '#D4AF37',
-    },
-    logoText: {
-        fontSize: 42,
-        fontWeight: '800',
-        color: '#ffffff',
-        letterSpacing: 2,
-        textShadowColor: 'rgba(138, 21, 56, 0.6)',
-        textShadowOffset: { width: 0, height: 2 },
-        textShadowRadius: 10,
     },
     driverBadge: {
         backgroundColor: Colors.secondary,

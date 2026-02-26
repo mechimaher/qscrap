@@ -43,6 +43,7 @@ describe('API Service', () => {
         });
 
         it('should clear all tokens', async () => {
+            (SecureStore.deleteItemAsync as jest.Mock).mockResolvedValue(true);
             (api as any).token = 'test-token';
             (api as any).refreshTokenValue = 'test-refresh';
 
@@ -76,7 +77,7 @@ describe('API Service', () => {
                 const result = await api.login('55551234', 'password123');
 
                 expect(mockFetch).toHaveBeenCalledWith(
-                    expect.stringContaining('/auth/driver/login'),
+                    expect.stringContaining('/auth/login'),
                     expect.objectContaining({
                         method: 'POST',
                         headers: expect.objectContaining({
@@ -96,6 +97,7 @@ describe('API Service', () => {
                 const mockFetch = global.fetch as jest.Mock;
                 mockFetch.mockResolvedValueOnce({
                     ok: false,
+                    status: 401,
                     json: () => Promise.resolve({ error: 'Invalid credentials' }),
                     headers: { get: () => 'application/json' },
                 });
@@ -153,7 +155,7 @@ describe('API Service', () => {
                 const result = await api.getProfile();
 
                 expect(mockFetch).toHaveBeenCalledWith(
-                    expect.stringContaining('/driver/profile'),
+                    expect.stringContaining('/driver/me'),
                     expect.objectContaining({
                         headers: expect.objectContaining({
                             Authorization: 'Bearer test-token',
@@ -168,20 +170,20 @@ describe('API Service', () => {
         describe('toggleAvailability', () => {
             it('should PUT /driver/toggle-availability with status', async () => {
                 (SecureStore.getItemAsync as jest.Mock).mockResolvedValue('test-token');
-                
+
                 const mockFetch = global.fetch as jest.Mock;
                 mockFetch.mockResolvedValueOnce({
                     ok: true,
                     json: () => Promise.resolve({ success: true, status: 'offline' }),
                     headers: { get: () => 'application/json' },
                 });
-                
+
                 await api.toggleAvailability('offline');
-                
+
                 expect(mockFetch).toHaveBeenCalledWith(
-                    expect.stringContaining('/driver/toggle-availability'),
+                    expect.stringContaining('/driver/availability'),
                     expect.objectContaining({
-                        method: 'PUT',
+                        method: 'POST',
                         body: JSON.stringify({ status: 'offline' }),
                     })
                 );
@@ -213,7 +215,7 @@ describe('API Service', () => {
                 const result = await api.getAssignments('active');
 
                 expect(mockFetch).toHaveBeenCalledWith(
-                    expect.stringContaining('/driver/assignments?filter=active'),
+                    expect.stringContaining('/driver/assignments?status=active'),
                     expect.objectContaining({
                         headers: expect.objectContaining({
                             Authorization: 'Bearer test-token',
@@ -297,7 +299,7 @@ describe('API Service', () => {
                 expect(mockFetch).toHaveBeenCalledWith(
                     expect.stringContaining('/driver/assignments/assign-1/status'),
                     expect.objectContaining({
-                        method: 'PUT',
+                        method: 'PATCH',
                         body: JSON.stringify({ status: 'picked_up' }),
                     })
                 );
@@ -309,14 +311,14 @@ describe('API Service', () => {
         describe('uploadProof', () => {
             it('should POST /driver/assignments/:id/pod with photo and signature', async () => {
                 (SecureStore.getItemAsync as jest.Mock).mockResolvedValue('test-token');
-                
+
                 const mockFetch = global.fetch as jest.Mock;
                 mockFetch.mockResolvedValueOnce({
                     ok: true,
                     json: () => Promise.resolve({ success: true }),
                     headers: { get: () => 'application/json' },
                 });
-                
+
                 const result = await api.uploadProof(
                     'assign-1',
                     'base64-photo-data',
@@ -324,14 +326,14 @@ describe('API Service', () => {
                     'Payment: cash',
                     'cash'
                 );
-                
+
                 expect(mockFetch).toHaveBeenCalledWith(
-                    expect.stringContaining('/driver/assignments/assign-1/pod'),
+                    expect.stringContaining('/driver/assignments/assign-1/proof'),
                     expect.objectContaining({
                         method: 'POST',
                     })
                 );
-                
+
                 expect(result.success).toBe(true);
             });
         });
@@ -344,34 +346,30 @@ describe('API Service', () => {
             const mockFetch = global.fetch as jest.Mock;
             mockFetch.mockResolvedValueOnce({
                 ok: false,
-                status: 401,
-                json: () => Promise.resolve({ error: 'Unauthorized' }),
+                status: 400,
+                json: () => Promise.resolve({ error: 'Bad Request' }),
                 headers: { get: () => 'application/json' },
             });
 
-            await expect(api.getProfile()).rejects.toThrow('Unauthorized');
+            await expect(api.getProfile()).rejects.toThrow('Bad Request');
         });
 
         it('should throw on network error', async () => {
             const mockFetch = global.fetch as jest.Mock;
             mockFetch.mockRejectedValueOnce(new Error('Network request failed'));
 
-            await expect(api.getProfile()).rejects.toThrow('Network request failed');
+            await expect(api.getProfile()).rejects.toThrow('Network error - please check your connection');
         });
 
         it('should handle timeout correctly', async () => {
-            jest.useFakeTimers();
+            (SecureStore.getItemAsync as jest.Mock).mockResolvedValue('test-token');
             const mockFetch = global.fetch as jest.Mock;
 
-            mockFetch.mockImplementationOnce(() => new Promise((_, reject) => {
-                setTimeout(() => reject(new Error('Timeout')), 20000);
-            }));
+            const abortError = new Error('AbortError');
+            abortError.name = 'AbortError';
+            mockFetch.mockRejectedValueOnce(abortError);
 
-            const profilePromise = api.getProfile();
-            jest.runAllTimers();
-
-            await expect(profilePromise).rejects.toThrow();
-            jest.useRealTimers();
+            await expect(api.getProfile()).rejects.toThrow('Request timed out - please check your connection');
         });
     });
 

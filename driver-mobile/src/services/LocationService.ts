@@ -60,26 +60,30 @@ class LocationService {
     }
 
     async startTracking() {
-        const hasPermissions = await this.requestPermissions();
-        if (!hasPermissions) {
-            console.warn('[LocationService] Permissions not granted');
-            return;
-        }
-
-        const isStarted = await Location.hasStartedLocationUpdatesAsync(LOCATION_TASK_NAME);
-        if (isStarted) return;
-
-        await Location.startLocationUpdatesAsync(LOCATION_TASK_NAME, {
-            accuracy: Location.Accuracy.Balanced,
-            timeInterval: 60 * 1000, // 60 seconds
-            distanceInterval: 100, // 100 meters
-            showsBackgroundLocationIndicator: true,
-            foregroundService: {
-                notificationTitle: "QScrap Driver",
-                notificationBody: "Tracking your location for delivery assignments",
-                notificationColor: "#800000"
+        try {
+            const hasPermissions = await this.requestPermissions();
+            if (!hasPermissions) {
+                console.warn('[LocationService] Permissions not granted');
+                return;
             }
-        });
+
+            const isStarted = await Location.hasStartedLocationUpdatesAsync(LOCATION_TASK_NAME);
+            if (isStarted) return;
+
+            await Location.startLocationUpdatesAsync(LOCATION_TASK_NAME, {
+                accuracy: Location.Accuracy.Balanced,
+                timeInterval: 60 * 1000,
+                distanceInterval: 100,
+                showsBackgroundLocationIndicator: true,
+                foregroundService: {
+                    notificationTitle: "QScrap Driver",
+                    notificationBody: "Tracking your location for delivery assignments",
+                    notificationColor: "#800000"
+                }
+            });
+        } catch (error) {
+            console.error('[LocationService] Failed to start tracking:', error);
+        }
     }
 
     async stopTracking() {
@@ -97,7 +101,7 @@ class LocationService {
     async cleanup() {
         // First stop tracking
         await this.stopTracking();
-        
+
         // Then unregister the task completely
         const isRegistered = await TaskManager.isTaskRegisteredAsync(LOCATION_TASK_NAME);
         if (isRegistered) {

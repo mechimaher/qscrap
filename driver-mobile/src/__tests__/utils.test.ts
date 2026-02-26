@@ -11,6 +11,19 @@ import * as FileSystem from 'expo-file-system';
 jest.mock('expo-image-manipulator');
 jest.mock('expo-file-system');
 
+// Mock Alert to auto-trigger 'Save for Later'
+import { Alert } from 'react-native';
+jest.spyOn(Alert, 'alert').mockImplementation((title, message, buttons) => {
+    if (buttons && buttons.length > 0) {
+        const saveButton = buttons.find(b => b.text === 'Save for Later');
+        if (saveButton && saveButton.onPress) {
+            saveButton.onPress();
+        } else if (buttons[0].onPress) {
+            buttons[0].onPress();
+        }
+    }
+});
+
 describe('Image Compressor', () => {
     beforeEach(() => {
         jest.clearAllMocks();
@@ -24,11 +37,12 @@ describe('Image Compressor', () => {
                 height: 1080,
             });
 
-            const result = await compressPODPhoto('original-uri');
+            const result = await compressPODPhoto('file:///original.jpg');
 
-            expect(result).toBe('compressed-uri');
+            expect(result.uri).toBe('compressed-uri');
+            expect(result.success).toBe(true);
             expect(ImageManipulator.manipulateAsync).toHaveBeenCalledWith(
-                'original-uri',
+                'file:///original.jpg',
                 expect.arrayContaining([
                     expect.objectContaining({
                         resize: expect.objectContaining({
@@ -49,15 +63,15 @@ describe('Image Compressor', () => {
                 height: 900,
             });
 
-            const result = await compressPODPhoto('original-uri', {
+            const result = await compressPODPhoto('file:///original.jpg', {
                 maxWidth: 1600,
                 quality: 0.8,
                 format: 'jpeg',
             });
 
-            expect(result).toBe('custom-compressed-uri');
+            expect(result.uri).toBe('custom-compressed-uri');
             expect(ImageManipulator.manipulateAsync).toHaveBeenCalledWith(
-                'original-uri',
+                'file:///original.jpg',
                 expect.any(Array),
                 expect.objectContaining({
                     compress: 0.8,
@@ -70,9 +84,10 @@ describe('Image Compressor', () => {
                 new Error('Compression failed')
             );
 
-            const result = await compressPODPhoto('original-uri');
+            const result = await compressPODPhoto('file:///original.jpg');
 
-            expect(result).toBe('original-uri');
+            expect(result.uri).toBe('file:///original.jpg');
+            expect(result.success).toBe(false);
         });
 
         it('should handle PNG format', async () => {
@@ -82,7 +97,7 @@ describe('Image Compressor', () => {
                 height: 1080,
             });
 
-            await compressPODPhoto('original-uri', { format: 'png' });
+            await compressPODPhoto('file:///original.jpg', { format: 'png' });
 
             expect(ImageManipulator.manipulateAsync).toHaveBeenCalled();
         });
@@ -124,7 +139,7 @@ describe('Image Compressor', () => {
                 .mockResolvedValueOnce({ size: 102400 }) // Original: 100 KB
                 .mockResolvedValueOnce({ size: 30720 }); // Compressed: 30 KB
 
-            const result = await calculateCompressionSavings('original', 'compressed');
+            const result = await calculateCompressionSavings('file:///original.jpg', 'file:///compressed.jpg');
 
             expect(result.originalSize).toBe(100);
             expect(result.compressedSize).toBe(30);
@@ -168,7 +183,7 @@ describe('SyncHelper', () => {
             const result = await executeWithOfflineFallback(mockOnlineAction, offlineAction);
 
             expect(mockOnlineAction).toHaveBeenCalled();
-            expect(result).toEqual({ success: true });
+            expect(result).toEqual({ status: 'success', data: { success: true } });
         });
 
         it('should queue offline action when online fails', async () => {
