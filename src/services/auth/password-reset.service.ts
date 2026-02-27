@@ -2,10 +2,10 @@
 // Provides secure password reset via email OTP with rate limiting and security logging
 
 import crypto from 'crypto';
-import pool from '../config/db';
-import logger from '../utils/logger';
-import { otpService } from './otp.service';
-import { emailService } from './email.service';
+import pool from '../../config/db';
+import logger from '../../utils/logger';
+import { otpService } from '../otp.service';
+import { emailService } from '../email.service';
 
 interface PasswordResetRequest {
     email: string;
@@ -121,10 +121,10 @@ export class PasswordResetService {
             );
 
             if (!verifyResult.success) {
-                logger.warn('Password reset OTP verification failed', { 
-                    email, 
+                logger.warn('Password reset OTP verification failed', {
+                    email,
                     error: verifyResult.error,
-                    attemptsRemaining: verifyResult.attemptsRemaining 
+                    attemptsRemaining: verifyResult.attemptsRemaining
                 });
 
                 throw new Error(verifyResult.error || 'Invalid or expired OTP');
@@ -179,7 +179,7 @@ export class PasswordResetService {
 
             // Hash new password
             const bcrypt = await import('bcrypt');
-            const { BCRYPT_ROUNDS } = await import('../config/security');
+            const { BCRYPT_ROUNDS } = await import('../../config/security');
             const passwordHash = await bcrypt.hash(data.newPassword, BCRYPT_ROUNDS);
 
             // Update user password
@@ -203,7 +203,7 @@ export class PasswordResetService {
             await client.query('COMMIT');
 
             // Log security event
-            logger.info('Password reset completed', { 
+            logger.info('Password reset completed', {
                 email,
                 action: 'password_reset_complete',
                 timestamp: new Date().toISOString()
@@ -298,7 +298,7 @@ export class PasswordResetService {
             );
 
             const count = parseInt(result.rows[0].count);
-            
+
             if (count >= this.RATE_LIMIT_MAX) {
                 const lastRequest = new Date(result.rows[0].last_request);
                 const waitUntil = new Date(lastRequest.getTime() + this.RATE_LIMIT_WINDOW_MS);
