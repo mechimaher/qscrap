@@ -121,18 +121,28 @@
     gap: 8px;
     padding: 10px 20px;
     background: var(--qatar-maroon, #8D1B3D);
-    color: var(--white, #FFFFFF);
+    color: var(--white, #FFFFFF) !important;
     text-decoration: none;
     border-radius: 100px;
     font-weight: 600;
     font-size: 14px;
     transition: all 0.2s ease;
+    white-space: nowrap;
 }
 
 .nav-cta:hover {
     background: var(--qatar-maroon-dark, #6B1530);
     transform: translateY(-2px);
     box-shadow: 0 8px 20px rgba(141, 27, 61, 0.3);
+    color: var(--white, #FFFFFF) !important;
+}
+
+.nav-cta svg {
+    flex-shrink: 0;
+}
+
+.nav-cta span {
+    white-space: nowrap;
 }
 
 /* ===== Mobile Menu Button ===== */

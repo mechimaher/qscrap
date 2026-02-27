@@ -109,6 +109,7 @@ const translations = {
         'nav.forBusiness': 'For Businesses',
         'nav.about': 'About',
         'nav.download': 'Download App',
+        'nav.requestPart': 'Request a Part',
 
         // Hero Section
         'hero.badge': "Qatar's #1 Auto Parts Platform",
@@ -225,6 +226,7 @@ const translations = {
         'nav.forBusiness': 'للشركات',
         'nav.about': 'من نحن',
         'nav.download': 'تحميل التطبيق',
+        'nav.requestPart': 'اطلب قطعة',
 
         // Hero Section
         'hero.badge': 'المنصة الأولى لقطع غيار السيارات في قطر',
