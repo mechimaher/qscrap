@@ -2119,4 +2119,7 @@ html[dir="rtl"] .mobile-menu-panel {
         opacity: 1 !important;
         transform: none !important;
     }
+}/* ===== Carousel Pause on Hover (Professional UX) ===== */
+.carousel-track:hover {
+    animation-play-state: paused;
 }

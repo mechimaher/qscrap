@@ -163,6 +163,38 @@ app.get('/verify/*', (req, res) => {
 });
 
 // ==========================================
+// PUBLIC WEBSITE PAGES (SEO Landing Pages)
+// ==========================================
+// Helper function to serve HTML files
+const servePage = (page: string) => (req: express.Request, res: express.Response) => {
+    res.sendFile(path.join(__dirname, '../public', `${page}.html`));
+};
+
+// Customer-facing pages
+app.get('/about', servePage('about'));
+app.get('/request', servePage('request'));
+app.get('/partners', servePage('partners'));
+app.get('/privacy', servePage('privacy'));
+app.get('/terms', servePage('terms'));
+app.get('/refund', servePage('refund'));
+
+// Location pages (SEO)
+app.get('/locations/industrial-area', servePage('locations/industrial-area'));
+app.get('/locations/doha', servePage('locations/doha'));
+app.get('/locations/al-wakra', servePage('locations/al-wakra'));
+app.get('/locations/al-khor', servePage('locations/al-khor'));
+app.get('/locations/salwa-road', servePage('locations/salwa-road'));
+
+// Driver app landing
+app.get('/driver-app', servePage('driver-app/index'));
+
+// Support both /page and /page.html URLs (redirect to clean URLs)
+app.get('/*.html', (req: express.Request, res: express.Response) => {
+    const cleanUrl = req.path.replace('.html', '');
+    res.redirect(301, cleanUrl);
+});
+
+// ==========================================
 // ERROR HANDLING (Last in chain)
 // ==========================================
 
