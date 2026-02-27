@@ -56,6 +56,9 @@ Sentry.init({
 import LoginScreen from './src/screens/auth/LoginScreen';
 import RegisterScreen from './src/screens/auth/RegisterScreen';
 import VerifyOTPScreen from './src/screens/auth/VerifyOTPScreen';
+import ForgotPasswordScreen from './src/screens/auth/ForgotPasswordScreen';
+import VerifyOTPResetScreen from './src/screens/auth/VerifyOTPResetScreen';
+import ResetPasswordScreen from './src/screens/auth/ResetPasswordScreen';
 
 // Import Tab screens
 import HomeScreen from './src/screens/tabs/HomeScreen';
@@ -149,6 +152,9 @@ export type AuthStackParamList = {
     phone_number: string;
     password: string;
   };
+  ForgotPassword: undefined;
+  VerifyOTPReset: { email: string };
+  ResetPassword: { email: string; otp: string };
 };
 
 export type MainTabParamList = {
@@ -246,6 +252,21 @@ function AuthNavigator() {
       <AuthStack.Screen name="Login" component={LoginScreen} />
       <AuthStack.Screen name="Register" component={RegisterScreen} />
       <AuthStack.Screen name="VerifyOTP" component={VerifyOTPScreen} />
+      <AuthStack.Screen
+        name="ForgotPassword"
+        component={ForgotPasswordScreen}
+        options={{ animation: 'slide_from_bottom' }}
+      />
+      <AuthStack.Screen
+        name="VerifyOTPReset"
+        component={VerifyOTPResetScreen}
+        options={{ animation: 'slide_from_bottom' }}
+      />
+      <AuthStack.Screen
+        name="ResetPassword"
+        component={ResetPasswordScreen}
+        options={{ animation: 'slide_from_bottom' }}
+      />
     </AuthStack.Navigator>
   );
 }

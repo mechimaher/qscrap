@@ -12,6 +12,8 @@ import {
     ActivityIndicator,
     Dimensions,
     Animated,
+    Linking,
+    Alert,
 } from 'react-native';
 import { Image } from 'expo-image';
 import { LinearGradient } from 'expo-linear-gradient';
@@ -26,7 +28,6 @@ import { rtlFlexDirection, rtlTextAlign } from '../../utils/rtl';
 import { Ionicons } from '@expo/vector-icons';
 import { BiometricLogin } from '../../components/BiometricLogin';
 import { api } from '../../services/api';
-import { Alert } from 'react-native';
 
 type LoginScreenNavigationProp = NativeStackNavigationProp<AuthStackParamList, 'Login'>;
 const { width } = Dimensions.get('window');
@@ -127,6 +128,12 @@ export default function LoginScreen() {
         }
     };
 
+    const handleForgotPassword = () => {
+        Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
+        // Navigate to forgot password flow
+        navigation.navigate('ForgotPassword');
+    };
+
     return (
         <LinearGradient
             colors={ThemeColors.gradients.primaryDark}
@@ -167,7 +174,6 @@ export default function LoginScreen() {
                                 accessibilityLabel={t('common.appName')}
                             />
                         </Animated.View>
-                        <Text style={styles.logoText}>{t('common.appName')}</Text>
                         <View style={[styles.taglineContainer, { flexDirection: rtlFlexDirection(isRTL) }]}>
                             <View style={styles.goldLine} />
                             <Text style={styles.tagline}>{t('auth.tagline')}</Text>
@@ -245,7 +251,12 @@ export default function LoginScreen() {
                             />
                         </View>
 
-                        <TouchableOpacity style={[styles.forgotPassword, isRTL && { alignSelf: 'flex-start' }]} accessibilityRole="button" accessibilityLabel={t('auth.forgotPassword')}>
+                        <TouchableOpacity
+                            style={[styles.forgotPassword, isRTL && { alignSelf: 'flex-start' }]}
+                            accessibilityRole="button"
+                            accessibilityLabel={t('auth.forgotPassword')}
+                            onPress={handleForgotPassword}
+                        >
                             <Text style={[styles.forgotPasswordText, { color: colors.primary }]}>{t('auth.forgotPassword')}</Text>
                         </TouchableOpacity>
 
@@ -337,15 +348,6 @@ const styles = StyleSheet.create({
         height: 100,
         borderRadius: 24,
         overflow: 'hidden',
-    },
-    logoText: {
-        fontSize: 42,
-        fontWeight: '800',
-        color: '#ffffff',
-        letterSpacing: 1,
-        textShadowColor: 'rgba(138, 21, 56, 0.6)',
-        textShadowOffset: { width: 0, height: 2 },
-        textShadowRadius: 10,
     },
     tagline: {
         fontSize: FontSizes.md,

@@ -82,6 +82,12 @@ export const API_ENDPOINTS = {
     CREATE_FULL_PAYMENT_INTENT: (orderId: string) => `/payments/full/${orderId}`,
     CONFIRM_FREE_ORDER: (orderId: string) => `/payments/free/${orderId}`,
 
+    // Password Reset (Enterprise Flow)
+    REQUEST_PASSWORD_RESET: '/auth/request-password-reset',
+    VERIFY_PASSWORD_RESET_OTP: '/auth/verify-password-reset-otp',
+    RESET_PASSWORD: '/auth/reset-password',
+    RESEND_PASSWORD_RESET_OTP: '/auth/resend-password-reset-otp',
+
 };
 
 // App Info

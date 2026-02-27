@@ -7,6 +7,7 @@ import logger from '../utils/logger';
 import { catchAsync } from '../utils/catchAsync';
 import { AuthService, RegisterData } from '../services/auth';
 import { AccountDeletionService } from '../services/auth/account-deletion.service';
+import { passwordResetService } from '../services/auth/password-reset.service';
 import { otpService } from '../services/otp.service';
 import { emailService } from '../services/email.service';
 import bcrypt from 'bcrypt';
@@ -55,6 +56,26 @@ interface ResendOtpBody {
 interface ChangePasswordBody {
     current_password?: string;
     new_password?: string;
+}
+
+// Password Reset Interfaces
+interface RequestPasswordResetBody {
+    email?: string;
+}
+
+interface VerifyPasswordResetOTPBody {
+    email?: string;
+    otp?: string;
+}
+
+interface ResendPasswordResetOTPBody {
+    email?: string;
+}
+
+interface ResetPasswordBody {
+    email?: string;
+    otp?: string;
+    newPassword?: string;
 }
 
 type RegisterRequest = Request<ParamsDictionary, unknown, RegisterBody>;
@@ -420,4 +441,112 @@ export const changePassword = catchAsync(async (req: AuthChangePasswordRequest, 
 
     logger.info('[Auth] Password changed', { userId });
     res.json({ success: true, message: 'Password changed successfully' });
+});
+
+/**
+ * Step 1: Request password reset - sends OTP to email
+ * Enterprise Security: Neutral response to prevent email enumeration
+ */
+export const requestPasswordReset = catchAsync(async (req: Request<ParamsDictionary, unknown, RequestPasswordResetBody>, res: Response) => {
+    const { email } = req.body;
+
+    if (!email) {
+        return res.status(400).json({ error: 'Email is required' });
+    }
+
+    const result = await passwordResetService.requestReset({
+        email,
+        ip_address: req.ip,
+        user_agent: req.headers['user-agent']
+    });
+
+    // Always return 200 with neutral message (security)
+    res.json(result);
+});
+
+/**
+ * Step 2: Verify OTP for password reset
+ * Returns reset token if OTP is valid
+ */
+export const verifyPasswordResetOTP = catchAsync(async (req: Request<ParamsDictionary, unknown, VerifyPasswordResetOTPBody>, res: Response) => {
+    const { email, otp } = req.body;
+
+    if (!email || !otp) {
+        return res.status(400).json({ error: 'Email and OTP are required' });
+    }
+
+    try {
+        const result = await passwordResetService.verifyOTP({ email, otp });
+        res.json(result);
+    } catch (error: any) {
+        logger.warn('Password reset OTP verification failed', { email, error: error.message });
+        res.status(400).json({ 
+            success: false, 
+            error: error.message || 'Invalid or expired OTP' 
+        });
+    }
+});
+
+/**
+ * Step 3: Complete password reset with new password
+ * Invalidates all sessions and sends confirmation email
+ */
+export const resetPassword = catchAsync(async (req: Request<ParamsDictionary, unknown, ResetPasswordBody>, res: Response) => {
+    const { email, otp, newPassword } = req.body;
+
+    if (!email || !otp || !newPassword) {
+        return res.status(400).json({ error: 'Email, OTP, and new password are required' });
+    }
+
+    if (newPassword.length < 12) {
+        return res.status(400).json({ error: 'Password must be at least 12 characters' });
+    }
+
+    // Enterprise password requirements
+    if (!/[A-Z]/.test(newPassword)) {
+        return res.status(400).json({ error: 'Password must contain at least one uppercase letter' });
+    }
+    if (!/[a-z]/.test(newPassword)) {
+        return res.status(400).json({ error: 'Password must contain at least one lowercase letter' });
+    }
+    if (!/[0-9]/.test(newPassword)) {
+        return res.status(400).json({ error: 'Password must contain at least one number' });
+    }
+    if (!/[!@#$%^&*(),.?":{}|<>]/.test(newPassword)) {
+        return res.status(400).json({ error: 'Password must contain at least one special character' });
+    }
+
+    try {
+        const result = await passwordResetService.completeReset({ email, otp, newPassword });
+        res.json(result);
+    } catch (error: any) {
+        logger.error('Password reset failed', { email, error: error.message });
+        res.status(400).json({ 
+            success: false, 
+            error: error.message || 'Failed to reset password' 
+        });
+    }
+});
+
+/**
+ * Resend OTP for password reset
+ * Rate limited to prevent abuse
+ */
+export const resendPasswordResetOTP = catchAsync(async (req: Request<ParamsDictionary, unknown, ResendPasswordResetOTPBody>, res: Response) => {
+    const { email } = req.body;
+
+    if (!email) {
+        return res.status(400).json({ error: 'Email is required' });
+    }
+
+    try {
+        const result = await passwordResetService.resendOTP(email);
+        res.json(result);
+    } catch (error: any) {
+        logger.error('Password reset OTP resend failed', { email, error: error.message });
+        res.status(400).json({ 
+            success: false, 
+            error: error.message || 'Failed to resend OTP' 
+        });
+    }
 });

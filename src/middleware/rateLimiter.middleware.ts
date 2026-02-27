@@ -35,6 +35,18 @@ export const apiLimiter = rateLimit({
     validate: { xForwardedForHeader: false }
 });
 
+// Password reset rate limiter
+// Enterprise Policy: Max 5 requests per hour per email/IP
+export const passwordResetLimiter = rateLimit({
+    windowMs: 60 * 60 * 1000, // 1 hour
+    max: 5, // 5 attempts per window
+    message: 'Too many password reset attempts. Please try again in an hour.',
+    standardHeaders: true,
+    legacyHeaders: false,
+    skip: () => process.env.NODE_ENV === 'test', // Skip in test environment
+    validate: { xForwardedForHeader: false }
+});
+
 // Driver location update rate limiter
 // 1 request per 5 seconds per driver (based on user ID from JWT)
 // Using simple key generator without IP fallback to avoid IPv6 validation issues

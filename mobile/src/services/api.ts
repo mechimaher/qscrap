@@ -274,6 +274,41 @@ class ApiService {
         await SecureStore.deleteItemAsync(USER_KEY);
     }
 
+    async requestPasswordReset(email: string): Promise<{ success: boolean; message: string }> {
+        return this.request('/auth/request-password-reset', {
+            method: 'POST',
+            body: JSON.stringify({ email }),
+        });
+    }
+
+    async verifyPasswordResetOTP(data: {
+        email: string;
+        otp: string;
+    }): Promise<{ success: boolean; token: string; message: string }> {
+        return this.request('/auth/verify-password-reset-otp', {
+            method: 'POST',
+            body: JSON.stringify(data),
+        });
+    }
+
+    async resendPasswordResetOTP(email: string): Promise<{ success: boolean; message: string }> {
+        return this.request('/auth/resend-password-reset-otp', {
+            method: 'POST',
+            body: JSON.stringify({ email }),
+        });
+    }
+
+    async resetPassword(data: {
+        email: string;
+        otp: string;
+        newPassword: string;
+    }): Promise<{ success: boolean; message: string }> {
+        return this.request('/auth/reset-password', {
+            method: 'POST',
+            body: JSON.stringify(data),
+        });
+    }
+
     // ========== Biometric Authentication ==========
     
     async saveBiometricCredentials(phone: string, password: string): Promise<void> {
@@ -316,6 +351,23 @@ class ApiService {
         } catch (error) {
             warn('[API] Failed to clear biometric credentials:', error);
         }
+    }
+
+    async requestPasswordReset(email: string): Promise<{ success: boolean; message: string }> {
+        return this.request('/auth/request-password-reset', {
+            method: 'POST',
+            body: JSON.stringify({ email }),
+        });
+    }
+
+    async verifyPasswordResetOTP(data: {
+        email: string;
+        otp: string;
+    }): Promise<{ success: boolean; token: string; message: string }> {
+        return this.request('/auth/verify-password-reset-otp', {
+            method: 'POST',
+            body: JSON.stringify(data),
+        });
     }
 
     async isBiometricEnabled(): Promise<boolean> {
