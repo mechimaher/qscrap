@@ -288,33 +288,6 @@ export class EmailService {
             .trim();
     }
 
-    /**
-     * Send password reset email
-     */
-    async sendPasswordResetEmail(email: string, otp: string, name?: string): Promise<boolean> {
-        const subject = 'Reset Your QScrap Password';
-        const html = `
-<!DOCTYPE html>
-<html>
-<head><meta charset="UTF-8"><title>Reset Password</title></head>
-<body style="font-family: Arial, sans-serif; padding: 20px;">
-    <div style="max-width: 600px; margin: 0 auto; background: #ffffff; padding: 30px; border-radius: 12px;">
-        <h2>Password Reset Request</h2>
-        <p>Hello${name ? ` ${name}` : ''},</p>
-        <p>We received a request to reset your QScrap password. Use the code below to proceed:</p>
-        <div style="background: #f5f5f5; padding: 20px; text-align: center; font-size: 32px; font-weight: bold; letter-spacing: 8px; margin: 20px 0; border: 2px dashed #8A1538; border-radius: 8px; color: #8A1538;">
-            ${otp}
-        </div>
-        <p>This code expires in 10 minutes.</p>
-        <p>If you didn't request this, please ignore this email or contact support.</p>
-        <p style="margin-top: 30px; font-size: 12px; color: #666;">© 2026 QScrap Qatar</p>
-    </div>
-</body>
-</html>
-        `;
-
-        return this.send(email, subject, html);
-    }
 
     /**
      * Send B2B Garage Welcome Email with Magic Link
