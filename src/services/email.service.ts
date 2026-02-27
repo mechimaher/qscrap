@@ -66,6 +66,26 @@ export class EmailService {
     }
 
     /**
+     * Send Password Reset OTP email
+     */
+    async sendPasswordResetEmail(email: string, otp: string): Promise<boolean> {
+        const subject = 'Password Reset OTP';
+        const html = this.getPasswordResetEmailTemplate(otp);
+
+        return this.send(email, subject, html);
+    }
+
+    /**
+     * Send Password Reset Confirmation email
+     */
+    async sendPasswordResetConfirmation(email: string): Promise<boolean> {
+        const subject = 'Password Changed Successfully';
+        const html = this.getPasswordResetConfirmationTemplate();
+
+        return this.send(email, subject, html);
+    }
+
+    /**
      * Send generic email
      */
     async send(to: string, subject: string, html: string, text?: string): Promise<boolean> {
@@ -1033,6 +1053,87 @@ export class EmailService {
 </body>
 </html>
         `;
+    }
+
+    /**
+     * Password Reset Email Template
+     */
+    private getPasswordResetEmailTemplate(otp: string): string {
+        return `
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Reset Your QScrap Password</title>
+    <style>
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        body { font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Arial, sans-serif; background-color: #f5f5f5; padding: 20px; }
+        .container { max-width: 600px; margin: 0 auto; background: #ffffff; border-radius: 16px; overflow: hidden; box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1); }
+        .header { background: linear-gradient(135deg, #8A1538 0%, #5A0F28 100%); color: white; padding: 40px 30px; text-align: center; }
+        .content { padding: 40px 30px; }
+        .otp-box { background: #f9f9f9; border: 2px dashed #8A1538; padding: 30px; text-align: center; font-size: 36px; font-weight: 800; color: #8A1538; margin: 30px 0; border-radius: 12px; letter-spacing: 8px; }
+        .footer { background: #f9f9f9; padding: 30px; text-align: center; border-top: 1px solid #e0e0e0; font-size: 13px; color: #666; }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="header">
+            <h1>QScrap Qatar</h1>
+            <p>Secure Password Reset</p>
+        </div>
+        <div class="content">
+            <h2>Reset Your Password</h2>
+            <p>You requested a password reset for your QScrap account. Use the code below to complete the process:</p>
+            <div class="otp-box">${otp}</div>
+            <p>This code will expire in 5 minutes. If you did not request this, please ignore this email or contact support.</p>
+        </div>
+        <div class="footer">
+            <p>&copy; 2026 QScrap Services & Trading L.L.C. | Doha, Qatar</p>
+        </div>
+    </div>
+</body>
+</html>`;
+    }
+
+    /**
+     * Password Reset Confirmation Template
+     */
+    private getPasswordResetConfirmationTemplate(): string {
+        return `
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Password Changed Successfully</title>
+    <style>
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        body { font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Arial, sans-serif; background-color: #f5f5f5; padding: 20px; }
+        .container { max-width: 600px; margin: 0 auto; background: #ffffff; border-radius: 16px; overflow: hidden; box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1); }
+        .header { background: #10B981; color: white; padding: 40px 30px; text-align: center; }
+        .content { padding: 40px 30px; text-align: center; }
+        .success-icon { font-size: 64px; margin-bottom: 20px; }
+        .footer { background: #f9f9f9; padding: 30px; text-align: center; border-top: 1px solid #e0e0e0; font-size: 13px; color: #666; }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="header">
+            <h1>Security Alert</h1>
+        </div>
+        <div class="content">
+            <div class="success-icon">✅</div>
+            <h2>Password Changed</h2>
+            <p>Your QScrap account password was changed successfully.</p>
+            <p>If you did not perform this action, please contact our support team immediately.</p>
+        </div>
+        <div class="footer">
+            <p>&copy; 2026 QScrap Services & Trading L.L.C. | Doha, Qatar</p>
+        </div>
+    </div>
+</body>
+</html>`;
     }
 }
 
