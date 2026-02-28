@@ -24,7 +24,7 @@
     <!-- Canonical & Language -->
     <link rel="canonical" href="https://www.qscrap.qa/partners">
     <link rel="alternate" hreflang="en" href="https://www.qscrap.qa/partners">
-    <link rel="alternate" hreflang="ar" href="https://www.qscrap.qa/partners?lang=ar">
+    <link rel="alternate" hreflang="ar" href="https://www.qscrap.qa/ar/partners">
     <link rel="alternate" hreflang="x-default" href="https://www.qscrap.qa/partners">
 
     <!-- Favicon -->
@@ -2609,65 +2609,25 @@
     <nav class="nav" id="mainNav">
         <div class="nav-container">
             <a href="/" class="nav-logo">
-                <img src="/assets/images/qscrap-logo.png?v=2026" alt="QScrap Logo">
+                <img src="/assets/images/qscrap-logo.png?v=2026" alt="QScrap Logo" data-i18n-alt="logo.alt">
             </a>
-            <div class="nav-links">
-                <a href="/" class="nav-link">
-                    <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+            <div class="nav-links-group">
+                <!-- Language Switcher -->
+                <div class="language-switcher">
+                    <button class="lang-btn" data-lang="ar">AR</button>
+                    <button class="lang-btn active" data-lang="en">EN</button>
+                </div>
+                <a href="/" class="nav-back-link">
+                    <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"
+                        stroke-linecap="round" stroke-linejoin="round">
                         <path d="m15 18-6-6 6-6" />
                     </svg>
                     <span data-i18n="nav.backHome">Back to Home</span>
                 </a>
-                <a href="/about.html" class="nav-link" data-i18n="nav.about">About</a>
+                <a href="#apply" class="nav-cta" data-i18n="nav.applyNow">Apply Now</a>
             </div>
-            <div class="lang-switcher" id="langSwitcher">
-                <button class="lang-btn active" data-lang="en" aria-label="English"><span
-                        class="lang-text">EN</span></button>
-                <span class="lang-divider">|</span>
-                <button class="lang-btn" data-lang="ar" aria-label="العربية"><span class="lang-text">AR</span></button>
-            </div>
-            <a href="#apply" class="nav-cta" data-i18n="nav.applyNow">Apply Now</a>
-            <button class="mobile-menu-btn" id="mobileMenuBtn" aria-label="Open menu">
-                <span></span>
-                <span></span>
-                <span></span>
-            </button>
         </div>
     </nav>
-
-    <!-- Mobile Menu Overlay -->
-    <div class="mobile-menu-overlay" id="mobileMenuOverlay" aria-hidden="true">
-        <div class="mobile-menu-backdrop" id="mobileMenuBackdrop"></div>
-        <div class="mobile-menu-panel" id="mobileMenuPanel" role="dialog" aria-modal="true">
-            <div class="mobile-menu-header">
-                <a href="/" class="mobile-menu-logo">
-                    <img src="/assets/images/qscrap-logo.png?v=2026" alt="QScrap Logo">
-                </a>
-                <button class="mobile-menu-close" id="mobileMenuClose">
-                    <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-                        <line x1="18" y1="6" x2="6" y2="18"></line>
-                        <line x1="6" y1="6" x2="18" y2="18"></line>
-                    </svg>
-                </button>
-            </div>
-            <nav class="mobile-menu-nav">
-                <a href="/" class="mobile-menu-link" data-i18n="nav.backHome">Back to Home</a>
-                <a href="/about.html" class="mobile-menu-link" data-i18n="nav.about">About</a>
-                <a href="#apply" class="mobile-menu-link" data-i18n="nav.applyNow">Apply Now</a>
-            </nav>
-            <div class="mobile-menu-footer">
-                <!-- Language Switcher -->
-                <div class="mobile-lang-switcher">
-                    <button class="mobile-lang-btn active" data-lang="en" aria-label="English">
-                        <span class="lang-text">English</span>
-                    </button>
-                    <button class="mobile-lang-btn" data-lang="ar" aria-label="العربية">
-                        <span class="lang-text">العربية</span>
-                    </button>
-                </div>
-            </div>
-        </div>
-    </div>
 
     <!-- Hero Section -->
     <section class="hero">
@@ -3500,20 +3460,22 @@
 
 
     <!-- VVVIP 2030 Premium Footer -->
-    <!-- Footer -->
     <footer class="footer">
-        <div class="container footer-content">
+        <div class="container" style="max-width: 1200px; margin: 0 auto;">
             <div class="footer-grid">
                 <div class="footer-brand">
-                    <img src="/assets/images/qscrap-logo.png?v=2026" alt="QScrap" class="footer-logo" loading="lazy">
-                    <p class="footer-desc" data-i18n="footer.tagline">Qatar's premium automotive parts marketplace.
-                        Connecting customers with verified garages for quality new, used, and OEM parts.</p>
+                    <a href="/" class="nav-logo" style="margin-bottom: 16px;">
+                        <img src="/assets/images/qscrap-logo.png?v=2026" alt="QScrap" data-i18n-alt="logo.alt"
+                            style="filter: brightness(0) invert(1);">
+                    </a>
+                    <p data-i18n="footer.description">Qatar's premium automotive parts marketplace. Connecting customers
+                        with verified garages for quality new, used, and OEM parts.</p>
                 </div>
                 <div>
                     <h4 class="footer-title" data-i18n="footer.company">Company</h4>
                     <ul class="footer-links">
                         <li><a href="/about.html" data-i18n="footer.aboutUs">About Us</a></li>
-                        <li><a href="/partners.html" data-i18n="footer.forBusiness">For Businesses</a></li>
+                        <li><a href="/partners.html" data-i18n="footer.forBusinesses">For Businesses</a></li>
                         <li><a href="/about.html#contact" data-i18n="footer.contact">Contact</a></li>
                         <li><a href="/#how-it-works" data-i18n="footer.howItWorks">How It Works</a></li>
                     </ul>
@@ -3529,30 +3491,17 @@
                 <div>
                     <h4 class="footer-title" data-i18n="footer.contactTitle">Contact</h4>
                     <ul class="footer-links">
-                        <li><a href="mailto:support@qscrap.qa"><svg class="footer-contact-icon" width="16" height="16"
-                                    viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"
-                                    stroke-linecap="round" stroke-linejoin="round">
-                                    <path
-                                        d="M4 4h16c1.1 0 2 .9 2 2v12c0 1.1-.9 2-2 2H4c-1.1 0-2-.9-2-2V6c0-1.1.9-2 2-2z" />
-                                    <polyline points="22,6 12,13 2,6" />
-                                </svg> <span data-i18n="footer.email">support@qscrap.qa</span></a></li>
-                        <li><a href="tel:+97450267974"><svg class="footer-contact-icon" width="16" height="16"
-                                    viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"
-                                    stroke-linecap="round" stroke-linejoin="round">
-                                    <path
-                                        d="M22 16.92v3a2 2 0 0 1-2.18 2 19.79 19.79 0 0 1-8.63-3.07 19.5 19.5 0 0 1-6-6 19.79 19.79 0 0 1-3.07-8.67A2 2 0 0 1 4.11 2h3a2 2 0 0 1 2 1.72 12.84 12.84 0 0 0 .7 2.81 2 2 0 0 1-.45 2.11L8.09 9.91a16 16 0 0 0 6 6l1.27-1.27a2 2 0 0 1 2.11-.45 12.84 12.84 0 0 0 2.81.7A2 2 0 0 1 22 16.92z" />
-                                </svg> <span data-i18n="footer.phone">+974 5026 7974</span></a></li>
-                        <li><a href="https://wa.me/97450267974" target="_blank"><svg class="footer-contact-icon"
-                                    width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor"
-                                    stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round">
-                                    <path
-                                        d="M21 11.5a8.38 8.38 0 0 1-.9 3.8 8.5 8.5 0 0 1-7.6 4.7 8.38 8.38 0 0 1-3.8-.9L3 21l1.9-5.7a8.38 8.38 0 0 1-.9-3.8 8.5 8.5 0 0 1 4.7-7.6 8.38 8.38 0 0 1 3.8-.9h.5a8.48 8.48 0 0 1 8 8v.5z" />
-                                </svg> <span data-i18n="footer.whatsapp">WhatsApp Support</span></a></li>
+                        <li><a href="mailto:support@qscrap.qa">📧 support@qscrap.qa</a></li>
+                        <li><a href="tel:+97450267974" dir="ltr">📞 +974 5026 7974</a></li>
+                        <li><a href="https://wa.me/97450267974" target="_blank"><span data-i18n="footer.whatsapp">💬
+                                    WhatsApp Support</span></a></li>
                     </ul>
                 </div>
             </div>
             <div class="footer-bottom">
-                <p class="footer-legal" data-i18n="footer.legalInfo">QScrap Services & Trading L.L.C | Doha, Qatar</p>
+                <p class="footer-legal">QScrap Services &amp; Trading L.L.C | كيوسكراب للخدمات والتجارة ذ.م.م | Doha,
+                    Qatar
+                </p>
                 <p class="footer-copyright" data-i18n="footer.copyright">© 2026 QScrap. All rights reserved.</p>
             </div>
         </div>

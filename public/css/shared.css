@@ -1,12 +1,84 @@
-@import url('./design-tokens.css');
+/**
+ * QScrap Shared CSS Utilities
+ * 
+ * Common utility classes and component styles used across all modules
+ * Include this file before module-specific CSS
+ */
 
-/* ===== CSS VARIABLES (Module Exceptions) ===== */
+/* ===== CSS VARIABLES (Shared Theme) ===== */
 :root {
+    /* Primary Colors */
+    --primary: #8D1B3D;
+    --primary-dark: #6B1530;
     --primary-light: #818cf8;
-    /* Module specific */
+    --accent: #8D1B3D;
     --accent-glow: rgba(141, 27, 61, 0.15);
-}
+    --qatar-maroon: #8D1B3D;
 
+    /* Status Colors */
+    --success: #10b981;
+    --warning: #f59e0b;
+    --danger: #ef4444;
+    --info: #3b82f6;
+
+    /* Light Theme Backgrounds */
+    --bg-primary: #f8fafc;
+    --bg-secondary: #ffffff;
+    --bg-tertiary: #f1f5f9;
+    --bg-card: #ffffff;
+    --bg-page: #f8fafc;
+    --bg-sidebar: #ffffff;
+    --card-bg: #ffffff;
+
+    /* Light Theme Text */
+    --text-primary: #0f172a;
+    --text-secondary: #64748b;
+    --text-muted: #94a3b8;
+
+    /* Borders & Shadows */
+    --border: #e2e8f0;
+    --border-color: #e2e8f0;
+    --shadow-sm: 0 1px 2px rgba(0, 0, 0, 0.05);
+    --shadow-md: 0 4px 6px -1px rgba(0, 0, 0, 0.1);
+    --shadow-lg: 0 10px 15px -3px rgba(0, 0, 0, 0.1);
+    --shadow-xl: 0 20px 25px -5px rgba(0, 0, 0, 0.1);
+    --shadow: var(--shadow-md);
+
+    /* Radius */
+    --radius-sm: 8px;
+    --radius-md: 12px;
+    --radius-lg: 16px;
+    --radius-xl: 24px;
+
+    /* Spacing Scale */
+    --space-xs: 4px;
+    --space-sm: 8px;
+    --space-md: 16px;
+    --space-lg: 24px;
+    --space-xl: 32px;
+    --space-2xl: 48px;
+
+    /* Z-Index Layers */
+    --z-dropdown: 100;
+    --z-sticky: 200;
+    --z-fixed: 300;
+    --z-modal-backdrop: 400;
+    --z-modal: 500;
+    --z-popover: 600;
+    --z-tooltip: 700;
+
+    /* Typography */
+    --font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+    --font-size-xs: 11px;
+    --font-size-sm: 13px;
+    --font-size-md: 14px;
+    --font-size-lg: 16px;
+    --font-size-xl: 18px;
+    --font-size-2xl: 24px;
+
+    /* Input */
+    --input-bg: #ffffff;
+}
 
 /* ===== UTILITY CLASSES ===== */
 
