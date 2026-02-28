@@ -194,5 +194,17 @@ export const notFoundHandler = (req: RequestWithContext, res: Response, _next: N
             requestId: req.requestId
         }
     };
-    res.status(404).json(errorResponse);
+    
+    // Check if this is an API request (expects JSON) or a page request (expects HTML)
+    const acceptsHtml = req.accepts('html');
+    const isApiRequest = req.path.startsWith('/api/') || req.xhr;
+    
+    if (isApiRequest || !acceptsHtml) {
+        // API request - return JSON
+        res.status(404).json(errorResponse);
+    } else {
+        // Browser request - serve 404.html page
+        const path = require('path');
+        res.status(404).sendFile(path.join(__dirname, '../../public/404.html'));
+    }
 };

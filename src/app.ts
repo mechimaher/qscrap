@@ -188,6 +188,9 @@ app.get('/locations/salwa-road', servePage('locations/salwa-road'));
 // Driver app landing
 app.get('/driver-app', servePage('driver-app/index'));
 
+// 404 Page
+app.get('/404', servePage('404'));
+
 // Support both /page and /page.html URLs (redirect to clean URLs)
 app.get('/*.html', (req: express.Request, res: express.Response) => {
     const cleanUrl = req.path.replace('.html', '');
