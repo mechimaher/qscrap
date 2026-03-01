@@ -993,10 +993,23 @@ body {
     margin-bottom: 8px;
 }
 
-.footer-legal-name-ar {
+.footer-legal-en {
+    display: block;
+}
+
+.footer-legal-ar {
+    display: none;
     font-size: 14px;
     color: var(--slate);
     direction: rtl;
+}
+
+html[dir="rtl"] .footer-legal-en {
+    display: none;
+}
+
+html[dir="rtl"] .footer-legal-ar {
+    display: block;
 }
 
 .footer-contact {

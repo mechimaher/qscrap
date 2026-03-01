@@ -294,6 +294,7 @@ const translations = {
         'footer.refund': 'Refund Policy',
         'footer.contactTitle': 'Contact',
         'footer.whatsapp': 'WhatsApp Support',
+        'footer.legalInfo.en': 'QScrap Services & Trading L.L.C | Doha, Qatar',
         'footer.copyright': '© 2026 QScrap. All rights reserved.'
     },
 
@@ -583,6 +584,7 @@ const translations = {
         'footer.refund': 'سياسة الاسترداد',
         'footer.contactTitle': 'تواصل',
         'footer.whatsapp': 'دعم واتساب',
+        'footer.legalInfo.ar': 'كيوسكراب للخدمات والتجارة ذ.م.م | الدوحة، قطر',
         'footer.copyright': 'كيوسكراب © 2026. جميع الحقوق محفوظة.'
     }
 };

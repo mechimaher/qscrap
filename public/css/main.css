@@ -248,6 +248,19 @@
             text-align: right;
         }
 
+        /* Footer Legal - Language Visibility */
+        .footer-legal-ar {
+            display: none;
+        }
+
+        html[dir="rtl"] .footer-legal-en {
+            display: none;
+        }
+
+        html[dir="rtl"] .footer-legal-ar {
+            display: inline;
+        }
+
         html[dir="rtl"] .footer-links {
             text-align: right;
         }
