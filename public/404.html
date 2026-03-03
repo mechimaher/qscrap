@@ -5,7 +5,8 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Page Not Found | QScrap Qatar</title>
-    <meta name="description" content="The page you're looking for doesn't exist. Return to QScrap Qatar's premium automotive parts marketplace.">
+    <meta name="description"
+        content="The page you're looking for doesn't exist. Return to QScrap Qatar's premium automotive parts marketplace.">
     <meta name="robots" content="noindex, follow">
 
     <!-- Canonical & Language -->
@@ -20,7 +21,8 @@
     <!-- Fonts -->
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800;900&display=swap" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800;900&display=swap"
+        rel="stylesheet">
 
     <!-- Design System -->
     <link rel="stylesheet" href="/css/design-tokens.min.css">
@@ -154,13 +156,25 @@
         }
 
         @keyframes float {
-            0%, 100% { transform: translateY(0); }
-            50% { transform: translateY(-25px); }
+
+            0%,
+            100% {
+                transform: translateY(0);
+            }
+
+            50% {
+                transform: translateY(-25px);
+            }
         }
 
         @keyframes glow {
-            0% { filter: drop-shadow(0 0 20px rgba(201, 162, 39, 0.3)); }
-            100% { filter: drop-shadow(0 0 50px rgba(201, 162, 39, 0.7)); }
+            0% {
+                filter: drop-shadow(0 0 20px rgba(201, 162, 39, 0.3));
+            }
+
+            100% {
+                filter: drop-shadow(0 0 50px rgba(201, 162, 39, 0.7));
+            }
         }
 
         .error-title {
@@ -230,7 +244,7 @@
         .bg-pattern {
             position: absolute;
             inset: 0;
-            background-image: 
+            background-image:
                 radial-gradient(circle at 20% 50%, rgba(141, 27, 61, 0.2) 0%, transparent 50%),
                 radial-gradient(circle at 80% 80%, rgba(201, 162, 39, 0.15) 0%, transparent 50%);
             pointer-events: none;
@@ -240,7 +254,7 @@
         .grid-overlay {
             position: absolute;
             inset: 0;
-            background-image: 
+            background-image:
                 linear-gradient(rgba(255, 255, 255, 0.03) 1px, transparent 1px),
                 linear-gradient(90deg, rgba(255, 255, 255, 0.03) 1px, transparent 1px);
             background-size: 60px 60px;
@@ -300,18 +314,23 @@
         }
 
         @keyframes particleFloat {
-            0%, 100% {
+
+            0%,
+            100% {
                 transform: translate(0, 0) scale(1);
                 opacity: 0.3;
             }
+
             25% {
                 transform: translate(30px, -40px) scale(1.3);
                 opacity: 0.7;
             }
+
             50% {
                 transform: translate(-20px, 30px) scale(0.8);
                 opacity: 0.4;
             }
+
             75% {
                 transform: translate(35px, 15px) scale(1.2);
                 opacity: 0.6;
@@ -451,7 +470,7 @@
     <main class="error-main">
         <div class="bg-pattern"></div>
         <div class="grid-overlay"></div>
-        
+
         <!-- Floating Particles -->
         <div class="particle particle-1"></div>
         <div class="particle particle-2"></div>
@@ -463,7 +482,7 @@
             <div class="error-code">404</div>
             <h1 class="error-title" data-i18n="error.title">Page Not Found</h1>
             <p class="error-message" data-i18n="error.message">
-                Oops! The page you're looking for doesn't exist or has been moved. 
+                Oops! The page you're looking for doesn't exist or has been moved.
                 Let's get you back on track to finding the perfect auto parts.
             </p>
             <div class="error-actions">
@@ -475,7 +494,8 @@
                     <span data-i18n="error.homeBtn">Go Home</span>
                 </a>
                 <a href="/request.html" class="btn-secondary">
-                    <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5">
+                    <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor"
+                        stroke-width="2.5">
                         <circle cx="12" cy="12" r="10" />
                         <line x1="12" y1="8" x2="12" y2="16" />
                         <line x1="8" y1="12" x2="16" y2="12" />
@@ -504,23 +524,9 @@
             </div>
         </div>
     </main>
-
-    <!-- Footer -->
-    <footer class="footer">
-        <p class="footer-text">
-            <span data-i18n="error.needHelp">Need help?</span> 
-            <a href="mailto:support@qscrap.qa" data-i18n="error.contact">Contact Support</a>
-        </p>
-        <div class="footer-links">
-            <a href="/about.html" data-i18n="footer.about">About</a>
-            <span class="footer-divider">•</span>
-            <a href="/partners.html" data-i18n="footer.partners">Partners</a>
-            <span class="footer-divider">•</span>
-            <a href="/terms.html" data-i18n="footer.terms">Terms</a>
-            <span class="footer-divider">•</span>
-            <a href="/privacy.html" data-i18n="footer.privacy">Privacy</a>
-        </div>
-    </footer>
+    <!-- Footer Component Loader -->
+    <footer id="footer-container" aria-label="Site footer"></footer>
+    <script src="/js/components/footer-loader.js" defer></script>
 
     <!-- i18n Script -->
     <script>

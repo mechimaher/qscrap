@@ -616,31 +616,16 @@
     </div>
 
     <!-- ════════════════════════════════════════════════════════════════
-     FOOTER (standard site footer section)
+     FOOTER COMPONENT (loaded dynamically via footer-loader.js)
 ═══════════════════════════════════════════════════════════════════ -->
-    <footer
-        style="background:var(--black);color:var(--slate-light);text-align:center;padding:28px 24px;font-size:13px;margin-top:64px">
-        <a href="/" style="display:inline-block;margin-bottom:14px">
-            <img src="/assets/images/qscrap-logo.png?v=2026" alt="QScrap"
-                style="height:32px;filter:brightness(0) invert(1);opacity:0.7">
-        </a>
-        <p style="margin-bottom:8px" data-i18n="app.footerRights">© 2026 QScrap Services &amp; Trading L.L.C. — Doha,
-            Qatar</p>
-        <div style="display:flex;gap:20px;justify-content:center;flex-wrap:wrap">
-            <a href="/terms.html" style="color:var(--slate-light);text-decoration:none"
-                data-i18n="app.footerTerms">Terms of Service</a>
-            <a href="/privacy.html" style="color:var(--slate-light);text-decoration:none"
-                data-i18n="app.footerPrivacy">Privacy Policy</a>
-            <a href="/refund.html" style="color:var(--slate-light);text-decoration:none"
-                data-i18n="app.footerRefund">Refund Policy</a>
-            <a href="/partners.html" style="color:var(--slate-light);text-decoration:none"
-                data-i18n="app.footerPartners">For Businesses</a>
-        </div>
-    </footer>
+    <footer id="footer-container" aria-label="Site footer"></footer>
 
     <!-- ════════════════════════════════════════════════════════════════
      SCRIPTS
 ═══════════════════════════════════════════════════════════════════ -->
+    <!-- Footer Component Loader -->
+    <script src="/js/components/footer-loader.js" defer></script>
+
     <!-- Customer request logic -->
     <script src="/js/customer-request.js?v=2.2" defer></script>
 </body>

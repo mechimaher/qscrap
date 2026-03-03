@@ -261,6 +261,15 @@
             display: inline;
         }
 
+        /* Footer Loading State */
+        .footer-loading {
+            text-align: center;
+            padding: 40px 20px;
+            color: var(--slate);
+            font-size: 14px;
+            background: var(--black);
+        }
+
         html[dir="rtl"] .footer-links {
             text-align: right;
         }

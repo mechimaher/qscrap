@@ -2337,17 +2337,6 @@
             filter: brightness(0);
         }
 
-        .footer-legal {
-            font-size: 13px;
-            color: rgba(255, 255, 255, 0.4);
-            letter-spacing: 0.5px;
-        }
-
-        .footer-copyright {
-            font-size: 13px;
-            color: rgba(255, 255, 255, 0.5);
-        }
-
         /* ===== Responsive ===== */
         @media (max-width: 992px) {
 
@@ -3458,57 +3447,9 @@
         </div>
     </section>
 
-
-    <!-- VVVIP 2030 Premium Footer -->
-    <footer class="footer">
-        <div class="container" style="max-width: 1200px; margin: 0 auto;">
-            <div class="footer-grid">
-                <div class="footer-brand">
-                    <a href="/" class="nav-logo" style="margin-bottom: 16px;">
-                        <img src="/assets/images/qscrap-logo.png?v=2026" alt="QScrap" data-i18n-alt="logo.alt"
-                            style="filter: brightness(0) invert(1);">
-                    </a>
-                    <p data-i18n="footer.description">Qatar's premium automotive parts marketplace. Connecting customers
-                        with verified garages for quality new, used, and OEM parts.</p>
-                </div>
-                <div>
-                    <h4 class="footer-title" data-i18n="footer.company">Company</h4>
-                    <ul class="footer-links">
-                        <li><a href="/about.html" data-i18n="footer.aboutUs">About Us</a></li>
-                        <li><a href="/partners.html" data-i18n="footer.forBusinesses">For Businesses</a></li>
-                        <li><a href="/about.html#contact" data-i18n="footer.contact">Contact</a></li>
-                        <li><a href="/#how-it-works" data-i18n="footer.howItWorks">How It Works</a></li>
-                    </ul>
-                </div>
-                <div>
-                    <h4 class="footer-title" data-i18n="footer.legal">Legal</h4>
-                    <ul class="footer-links">
-                        <li><a href="/privacy.html" data-i18n="footer.privacy">Privacy Policy</a></li>
-                        <li><a href="/terms.html" data-i18n="footer.terms">Terms of Service</a></li>
-                        <li><a href="/refund.html" data-i18n="footer.refund">Refund Policy</a></li>
-                    </ul>
-                </div>
-                <div>
-                    <h4 class="footer-title" data-i18n="footer.contactTitle">Contact</h4>
-                    <ul class="footer-links">
-                        <li><a href="mailto:support@qscrap.qa">📧 support@qscrap.qa</a></li>
-                        <li><a href="tel:+97450267974" dir="ltr">📞 +974 5026 7974</a></li>
-                        <li><a href="https://wa.me/97450267974" target="_blank"><span data-i18n="footer.whatsapp">💬
-                                    WhatsApp Support</span></a></li>
-                    </ul>
-                </div>
-            </div>
-            <div class="footer-bottom">
-                <p class="footer-legal">
-                    <span class="footer-legal-en" data-i18n="footer.legalInfo.en">QScrap Services &amp; Trading L.L.C |
-                        Doha, Qatar</span>
-                    <span class="footer-legal-ar" data-i18n="footer.legalInfo.ar">كيوسكراب للخدمات والتجارة ذ.م.م |
-                        الدوحة، قطر</span>
-                </p>
-                <p class="footer-copyright" data-i18n="footer.copyright">© 2026 QScrap. All rights reserved.</p>
-            </div>
-        </div>
-    </footer>
+    <!-- Footer Component Loader -->
+    <footer id="footer-container" aria-label="Site footer"></footer>
+    <script src="/js/components/footer-loader.js" defer></script>
 
     <script>
         // Navigation scroll effect
