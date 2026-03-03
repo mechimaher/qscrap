@@ -102,6 +102,10 @@ export default function RequestDetailScreen() {
     const [viewerImages, setViewerImages] = useState<string[]>([]);
     const [isComparisonVisible, setIsComparisonVisible] = useState(false);
     const [showConfetti, setShowConfetti] = useState(false);
+    // G-01 Undo Compliance: 30-second undo timer state
+    const [pendingAcceptance, setPendingAcceptance] = useState<{ bid: Bid; deliveryFee: number } | null>(null);
+    const [undoCountdown, setUndoCountdown] = useState<number>(0);
+    const undoTimerRef = useRef<NodeJS.Timeout | null>(null);
 
 
     useEffect(() => {
@@ -109,6 +113,33 @@ export default function RequestDetailScreen() {
         const unsubscribe = navigation.addListener('focus', loadRequestDetails);
         return unsubscribe;
     }, [navigation]);
+
+    // G-01 Undo Compliance: Cleanup timer on unmount
+    useEffect(() => {
+        return () => {
+            if (undoTimerRef.current) {
+                clearInterval(undoTimerRef.current);
+            }
+        };
+    }, []);
+
+    // G-01 Undo Compliance: Handle countdown timer
+    useEffect(() => {
+        if (undoCountdown > 0 && pendingAcceptance) {
+            undoTimerRef.current = setTimeout(() => {
+                setUndoCountdown(prev => prev - 1);
+            }, 1000);
+        } else if (undoCountdown === 0 && pendingAcceptance) {
+            // Timer expired - proceed to payment
+            proceedToPayment(pendingAcceptance.bid, pendingAcceptance.deliveryFee);
+            setPendingAcceptance(null);
+        }
+        return () => {
+            if (undoTimerRef.current) {
+                clearTimeout(undoTimerRef.current);
+            }
+        };
+    }, [undoCountdown, pendingAcceptance]);
 
     useEffect(() => {
         const hasNewBidForThisRequest = newBids.some(b => b.request_id === requestId);
@@ -226,39 +257,61 @@ export default function RequestDetailScreen() {
             log('Using Zone 1 base delivery fee');
         }
 
+        // G-01 Undo Compliance: Show 30-second undo confirmation instead of direct navigation
+        const totalPrice = priceToShow + deliveryFee;
+        
+        // Create custom alert with countdown timer
         Alert.alert(
             t('alerts.acceptBidTitle'),
             t('alerts.acceptBidMessage', { name: bid.garage_name, price: priceToShow }) +
-            `\n\n${t('alerts.totalBreakdown', { total: priceToShow + deliveryFee, price: priceToShow, fee: deliveryFee, currency: t('common.currency') })}\n\n${t('alerts.chooseMethodHint')}`,
+            `\n\n${t('alerts.totalBreakdown', { total: totalPrice, price: priceToShow, fee: deliveryFee, currency: t('common.currency') })}\n\n⏱️ ${t('common.currency')}${totalPrice} will be charged in 30 seconds.`,
             [
-                { text: t('common.cancel'), style: 'cancel' },
                 {
-                    text: t('alerts.continueToPayment'),
+                    text: t('common.undo'),
+                    style: 'cancel',
                     onPress: () => {
-                        // CRITICAL: Navigate to Payment screen with bid details
-                        // Using unique key to force fresh screen instance (cache-busting)
-                        const navigationParams = {
-                            bidId: bid.bid_id,
-                            garageName: bid.garage_name,
-                            partPrice: priceToShow,
-                            deliveryFee: deliveryFee,
-                            partDescription: request?.part_description || 'Part',
-                        };
-
-                        log('========================================');
-                        log('[Payment] NAVIGATING TO PAYMENT SCREEN');
-                        log('[Payment] Params:', JSON.stringify(navigationParams, null, 2));
-                        log('========================================');
-
-                        navigation.navigate('Payment', {
-                            ...navigationParams,
-                            // Unique key forces new screen instance, bypassing cache
-                            _cacheKey: `payment_${bid.bid_id}_${Date.now()}`,
-                        });
+                        Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success);
+                        log('[G-01 Undo] User cancelled bid acceptance');
+                    }
+                },
+                {
+                    text: t('alerts.confirmAndPay'),
+                    onPress: () => {
+                        // Start 30-second undo timer
+                        Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success);
+                        setPendingAcceptance({ bid, deliveryFee });
+                        setUndoCountdown(30);
+                        log('[G-01 Undo] Started 30-second countdown for bid:', bid.bid_id);
                     },
                 },
             ]
         );
+    };
+
+    // G-01 Undo Compliance: Proceed to payment after countdown or manual confirm
+    const proceedToPayment = (bid: Bid, deliveryFee: number) => {
+        const priceToShow = Number(bid.bid_amount);
+        
+        // CRITICAL: Navigate to Payment screen with bid details
+        // Using unique key to force fresh screen instance (cache-busting)
+        const navigationParams = {
+            bidId: bid.bid_id,
+            garageName: bid.garage_name,
+            partPrice: priceToShow,
+            deliveryFee: deliveryFee,
+            partDescription: request?.part_description || 'Part',
+        };
+
+        log('========================================');
+        log('[Payment] NAVIGATING TO PAYMENT SCREEN');
+        log('[Payment] Params:', JSON.stringify(navigationParams, null, 2));
+        log('========================================');
+
+        navigation.navigate('Payment', {
+            ...navigationParams,
+            // Unique key forces new screen instance, bypassing cache
+            _cacheKey: `payment_${bid.bid_id}_${Date.now()}`,
+        });
     };
 
     const handleRejectBid = async (bid: Bid) => {
@@ -351,6 +404,48 @@ export default function RequestDetailScreen() {
                 <Text style={[styles.headerTitle, { color: colors.text }]}>{t('requestDetail.title')}</Text>
                 <View style={{ width: 60 }} />
             </View>
+
+            {/* G-01 Undo Compliance: Pending Acceptance Banner */}
+            {pendingAcceptance && undoCountdown > 0 && (
+                <LinearGradient
+                    colors={['#C9A227', '#A68520']}
+                    start={{ x: 0, y: 0 }}
+                    end={{ x: 1, y: 0 }}
+                    style={styles.undoBanner}
+                >
+                    <View style={[styles.undoContent, { flexDirection: rtlFlexDirection(isRTL) }]}>
+                        <View style={styles.undoIconBg}>
+                            <Ionicons name="time-outline" size={24} color="#fff" />
+                        </View>
+                        <View style={styles.undoTextContainer}>
+                            <Text style={styles.undoTitle}>⏱️ {t('common.paymentPending')}</Text>
+                            <Text style={styles.undoSubtitle}>
+                                {t('common.chargingIn', { seconds: undoCountdown })} - {pendingAcceptance.bid.garage_name}
+                            </Text>
+                        </View>
+                        <TouchableOpacity
+                            style={styles.undoButton}
+                            onPress={() => {
+                                Haptics.notificationAsync(Haptics.NotificationFeedbackType.Warning);
+                                setPendingAcceptance(null);
+                                setUndoCountdown(0);
+                                log('[G-01 Undo] User manually cancelled pending acceptance');
+                            }}
+                        >
+                            <Text style={styles.undoButtonText}>{t('common.undo')}</Text>
+                        </TouchableOpacity>
+                    </View>
+                    {/* Progress bar */}
+                    <View style={styles.undoProgressBg}>
+                        <View 
+                            style={[
+                                styles.undoProgressFill, 
+                                { width: `${(undoCountdown / 30) * 100}%` }
+                            ]} 
+                        />
+                    </View>
+                </LinearGradient>
+            )}
 
             <ScrollView style={styles.scrollView} showsVerticalScrollIndicator={false}>
                 {/* Hero Card */}
@@ -467,6 +562,66 @@ const styles = StyleSheet.create({
     headerTitle: { fontSize: FontSizes.xl, fontWeight: '800', letterSpacing: -0.5 },
     scrollView: { flex: 1 },
     errorText: { color: Colors.error, fontSize: FontSizes.lg, textAlign: 'center', marginTop: 100 },
+
+    // G-01 Undo Compliance Banner
+    undoBanner: {
+        marginHorizontal: Spacing.lg,
+        marginTop: Spacing.md,
+        borderRadius: BorderRadius.lg,
+        overflow: 'hidden',
+        elevation: 4,
+        shadowColor: '#000',
+        shadowOffset: { width: 0, height: 2 },
+        shadowOpacity: 0.1,
+        shadowRadius: 4,
+    },
+    undoContent: {
+        flexDirection: 'row',
+        alignItems: 'center',
+        padding: Spacing.md,
+        gap: Spacing.md,
+    },
+    undoIconBg: {
+        width: 40,
+        height: 40,
+        borderRadius: 20,
+        backgroundColor: 'rgba(255, 255, 255, 0.2)',
+        alignItems: 'center',
+        justifyContent: 'center',
+    },
+    undoTextContainer: {
+        flex: 1,
+    },
+    undoTitle: {
+        color: '#fff',
+        fontSize: FontSizes.md,
+        fontWeight: '700',
+        marginBottom: 2,
+    },
+    undoSubtitle: {
+        color: 'rgba(255, 255, 255, 0.9)',
+        fontSize: FontSizes.sm,
+        fontWeight: '500',
+    },
+    undoButton: {
+        backgroundColor: 'rgba(255, 255, 255, 0.2)',
+        paddingHorizontal: Spacing.md,
+        paddingVertical: Spacing.sm,
+        borderRadius: BorderRadius.md,
+    },
+    undoButtonText: {
+        color: '#fff',
+        fontSize: FontSizes.sm,
+        fontWeight: '700',
+    },
+    undoProgressBg: {
+        height: 4,
+        backgroundColor: 'rgba(255, 255, 255, 0.3)',
+    },
+    undoProgressFill: {
+        height: '100%',
+        backgroundColor: 'rgba(255, 255, 255, 0.9)',
+    },
 
     // Bids Section
     bidsSection: { paddingHorizontal: Spacing.lg },

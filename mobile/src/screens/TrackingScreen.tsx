@@ -608,9 +608,9 @@ export default function TrackingScreen() {
                             style={styles.supportButton}
                             onPress={() => {
                                 Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Medium);
-                                navigation.navigate('SupportChat' as any, {
-                                    order_id: orderId,
-                                    order_number: orderNumber
+                                navigation.navigate('Support' as any, {
+                                    orderId: orderId,
+                                    orderNumber: orderNumber
                                 });
                             }}
                         >

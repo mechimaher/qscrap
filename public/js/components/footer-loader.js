@@ -1,5 +1,5 @@
 /**
- * QScrap Footer Component Loader v2026.2
+ * QScrap Footer Component Loader v2026.3
  * Dynamically loads the footer component with retry logic and error handling
  * 
  * Usage: <script src="/js/components/footer-loader.js" defer></script>
@@ -7,7 +7,8 @@
  * Features:
  * - Async/await with 3 retry attempts
  * - Loading state indicator
- * - Versioned caching (v=2026.2)
+ * - Versioned caching (v=2026.3)
+ * - Automatic footer stylesheet injection
  * - Automatic i18n translation re-application
  * - Custom event dispatch (footer:loaded)
  * - Semantic HTML5 footer element
@@ -17,8 +18,10 @@
     'use strict';
 
     // Configuration
-    const FOOTER_VERSION = '2026.2';
+    const FOOTER_VERSION = '2026.3';
     const FOOTER_PATH = `/components/footer.html?v=${FOOTER_VERSION}`;
+    const FOOTER_STYLESHEET_PATH = `/css/components/footer.css?v=${FOOTER_VERSION}`;
+    const FOOTER_STYLESHEET_ID = 'qscrap-footer-component-styles';
     const FOOTER_CONTAINER_ID = 'footer-container';
     const MAX_RETRIES = 3;
     const RETRY_DELAY = 1000; // ms
@@ -31,10 +34,48 @@
     }
 
     /**
+     * Ensure footer component stylesheet is available once per page.
+     * Non-blocking fallback: resolves even if stylesheet fails to load.
+     */
+    function ensureFooterStylesheet() {
+        return new Promise((resolve) => {
+            const existing = document.getElementById(FOOTER_STYLESHEET_ID);
+            if (existing) {
+                resolve();
+                return;
+            }
+
+            let settled = false;
+            const done = () => {
+                if (settled) return;
+                settled = true;
+                resolve();
+            };
+
+            const link = document.createElement('link');
+            link.id = FOOTER_STYLESHEET_ID;
+            link.rel = 'stylesheet';
+            link.href = FOOTER_STYLESHEET_PATH;
+            const timeoutId = window.setTimeout(done, 1500);
+            link.onload = () => {
+                window.clearTimeout(timeoutId);
+                done();
+            };
+            link.onerror = () => {
+                window.clearTimeout(timeoutId);
+                done();
+            };
+            document.head.appendChild(link);
+        });
+    }
+
+    /**
      * Load footer component with retry logic
      */
     async function loadFooter(retries = MAX_RETRIES) {
         try {
+            await ensureFooterStylesheet();
+
             // Find or create footer container
             let container = document.getElementById(FOOTER_CONTAINER_ID);
             

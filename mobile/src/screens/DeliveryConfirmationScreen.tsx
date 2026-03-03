@@ -24,6 +24,7 @@ import { Colors, Spacing, BorderRadius, FontSizes } from '../constants/theme';
 import { useTranslation } from '../contexts/LanguageContext';
 import { extractErrorMessage } from '../utils/errorHandler';
 import { rtlFlexDirection, rtlTextAlign } from '../utils/rtl';
+import { log, error as logError } from '../utils/logger';
 
 export default function DeliveryConfirmationScreen() {
     const navigation = useNavigation<any>();
@@ -71,11 +72,25 @@ export default function DeliveryConfirmationScreen() {
         Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Medium);
         setIsLoading(true);
 
+        // Enterprise-safe: Block confirmation if escrow ID is missing
+        if (!escrow?.escrow_id) {
+            logError('[DeliveryConfirmation] Missing escrow ID - blocking confirmation');
+            Haptics.notificationAsync(Haptics.NotificationFeedbackType.Error);
+            Alert.alert(
+                t('common.error'),
+                t('delivery.missingEscrowId', { defaultValue: 'Missing escrow ID. Cannot confirm delivery.' })
+            );
+            setIsLoading(false);
+            return;
+        }
+
         try {
-            await api.confirmEscrowReceipt(escrow?.escrow_id || 'test', photos);
+            log('[DeliveryConfirmation] Confirming escrow receipt:', escrow.escrow_id);
+            await api.confirmEscrowReceipt(escrow.escrow_id, photos);
             Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success);
             setStep('success');
         } catch (error: any) {
+            logError('[DeliveryConfirmation] Escrow confirmation failed:', error);
             Haptics.notificationAsync(Haptics.NotificationFeedbackType.Error);
             Alert.alert(t('common.error'), extractErrorMessage(error));
         } finally {
@@ -97,7 +112,7 @@ export default function DeliveryConfirmationScreen() {
     };
 
     const navigateDispute = (reason: string) => {
-        navigation.navigate('Dispute', { order_id: order?.order_id, reason, photos });
+        navigation.navigate('Support');
     };
 
     // Success State
@@ -118,7 +133,7 @@ export default function DeliveryConfirmationScreen() {
                         {t('delivery.paymentReleased')}{'\n'}{t('delivery.thankYou')}
                     </Text>
                     <TouchableOpacity
-                        onPress={() => navigation.navigate('HomeTab')}
+                        onPress={() => navigation.reset({ index: 0, routes: [{ name: 'Main' }] })}
                         style={styles.doneButton}
                     >
                         <LinearGradient

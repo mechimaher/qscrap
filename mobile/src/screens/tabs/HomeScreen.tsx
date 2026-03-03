@@ -324,7 +324,7 @@ export default function HomeScreen() {
                     onLocationPress={() => setShowLocationPicker(true)}
                     deliveryAddress={deliveryAddress}
                     loyalty={loyalty}
-                    onLoyaltyPress={() => navigation.navigate('Rewards')}
+                    onLoyaltyPress={() => toast.show({ type: 'info', title: t('common.comingSoon', { defaultValue: 'Coming soon!' }), message: '' })}
                     greeting={getGreeting()}
                     customerLabel={t('common.customer')}
                 />

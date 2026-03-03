@@ -274,6 +274,52 @@ class ApiService {
         await SecureStore.deleteItemAsync(USER_KEY);
     }
 
+    // ========== Biometric Authentication ==========
+
+    async saveBiometricCredentials(phone: string, password: string): Promise<void> {
+        try {
+            await SecureStore.setItemAsync(BIOMETRIC_PHONE, phone);
+            await SecureStore.setItemAsync(BIOMETRIC_PASSWORD, password);
+            await SecureStore.setItemAsync(BIOMETRIC_ENABLED, 'true');
+            log('[API] Biometric credentials saved');
+        } catch (error) {
+            warn('[API] Failed to save biometric credentials:', error);
+        }
+    }
+
+    async getBiometricCredentials(): Promise<{ phone: string; password: string } | null> {
+        try {
+            const enabled = await SecureStore.getItemAsync(BIOMETRIC_ENABLED);
+            if (enabled !== 'true') {
+                return null;
+            }
+
+            const phone = await SecureStore.getItemAsync(BIOMETRIC_PHONE);
+            const password = await SecureStore.getItemAsync(BIOMETRIC_PASSWORD);
+
+            if (phone && password) {
+                return { phone, password };
+            }
+            return null;
+        } catch (error) {
+            warn('[API] Failed to get biometric credentials:', error);
+            return null;
+        }
+    }
+
+    async clearBiometricCredentials(): Promise<void> {
+        try {
+            await SecureStore.deleteItemAsync(BIOMETRIC_PHONE);
+            await SecureStore.deleteItemAsync(BIOMETRIC_PASSWORD);
+            await SecureStore.deleteItemAsync(BIOMETRIC_ENABLED);
+            log('[API] Biometric credentials cleared');
+        } catch (error) {
+            warn('[API] Failed to clear biometric credentials:', error);
+        }
+    }
+
+    // ========== Password Reset Methods ==========
+
     async requestPasswordReset(email: string): Promise<{ success: boolean; message: string }> {
         return this.request('/auth/request-password-reset', {
             method: 'POST',
@@ -309,66 +355,7 @@ class ApiService {
         });
     }
 
-    // ========== Biometric Authentication ==========
-    
-    async saveBiometricCredentials(phone: string, password: string): Promise<void> {
-        try {
-            await SecureStore.setItemAsync(BIOMETRIC_PHONE, phone);
-            await SecureStore.setItemAsync(BIOMETRIC_PASSWORD, password);
-            await SecureStore.setItemAsync(BIOMETRIC_ENABLED, 'true');
-            log('[API] Biometric credentials saved');
-        } catch (error) {
-            warn('[API] Failed to save biometric credentials:', error);
-        }
-    }
-
-    async getBiometricCredentials(): Promise<{ phone: string; password: string } | null> {
-        try {
-            const enabled = await SecureStore.getItemAsync(BIOMETRIC_ENABLED);
-            if (enabled !== 'true') {
-                return null;
-            }
-            
-            const phone = await SecureStore.getItemAsync(BIOMETRIC_PHONE);
-            const password = await SecureStore.getItemAsync(BIOMETRIC_PASSWORD);
-            
-            if (phone && password) {
-                return { phone, password };
-            }
-            return null;
-        } catch (error) {
-            warn('[API] Failed to get biometric credentials:', error);
-            return null;
-        }
-    }
-
-    async clearBiometricCredentials(): Promise<void> {
-        try {
-            await SecureStore.deleteItemAsync(BIOMETRIC_PHONE);
-            await SecureStore.deleteItemAsync(BIOMETRIC_PASSWORD);
-            await SecureStore.deleteItemAsync(BIOMETRIC_ENABLED);
-            log('[API] Biometric credentials cleared');
-        } catch (error) {
-            warn('[API] Failed to clear biometric credentials:', error);
-        }
-    }
-
-    async requestPasswordReset(email: string): Promise<{ success: boolean; message: string }> {
-        return this.request('/auth/request-password-reset', {
-            method: 'POST',
-            body: JSON.stringify({ email }),
-        });
-    }
-
-    async verifyPasswordResetOTP(data: {
-        email: string;
-        otp: string;
-    }): Promise<{ success: boolean; token: string; message: string }> {
-        return this.request('/auth/verify-password-reset-otp', {
-            method: 'POST',
-            body: JSON.stringify(data),
-        });
-    }
+    // ========== Biometric Settings ==========
 
     async isBiometricEnabled(): Promise<boolean> {
         try {

@@ -87,6 +87,11 @@ export const ar = {
         enable: 'تفعيل',
         supportEmail: 'support@qscrap.qa',
         supportPhone: 'tel:+97450267974',
+        // G-01 Undo Compliance
+        undo: 'تراجع',
+        confirmAndPay: 'تأكيد ودفع',
+        paymentPending: 'الدفع قيد الانتظار',
+        chargingIn: 'سيتم الخصم خلال {{seconds}} ثانية...',
         // مفاتيح تفاصيل الطلب
         order: 'طلب',
         current: 'الحالي',

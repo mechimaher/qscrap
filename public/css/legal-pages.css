@@ -190,7 +190,7 @@ body {
     padding: 60px 24px;
 }
 
-.container {
+.content-wrapper .container {
     max-width: 900px;
     margin: 0 auto;
 }
@@ -272,7 +272,7 @@ body {
     font-weight: 700;
 }
 
-h3 {
+.content-wrapper h3 {
     color: var(--qatar-maroon);
     font-size: 17px;
     font-weight: 600;
@@ -282,7 +282,7 @@ h3 {
     gap: 8px;
 }
 
-h3::before {
+.content-wrapper h3::before {
     content: '';
     width: 4px;
     height: 20px;
@@ -290,24 +290,24 @@ h3::before {
     border-radius: 2px;
 }
 
-p {
+.content-wrapper p {
     margin-bottom: 16px;
     color: var(--charcoal);
 }
 
-ul {
+.content-wrapper ul {
     margin-left: 0;
     margin-bottom: 16px;
     list-style: none;
 }
 
-li {
+.content-wrapper li {
     margin-bottom: 10px;
     padding-left: 28px;
     position: relative;
 }
 
-li::before {
+.content-wrapper li::before {
     content: '✓';
     position: absolute;
     left: 0;
@@ -315,14 +315,14 @@ li::before {
     font-weight: 700;
 }
 
-a {
+.content-wrapper a {
     color: var(--qatar-maroon);
     text-decoration: none;
     font-weight: 500;
     transition: color 0.2s ease;
 }
 
-a:hover {
+.content-wrapper a:hover {
     color: var(--gold);
 }
 
@@ -449,8 +449,8 @@ a:hover {
     color: var(--slate);
 }
 
-/* Footer */
-.footer {
+/* Legacy static footer styles (kept for archival templates only) */
+.legal-static-footer {
     background: var(--black);
     color: var(--white);
     text-align: center;
@@ -458,12 +458,12 @@ a:hover {
     font-size: 14px;
 }
 
-.footer p {
+.legal-static-footer p {
     color: #FFFFFF;
     opacity: 0.9;
 }
 
-.footer a {
+.legal-static-footer a {
     color: var(--gold);
 }
 
@@ -565,12 +565,12 @@ a:hover {
 }
 
 /* RTL List Items - Checkmarks on Right */
-[dir="rtl"] li {
+[dir="rtl"] .content-wrapper li {
     padding-left: 0;
     padding-right: 28px;
 }
 
-[dir="rtl"] li::before {
+[dir="rtl"] .content-wrapper li::before {
     left: auto;
     right: 0;
 }
