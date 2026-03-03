@@ -192,6 +192,9 @@ const translations = {
     }
 };
 
+// Expose translations globally for footer-loader.js
+window.translations = translations;
+
 // i18n System
 const i18n = {
     currentLang: localStorage.getItem('qscrap-lang') || 'en',

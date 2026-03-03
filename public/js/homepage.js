@@ -109,6 +109,8 @@ const translations = {
         'nav.forBusiness': 'For Businesses',
         'nav.about': 'About',
         'nav.download': 'Download App',
+        'nav.requestPart': 'Request a Part',
+        'hero.requestNow': 'Request a Part Now',
 
         // Hero Section
         'hero.badge': "Qatar's #1 Auto Parts Platform",
@@ -226,6 +228,8 @@ const translations = {
         'nav.forBusiness': 'للشركات',
         'nav.about': 'من نحن',
         'nav.download': 'تحميل التطبيق',
+        'nav.requestPart': 'طلب قطعة',
+        'hero.requestNow': 'اطلب قطعة الآن',
 
         // Hero Section
         'hero.badge': 'المنصة الأولى لقطع غيار السيارات في قطر',
@@ -337,6 +341,9 @@ const translations = {
         'vvip.orb.cta': 'ابدأ الآن'
     }
 };
+
+// Expose translations globally for footer-loader.js
+window.translations = translations;
 
 // i18n System
 const i18n = {
@@ -644,10 +651,10 @@ const vvipWidget = {
 
         // Initialize with saved or default widget
         this.currentWidget = startWidget;
-        
+
         // Update ALL widget texts on initialization (for current language)
         this.updateAllWidgetTexts();
-        
+
         this.showWidget(startWidget);
 
         // Setup scroll listener with throttling
@@ -738,7 +745,7 @@ const vvipWidget = {
 
         widget.classList.remove('vvip-widget-hidden');
         widget.classList.add('vvip-widget-visible');
-        
+
         // Update i18n text
         this.updateWidgetText(i18n.currentLang);
     },
