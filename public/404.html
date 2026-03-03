@@ -545,10 +545,24 @@
                 'error.feature2.desc': 'Get the mobile experience',
                 'error.feature3.title': 'Contact Support',
                 'error.feature3.desc': "We're here to help",
-                'footer.about': 'About',
-                'footer.partners': 'Partners',
-                'footer.terms': 'Terms',
-                'footer.privacy': 'Privacy'
+                // Footer keys (matching footer component)
+                'footer.tagline': "Qatar's premium automotive parts marketplace. Connecting customers with verified garages for quality new, used, and OEM parts.",
+                'footer.company': 'Company',
+                'footer.aboutUs': 'About Us',
+                'footer.forBusiness': 'For Businesses',
+                'footer.contact': 'Contact',
+                'footer.howItWorks': 'How It Works',
+                'footer.legal': 'Legal',
+                'footer.privacy': 'Privacy Policy',
+                'footer.terms': 'Terms of Service',
+                'footer.refund': 'Refund Policy',
+                'footer.contactTitle': 'Contact',
+                'footer.email': 'support@qscrap.qa',
+                'footer.phone': '+974 5026 7974',
+                'footer.whatsapp': 'WhatsApp Support',
+                'footer.legalInfo.en': 'QScrap Services & Trading L.L.C | Doha, Qatar',
+                'footer.legalInfo.ar': 'كيوسكراب للخدمات والتجارة ذ.م.م | الدوحة، قطر',
+                'footer.copyright': '© 2026 QScrap. All rights reserved.'
             },
             ar: {
                 'nav.backHome': 'العودة للرئيسية',
@@ -564,12 +578,28 @@
                 'error.feature2.desc': 'احصل على تجربة الهاتف',
                 'error.feature3.title': 'تواصل مع الدعم',
                 'error.feature3.desc': 'نحن هنا للمساعدة',
-                'footer.about': 'من نحن',
-                'footer.partners': 'الشركاء',
-                'footer.terms': 'الشروط',
-                'footer.privacy': 'الخصوصية'
+                // Footer keys (matching footer component)
+                'footer.tagline': 'سوق قطع غيار السيارات المتميز في قطر. نربط العملاء بكراجات معتمدة للحصول على قطع جديدة ومستعملة وأصلية.',
+                'footer.company': 'الشركة',
+                'footer.aboutUs': 'من نحن',
+                'footer.forBusiness': 'للشركات',
+                'footer.contact': 'تواصل',
+                'footer.howItWorks': 'كيف يعمل',
+                'footer.legal': 'قانوني',
+                'footer.privacy': 'سياسة الخصوصية',
+                'footer.terms': 'شروط الخدمة',
+                'footer.refund': 'سياسة الاسترداد',
+                'footer.contactTitle': 'تواصل',
+                'footer.email': 'support@qscrap.qa',
+                'footer.phone': '<span dir="ltr">+974 5026 7974</span>',
+                'footer.whatsapp': 'دعم واتساب',
+                'footer.legalInfo.ar': 'كيوسكراب للخدمات والتجارة ذ.م.م | الدوحة، قطر',
+                'footer.copyright': 'كيوسكراب © 2026. جميع الحقوق محفوظة.'
             }
         };
+
+        // Expose translations globally for footer-loader.js
+        window.translations = translations;
 
         const i18n = {
             currentLang: localStorage.getItem('qscrap-lang') || 'en',
@@ -591,6 +621,14 @@
                     html.setAttribute('lang', 'en');
                 }
 
+                // Swap logo
+                const logoSrc = lang === 'ar'
+                    ? '/assets/images/qscrap-logo-ar.png?v=2026opt'
+                    : '/assets/images/qscrap-logo.png?v=2026';
+                document.querySelectorAll('.nav-logo img, .footer-brand img').forEach(img => {
+                    img.src = logoSrc;
+                });
+
                 document.querySelectorAll('[data-i18n]').forEach(el => {
                     const key = el.dataset.i18n;
                     const translation = translations[lang][key];
@@ -598,11 +636,11 @@
                         if (animate) {
                             el.style.opacity = '0';
                             setTimeout(() => {
-                                el.textContent = translation;
+                                el.innerHTML = translation;
                                 el.style.opacity = '1';
                             }, 150);
                         } else {
-                            el.textContent = translation;
+                            el.innerHTML = translation;
                         }
                     }
                 });

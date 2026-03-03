@@ -282,10 +282,10 @@ const translations = {
         'success.portalBtn': 'Go to Partner Portal',
 
         // Footer
-        'footer.description': 'Qatar\'s premium automotive parts marketplace. Connecting customers with verified garages for quality new, used, and OEM parts.',
+        'footer.tagline': 'Qatar\'s premium automotive parts marketplace. Connecting customers with verified garages for quality new, used, and OEM parts.',
         'footer.company': 'Company',
         'footer.aboutUs': 'About Us',
-        'footer.forBusinesses': 'For Businesses',
+        'footer.forBusiness': 'For Businesses',
         'footer.contact': 'Contact',
         'footer.howItWorks': 'How It Works',
         'footer.legal': 'Legal',
@@ -572,10 +572,10 @@ const translations = {
         'success.portalBtn': 'اذهب لبوابة الشركاء',
 
         // Footer
-        'footer.description': 'سوق قطع السيارات الفاخر في قطر. نربط العملاء بالكراجات المعتمدة للحصول على قطع جديدة ومستعملة وأصلية بجودة عالية.',
+        'footer.tagline': 'سوق قطع السيارات الفاخر في قطر. نربط العملاء بالكراجات المعتمدة للحصول على قطع جديدة ومستعملة وأصلية بجودة عالية.',
         'footer.company': 'الشركة',
         'footer.aboutUs': 'من نحن',
-        'footer.forBusinesses': 'للأعمال',
+        'footer.forBusiness': 'للأعمال',
         'footer.contact': 'تواصل معنا',
         'footer.howItWorks': 'كيف يعمل',
         'footer.legal': 'قانوني',

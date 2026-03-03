@@ -321,13 +321,24 @@ const legalTranslations = {
         'privacy.contact.address': 'Location',
         'privacy.contact.addressValue': 'Doha, Qatar',
 
-        // Footer
-        'footer.copyright': '© 2026 QScrap Services & Trading L.L.C. All rights reserved.',
-        'footer.compliance': 'Compliant with Google Play Developer Program Policies and Qatar\'s Personal Data Protection Law.',
-        'footer.backHome': 'Back to QScrap Home',
+        // Footer (Matching footer component)
+        'footer.tagline': "Qatar's premium automotive parts marketplace. Connecting customers with verified garages for quality new, used, and OEM parts.",
+        'footer.company': 'Company',
+        'footer.aboutUs': 'About Us',
+        'footer.forBusiness': 'For Businesses',
+        'footer.contact': 'Contact',
+        'footer.howItWorks': 'How It Works',
+        'footer.legal': 'Legal',
         'footer.privacy': 'Privacy Policy',
         'footer.terms': 'Terms of Service',
-        'footer.refund': 'Refund Policy'
+        'footer.refund': 'Refund Policy',
+        'footer.contactTitle': 'Contact',
+        'footer.email': 'support@qscrap.qa',
+        'footer.phone': '+974 5026 7974',
+        'footer.whatsapp': 'WhatsApp Support',
+        'footer.legalInfo.en': 'QScrap Services & Trading L.L.C | Doha, Qatar',
+        'footer.legalInfo.ar': 'كيوسكراب للخدمات والتجارة ذ.م.م | الدوحة، قطر',
+        'footer.copyright': '© 2026 QScrap. All rights reserved.'
     },
     ar: {
         // Navigation
@@ -645,15 +656,29 @@ const legalTranslations = {
         'privacy.contact.address': 'الموقع',
         'privacy.contact.addressValue': 'الدوحة، قطر',
 
-        // Footer
-        'footer.copyright': 'كيوسكراب للخدمات والتجارة ذ.م.م © 2026. جميع الحقوق محفوظة.',
-        'footer.compliance': 'متوافق مع سياسات برنامج مطوري Google Play وقانون حماية البيانات الشخصية في قطر.',
-        'footer.backHome': 'العودة إلى الصفحة الرئيسية',
+        // Footer (Matching footer component)
+        'footer.tagline': 'سوق قطع غيار السيارات المتميز في قطر. نربط العملاء بكراجات معتمدة للحصول على قطع جديدة ومستعملة وأصلية.',
+        'footer.company': 'الشركة',
+        'footer.aboutUs': 'من نحن',
+        'footer.forBusiness': 'للشركات',
+        'footer.contact': 'تواصل',
+        'footer.howItWorks': 'كيف يعمل',
+        'footer.legal': 'قانوني',
         'footer.privacy': 'سياسة الخصوصية',
         'footer.terms': 'شروط الخدمة',
-        'footer.refund': 'سياسة الاسترداد'
+        'footer.refund': 'سياسة الاسترداد',
+        'footer.contactTitle': 'تواصل',
+        'footer.email': 'support@qscrap.qa',
+        'footer.phone': '<span dir="ltr">+974 5026 7974</span>',
+        'footer.whatsapp': 'دعم واتساب',
+        'footer.legalInfo.en': 'QScrap Services & Trading L.L.C | Doha, Qatar',
+        'footer.legalInfo.ar': 'كيوسكراب للخدمات والتجارة ذ.م.م | الدوحة، قطر',
+        'footer.copyright': 'كيوسكراب © 2026. جميع الحقوق محفوظة.'
     }
 };
+
+// Expose translations globally for footer-loader.js
+window.translations = legalTranslations;
 
 // i18n System for Legal Pages
 const legalI18n = {
