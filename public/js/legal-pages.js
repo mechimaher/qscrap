@@ -669,7 +669,7 @@ const legalTranslations = {
         'footer.refund': 'سياسة الاسترداد',
         'footer.contactTitle': 'تواصل',
         'footer.email': 'support@qscrap.qa',
-        'footer.phone': '<span dir="ltr">+974 5026 7974</span>',
+        'footer.phone': '+974 5026 7974',
         'footer.whatsapp': 'دعم واتساب',
         'footer.legalInfo.en': 'QScrap Services & Trading L.L.C | Doha, Qatar',
         'footer.legalInfo.ar': 'كيوسكراب للخدمات والتجارة ذ.م.م | الدوحة، قطر',
@@ -747,3 +747,8 @@ const legalI18n = {
 
 // Initialize i18n on DOM ready
 document.addEventListener('DOMContentLoaded', () => legalI18n.init());
+
+// Re-apply current language when footer component is injected asynchronously.
+document.addEventListener('footer:loaded', () => {
+    legalI18n.setLanguage(legalI18n.currentLang, false);
+});

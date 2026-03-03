@@ -591,7 +591,7 @@
                 'footer.refund': 'سياسة الاسترداد',
                 'footer.contactTitle': 'تواصل',
                 'footer.email': 'support@qscrap.qa',
-                'footer.phone': '<span dir="ltr">+974 5026 7974</span>',
+                'footer.phone': '+974 5026 7974',
                 'footer.whatsapp': 'دعم واتساب',
                 'footer.legalInfo.ar': 'كيوسكراب للخدمات والتجارة ذ.م.م | الدوحة، قطر',
                 'footer.copyright': 'كيوسكراب © 2026. جميع الحقوق محفوظة.'
@@ -649,6 +649,11 @@
 
         document.addEventListener('DOMContentLoaded', () => {
             i18n.init();
+        });
+
+        // Re-apply current language when footer component is injected asynchronously.
+        document.addEventListener('footer:loaded', () => {
+            i18n.setLanguage(i18n.currentLang, false);
         });
     </script>
 </body>

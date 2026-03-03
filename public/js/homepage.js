@@ -326,7 +326,7 @@ const translations = {
         'footer.terms': 'شروط الخدمة',
         'footer.refund': 'سياسة الاسترداد',
         'footer.email': 'support@qscrap.qa',
-        'footer.phone': '<span dir="ltr">+974 5026 7974</span>',
+        'footer.phone': '+974 5026 7974',
         'footer.whatsapp': 'دعم واتساب',
         'footer.legalInfo.en': 'QScrap Services & Trading L.L.C | Doha, Qatar',
         'footer.legalInfo.ar': 'كيوسكراب للخدمات والتجارة ذ.م.م | الدوحة، قطر',

@@ -1,5 +1,5 @@
 /**
- * QScrap Footer Component Loader v2026.1
+ * QScrap Footer Component Loader v2026.2
  * Dynamically loads the footer component with retry logic and error handling
  * 
  * Usage: <script src="/js/components/footer-loader.js" defer></script>
@@ -7,7 +7,7 @@
  * Features:
  * - Async/await with 3 retry attempts
  * - Loading state indicator
- * - Versioned caching (v=2026.1)
+ * - Versioned caching (v=2026.2)
  * - Automatic i18n translation re-application
  * - Custom event dispatch (footer:loaded)
  * - Semantic HTML5 footer element
@@ -17,7 +17,7 @@
     'use strict';
 
     // Configuration
-    const FOOTER_VERSION = '2026.1';
+    const FOOTER_VERSION = '2026.2';
     const FOOTER_PATH = `/components/footer.html?v=${FOOTER_VERSION}`;
     const FOOTER_CONTAINER_ID = 'footer-container';
     const MAX_RETRIES = 3;
@@ -97,19 +97,27 @@
             return;
         }
 
+        const container = document.getElementById(FOOTER_CONTAINER_ID);
+        if (!container) {
+            return;
+        }
+
         const translations = window.translations[lang];
-        
-        document.querySelectorAll('[data-i18n]').forEach(el => {
+
+        // Scope updates to the footer only, so page-level i18n remains the source of truth.
+        container.querySelectorAll('[data-i18n]').forEach(el => {
             const key = el.dataset.i18n;
-            const translation = translations[key];
-            if (translation) {
-                // Preserve HTML structure for translations with icons
-                if (typeof translation === 'string' && (translation.includes('<') || translation.includes('>'))) {
-                    el.innerHTML = translation;
-                } else {
-                    el.textContent = translation;
-                }
+            if (!Object.prototype.hasOwnProperty.call(translations, key)) {
+                return;
             }
+
+            const translation = translations[key];
+            if (translation === null || translation === undefined) {
+                return;
+            }
+
+            // Footer translations are text-only; icons are part of the component template.
+            el.textContent = String(translation);
         });
 
         // Note: Language visibility is handled by CSS based on html[dir] attribute
