@@ -28,7 +28,6 @@ import { ToastProvider } from './src/components/Toast';
 import OfflineBanner from './src/components/OfflineBanner';
 import { Address } from './src/services/api';
 import { BadgeCountsProvider, useBadgeCounts } from './src/hooks/useBadgeCounts';
-import { linking } from './src/navigation/linking';
 
 // Initialize Sentry — must be called before any React rendering
 Sentry.init({
@@ -435,7 +434,7 @@ export default Sentry.wrap(function App() {
               <SocketProvider>
                 <BadgeCountsProvider>
                   <ToastProvider>
-                    <NavigationContainer ref={navigationRef} linking={linking}>
+                    <NavigationContainer ref={navigationRef}>
                       <ThemedApp />
                     </NavigationContainer>
                   </ToastProvider>

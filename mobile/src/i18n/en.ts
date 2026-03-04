@@ -86,11 +86,6 @@ export const en = {
         enable: 'Enable',
         supportEmail: 'support@qscrap.qa',
         supportPhone: 'tel:+97450267974',
-        // G-01 Undo Compliance
-        undo: 'Undo',
-        confirmAndPay: 'Confirm & Pay',
-        paymentPending: 'Payment Pending',
-        chargingIn: 'Charging in {{seconds}}s...',
         // Order Details common keys
         order: 'Order',
         current: 'Current',

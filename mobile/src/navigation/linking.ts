@@ -29,45 +29,43 @@ export const linking: LinkingOptions<RootStackParamList> = {
                 screens: {
                     Login: 'login',
                     Register: 'register',
-                    ForgotPassword: 'forgot-password',
-                    VerifyOTP: 'verify-otp',
-                    VerifyOTPReset: 'verify-reset',
-                    ResetPassword: 'reset-password',
                 },
             },
-            // Main tab screens
+            // Main authenticated screens
             Main: {
                 screens: {
-                    Home: 'home',
-                    Requests: 'requests',
-                    Orders: 'orders',
-                    Profile: 'profile',
+                    MainTabs: {
+                        screens: {
+                            Home: 'home',
+                            Requests: 'requests',
+                            Orders: 'orders',
+                            Profile: 'profile',
+                            Support: 'support',
+                        },
+                    },
+                    RequestDetails: {
+                        path: 'request/:requestId',
+                        parse: {
+                            requestId: (requestId: string) => requestId,
+                        },
+                    },
+                    OrderDetails: {
+                        path: 'order/:orderId',
+                        parse: {
+                            orderId: (orderId: string) => orderId,
+                        },
+                    },
+                    Tracking: {
+                        path: 'track/:orderId',
+                        parse: {
+                            orderId: (orderId: string) => orderId,
+                        },
+                    },
+                    CancellationPreview: 'cancel/:orderId',
+                    ReturnRequest: 'return/:orderId',
+                    Dispute: 'dispute/:orderId',
                 },
             },
-            // Root stack screens
-            RequestDetail: {
-                path: 'request/:requestId',
-                parse: {
-                    requestId: (requestId: string) => requestId,
-                },
-            },
-            OrderDetail: {
-                path: 'order/:orderId',
-                parse: {
-                    orderId: (orderId: string) => orderId,
-                },
-            },
-            Tracking: {
-                path: 'track/:orderId',
-                parse: {
-                    orderId: (orderId: string) => orderId,
-                },
-            },
-            Chat: 'chat/:orderId',
-            Settings: 'settings',
-            Support: 'support',
-            Notifications: 'notifications',
-            NewRequest: 'new-request',
             // Legal screens (accessible without auth)
             PrivacyPolicy: 'privacy',
             Terms: 'terms',
@@ -92,12 +90,12 @@ export const handleDeepLink = async (url: string): Promise<{ screen: string; par
         // Handle specific routes
         if (path.startsWith('request/')) {
             const requestId = path.replace('request/', '');
-            return { screen: 'RequestDetail', params: { requestId } };
+            return { screen: 'RequestDetails', params: { requestId } };
         }
 
         if (path.startsWith('order/')) {
             const orderId = path.replace('order/', '');
-            return { screen: 'OrderDetail', params: { orderId } };
+            return { screen: 'OrderDetails', params: { orderId } };
         }
 
         if (path.startsWith('track/')) {
@@ -108,13 +106,13 @@ export const handleDeepLink = async (url: string): Promise<{ screen: string; par
         // Handle simple paths
         switch (path) {
             case 'home':
-                return { screen: 'Main', params: { screen: 'Home' } };
+                return { screen: 'Home' };
             case 'requests':
-                return { screen: 'Main', params: { screen: 'Requests' } };
+                return { screen: 'Requests' };
             case 'orders':
-                return { screen: 'Main', params: { screen: 'Orders' } };
+                return { screen: 'Orders' };
             case 'profile':
-                return { screen: 'Main', params: { screen: 'Profile' } };
+                return { screen: 'Profile' };
             case 'support':
                 return { screen: 'Support' };
             case 'privacy':

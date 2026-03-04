@@ -103,7 +103,7 @@ export default function ProfileScreen() {
                 break;
             case 'Requests':
                 // Navigate back to tab navigator - Requests tab
-                (navigation as any).navigate('Main', { screen: 'Requests' });
+                (navigation as any).navigate('MainTabs', { screen: 'Requests' });
                 break;
             default:
                 navigation.navigate('Support');
