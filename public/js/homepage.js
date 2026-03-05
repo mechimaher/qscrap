@@ -1,3 +1,264 @@
+// ===== 2026 BILINGUAL I18N SYSTEM FOR HOMEPAGE =====
+const translations = {
+    en: {
+        // Navigation
+        'nav.howItWorks': 'How It Works',
+        'nav.gallery': 'Gallery',
+        'nav.forBusiness': 'For Businesses',
+        'nav.about': 'About',
+        'nav.requestPart': 'Request a Part',
+        'nav.download': 'Download App',
+
+        // Hero
+        'hero.badge': "Qatar's #1 Auto Parts Platform",
+        'hero.title1': "Qatar's Premium",
+        'hero.title2': 'Automotive Parts',
+        'hero.title3': 'Marketplace',
+        'hero.subtitle': 'New • Used • Genuine OEM — Delivered Same Day to Your Door',
+        'hero.requestNow': 'Request a Part Now',
+        'hero.cta1': 'Download App',
+
+        // Stats
+        'hero.stat1.value': '5,000+',
+        'hero.stat1.label': 'Parts Delivered',
+        'hero.stat2.value': '50+',
+        'hero.stat2.label': 'Verified Garages',
+        'hero.stat3.value': '4.8★',
+        'hero.stat3.label': 'Customer Rating',
+
+        // Showcase
+        'showcase.label': 'Parts Showcase',
+        'showcase.title': 'Thousands of Quality Parts',
+        'carousel.item1.title': 'Engine Components',
+        'carousel.item1.desc': 'Premium quality internals',
+        'carousel.item2.title': 'BMW Premium Parts',
+        'carousel.item2.desc': 'OEM & Aftermarket',
+        'carousel.item3.title': 'Full Catalog',
+        'carousel.item3.desc': 'Every part you need',
+        'carousel.item4.title': 'Performance Engines',
+        'carousel.item4.desc': 'High-performance parts',
+        'carousel.item5.title': 'Expert Service',
+        'carousel.item5.desc': 'Professional guidance',
+        'carousel.item6.title': 'Industrial Scale',
+        'carousel.item6.desc': 'Massive inventory',
+
+        // Steps
+        'steps.badge': 'How It Works',
+        'steps.title': 'Simple. Fast. Reliable.',
+        'steps.subtitle': 'Get the parts you need in 4 easy steps',
+        'step1.title': 'Request',
+        'step1.desc': 'Describe the part you need. Add photos and your car details for accuracy.',
+        'step2.title': 'Compare Bids',
+        'step2.desc': 'Receive competitive quotes from verified garages within hours.',
+        'step3.title': 'Pay Securely',
+        'step3.desc': 'Choose card payment or Cash on Delivery. Your money is protected.',
+        'step4.title': 'Receive at Door',
+        'step4.desc': 'Track your order in real-time and receive it at your doorstep.',
+
+        // Gallery
+        'gallery.badge': 'Gallery',
+        'gallery.title': 'The World of Auto Parts',
+        'gallery.subtitle': 'Quality parts from verified sources',
+        'gallery.item1': 'Complete Engines',
+        'gallery.item2': 'Engine Components',
+        'gallery.item3': 'Expert Service',
+        'gallery.item4': 'Industrial Scale',
+        'gallery.item5': 'Luxury Parts',
+
+        // Value Props
+        'value.badge': 'Why QScrap',
+        'value.title': 'The Smart Way to Buy Auto Parts',
+        'value.subtitle': 'Trust, quality, and convenience in every order',
+        'value1.title': 'Quality Guaranteed',
+        'value1.desc': 'Every part is verified for quality. 7-day return policy.',
+        'value2.title': 'Same-Day Delivery',
+        'value2.desc': 'Get parts delivered to your door across Doha within hours.',
+        'value3.title': 'Best Prices',
+        'value3.desc': 'Compare quotes from multiple garages. Find the best deal.',
+        'value4.title': 'Secure Payments',
+        'value4.desc': 'Pay by card or COD. Escrow protection ensures your money is safe.',
+        'value5.title': 'Verified Garages',
+        'value5.desc': 'All garages are vetted and verified. Buy with confidence.',
+        'value6.title': 'Easy Mobile App',
+        'value6.desc': 'Request parts, track orders, and manage everything from your phone.',
+
+        // CTA
+        'cta.title': 'Ready to Find Your Part?',
+        'cta.subtitle': "Download the QScrap app and get started in minutes. It's free!",
+        'cta.ios': 'Download for iOS',
+        'cta.android': 'Download for Android',
+        'cta.orScan': 'Or scan to download',
+        'cta.appStore': 'App Store',
+        'cta.googlePlay': 'Google Play'
+    },
+    ar: {
+        // Navigation
+        'nav.howItWorks': 'كيف يعمل',
+        'nav.gallery': 'المعرض',
+        'nav.forBusiness': 'للشركات',
+        'nav.about': 'من نحن',
+        'nav.requestPart': 'اطلب قطعة',
+        'nav.download': 'حمّل التطبيق',
+
+        // Hero
+        'hero.badge': 'منصة قطع غيار السيارات الأولى في قطر',
+        'hero.title1': 'سوق قطر المتميز',
+        'hero.title2': 'لقطع غيار',
+        'hero.title3': 'السيارات',
+        'hero.subtitle': 'جديد • مستعمل • أصلي — توصيل في نفس اليوم إلى بابك',
+        'hero.requestNow': 'اطلب قطعة الآن',
+        'hero.cta1': 'حمّل التطبيق',
+
+        // Stats
+        'hero.stat1.value': '+5,000',
+        'hero.stat1.label': 'قطعة تم توصيلها',
+        'hero.stat2.value': '+50',
+        'hero.stat2.label': 'كراج معتمد',
+        'hero.stat3.value': '4.8★',
+        'hero.stat3.label': 'تقييم العملاء',
+
+        // Showcase
+        'showcase.label': 'معرض القطع',
+        'showcase.title': 'آلاف القطع عالية الجودة',
+        'carousel.item1.title': 'مكونات المحرك',
+        'carousel.item1.desc': 'أجزاء داخلية عالية الجودة',
+        'carousel.item2.title': 'قطع BMW المتميزة',
+        'carousel.item2.desc': 'أصلية وما بعد السوق',
+        'carousel.item3.title': 'الكتالوج الكامل',
+        'carousel.item3.desc': 'كل قطعة تحتاجها',
+        'carousel.item4.title': 'محركات الأداء',
+        'carousel.item4.desc': 'قطع عالية الأداء',
+        'carousel.item5.title': 'خدمة خبيرة',
+        'carousel.item5.desc': 'إرشاد احترافي',
+        'carousel.item6.title': 'مقياس صناعي',
+        'carousel.item6.desc': 'مخزون ضخم',
+
+        // Steps
+        'steps.badge': 'كيف يعمل',
+        'steps.title': 'بسيط. سريع. موثوق.',
+        'steps.subtitle': 'احصل على القطع التي تحتاجها في 4 خطوات سهلة',
+        'step1.title': 'اطلب',
+        'step1.desc': 'صِف القطعة التي تحتاجها. أضف الصور وتفاصيل سيارتك للحصول على دقة.',
+        'step2.title': 'قارن العروض',
+        'step2.desc': 'احصل على عروض تنافسية من الكراجات المعتمدة خلال ساعات.',
+        'step3.title': 'ادفع بأمان',
+        'step3.desc': 'اختر الدفع بالبطاقة أو الدفع عند الاستلام. أموالك محمية.',
+        'step4.title': 'استلم عند الباب',
+        'step4.desc': 'تتبع طلبك في الوقت الفعلي واستلمه عند بابك.',
+
+        // Gallery
+        'gallery.badge': 'المعرض',
+        'gallery.title': 'عالم قطع الغيار',
+        'gallery.subtitle': 'قطع عالية الجودة من مصادر موثوقة',
+        'gallery.item1': 'محركات كاملة',
+        'gallery.item2': 'مكونات المحرك',
+        'gallery.item3': 'خدمة خبيرة',
+        'gallery.item4': 'مقياس صناعي',
+        'gallery.item5': 'قطع فاخرة',
+
+        // Value Props
+        'value.badge': 'لماذا QScrap',
+        'value.title': 'الطريقة الذكية لشراء قطع الغيار',
+        'value.subtitle': 'ثقة وجودة وراحة في كل طلب',
+        'value1.title': 'جودة مضمونة',
+        'value1.desc': 'كل قطعة معتمدة للجودة. سياسة إرجاع 7 أيام.',
+        'value2.title': 'توصيل في نفس اليوم',
+        'value2.desc': 'احصل على القطع موصلة إلى بابك في الدوحة خلال ساعات.',
+        'value3.title': 'أفضل الأسعار',
+        'value3.desc': 'قارن عروض من كراجات متعددة. اعثر على أفضل صفقة.',
+        'value4.title': 'مدفوعات آمنة',
+        'value4.desc': 'ادفع بالبطاقة أو عند الاستلام. حماية الضمان تضمن أمان أموالك.',
+        'value5.title': 'كراجات معتمدة',
+        'value5.desc': 'جميع الكراجات موثقة ومعتمدة. اشترِ بثقة.',
+        'value6.title': 'تطبيق جوال سهل',
+        'value6.desc': 'اطلب قطعًا وتتبع الطلبات وأدر كل شيء من هاتفك.',
+
+        // CTA
+        'cta.title': 'مستعد لإيجاد قطعتك؟',
+        'cta.subtitle': 'حمّل تطبيق QScrap وابدأ في دقائق. مجاني!',
+        'cta.ios': 'حمّل للتطبيق iOS',
+        'cta.android': 'حمّل للتطبيق Android',
+        'cta.orScan': 'أو امسح الضوئي للتنزيل',
+        'cta.appStore': 'متجر التطبيقات',
+        'cta.googlePlay': 'جوجل بلاي'
+    }
+};
+
+// i18n System
+const i18n = {
+    currentLang: localStorage.getItem('qscrap-lang') || 'en',
+
+    init() {
+        this.setLanguage(this.currentLang, false);
+        this.attachLanguageToggleListeners();
+    },
+
+    attachLanguageToggleListeners() {
+        document.querySelectorAll('.lang-btn, .mobile-lang-btn').forEach(btn => {
+            btn.addEventListener('click', () => {
+                const lang = btn.dataset.lang;
+                if (lang && lang !== this.currentLang) {
+                    this.setLanguage(lang, true);
+                }
+            });
+        });
+    },
+
+    setLanguage(lang, animate = true) {
+        this.currentLang = lang;
+        localStorage.setItem('qscrap-lang', lang);
+
+        // RTL/LTR toggle
+        const html = document.documentElement;
+        if (lang === 'ar') {
+            html.setAttribute('dir', 'rtl');
+            html.setAttribute('lang', 'ar');
+            document.body.style.fontFamily = "'Inter', 'Noto Sans Arabic', sans-serif";
+        } else {
+            html.setAttribute('dir', 'ltr');
+            html.setAttribute('lang', 'en');
+            document.body.style.fontFamily = "'Inter', -apple-system, sans-serif";
+        }
+
+        // Logo swap
+        const logoSrc = lang === 'ar'
+            ? '/assets/images/qscrap-logo-ar.png?v=2026opt'
+            : '/assets/images/qscrap-logo.png?v=2026final';
+        document.querySelectorAll('.nav-logo img, .footer-brand img').forEach(img => {
+            img.src = logoSrc;
+        });
+
+        // Translate all [data-i18n] elements
+        document.querySelectorAll('[data-i18n]').forEach(el => {
+            const key = el.dataset.i18n;
+            const translation = translations[lang][key];
+            if (translation) {
+                if (animate) {
+                    el.style.opacity = '0';
+                    setTimeout(() => {
+                        el.innerHTML = translation;
+                        el.style.opacity = '1';
+                    }, 150);
+                } else {
+                    el.innerHTML = translation;
+                }
+            }
+        });
+
+        // Update button states
+        document.querySelectorAll('.lang-btn, .mobile-lang-btn').forEach(btn => {
+            btn.classList.toggle('active', btn.dataset.lang === lang);
+        });
+    },
+
+    t(key) {
+        return translations[this.currentLang][key] || key;
+    }
+};
+
+// Initialize i18n on DOM ready
+document.addEventListener('DOMContentLoaded', () => i18n.init());
+
 // Hero Background Slideshow
 const slides = document.querySelectorAll('.hero-bg-slide');
 let currentSlide = 0;

@@ -3,17 +3,19 @@
 **Version:** 2.0  
 **Status:** Production-Ready  
 **License:** Proprietary  
+**Canonical Architecture:** See [BRAIN.MD](BRAIN.MD) for the single source of truth  
 
 ---
 
 ## 🚀 Platform Overview
 
-QScrap is Qatar's first **enterprise-grade automotive services platform** offering:
-- **Parts Marketplace**: Spare parts bidding & delivery
-- **Quick Services**: Battery, oil, wash, tire, AC, breakdown
-- **Repair Services**: Workshop bookings & mobile mechanics
-- **Insurance Integration**: MOI reports, escrow, pricing analytics
-- **Partner Revenue**: Analytics, Loyalty, Ads, Subscriptions
+QScrap is Qatar's first **enterprise-grade automotive spare parts marketplace** offering:
+- **Parts Marketplace**: Spare parts bidding & delivery (✅ Live)
+- **Escrow & Buyer Protection**: 7-day warranty hold with proof-of-condition (✅ Live)
+- **Partner Revenue**: Analytics, Loyalty, Ads, Subscriptions (✅ Live)
+- **Quick Services**: Battery, oil, wash, tire, AC, breakdown (🔜 Phase 2)
+- **Repair Services**: Workshop bookings & mobile mechanics (🔜 Phase 2)
+- **Insurance Integration**: MOI reports, pricing analytics (🔜 Phase 3)
 
 **Revenue Potential:** 295k QAR/year  
 **Market Position:** Leader in Qatar automotive sector  
@@ -35,10 +37,10 @@ QScrap is Qatar's first **enterprise-grade automotive services platform** offeri
 - Premium Qatar VVIP theme (Maroon & Gold)
 
 **Infrastructure:**
-- VPS: $VPS_HOST (Contabo)
-- Nginx reverse proxy
-- Docker for database & Redis
-- PM2 for process management
+- VPS: Hetzner (Doha Region)
+- Nginx reverse proxy with TLS + Cloudflare
+- Docker Compose (Backend, PostgreSQL 14, Redis)
+- GitHub Actions CI/CD → GHCR → Docker pull on VPS
 
 ---
 
@@ -104,11 +106,12 @@ qscrap/
 │   │   └── navigation/   # App navigation
 │   └── build_customer_apk.sh
 ├── driver-mobile/        # Driver mobile app
-├── public/               # Web dashboards
+├── public/               # Web dashboards & website
 │   ├── admin-dashboard.html
 │   ├── garage-dashboard.html
 │   ├── operations-dashboard.html
-│   ├── insurance-dashboard.html
+│   ├── finance-dashboard.html
+│   ├── support-dashboard.html
 │   └── css/
 ├── uploads/              # User uploads
 └── tests/               # Automated tests
@@ -145,36 +148,20 @@ Content-Type: application/json
 }
 ```
 
-### Quick Services
+### Quick Services (🔜 Phase 2 — Not Yet Implemented)
 
-**Create Quick Service Request:**
-```http
-POST /api/services/quick/request
-Authorization: Bearer {token}
-Content-Type: application/json
-
-{
-  "service_type": "battery",
-  "location_lat": 25.2854,
-  "location_lng": 51.5310,
-  "location_address": "Al Sadd, Doha",
-  "vehicle_make": "Toyota",
-  "vehicle_model": "Camry",
-  "vehicle_year": 2020
-}
-```
-
-**Service Types:**
-- `battery` - Battery replacement
-- `oil` - Oil change
-- `wash` - Home car wash
-- `tire` - Tire service/repair
-- `ac` - AC gas refill
-- `breakdown` - Emergency assistance
+The following on-demand services are planned for Phase 2:
+- Battery replacement
+- Oil change
+- Home car wash
+- Tire service/repair
+- AC gas refill
+- Emergency breakdown assistance
 
 ### Complete API Docs
 
 Visit `/api-docs` when server is running for interactive Swagger documentation.
+See [BRAIN.MD](BRAIN.MD) Section 3.5 for the full 345-endpoint API reference.
 
 ---
 
@@ -195,11 +182,10 @@ npm run test:coverage
 npm test -- loyalty.service.test
 ```
 
-**Coverage Requirements:**
-- Branches: 70%
-- Functions: 70%
-- Lines: 70%
-- Statements: 70%
+**Coverage Targets (see COVERAGE-IMPROVEMENT-PLAN.md):**
+- Current: ~24%
+- Target: 70% (branches, functions, lines, statements)
+- Priority: Payment/escrow flows, order state machine
 
 ---
 
@@ -217,24 +203,25 @@ cd mobile
 ./build_customer_apk.sh
 ```
 
-### VPS Deployment
+### VPS Deployment (Docker Compose)
 
 ```bash
 # SSH to server
-ssh root@$VPS_HOST
+ssh root@147.93.89.153
 
-# Pull latest code
+# Navigate to project
 cd /opt/qscrap
-git pull origin main
 
-# Install dependencies
-npm install
+# Pull latest and rebuild
+git pull origin main
+docker compose build --no-cache backend
+docker compose up -d
 
 # Run migrations
-npm run migrate
+docker exec qscrap-backend node scripts/migrate.js
 
-# Restart services
-pm2 restart qscrap-backend
+# Health check
+curl -s https://api.qscrap.qa/health | jq
 ```
 
 ### Database Backup
@@ -329,44 +316,44 @@ SENTRY_DSN=your_sentry_dsn (optional)
 
 ## 🎯 Key Features
 
-### For Customers
+### For Customers (✅ Live)
 - 🔍 Request spare parts (multi-garage bidding)
-- ⚡ Quick services (battery, oil, wash, etc.)
-- 🔧 Workshop bookings
 - 🚚 Real-time delivery tracking
 - 🎁 Loyalty rewards (4-tier system)
 - ⭐ Ratings & reviews
+- 🔄 30-second undo for accidental orders
+- 💬 In-app chat with garages
 
-### For Partners (Garages)
+### For Partners / Garages (✅ Live)
 - 📊 Analytics dashboard
-- 💰 Revenue management
-- 📢 Ad campaigns
-- 💳 Premium subscriptions
-- 👨‍🔧 Technician management
-- 📦 Inventory tracking
+- 💰 Revenue management & payout tracking
+- 💳 Premium subscriptions (5 tiers: Demo → Platinum)
+- 📦 Inventory & showcase management
+- 🤝 3-round negotiation system
 
-### For Operations
+### For Operations (✅ Live)
 - 👥 User management
-- 💵 Payout processing
-- 🎫 Support tickets
+- 💵 Payout processing (2-way confirmation)
+- 🎫 Support tickets with SLA tracking
 - 📈 Platform analytics
 - ⚙️ System configuration
 
-### For Insurance
-- 📄 MOI reports
-- 💼 Escrow management
-- 📊 Pricing benchmarks
-- 🕵️ Fraud detection
+### Planned Features (🔜 Phase 2-3)
+- ⚡ Quick services (battery, oil, wash, tire, AC, breakdown)
+- 🔧 Workshop bookings & mobile mechanics
+- 📄 Insurance integration (MOI reports, pricing benchmarks)
+- 📢 Ad campaigns for garages
 
 ---
 
 ## 📈 Performance Metrics
 
 **Current Performance:**
-- API Response Time: ~50ms (75% improvement)
-- Database Query Time: ~20ms (80% improvement)
-- Concurrent Users: 1000+ (10x capacity)
+- API Response Time: ~50ms (p95)
+- Database Query Time: ~20ms (p95)
+- Socket.IO Latency: <50ms
 - Cache Hit Rate: 80%+
+- Test Coverage: ~24% (target: 70%)
 - Uptime: 99.9%+
 
 ---
@@ -374,20 +361,24 @@ SENTRY_DSN=your_sentry_dsn (optional)
 ## 🔐 Security
 
 **Implemented:**
-- ✅ JWT authentication
-- ✅ Input validation (Zod schemas)
-- ✅ Rate limiting (express-rate-limit)
-- ✅ SQL injection prevention
-- ✅ XSS protection
-- ✅ CORS configuration
-- ✅ Helmet security headers
-- ✅ Password hashing (bcrypt)
+- ✅ JWT authentication (15m access + 7d refresh tokens)
+- ✅ Input validation (Zod + express-validator)
+- ✅ Rate limiting (express-rate-limit per endpoint)
+- ✅ SQL injection prevention (parameterized queries)
+- ✅ XSS protection (Helmet + request sanitization)
+- ✅ CORS configuration (origin whitelist)
+- ✅ Helmet security headers (HSTS, CSP, X-Frame-Options)
+- ✅ Password hashing (bcrypt, 12 rounds)
+- ✅ CSRF protection (double-submit cookie)
+- ✅ Audit logging (`audit_logs`, `admin_audit_log` tables)
+- ✅ Idempotency keys (payment deduplication)
+- ✅ Stripe webhook signature verification
 
 **Planned:**
 - [ ] Two-factor authentication
 - [ ] IP whitelisting (admin)
-- [ ] Audit logging
 - [ ] Penetration testing
+- [ ] CSP nonce migration (remove `unsafe-inline`)
 
 ---
 

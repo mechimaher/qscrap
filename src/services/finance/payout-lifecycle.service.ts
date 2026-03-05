@@ -60,9 +60,9 @@ export class PayoutLifecycleService {
                 // CRITICAL: 7-day warranty window check (Qatar B2B business rule)
                 // Customer has 7 days from delivery to report issues/request refund
                 const warrantyCheck = await client.query(`
-                    SELECT o.order_number, o.delivered_at, o.completed_at,
-                           EXTRACT(DAY FROM NOW() - COALESCE(o.delivered_at, o.completed_at)) as days_since_delivery,
-                           GREATEST(0, 7 - EXTRACT(DAY FROM NOW() - COALESCE(o.delivered_at, o.completed_at)))::int as days_remaining
+                    SELECT o.order_number, o.actual_delivery_at, o.completed_at,
+                           EXTRACT(DAY FROM NOW() - COALESCE(o.actual_delivery_at, o.completed_at)) as days_since_delivery,
+                           GREATEST(0, 7 - EXTRACT(DAY FROM NOW() - COALESCE(o.actual_delivery_at, o.completed_at)))::int as days_remaining
                     FROM orders o
                     WHERE o.order_id = $1
                 `, [payout.order_id]);

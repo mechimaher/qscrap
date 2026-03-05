@@ -39,9 +39,12 @@ temp/
 lint_results.json
 test-output.txt
 
-# Built APK/AAB files
+# Built APK/AAB files (CRITICAL: 420MB+ bloat)
 *.apk
 *.aab
+
+# Archive (session logs, audit reports)
+audit/session-logs/
 
 # Credentials & Sensitive Docs (CRITICAL for public repos)
 VPS_CREDENTIALS.md
