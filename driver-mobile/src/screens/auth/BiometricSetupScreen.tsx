@@ -23,6 +23,8 @@ import * as SecureStore from 'expo-secure-store';
 import { useTheme } from '../../contexts/ThemeContext';
 import { Colors, Spacing, BorderRadius, FontSize, Shadows } from '../../constants/theme';
 
+import { log, warn, error as logError } from '../../utils/logger';
+
 const { width } = Dimensions.get('window');
 
 export default function BiometricSetupScreen() {
@@ -63,7 +65,7 @@ export default function BiometricSetupScreen() {
                 }
             }
         } catch (error) {
-            console.error('[Biometric] Capability check failed:', error);
+            logError('[Biometric] Capability check failed:', error);
         }
     };
 
@@ -103,7 +105,7 @@ export default function BiometricSetupScreen() {
                 setTimeout(() => setStatus('idle'), 2000);
             }
         } catch (error) {
-            console.error('[Biometric] Authentication error:', error);
+            logError('[Biometric] Authentication error:', error);
             setStatus('failed');
             setTimeout(() => setStatus('idle'), 2000);
         }

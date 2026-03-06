@@ -175,7 +175,7 @@ class DriverApiService {
                 undefined
             );
         } catch (error) {
-            console.warn('[API] Failed to persist refresh token:', error);
+            warn('[API] Failed to persist refresh token:', error);
         }
     }
 
@@ -187,7 +187,7 @@ class DriverApiService {
             await this.withTimeout(SecureStore.deleteItemAsync(REFRESH_TOKEN_KEY), 5000, undefined);
             await this.withTimeout(SecureStore.deleteItemAsync(USER_KEY), 5000, undefined);
         } catch (error) {
-            console.warn('[API] Error clearing tokens:', error);
+            warn('[API] Error clearing tokens:', error);
         }
     }
 
@@ -258,7 +258,7 @@ class DriverApiService {
                 undefined
             );
         } catch (error) {
-            console.warn('[API] Failed to save driver data:', error);
+            warn('[API] Failed to save driver data:', error);
         }
     }
 
@@ -272,7 +272,7 @@ class DriverApiService {
             const driver = driverData ? JSON.parse(driverData) : null;
             return driver;
         } catch (error) {
-            console.error('[API] getDriver error:', error);
+            logError('[API] getDriver error:', error);
             return null;
         }
     }
@@ -306,17 +306,17 @@ class DriverApiService {
         } catch (networkError: any) {
             clearTimeout(timeoutId);
             if (networkError.name === 'AbortError') {
-                console.error('[API] Request timed out');
+                logError('[API] Request timed out');
                 throw new Error('Request timed out - please check your connection');
             }
-            console.error('[API] Network error:', networkError);
+            logError('[API] Network error:', networkError);
             throw new Error('Network error - please check your connection');
         }
 
         const contentType = response.headers.get('content-type');
         if (!contentType || !contentType.includes('application/json')) {
             const text = await response.text();
-            console.error('[API] Non-JSON response:', text.substring(0, 200));
+            logError('[API] Non-JSON response:', text.substring(0, 200));
             throw new Error('Server error - please try again later');
         }
 
@@ -324,7 +324,7 @@ class DriverApiService {
         try {
             data = await response.json();
         } catch (parseError) {
-            console.error('[API] JSON parse error:', parseError);
+            logError('[API] JSON parse error:', parseError);
             throw new Error('Invalid response from server');
         }
 
@@ -368,7 +368,7 @@ class DriverApiService {
 
         // Verify this is a driver account
         if (data.userType !== 'driver') {
-            console.error('[API] userType mismatch! Expected "driver", got:', data.userType);
+            logError('[API] userType mismatch! Expected "driver", got:', data.userType);
             throw new Error('This app is for drivers only. Please use the customer app.');
         }
 
@@ -378,7 +378,7 @@ class DriverApiService {
                 await this.setRefreshToken(data.refreshToken);
             }
         } else {
-            console.warn('[API] No token in response!');
+            warn('[API] No token in response!');
         }
 
         return data;

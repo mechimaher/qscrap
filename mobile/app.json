@@ -67,7 +67,6 @@
         "android.permission.SCHEDULE_EXACT_ALARM",
         "android.permission.POST_NOTIFICATIONS"
       ],
-      "useNextNotificationsApi": true,
       "config": {
         "googleMaps": {
           "apiKey": "AIzaSyBtetLMBqtW1TNNsBFWi5Xa4LTy1GEbwYw"

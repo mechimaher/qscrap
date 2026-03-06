@@ -11,6 +11,8 @@
 
 import { Audio } from 'expo-av';
 
+import { log, warn, error as logError } from '../utils/logger';
+
 let assignmentSound: Audio.Sound | null = null;
 let isInitialized = false;
 
@@ -32,7 +34,7 @@ export async function initSoundService(): Promise<void> {
         });
         isInitialized = true;
     } catch (err) {
-        console.warn('[Sound] Failed to configure audio mode:', err);
+        warn('[Sound] Failed to configure audio mode:', err);
     }
 }
 
@@ -79,7 +81,7 @@ export async function playAssignmentAlert(): Promise<void> {
         });
 
     } catch (err) {
-        console.warn('[Sound] Failed to play alert:', err);
+        warn('[Sound] Failed to play alert:', err);
         // Don't throw — sound failure should never block assignment flow
     }
 }

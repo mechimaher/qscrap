@@ -32,6 +32,8 @@ import { HomeScreenSkeleton, LiveMapView, AssignmentPopup, StatCard, AssignmentC
 import { ErrorBoundary } from '../../components/ErrorBoundary';
 import { useI18n } from '../../i18n';
 
+import { log, warn, error as logError } from '../../utils/logger';
+
 export default function HomeScreen() {
     const setStoreAssignments = useJobStore(state => state.setAssignments);
     const { t } = useI18n();
@@ -174,7 +176,7 @@ export default function HomeScreen() {
                     await updateActiveOrders(activeOrderIds);
                 }
             } catch (assignErr) {
-                console.error('[Home] Failed to fetch assignments:', assignErr);
+                logError('[Home] Failed to fetch assignments:', assignErr);
                 // We do NOT clear assignments on error to support offline mode
             }
 
@@ -186,7 +188,7 @@ export default function HomeScreen() {
                 ]);
                 setStats(statsRes.stats);
             } catch (statsErr) {
-                console.warn('[Home] Failed to fetch stats:', statsErr);
+                warn('[Home] Failed to fetch stats:', statsErr);
             }
 
             // Start entrance animation regardless of success/partial success
@@ -204,7 +206,7 @@ export default function HomeScreen() {
                 }),
             ]).start();
         } catch (err) {
-            console.error('[Home] Critical Load Error:', err);
+            logError('[Home] Critical Load Error:', err);
         } finally {
             if (!silent) setIsLoading(false);
         }
@@ -287,7 +289,7 @@ export default function HomeScreen() {
                 [{ text: t('ok') }]
             );
         } catch (err: any) {
-            console.error('[Home] Failed to accept assignment:', err);
+            logError('[Home] Failed to accept assignment:', err);
             Haptics.notificationAsync(Haptics.NotificationFeedbackType.Error);
             Alert.alert(
                 t('error'),
@@ -315,7 +317,7 @@ export default function HomeScreen() {
                 [{ text: t('ok') }]
             );
         } catch (err: any) {
-            console.error('[Home] Failed to reject assignment:', err);
+            logError('[Home] Failed to reject assignment:', err);
             Haptics.notificationAsync(Haptics.NotificationFeedbackType.Error);
             Alert.alert(
                 t('error'),

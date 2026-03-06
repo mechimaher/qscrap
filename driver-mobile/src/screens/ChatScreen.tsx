@@ -33,6 +33,8 @@ import { offlineQueue } from '../services/OfflineQueue';
 import { Colors, BorderRadius, Spacing, FontSize, Shadows } from '../constants/theme';
 import { QuickReplies, SkeletonLoader } from '../components';
 
+import { log, warn, error as logError } from '../utils/logger';
+
 interface Message {
     message_id: string;
     order_id: string;
@@ -134,7 +136,7 @@ export default function ChatScreen() {
                 }),
             ]).start();
         } catch (err) {
-            console.error('[Chat] Load messages error:', err);
+            logError('[Chat] Load messages error:', err);
         } finally {
             setIsLoading(false);
         }
@@ -165,7 +167,7 @@ export default function ChatScreen() {
             // Send via REST API (Backend emits socket event)
             await api.sendChatMessage(orderId, messageText);
         } catch (err) {
-            console.error('[Chat] Send error, queueing for retry:', err);
+            logError('[Chat] Send error, queueing for retry:', err);
             // P0 IMPROVEMENT: Queue message for offline retry
             // This ensures messages are never lost even in poor network conditions
             await offlineQueue.enqueue(

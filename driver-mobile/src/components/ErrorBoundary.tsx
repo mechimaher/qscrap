@@ -4,6 +4,8 @@ import { Colors } from '../constants/theme';
 import * as Haptics from 'expo-haptics';
 import { Ionicons } from '@expo/vector-icons';
 
+import { log, warn, error as logError } from '../utils/logger';
+
 interface Props {
     children: ReactNode;
     fallback?: ReactNode;
@@ -28,7 +30,7 @@ export class ErrorBoundary extends Component<Props, State> {
     }
 
     public componentDidCatch(error: Error, errorInfo: ErrorInfo) {
-        console.error(`[ErrorBoundary] Error in ${this.props.name || 'component'}:`, error, errorInfo);
+        logError(`[ErrorBoundary] Error in ${this.props.name || 'component'}:`, error, errorInfo);
         this.setState({ errorInfo });
     }
 

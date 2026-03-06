@@ -2,6 +2,8 @@ import { Alert } from 'react-native';
 import * as Haptics from 'expo-haptics';
 import { offlineQueue } from '../services/OfflineQueue';
 
+import { log, warn, error as logError } from '../utils/logger';
+
 interface QueueConfig {
     endpoint: string;
     method: string;
@@ -109,7 +111,7 @@ export const executeWithOfflineFallback = async (
                                 options.onQueued?.();
                                 resolve({ status: 'queued' });
                             } catch (queueError) {
-                                console.error('[Sync] Failed to enqueue:', queueError);
+                                logError('[Sync] Failed to enqueue:', queueError);
                                 Alert.alert('Error', 'Could not save to offline queue.');
                                 options.onError?.(queueError);
                                 resolve({ status: 'error', error: queueError });

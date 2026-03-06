@@ -4,6 +4,8 @@ import { api, Driver } from '../services/api';
 import { locationService } from '../services/LocationService';
 import { clearActiveOrders } from '../services/socket';
 
+import { log, warn, error as logError } from '../utils/logger';
+
 interface AuthContextType {
     driver: Driver | null;
     isLoading: boolean;
@@ -23,7 +25,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
 
         // Failsafe: Force app to load after 10 seconds even if auth check hangs
         const safetyTimer = setTimeout(() => {
-            console.warn('[Auth] Safety timer triggered! Forcing app load.');
+            warn('[Auth] Safety timer triggered! Forcing app load.');
             setIsLoading(false);
         }, 10000);
 
@@ -47,7 +49,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
 
                     // Start location tracking (non-blocking)
                     locationService.startTracking().catch(e =>
-                        console.warn('[Auth] Location tracking error:', e)
+                        warn('[Auth] Location tracking error:', e)
                     );
 
                     // Refresh profile in BACKGROUND after UI loads
@@ -61,7 +63,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
                                 }
                             })
                             .catch(error => {
-                                console.warn('[Auth] Background refresh failed:', error?.message);
+                                warn('[Auth] Background refresh failed:', error?.message);
                                 // Token might be invalid - clear it and force re-login
                                 if (error?.message?.includes('401') || error?.message?.includes('Unauthorized')) {
                                     api.clearToken();
@@ -82,7 +84,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
                             setDriver(response.driver);
                             await api.saveDriver(response.driver);
                             locationService.startTracking().catch(e =>
-                                console.warn('[Auth] Location tracking error:', e)
+                                warn('[Auth] Location tracking error:', e)
                             );
                         }
                     } catch (error: any) {
@@ -108,7 +110,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
                 await api.saveDriver(profileResponse.driver);
 
                 // Start tracking location
-                locationService.startTracking().catch(console.error);
+                locationService.startTracking().catch(logError);
             }
 
             return { success: true };
@@ -121,7 +123,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     const logout = async () => {
         try {
             // CRITICAL: Stop location tracking BEFORE logout to prevent battery drain
-            await locationService.cleanup().catch(console.error);
+            await locationService.cleanup().catch(logError);
 
             // Set status to offline before logout
             try {
@@ -140,7 +142,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
             Sentry.setUser(null);
             setDriver(null);
         } catch (error) {
-            console.error('[Auth] Logout error:', error);
+            logError('[Auth] Logout error:', error);
             setDriver(null);
         }
     };

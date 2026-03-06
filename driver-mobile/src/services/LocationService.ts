@@ -3,17 +3,17 @@ import * as TaskManager from 'expo-task-manager';
 import { offlineQueue } from './OfflineQueue';
 import { API_ENDPOINTS } from '../config/api';
 
+import { log, warn, error as logError } from '../utils/logger';
+
 const LOCATION_TASK_NAME = 'background-location-task';
 
-// Define the background task in global scope
-// Define the background task in global scope
 // Define the background task in global scope
 let lastUpdateTimestamp = 0;
 const MIN_UPDATE_INTERVAL = 30 * 1000; // 30 seconds
 
 TaskManager.defineTask(LOCATION_TASK_NAME, async ({ data, error }) => {
     if (error) {
-        console.error('[LocationService] Background task error:', error);
+        logError('[LocationService] Background task error:', error);
         return;
     }
     if (data) {
@@ -43,7 +43,7 @@ TaskManager.defineTask(LOCATION_TASK_NAME, async ({ data, error }) => {
                     }
                 );
             } catch (err) {
-                console.error('[LocationService] Failed to queue location:', err);
+                logError('[LocationService] Failed to queue location:', err);
             }
         }
     }
@@ -63,7 +63,7 @@ class LocationService {
         try {
             const hasPermissions = await this.requestPermissions();
             if (!hasPermissions) {
-                console.warn('[LocationService] Permissions not granted');
+                warn('[LocationService] Permissions not granted');
                 return;
             }
 
@@ -82,7 +82,7 @@ class LocationService {
                 }
             });
         } catch (error) {
-            console.error('[LocationService] Failed to start tracking:', error);
+            logError('[LocationService] Failed to start tracking:', error);
         }
     }
 
@@ -90,7 +90,7 @@ class LocationService {
         const isStarted = await Location.hasStartedLocationUpdatesAsync(LOCATION_TASK_NAME);
         if (isStarted) {
             await Location.stopLocationUpdatesAsync(LOCATION_TASK_NAME);
-            console.log('[LocationService] Stopped location tracking');
+            log('[LocationService] Stopped location tracking');
         }
     }
 
@@ -106,7 +106,7 @@ class LocationService {
         const isRegistered = await TaskManager.isTaskRegisteredAsync(LOCATION_TASK_NAME);
         if (isRegistered) {
             await TaskManager.unregisterTaskAsync(LOCATION_TASK_NAME);
-            console.log('[LocationService] Unregistered background task');
+            log('[LocationService] Unregistered background task');
         }
     }
 }

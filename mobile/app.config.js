@@ -72,7 +72,6 @@ module.exports = ({ config }) => {
                 'android.permission.SCHEDULE_EXACT_ALARM',
                 'android.permission.POST_NOTIFICATIONS',
             ],
-            useNextNotificationsApi: true,
             config: {
                 googleMaps: {
                     // Read from environment variable, fallback to existing key for backwards compatibility

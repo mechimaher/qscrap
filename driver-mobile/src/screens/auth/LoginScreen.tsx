@@ -24,6 +24,7 @@ import { SafeAreaView } from 'react-native-safe-area-context';
 import * as Haptics from 'expo-haptics';
 import { useAuth } from '../../contexts/AuthContext';
 import { useI18n } from '../../i18n';
+import { SUPPORT_WHATSAPP } from '../../config/api';
 import { Colors, Shadows, BorderRadius, FontWeights } from '../../constants/theme';
 
 const { width } = Dimensions.get('window');
@@ -36,6 +37,8 @@ export default function LoginScreen() {
     const [password, setPassword] = useState('');
     const [isLoading, setIsLoading] = useState(false);
     const [showPassword, setShowPassword] = useState(false);
+    const [loginAttempts, setLoginAttempts] = useState(0);
+    const [lockoutUntil, setLockoutUntil] = useState<number | null>(null);
 
     // Premium Animations (matching customer app)
     const floatAnim = useRef(new Animated.Value(0)).current;
@@ -84,8 +87,14 @@ export default function LoginScreen() {
     }, []);
 
     const handleLogin = async () => {
+        if (lockoutUntil && Date.now() < lockoutUntil) {
+            const secondsLeft = Math.ceil((lockoutUntil - Date.now()) / 1000);
+            Alert.alert('Too many attempts', `Please wait ${secondsLeft} seconds before trying again.`);
+            return;
+        }
+
         if (!phone.trim() || !password.trim()) {
-            Alert.alert(t('login_error' as any), t('login_subtitle' as any));
+            Alert.alert(t('login_error'), t('login_subtitle'));
             return;
         }
 
@@ -99,8 +108,17 @@ export default function LoginScreen() {
         if (!result.success) {
             Haptics.notificationAsync(Haptics.NotificationFeedbackType.Error);
             Alert.alert('Login Failed', result.error || 'Please check your credentials');
+
+            const newAttempts = loginAttempts + 1;
+            setLoginAttempts(newAttempts);
+            if (newAttempts >= 5) {
+                setLockoutUntil(Date.now() + 30000); // 30 second lockout
+                setLoginAttempts(0); // reset attempts after lockout
+            }
         } else {
             Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success);
+            setLoginAttempts(0);
+            setLockoutUntil(null);
         }
     };
 
@@ -146,7 +164,7 @@ export default function LoginScreen() {
                         </View>
                         <View style={styles.taglineContainer}>
                             <View style={styles.goldLine} />
-                            <Text style={styles.tagline}>{t('login_subtitle' as any)}</Text>
+                            <Text style={styles.tagline}>{t('login_subtitle')}</Text>
                             <View style={styles.goldLine} />
                         </View>
                     </Animated.View>
@@ -163,7 +181,7 @@ export default function LoginScreen() {
                             </View>
                             <TextInput
                                 style={styles.input}
-                                placeholder={t('phone' as any)}
+                                placeholder={t('phone')}
                                 placeholderTextColor="rgba(255,255,255,0.5)"
                                 value={phone}
                                 onChangeText={setPhone}
@@ -179,7 +197,7 @@ export default function LoginScreen() {
                             </View>
                             <TextInput
                                 style={styles.input}
-                                placeholder={t('password' as any)}
+                                placeholder={t('password')}
                                 placeholderTextColor="rgba(255,255,255,0.5)"
                                 value={password}
                                 onChangeText={setPassword}
@@ -211,7 +229,7 @@ export default function LoginScreen() {
                                     <ActivityIndicator color={Colors.primaryDark} size="small" />
                                 ) : (
                                     <>
-                                        <Text style={styles.loginButtonText}>{t('login_button' as any)}</Text>
+                                        <Text style={styles.loginButtonText}>{t('login_button')}</Text>
                                         <Text style={styles.loginButtonIcon}>→</Text>
                                     </>
                                 )}
@@ -229,7 +247,7 @@ export default function LoginScreen() {
                                         { text: 'Cancel', style: 'cancel' },
                                         {
                                             text: 'Contact Support',
-                                            onPress: () => Linking.openURL('whatsapp://send?phone=97440000000&text=Hi, I need help resetting my driver password')
+                                            onPress: () => Linking.openURL(`whatsapp://send?phone=${SUPPORT_WHATSAPP}&text=Hi, I need help resetting my driver password`)
                                         }
                                     ]
                                 );
@@ -249,7 +267,7 @@ export default function LoginScreen() {
                         </Text>
                         <TouchableOpacity
                             style={styles.helpButton}
-                            onPress={() => Linking.openURL('whatsapp://send?phone=97440000000')}
+                            onPress={() => Linking.openURL(`whatsapp://send?phone=${SUPPORT_WHATSAPP}`)}
                         >
                             <Text style={styles.helpButtonText}>Need Help?</Text>
                         </TouchableOpacity>

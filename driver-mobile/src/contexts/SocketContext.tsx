@@ -2,8 +2,6 @@
 // Provides real-time socket connection and event handling throughout the app
 
 import React, { createContext, useContext, useEffect, useState, useCallback, ReactNode } from 'react';
-import { Alert, Vibration } from 'react-native';
-import * as Haptics from 'expo-haptics';
 import {
     initSocket,
     disconnectSocket,
@@ -15,6 +13,7 @@ import {
 } from '../services/socket';
 import { useAuth } from './AuthContext';
 import { Assignment } from '../services/api';
+import { error as logError } from '../utils/logger';
 
 interface SocketContextType {
     isConnected: boolean;
@@ -60,7 +59,7 @@ export function SocketProvider({ children }: { children: ReactNode }) {
                 setupEventListeners();
             }
         } catch (error) {
-            console.error('[SocketContext] Connection error:', error);
+            logError('[SocketContext] Connection error:', error);
         }
     };
 
@@ -75,36 +74,27 @@ export function SocketProvider({ children }: { children: ReactNode }) {
     };
 
     const setupEventListeners = () => {
-        // NEW ASSIGNMENT - Vibrate and show alert
+        // NOTE: Haptics, vibrations, sounds, and push notifications are
+        // already handled in socket.ts inline handlers. These context
+        // listeners only manage React UI state to avoid double-firing.
+
+        // NEW ASSIGNMENT - Show popup alert for accept/reject
         onNewAssignment((data) => {
-
-            // Strong haptic feedback
-            Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success);
-            Vibration.vibrate([0, 250, 100, 250]); // Pattern vibration
-
-            // Set alert for display
             setNewAssignmentAlert(data);
         });
 
-        // ASSIGNMENT UPDATED
-        onAssignmentUpdated((data) => {
-            Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
+        // ASSIGNMENT UPDATED - No UI state needed (socket.ts handles notification)
+        onAssignmentUpdated((_data) => {
+            // Refresh handled by screen-level focus listeners
         });
 
-        // ASSIGNMENT CANCELLED
-        onAssignmentCancelled((data) => {
-            Haptics.notificationAsync(Haptics.NotificationFeedbackType.Warning);
-
-            Alert.alert(
-                'Assignment Cancelled',
-                `Order #${data.order_number} has been cancelled.\n\nReason: ${data.reason || 'No reason provided'}`,
-                [{ text: 'OK' }]
-            );
+        // ASSIGNMENT CANCELLED - No UI state needed (socket.ts handles notification)
+        onAssignmentCancelled((_data) => {
+            // Refresh handled by screen-level focus listeners
         });
 
-        // NEW MESSAGE
-        onNewMessage((data) => {
-            Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Medium);
+        // NEW MESSAGE - Increment unread badge
+        onNewMessage((_data) => {
             setUnreadMessages((prev) => prev + 1);
         });
     };

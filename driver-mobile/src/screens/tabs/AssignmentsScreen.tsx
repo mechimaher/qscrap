@@ -21,6 +21,8 @@ import { api, Assignment } from '../../services/api';
 import { Colors, AssignmentStatusConfig, AssignmentTypeConfig, Spacing } from '../../constants/theme';
 import { useI18n } from '../../i18n';
 
+import { log, warn, error as logError } from '../../utils/logger';
+
 type FilterType = 'active' | 'completed' | 'all';
 
 export default function AssignmentsScreen() {
@@ -74,7 +76,7 @@ export default function AssignmentsScreen() {
                 setAssignments([...otherFilterAssignments, ...(result.assignments || [])]);
             }
         } catch (err) {
-            console.error('[Assignments] Load error:', err);
+            logError('[Assignments] Load error:', err);
             // Don't show error to user if we have offline data
         } finally {
             setIsLoading(false);

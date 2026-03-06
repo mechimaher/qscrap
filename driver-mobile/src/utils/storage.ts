@@ -3,6 +3,7 @@
 // SECURITY: Encryption key is generated once and stored in platform keychain via SecureStore
 
 import * as SecureStore from 'expo-secure-store';
+import { warn as logWarn } from './logger';
 
 const ENCRYPTION_KEY_ALIAS = 'qscrap_driver_mmkv_key';
 const MMKV_STORAGE_ID = 'qscrap-driver-storage';
@@ -31,7 +32,7 @@ const getOrCreateEncryptionKey = async (): Promise<string | null> => {
         await SecureStore.setItemAsync(ENCRYPTION_KEY_ALIAS, newKey);
         return newKey;
     } catch (e) {
-        console.warn('[Storage] SecureStore key generation failed, MMKV will be unencrypted', e);
+        logWarn('[Storage] SecureStore key generation failed, MMKV will be unencrypted', e);
         return null;
     }
 };
@@ -52,7 +53,7 @@ const initStorage = async (): Promise<any> => {
 
         return new MMKV(options);
     } catch (e) {
-        console.warn('[Storage] MMKV init failed, using fallback', e);
+        logWarn('[Storage] MMKV init failed, using fallback', e);
         // Fallback to in-memory storage if MMKV fails
         const memStore: Record<string, string> = {};
         return {
@@ -62,6 +63,8 @@ const initStorage = async (): Promise<any> => {
         };
     }
 };
+
+const _pendingOperations: Array<(s: any) => void> = [];
 
 /**
  * Get the storage instance. On first call, initializes asynchronously.
@@ -74,29 +77,35 @@ const getStorage = (): any => {
     if (!_keyPromise) {
         _keyPromise = initStorage().then((s) => {
             _storage = s;
+            // Execute any operations that were queued during initialization
+            _pendingOperations.forEach(op => op(s));
+            _pendingOperations.length = 0;
             return null;
         });
     }
 
-    // Synchronous fallback while async init is in-flight
-    // This handles the brief window between first access and key resolution
-    const memStore: Record<string, string> = {};
-    const syncFallback = {
-        getString: (key: string) => memStore[key],
-        set: (key: string, value: string) => { memStore[key] = value; },
-        delete: (key: string) => { delete memStore[key]; },
+    // Return a proxy that queues writes and safely ignores early reads
+    return {
+        getString: (key: string) => {
+            if (_storage) return _storage.getString(key);
+            logWarn(`[Storage] Read attempted for ${key} before secure MMKV init completed`);
+            return undefined;
+        },
+        set: (key: string, value: string) => {
+            if (_storage) {
+                _storage.set(key, value);
+            } else {
+                _pendingOperations.push((s) => s.set(key, value));
+            }
+        },
+        delete: (key: string) => {
+            if (_storage) {
+                _storage.delete(key);
+            } else {
+                _pendingOperations.push((s) => s.delete(key));
+            }
+        },
     };
-
-    // Try sync MMKV init without encryption as immediate bridge
-    try {
-        const { MMKV } = require('react-native-mmkv');
-        _storage = new MMKV({ id: MMKV_STORAGE_ID });
-        // Replace with encrypted version once key is ready
-        _keyPromise!.then(() => { /* _storage already updated by initStorage */ });
-        return _storage;
-    } catch {
-        return syncFallback;
-    }
 };
 
 export const storage = {

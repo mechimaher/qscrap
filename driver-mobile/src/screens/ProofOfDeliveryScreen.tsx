@@ -30,6 +30,8 @@ import { executeWithOfflineFallback } from '../utils/syncHelper';
 import { compressPODPhoto } from '../utils/imageCompressor';
 import { useI18n } from '../i18n';
 
+import { log, warn, error as logError } from '../utils/logger';
+
 type WizardStep = 'photo' | 'payment' | 'success';
 
 export default function ProofOfDeliveryScreen() {
@@ -107,7 +109,7 @@ export default function ProofOfDeliveryScreen() {
                     }
                 }
             } catch (error) {
-                console.error('[POD] Failed to load assignment details:', error);
+                logError('[POD] Failed to load assignment details:', error);
                 Alert.alert(
                     'Error Loading Details',
                     'Could not load order information. Please try again.',
@@ -131,16 +133,16 @@ export default function ProofOfDeliveryScreen() {
                 quality: 0.5,
                 base64: false,
             });
-            
+
             if (photo?.uri) {
                 // Compress photo before storing (60-80% size reduction)
                 Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
-                const compressedUri = await compressPODPhoto(photo.uri, {
+                const compressed = await compressPODPhoto(photo.uri, {
                     maxWidth: 1920,
                     quality: 0.7,
                     format: 'jpeg',
                 });
-                setPhotoUri(compressedUri);
+                setPhotoUri(compressed.uri);
             }
         } catch (error) {
             Alert.alert("Error", "Failed to take photo");
@@ -222,7 +224,7 @@ export default function ProofOfDeliveryScreen() {
             const podPhotoUrl = responseData?.photo_url;
 
             if (!podPhotoUrl) {
-                console.error('[POD] No photo_url in response:', uploadResponse);
+                logError('[POD] No photo_url in response:', uploadResponse);
                 throw new Error('Failed to upload photo - no URL returned from server');
             }
 
@@ -252,7 +254,7 @@ export default function ProofOfDeliveryScreen() {
 
             setStep('success');
         } catch (err: any) {
-            console.error('[POD] Submit error:', err);
+            logError('[POD] Submit error:', err);
             Alert.alert("Error", err.message || "Failed to complete delivery");
         } finally {
             setIsSubmitting(false);

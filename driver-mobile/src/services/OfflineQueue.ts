@@ -3,6 +3,8 @@ import { api } from './api';
 import NetInfo from '@react-native-community/netinfo';
 import * as FileSystem from 'expo-file-system/legacy';
 
+import { log, warn, error as logError } from '../utils/logger';
+
 interface QueuedRequest {
     id: string;
     endpoint: string;
@@ -28,7 +30,7 @@ class OfflineQueueService {
                 this.queue = JSON.parse(json);
             }
         } catch (e) {
-            console.warn('[OfflineQueue] Failed to load queue', e);
+            warn('[OfflineQueue] Failed to load queue', e);
             this.queue = [];
         }
     }
@@ -91,14 +93,14 @@ class OfflineQueueService {
                             photoPath: undefined // Remove path from payload
                         };
                     } else {
-                        console.warn(`[OfflineQueue] File not found: ${req.body.photoPath}, skipping upload part`);
+                        warn(`[OfflineQueue] File not found: ${req.body.photoPath}, skipping upload part`);
                     }
                 }
 
                 // Age out stale requests (older than 1 hour)
                 const ageMs = Date.now() - req.timestamp;
                 if (ageMs > 60 * 60 * 1000) {
-                    console.warn(`[OfflineQueue] Dropping stale request (${Math.round(ageMs / 60000)}min old): ${req.endpoint}`);
+                    warn(`[OfflineQueue] Dropping stale request (${Math.round(ageMs / 60000)}min old): ${req.endpoint}`);
                     this.queue.shift();
                     this.saveQueue();
                     continue;
@@ -113,11 +115,11 @@ class OfflineQueueService {
                 this.queue.shift();
                 this.saveQueue();
             } catch (err: any) {
-                console.error(`[OfflineQueue] Failed ${req.endpoint}:`, err.message || err);
+                logError(`[OfflineQueue] Failed ${req.endpoint}:`, err.message || err);
 
                 // THROTTLING: Handle 429 Too Many Requests
                 if (err.message && err.message.includes('429')) {
-                    console.warn('[OfflineQueue] Rate limit hit (429), pausing queue for 60s');
+                    warn('[OfflineQueue] Rate limit hit (429), pausing queue for 60s');
                     // Wait 60 seconds before retrying THIS same request
                     await new Promise(resolve => setTimeout(resolve, 60000));
                     continue; // Loop again to retry the same request
@@ -134,7 +136,7 @@ class OfflineQueueService {
                 );
 
                 if (isClientError) {
-                    console.warn('[OfflineQueue] Client error detected, dropping request to prevent loop');
+                    warn('[OfflineQueue] Client error detected, dropping request to prevent loop');
                     this.queue.shift();
                     this.saveQueue();
                     continue; // Move to next item
@@ -144,7 +146,7 @@ class OfflineQueueService {
                 req.retryCount++;
 
                 if (req.retryCount >= 5) {
-                    console.error('[OfflineQueue] Dropping request after max retries:', req);
+                    logError('[OfflineQueue] Dropping request after max retries:', req);
                     this.queue.shift();
                     this.saveQueue();
                 } else {

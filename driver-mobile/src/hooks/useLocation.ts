@@ -7,6 +7,7 @@ import * as Location from 'expo-location';
 import { api } from '../services/api';
 import { offlineQueue } from '../services/OfflineQueue';
 import { API_ENDPOINTS } from '../config/api';
+import { error as logError, warn as logWarn } from '../utils/logger';
 
 
 interface LocationState {
@@ -64,7 +65,7 @@ export function useLocation(): UseLocationResult {
             const { status } = await Location.getForegroundPermissionsAsync();
             if (isMountedRef.current) setHasPermission(status === 'granted');
         } catch (err) {
-            console.error('[Location] Permission check error:', err);
+            logError('[Location] Permission check error:', err);
         }
     };
 
@@ -151,7 +152,7 @@ export function useLocation(): UseLocationResult {
                     updateLocation(pos, 'Current');
                 }
             } catch (e2) {
-                console.warn('[Location] Poll failed:', e2);
+                logWarn('[Location] Poll failed:', e2);
             }
         }
     }, [updateLocation]);
@@ -192,7 +193,7 @@ export function useLocation(): UseLocationResult {
                     }
                 }
             } catch (e) {
-                console.warn('[Location] Initial position fetch failed:', e);
+                logWarn('[Location] Initial position fetch failed:', e);
             }
 
             // 4. Start polling
@@ -202,7 +203,7 @@ export function useLocation(): UseLocationResult {
             return true;
 
         } catch (err: any) {
-            console.error('[Location] startTracking failed:', err);
+            logError('[Location] startTracking failed:', err);
             if (isMountedRef.current) {
                 setError(err.message || 'Failed to start tracking');
                 setIsTracking(false);
@@ -219,7 +220,7 @@ export function useLocation(): UseLocationResult {
             }
             if (isMountedRef.current) setIsTracking(false);
         } catch (err) {
-            console.error(err);
+            logError(err);
         }
     };
 

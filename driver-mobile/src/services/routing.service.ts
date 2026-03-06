@@ -3,6 +3,8 @@
 
 import { Platform, Linking } from 'react-native';
 
+import { log, warn, error as logError } from '../utils/logger';
+
 export interface LatLng {
     latitude: number;
     longitude: number;
@@ -21,7 +23,7 @@ export function openExternalMap(lat: number, lng: number, label: string = 'Desti
     });
 
     if (url) {
-        Linking.openURL(url).catch(err => console.error('Could not open maps', err));
+        Linking.openURL(url).catch(err => logError('Could not open maps', err));
     }
 }
 

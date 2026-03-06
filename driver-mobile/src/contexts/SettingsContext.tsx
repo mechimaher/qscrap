@@ -2,6 +2,8 @@ import React, { createContext, useContext, useState, useEffect } from 'react';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import { Appearance } from 'react-native';
 
+import { log, warn, error as logError } from '../utils/logger';
+
 type NavApp = 'google' | 'waze' | 'apple' | 'in_app';
 type Language = 'en' | 'ar';
 type ThemeMode = 'light' | 'dark' | 'system';
@@ -45,7 +47,7 @@ export const SettingsProvider: React.FC<{ children: React.ReactNode }> = ({ chil
             if (storedTheme) setThemeModeState(storedTheme as ThemeMode);
             if (storedNotif) setNotificationsEnabledState(storedNotif === 'true');
         } catch (error) {
-            console.error('Failed to load settings:', error);
+            logError('Failed to load settings:', error);
         } finally {
             setIsLoading(false);
         }

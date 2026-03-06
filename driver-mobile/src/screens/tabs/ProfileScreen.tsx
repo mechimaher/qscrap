@@ -28,6 +28,8 @@ import { api } from '../../services/api';
 import { Colors, Spacing, BorderRadius, Shadows } from '../../constants/theme';
 
 
+import { log, warn, error as logError } from '../../utils/logger';
+
 const APP_VERSION = Constants.expoConfig?.version || (Constants.manifest as any)?.version || '1.0.0';
 
 export default function ProfileScreen() {
@@ -71,7 +73,7 @@ export default function ProfileScreen() {
             setIsEditModalVisible(false);
             Alert.alert(t('success'), t('profile_updated'));
         } catch (err) {
-            console.error('[Profile] Update error:', err);
+            logError('[Profile] Update error:', err);
             Alert.alert(t('error'), t('something_went_wrong'));
         } finally {
             setIsSaving(false);
@@ -117,7 +119,7 @@ export default function ProfileScreen() {
                             await logout();
                             Alert.alert(t('success'), t('account_deleted'));
                         } catch (err) {
-                            console.error('[Profile] Delete error:', err);
+                            logError('[Profile] Delete error:', err);
                             Alert.alert(t('error'), t('something_went_wrong'));
                         } finally {
                             setIsSaving(false);

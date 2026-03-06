@@ -12,8 +12,8 @@ import { Ionicons } from '@expo/vector-icons';
 import { LinearGradient } from 'expo-linear-gradient';
 import * as Location from 'expo-location';
 import * as Haptics from 'expo-haptics';
-import { Colors, Spacing, BorderRadius, Shadows } from '../../constants/theme';
-import { api } from '../../services/api';
+import { Colors, Spacing, BorderRadius, Shadows } from '../constants/theme';
+import { api } from '../services/api';
 
 interface EmergencySOSProps {
     onSOSTriggered?: () => void;
@@ -29,7 +29,7 @@ export const EmergencySOS: React.FC<EmergencySOSProps> = ({
     const handlePressIn = () => {
         setIsPressed(true);
         Haptics.notificationAsync(Haptics.NotificationFeedbackType.Warning);
-        
+
         // Animate progress
         Animated.timing(progressAnim, {
             toValue: 100,
@@ -44,7 +44,7 @@ export const EmergencySOS: React.FC<EmergencySOSProps> = ({
 
     const handlePressOut = () => {
         if (!isPressed) return;
-        
+
         setIsPressed(false);
         setProgress(0);
         progressAnim.setValue(0);
@@ -64,7 +64,6 @@ export const EmergencySOS: React.FC<EmergencySOSProps> = ({
             // Get current location with high accuracy
             const location = await Location.getCurrentPositionAsync({
                 accuracy: Location.Accuracy.Highest,
-                timeout: 10000,
             });
 
             // Show confirmation alert
@@ -93,7 +92,7 @@ export const EmergencySOS: React.FC<EmergencySOSProps> = ({
                                 });
 
                                 Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success);
-                                
+
                                 Alert.alert(
                                     '✅ SOS Sent',
                                     'Help is on the way. Operations has been notified with your location. Stay on the line.',
@@ -117,7 +116,7 @@ export const EmergencySOS: React.FC<EmergencySOSProps> = ({
             setIsPressed(false);
             setProgress(0);
             Haptics.notificationAsync(Haptics.NotificationFeedbackType.Error);
-            
+
             Alert.alert(
                 'Location Error',
                 'Unable to get your location. Please call emergency services directly.',
@@ -156,7 +155,7 @@ export const EmergencySOS: React.FC<EmergencySOSProps> = ({
                             { width: progressWidth },
                         ]}
                     />
-                    
+
                     <View style={styles.content}>
                         <Ionicons name="warning" size={32} color="#fff" />
                         <Text style={styles.sosText}>
@@ -165,7 +164,7 @@ export const EmergencySOS: React.FC<EmergencySOSProps> = ({
                     </View>
                 </LinearGradient>
             </TouchableOpacity>
-            
+
             <Text style={styles.instructionText}>
                 Hold for 3 seconds to send emergency alert
             </Text>

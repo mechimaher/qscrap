@@ -11,6 +11,8 @@ import { Assignment } from '../services/api';
 import { VVIP_MIDNIGHT_STYLE } from '../constants/mapStyle';
 import { Ionicons } from '@expo/vector-icons';
 
+import { log, warn, error as logError } from '../utils/logger';
+
 interface DriverLocation {
     latitude: number;
     longitude: number;
@@ -89,7 +91,7 @@ export default function LiveMapView({
                     duration: formatDuration(etaSeconds),
                 });
             } catch (err) {
-                console.error('[LiveMapView] Route error:', err);
+                logError('[LiveMapView] Route error:', err);
                 setRouteCoordinates([
                     { latitude: driverLocation.latitude, longitude: driverLocation.longitude },
                     { latitude: destLat, longitude: destLng },

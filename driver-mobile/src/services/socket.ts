@@ -9,6 +9,8 @@ import { API_BASE_URL } from '../config/api';
 import { scheduleLocalNotification } from './notifications';
 import { playAssignmentAlert, initSoundService } from './SoundService';
 
+import { log, warn, error as logError } from '../utils/logger';
+
 // Get socket URL from API URL (same server)
 const SOCKET_URL = API_BASE_URL.replace('/api', '');
 
@@ -41,7 +43,7 @@ export const initSocket = async (): Promise<Socket | null> => {
                 const driver = JSON.parse(driverJson);
                 socket?.emit('join_driver_room', driver.user_id);
             } catch (e) {
-                console.error('[Socket] Failed to parse driver:', e);
+                logError('[Socket] Failed to parse driver:', e);
             }
         }
 
@@ -56,7 +58,7 @@ export const initSocket = async (): Promise<Socket | null> => {
                     });
                 }
             } catch (e) {
-                console.error('[Socket] Failed to parse active orders:', e);
+                logError('[Socket] Failed to parse active orders:', e);
             }
         }
     });
@@ -65,7 +67,7 @@ export const initSocket = async (): Promise<Socket | null> => {
     });
 
     socket.on('connect_error', (error) => {
-        console.error('[Socket] Connection error:', error.message);
+        logError('[Socket] Connection error:', error.message);
     });
 
     socket.on('reconnect', (attemptNumber) => {
@@ -345,7 +347,7 @@ export const updateActiveOrders = async (orderIds: string[]) => {
             socket?.emit('join_room', `order_${orderId}`);
         });
     } catch (e) {
-        console.error('[Socket] Failed to update active orders:', e);
+        logError('[Socket] Failed to update active orders:', e);
     }
 };
 
@@ -356,6 +358,6 @@ export const clearActiveOrders = async () => {
     try {
         await SecureStore.deleteItemAsync('qscrap_active_orders');
     } catch (e) {
-        console.error('[Socket] Failed to clear active orders:', e);
+        logError('[Socket] Failed to clear active orders:', e);
     }
 };
