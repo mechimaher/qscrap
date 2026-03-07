@@ -1,0 +1,48 @@
+src/__tests__/components/payment/LoyaltyDiscountCard.test.tsx(63,17): error TS2339: Property 'container' does not exist on type '{ rerender: (component: ReactElement<unknown, string | JSXElementConstructor<any>>) => void; rerenderAsync: (component: ReactElement<unknown, string | JSXElementConstructor<any>>) => Promise<...>; ... 69 more ...; findAllByText: FindAllByQuery<...>; }'.
+src/__tests__/components/payment/LoyaltyDiscountCard.test.tsx(69,17): error TS2339: Property 'container' does not exist on type '{ rerender: (component: ReactElement<unknown, string | JSXElementConstructor<any>>) => void; rerenderAsync: (component: ReactElement<unknown, string | JSXElementConstructor<any>>) => Promise<...>; ... 69 more ...; findAllByText: FindAllByQuery<...>; }'.
+src/__tests__/components/payment/PaymentButton.test.tsx(151,70): error TS2322: Type '{ isRTL: boolean; freeOrder: boolean; handleFreeOrder: Mock<any, any, any>; isLoading: boolean; cardComplete: boolean; handlePayment: Mock<any, any, any>; payNowAmount: number; t: (key: string, params?: any) => string; colors: { ...; }; }' is not assignable to type 'IntrinsicAttributes & PaymentButtonProps'.
+  Property 'isRTL' does not exist on type 'IntrinsicAttributes & PaymentButtonProps'.
+src/__tests__/components/payment/PaymentButton.test.tsx(154,51): error TS2322: Type '{ isRTL: boolean; freeOrder: boolean; handleFreeOrder: Mock<any, any, any>; isLoading: boolean; cardComplete: boolean; handlePayment: Mock<any, any, any>; payNowAmount: number; t: (key: string, params?: any) => string; colors: { ...; }; }' is not assignable to type 'IntrinsicAttributes & PaymentButtonProps'.
+  Property 'isRTL' does not exist on type 'IntrinsicAttributes & PaymentButtonProps'.
+src/__tests__/components/payment/PaymentTypeSelector.test.tsx(53,23): error TS2339: Property 'getByText' does not exist on type 'Screen'.
+src/__tests__/components/payment/PaymentTypeSelector.test.tsx(54,23): error TS2339: Property 'getByText' does not exist on type 'Screen'.
+src/__tests__/components/payment/PaymentTypeSelector.test.tsx(60,23): error TS2339: Property 'getByText' does not exist on type 'Screen'.
+src/__tests__/components/payment/PaymentTypeSelector.test.tsx(66,23): error TS2339: Property 'getByText' does not exist on type 'Screen'.
+src/__tests__/components/payment/PaymentTypeSelector.test.tsx(72,39): error TS2339: Property 'getByText' does not exist on type 'Screen'.
+src/__tests__/components/payment/PaymentTypeSelector.test.tsx(80,39): error TS2339: Property 'getByText' does not exist on type 'Screen'.
+src/__tests__/components/payment/PaymentTypeSelector.test.tsx(92,35): error TS2339: Property 'getByText' does not exist on type 'Screen'.
+src/__tests__/components/payment/PaymentTypeSelector.test.tsx(104,35): error TS2339: Property 'getByText' does not exist on type 'Screen'.
+src/__tests__/components/payment/PaymentTypeSelector.test.tsx(116,39): error TS2339: Property 'getByText' does not exist on type 'Screen'.
+src/__tests__/components/payment/PaymentTypeSelector.test.tsx(128,39): error TS2339: Property 'getByText' does not exist on type 'Screen'.
+src/__tests__/components/payment/PaymentTypeSelector.test.tsx(138,23): error TS2339: Property 'getByText' does not exist on type 'Screen'.
+src/__tests__/components/payment/PaymentTypeSelector.test.tsx(141,23): error TS2339: Property 'getByText' does not exist on type 'Screen'.
+src/__tests__/components/payment/PaymentTypeSelector.test.tsx(148,23): error TS2339: Property 'getByTestId' does not exist on type 'Screen'.
+src/__tests__/components/payment/PaymentTypeSelector.test.tsx(149,23): error TS2339: Property 'getByTestId' does not exist on type 'Screen'.
+src/__tests__/components/payment/StripeCardField.test.tsx(15,13): error TS2322: Type '{ testID: string; onChange: () => any; }' is not assignable to type 'DetailedHTMLProps<HTMLAttributes<HTMLDivElement>, HTMLDivElement>'.
+  Property 'testID' does not exist on type 'DetailedHTMLProps<HTMLAttributes<HTMLDivElement>, HTMLDivElement>'.
+src/__tests__/components/request/VehicleSelectionStep.test.tsx(14,18): error TS2322: Type '{ children: any[]; testID: string; }' is not assignable to type 'DetailedHTMLProps<HTMLAttributes<HTMLDivElement>, HTMLDivElement>'.
+  Property 'testID' does not exist on type 'DetailedHTMLProps<HTMLAttributes<HTMLDivElement>, HTMLDivElement>'.
+src/__tests__/components/request/VehicleSelectionStep.test.tsx(84,19): error TS2339: Property 'click' does not exist on type 'typeof fireEvent'.
+src/__tests__/components/request/VehicleSelectionStep.test.tsx(99,19): error TS2339: Property 'click' does not exist on type 'typeof fireEvent'.
+src/__tests__/hooks/useSubmitRequest.test.ts(157,13): error TS7034: Variable 'promise' implicitly has type 'any' in some locations where its type cannot be determined.
+src/__tests__/hooks/useSubmitRequest.test.ts(165,19): error TS7005: Variable 'promise' implicitly has an 'any' type.
+src/components/DeliveryLocationWidget.tsx(36,34): error TS2347: Untyped function calls may not accept type arguments.
+src/components/DeliveryLocationWidget.tsx(42,48): error TS7006: Parameter 'a' implicitly has an 'any' type.
+src/components/payment/LoyaltyDiscountCard.tsx(57,64): error TS2554: Expected 1 arguments, but got 2.
+src/components/payment/PaymentButton.tsx(66,51): error TS2554: Expected 1 arguments, but got 2.
+src/hooks/useBadgeCounts.tsx(62,36): error TS2347: Untyped function calls may not accept type arguments.
+src/hooks/useStripeCheckout.ts(91,64): error TS2554: Expected 1 arguments, but got 2.
+src/screens/PaymentScreen.tsx(292,21): error TS2322: Type '(calculateDiscount: any) => Promise<void>' is not assignable to type '() => void'.
+  Target signature provides too few arguments. Expected 1 or more, but got 0.
+src/services/apiClient.ts(142,17): error TS2552: Cannot find name 'logError'. Did you mean 'onerror'?
+src/services/auth.service.ts(144,44): error TS2304: Cannot find name 'BIOMETRIC_PHONE'.
+src/services/auth.service.ts(145,44): error TS2304: Cannot find name 'BIOMETRIC_PASSWORD'.
+src/services/auth.service.ts(146,44): error TS2304: Cannot find name 'BIOMETRIC_ENABLED'.
+src/services/auth.service.ts(155,60): error TS2304: Cannot find name 'BIOMETRIC_ENABLED'.
+src/services/auth.service.ts(160,58): error TS2304: Cannot find name 'BIOMETRIC_PHONE'.
+src/services/auth.service.ts(161,61): error TS2304: Cannot find name 'BIOMETRIC_PASSWORD'.
+src/services/auth.service.ts(175,47): error TS2304: Cannot find name 'BIOMETRIC_PHONE'.
+src/services/auth.service.ts(176,47): error TS2304: Cannot find name 'BIOMETRIC_PASSWORD'.
+src/services/auth.service.ts(177,47): error TS2304: Cannot find name 'BIOMETRIC_ENABLED'.
+src/services/auth.service.ts(186,60): error TS2304: Cannot find name 'BIOMETRIC_ENABLED'.
+src/services/auth.service.ts(195,44): error TS2304: Cannot find name 'BIOMETRIC_ENABLED'.

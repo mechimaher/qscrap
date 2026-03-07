@@ -1,0 +1,6 @@
+src/__tests__/components/request/VehicleSelectionStep.test.tsx(90,75): error TS2322: Type '{ vehicle_id: string; car_make: string; car_model: string; car_year: number; vin_number: null; }' is not assignable to type 'Vehicle'.
+  Types of property 'vin_number' are incompatible.
+    Type 'null' is not assignable to type 'string | undefined'.
+src/components/DeliveryLocationWidget.tsx(36,34): error TS2347: Untyped function calls may not accept type arguments.
+src/components/DeliveryLocationWidget.tsx(42,48): error TS7006: Parameter 'a' implicitly has an 'any' type.
+src/hooks/useBadgeCounts.tsx(62,36): error TS2347: Untyped function calls may not accept type arguments.

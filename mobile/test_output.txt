@@ -1,0 +1,2385 @@
+
+> qscrap@1.0.0 test
+> jest --verbose
+
+FAIL src/__tests__/integration.test.ts
+  Integration: Critical User Flows
+    Login → Dashboard → Create Request
+      ✓ should complete full flow from login to request creation (16 ms)
+    Request → Accept Bid → Order Creation
+      ✓ should flow from viewing bids to order creation (5 ms)
+    Request → Accept Bid → Payment → Tracking
+      ✓ should complete full payment flow from bid acceptance to confirmation (4 ms)
+    Accept Bid → Free Order (Loyalty Covers All)
+      ✓ should complete free order flow when loyalty discount covers entire amount (19 ms)
+    Order → Confirm Delivery → Submit Review
+      ✓ should complete delivery confirmation and review flow (9 ms)
+    Order Cancellation Flow
+      ✓ should preview and execute cancellation (8 ms)
+    Post-Delivery Return Flow
+      ✓ should preview and create return request (3 ms)
+    Bid Negotiation Flow
+      ✓ should complete counter-offer negotiation cycle (2 ms)
+    Notification Lifecycle
+      ✓ should fetch, read, and clear notifications (3 ms)
+    Address Management
+      ✓ should CRUD addresses (3 ms)
+    Vehicle Fleet Management
+      ✓ should CRUD vehicles (3 ms)
+    Account Deletion Safety
+      ✕ should check eligibility before deletion (1 ms)
+
+  ● Integration: Critical User Flows › Account Deletion Safety › should check eligibility before deletion
+
+    TypeError: api_2.api.checkDeletionEligibility is not a function
+
+      396 |                 ],
+      397 |             });
+    > 398 |             const eligibility = await api.checkDeletionEligibility();
+          |                                           ^
+      399 |             expect(eligibility.canDelete).toBe(false);
+      400 |             expect(eligibility.blockers).toHaveLength(1);
+      401 |
+
+      at Object.<anonymous> (src/__tests__/integration.test.ts:398:43)
+
+  console.error
+    react-test-renderer is deprecated. See https://react.dev/warnings/react-test-renderer
+
+      46 |         });
+      47 |
+    > 48 |         const { result } = renderHook(() =>
+         |                                      ^
+      49 |             usePaymentInitialization({
+      50 |                 ...baseParams,
+      51 |                 existingOrderId: 'order-123',
+
+      at Object.<anonymous>.process.env.NODE_ENV.exports.create (node_modules/react-test-renderer/cjs/react-test-renderer.development.js:14598:17)
+      at create (node_modules/@testing-library/react-native/src/render-act.ts:15:29)
+      at callback (node_modules/@testing-library/react-native/src/act.ts:31:24)
+      at Object.<anonymous>.process.env.NODE_ENV.exports.act (node_modules/react/cjs/react.development.js:789:22)
+      at actImplementation (node_modules/@testing-library/react-native/src/act.ts:30:25)
+      at renderWithAct (node_modules/@testing-library/react-native/src/render-act.ts:13:11)
+      at renderInternal (node_modules/@testing-library/react-native/src/render.tsx:69:33)
+      at renderInternal (node_modules/@testing-library/react-native/src/render.tsx:44:10)
+      at renderHook (node_modules/@testing-library/react-native/src/render-hook.tsx:55:58)
+      at Object.<anonymous> (src/__tests__/hooks/usePaymentInitialization.test.ts:48:38)
+
+  console.error
+    react-test-renderer is deprecated. See https://react.dev/warnings/react-test-renderer
+
+      45 |
+      46 |     it('should render payment button when not free order', () => {
+    > 47 |         render(<PaymentButton {...defaultProps} />);
+         |               ^
+      48 |         
+      49 |         expect(screen.getByText('Pay 50 QAR')).toBeTruthy();
+      50 |     });
+
+      at Object.<anonymous>.process.env.NODE_ENV.exports.create (node_modules/react-test-renderer/cjs/react-test-renderer.development.js:14598:17)
+      at create (node_modules/@testing-library/react-native/src/render-act.ts:15:29)
+      at callback (node_modules/@testing-library/react-native/src/act.ts:31:24)
+      at Object.<anonymous>.process.env.NODE_ENV.exports.act (node_modules/react/cjs/react.development.js:789:22)
+      at actImplementation (node_modules/@testing-library/react-native/src/act.ts:30:25)
+      at renderWithAct (node_modules/@testing-library/react-native/src/render-act.ts:13:11)
+      at renderInternal (node_modules/@testing-library/react-native/src/render.tsx:69:33)
+      at renderInternal (node_modules/@testing-library/react-native/src/render.tsx:44:10)
+      at Object.<anonymous> (src/__tests__/components/payment/PaymentButton.test.tsx:47:15)
+
+  console.error
+    react-test-renderer is deprecated. See https://react.dev/warnings/react-test-renderer
+
+      35 |
+      36 |     it('should render VVIP order card with garage name', () => {
+    > 37 |         render(<PaymentSummary {...defaultProps} />);
+         |               ^
+      38 |         
+      39 |         expect(screen.getByText('Al-Futtaim Garage')).toBeTruthy();
+      40 |     });
+
+      at Object.<anonymous>.process.env.NODE_ENV.exports.create (node_modules/react-test-renderer/cjs/react-test-renderer.development.js:14598:17)
+      at create (node_modules/@testing-library/react-native/src/render-act.ts:15:29)
+      at callback (node_modules/@testing-library/react-native/src/act.ts:31:24)
+      at Object.<anonymous>.process.env.NODE_ENV.exports.act (node_modules/react/cjs/react.development.js:789:22)
+      at actImplementation (node_modules/@testing-library/react-native/src/act.ts:30:25)
+      at renderWithAct (node_modules/@testing-library/react-native/src/render-act.ts:13:11)
+      at renderInternal (node_modules/@testing-library/react-native/src/render.tsx:69:33)
+      at renderInternal (node_modules/@testing-library/react-native/src/render.tsx:44:10)
+      at Object.<anonymous> (src/__tests__/components/payment/PaymentSummary.test.tsx:37:15)
+
+  console.error
+    react-test-renderer is deprecated. See https://react.dev/warnings/react-test-renderer
+
+      73 |         });
+      74 |
+    > 75 |         const { result } = renderHook(() =>
+         |                                      ^
+      76 |             usePaymentInitialization({
+      77 |                 ...baseParams,
+      78 |                 existingOrderId: undefined,
+
+      at Object.<anonymous>.process.env.NODE_ENV.exports.create (node_modules/react-test-renderer/cjs/react-test-renderer.development.js:14598:17)
+      at create (node_modules/@testing-library/react-native/src/render-act.ts:15:29)
+      at callback (node_modules/@testing-library/react-native/src/act.ts:31:24)
+      at Object.<anonymous>.process.env.NODE_ENV.exports.act (node_modules/react/cjs/react.development.js:789:22)
+      at actImplementation (node_modules/@testing-library/react-native/src/act.ts:30:25)
+      at renderWithAct (node_modules/@testing-library/react-native/src/render-act.ts:13:11)
+      at renderInternal (node_modules/@testing-library/react-native/src/render.tsx:69:33)
+      at renderInternal (node_modules/@testing-library/react-native/src/render.tsx:44:10)
+      at renderHook (node_modules/@testing-library/react-native/src/render-hook.tsx:55:58)
+      at Object.<anonymous> (src/__tests__/hooks/usePaymentInitialization.test.ts:75:38)
+
+  console.error
+    react-test-renderer is deprecated. See https://react.dev/warnings/react-test-renderer
+
+      51 |
+      52 |     it('should render free order button when freeOrder is true', () => {
+    > 53 |         render(<PaymentButton {...defaultProps} freeOrder={true} />);
+         |               ^
+      54 |         
+      55 |         expect(screen.getByText('Claim Free Order')).toBeTruthy();
+      56 |     });
+
+      at Object.<anonymous>.process.env.NODE_ENV.exports.create (node_modules/react-test-renderer/cjs/react-test-renderer.development.js:14598:17)
+      at create (node_modules/@testing-library/react-native/src/render-act.ts:15:29)
+      at callback (node_modules/@testing-library/react-native/src/act.ts:31:24)
+      at Object.<anonymous>.process.env.NODE_ENV.exports.act (node_modules/react/cjs/react.development.js:789:22)
+      at actImplementation (node_modules/@testing-library/react-native/src/act.ts:30:25)
+      at renderWithAct (node_modules/@testing-library/react-native/src/render-act.ts:13:11)
+      at renderInternal (node_modules/@testing-library/react-native/src/render.tsx:69:33)
+      at renderInternal (node_modules/@testing-library/react-native/src/render.tsx:44:10)
+      at Object.<anonymous> (src/__tests__/components/payment/PaymentButton.test.tsx:53:15)
+
+  console.error
+    react-test-renderer is deprecated. See https://react.dev/warnings/react-test-renderer
+
+      58 |     it('should call handlePayment when payment button is pressed', () => {
+      59 |         const handlePaymentMock = jest.fn();
+    > 60 |         render(<PaymentButton {...defaultProps} handlePayment={handlePaymentMock} />);
+         |               ^
+      61 |         
+      62 |         const payButton = screen.getByText('Pay 50 QAR').parent?.parent;
+      63 |         if (payButton) {
+
+      at Object.<anonymous>.process.env.NODE_ENV.exports.create (node_modules/react-test-renderer/cjs/react-test-renderer.development.js:14598:17)
+      at create (node_modules/@testing-library/react-native/src/render-act.ts:15:29)
+      at callback (node_modules/@testing-library/react-native/src/act.ts:31:24)
+      at Object.<anonymous>.process.env.NODE_ENV.exports.act (node_modules/react/cjs/react.development.js:789:22)
+      at actImplementation (node_modules/@testing-library/react-native/src/act.ts:30:25)
+      at renderWithAct (node_modules/@testing-library/react-native/src/render-act.ts:13:11)
+      at renderInternal (node_modules/@testing-library/react-native/src/render.tsx:69:33)
+      at renderInternal (node_modules/@testing-library/react-native/src/render.tsx:44:10)
+      at Object.<anonymous> (src/__tests__/components/payment/PaymentButton.test.tsx:60:15)
+
+  console.error
+    react-test-renderer is deprecated. See https://react.dev/warnings/react-test-renderer
+
+      58 |
+      59 |     it('should show error if vehicle is not selected', async () => {
+    > 60 |         const { result } = renderHook(() =>
+         |                                      ^
+      61 |             useSubmitRequest({ ...baseParams, selectedVehicle: null })
+      62 |         );
+      63 |
+
+      at Object.<anonymous>.process.env.NODE_ENV.exports.create (node_modules/react-test-renderer/cjs/react-test-renderer.development.js:14598:17)
+      at create (node_modules/@testing-library/react-native/src/render-act.ts:15:29)
+      at callback (node_modules/@testing-library/react-native/src/act.ts:31:24)
+      at Object.<anonymous>.process.env.NODE_ENV.exports.act (node_modules/react/cjs/react.development.js:789:22)
+      at actImplementation (node_modules/@testing-library/react-native/src/act.ts:30:25)
+      at renderWithAct (node_modules/@testing-library/react-native/src/render-act.ts:13:11)
+      at renderInternal (node_modules/@testing-library/react-native/src/render.tsx:69:33)
+      at renderInternal (node_modules/@testing-library/react-native/src/render.tsx:44:10)
+      at renderHook (node_modules/@testing-library/react-native/src/render-hook.tsx:55:58)
+      at Object.<anonymous> (src/__tests__/hooks/useSubmitRequest.test.ts:60:38)
+
+  console.error
+    react-test-renderer is deprecated. See https://react.dev/warnings/react-test-renderer
+
+      70 |     it('should call handleFreeOrder when free order button is pressed', () => {
+      71 |         const handleFreeOrderMock = jest.fn();
+    > 72 |         render(<PaymentButton {...defaultProps} freeOrder={true} handleFreeOrder={handleFreeOrderMock} />);
+         |               ^
+      73 |         
+      74 |         const freeButton = screen.getByText('Claim Free Order').parent?.parent;
+      75 |         if (freeButton) {
+
+      at Object.<anonymous>.process.env.NODE_ENV.exports.create (node_modules/react-test-renderer/cjs/react-test-renderer.development.js:14598:17)
+      at create (node_modules/@testing-library/react-native/src/render-act.ts:15:29)
+      at callback (node_modules/@testing-library/react-native/src/act.ts:31:24)
+      at Object.<anonymous>.process.env.NODE_ENV.exports.act (node_modules/react/cjs/react.development.js:789:22)
+      at actImplementation (node_modules/@testing-library/react-native/src/act.ts:30:25)
+      at renderWithAct (node_modules/@testing-library/react-native/src/render-act.ts:13:11)
+      at renderInternal (node_modules/@testing-library/react-native/src/render.tsx:69:33)
+      at renderInternal (node_modules/@testing-library/react-native/src/render.tsx:44:10)
+      at Object.<anonymous> (src/__tests__/components/payment/PaymentButton.test.tsx:72:15)
+
+  console.error
+    react-test-renderer is deprecated. See https://react.dev/warnings/react-test-renderer
+
+      81 |
+      82 |     it('should be disabled when card is not complete', () => {
+    > 83 |         render(<PaymentButton {...defaultProps} cardComplete={false} />);
+         |               ^
+      84 |         
+      85 |         const payButton = screen.getByText('Pay 50 QAR').parent?.parent;
+      86 |         expect(payButton?.props.accessibilityState?.disabled).toBe(true);
+
+      at Object.<anonymous>.process.env.NODE_ENV.exports.create (node_modules/react-test-renderer/cjs/react-test-renderer.development.js:14598:17)
+      at create (node_modules/@testing-library/react-native/src/render-act.ts:15:29)
+      at callback (node_modules/@testing-library/react-native/src/act.ts:31:24)
+      at Object.<anonymous>.process.env.NODE_ENV.exports.act (node_modules/react/cjs/react.development.js:789:22)
+      at actImplementation (node_modules/@testing-library/react-native/src/act.ts:30:25)
+      at renderWithAct (node_modules/@testing-library/react-native/src/render-act.ts:13:11)
+      at renderInternal (node_modules/@testing-library/react-native/src/render.tsx:69:33)
+      at renderInternal (node_modules/@testing-library/react-native/src/render.tsx:44:10)
+      at Object.<anonymous> (src/__tests__/components/payment/PaymentButton.test.tsx:83:15)
+
+  console.error
+    react-test-renderer is deprecated. See https://react.dev/warnings/react-test-renderer
+
+      41 |
+      42 |     it('should render part description', () => {
+    > 43 |         render(<PaymentSummary {...defaultProps} />);
+         |               ^
+      44 |         
+      45 |         expect(screen.getByText('Front Bumper for Toyota Camry 2024')).toBeTruthy();
+      46 |     });
+
+      at Object.<anonymous>.process.env.NODE_ENV.exports.create (node_modules/react-test-renderer/cjs/react-test-renderer.development.js:14598:17)
+      at create (node_modules/@testing-library/react-native/src/render-act.ts:15:29)
+      at callback (node_modules/@testing-library/react-native/src/act.ts:31:24)
+      at Object.<anonymous>.process.env.NODE_ENV.exports.act (node_modules/react/cjs/react.development.js:789:22)
+      at actImplementation (node_modules/@testing-library/react-native/src/act.ts:30:25)
+      at renderWithAct (node_modules/@testing-library/react-native/src/render-act.ts:13:11)
+      at renderInternal (node_modules/@testing-library/react-native/src/render.tsx:69:33)
+      at renderInternal (node_modules/@testing-library/react-native/src/render.tsx:44:10)
+      at Object.<anonymous> (src/__tests__/components/payment/PaymentSummary.test.tsx:43:15)
+
+  console.error
+    react-test-renderer is deprecated. See https://react.dev/warnings/react-test-renderer
+
+      88 |
+      89 |     it('should be disabled when loading', () => {
+    > 90 |         render(<PaymentButton {...defaultProps} isLoading={true} />);
+         |               ^
+      91 |         
+      92 |         const payButton = screen.getByText('Pay 50 QAR').parent?.parent;
+      93 |         expect(payButton?.props.accessibilityState?.disabled).toBe(true);
+
+      at Object.<anonymous>.process.env.NODE_ENV.exports.create (node_modules/react-test-renderer/cjs/react-test-renderer.development.js:14598:17)
+      at create (node_modules/@testing-library/react-native/src/render-act.ts:15:29)
+      at callback (node_modules/@testing-library/react-native/src/act.ts:31:24)
+      at Object.<anonymous>.process.env.NODE_ENV.exports.act (node_modules/react/cjs/react.development.js:789:22)
+      at actImplementation (node_modules/@testing-library/react-native/src/act.ts:30:25)
+      at renderWithAct (node_modules/@testing-library/react-native/src/render-act.ts:13:11)
+      at renderInternal (node_modules/@testing-library/react-native/src/render.tsx:69:33)
+      at renderInternal (node_modules/@testing-library/react-native/src/render.tsx:44:10)
+      at Object.<anonymous> (src/__tests__/components/payment/PaymentButton.test.tsx:90:15)
+
+  console.error
+    react-test-renderer is deprecated. See https://react.dev/warnings/react-test-renderer
+
+       95 |
+       96 |     it('should show loading spinner when loading', () => {
+    >  97 |         const { getByTestId } = render(<PaymentButton {...defaultProps} isLoading={true} />);
+          |                                       ^
+       98 |         
+       99 |         expect(getByTestId('activity-indicator')).toBeTruthy();
+      100 |     });
+
+      at Object.<anonymous>.process.env.NODE_ENV.exports.create (node_modules/react-test-renderer/cjs/react-test-renderer.development.js:14598:17)
+      at create (node_modules/@testing-library/react-native/src/render-act.ts:15:29)
+      at callback (node_modules/@testing-library/react-native/src/act.ts:31:24)
+      at Object.<anonymous>.process.env.NODE_ENV.exports.act (node_modules/react/cjs/react.development.js:789:22)
+      at actImplementation (node_modules/@testing-library/react-native/src/act.ts:30:25)
+      at renderWithAct (node_modules/@testing-library/react-native/src/render-act.ts:13:11)
+      at renderInternal (node_modules/@testing-library/react-native/src/render.tsx:69:33)
+      at renderInternal (node_modules/@testing-library/react-native/src/render.tsx:44:10)
+      at Object.<anonymous> (src/__tests__/components/payment/PaymentButton.test.tsx:97:39)
+
+  console.error
+    react-test-renderer is deprecated. See https://react.dev/warnings/react-test-renderer
+
+      26 |
+      27 |     it('should do nothing if orderId is null', () => {
+    > 28 |         const { result } = renderHook(() =>
+         |                                      ^
+      29 |             usePaymentIntent({
+      30 |                 orderId: null,
+      31 |                 paymentType: 'full',
+
+      at Object.<anonymous>.process.env.NODE_ENV.exports.create (node_modules/react-test-renderer/cjs/react-test-renderer.development.js:14598:17)
+      at create (node_modules/@testing-library/react-native/src/render-act.ts:15:29)
+      at callback (node_modules/@testing-library/react-native/src/act.ts:31:24)
+      at Object.<anonymous>.process.env.NODE_ENV.exports.act (node_modules/react/cjs/react.development.js:789:22)
+      at actImplementation (node_modules/@testing-library/react-native/src/act.ts:30:25)
+      at renderWithAct (node_modules/@testing-library/react-native/src/render-act.ts:13:11)
+      at renderInternal (node_modules/@testing-library/react-native/src/render.tsx:69:33)
+      at renderInternal (node_modules/@testing-library/react-native/src/render.tsx:44:10)
+      at renderHook (node_modules/@testing-library/react-native/src/render-hook.tsx:55:58)
+      at Object.<anonymous> (src/__tests__/hooks/usePaymentIntent.test.ts:28:38)
+
+  console.error
+    react-test-renderer is deprecated. See https://react.dev/warnings/react-test-renderer
+
+      72 |     it('should show VIN alert if selected vehicle is missing VIN', async () => {
+      73 |         const noVinVehicle = { car_make: 'Toyota', car_model: 'Camry', car_year: 2020, vin_number: null };
+    > 74 |         const { result } = renderHook(() =>
+         |                                      ^
+      75 |             useSubmitRequest({ ...baseParams, selectedVehicle: noVinVehicle })
+      76 |         );
+      77 |
+
+      at Object.<anonymous>.process.env.NODE_ENV.exports.create (node_modules/react-test-renderer/cjs/react-test-renderer.development.js:14598:17)
+      at create (node_modules/@testing-library/react-native/src/render-act.ts:15:29)
+      at callback (node_modules/@testing-library/react-native/src/act.ts:31:24)
+      at Object.<anonymous>.process.env.NODE_ENV.exports.act (node_modules/react/cjs/react.development.js:789:22)
+      at actImplementation (node_modules/@testing-library/react-native/src/act.ts:30:25)
+      at renderWithAct (node_modules/@testing-library/react-native/src/render-act.ts:13:11)
+      at renderInternal (node_modules/@testing-library/react-native/src/render.tsx:69:33)
+      at renderInternal (node_modules/@testing-library/react-native/src/render.tsx:44:10)
+      at renderHook (node_modules/@testing-library/react-native/src/render-hook.tsx:55:58)
+      at Object.<anonymous> (src/__tests__/hooks/useSubmitRequest.test.ts:74:38)
+
+  console.error
+    react-test-renderer is deprecated. See https://react.dev/warnings/react-test-renderer
+
+      47 |
+      48 |     it('should render part label', () => {
+    > 49 |         render(<PaymentSummary {...defaultProps} />);
+         |               ^
+      50 |         
+      51 |         expect(screen.getByText('Part')).toBeTruthy();
+      52 |     });
+
+      at Object.<anonymous>.process.env.NODE_ENV.exports.create (node_modules/react-test-renderer/cjs/react-test-renderer.development.js:14598:17)
+      at create (node_modules/@testing-library/react-native/src/render-act.ts:15:29)
+      at callback (node_modules/@testing-library/react-native/src/act.ts:31:24)
+      at Object.<anonymous>.process.env.NODE_ENV.exports.act (node_modules/react/cjs/react.development.js:789:22)
+      at actImplementation (node_modules/@testing-library/react-native/src/act.ts:30:25)
+      at renderWithAct (node_modules/@testing-library/react-native/src/render-act.ts:13:11)
+      at renderInternal (node_modules/@testing-library/react-native/src/render.tsx:69:33)
+      at renderInternal (node_modules/@testing-library/react-native/src/render.tsx:44:10)
+      at Object.<anonymous> (src/__tests__/components/payment/PaymentSummary.test.tsx:49:15)
+
+  console.error
+    react-test-renderer is deprecated. See https://react.dev/warnings/react-test-renderer
+
+      101 |
+      102 |     it('should not show button text when loading', () => {
+    > 103 |         render(<PaymentButton {...defaultProps} isLoading={true} />);
+          |               ^
+      104 |         
+      105 |         expect(screen.queryByText('Pay 50 QAR')).toBeNull();
+      106 |     });
+
+      at Object.<anonymous>.process.env.NODE_ENV.exports.create (node_modules/react-test-renderer/cjs/react-test-renderer.development.js:14598:17)
+      at create (node_modules/@testing-library/react-native/src/render-act.ts:15:29)
+      at callback (node_modules/@testing-library/react-native/src/act.ts:31:24)
+      at Object.<anonymous>.process.env.NODE_ENV.exports.act (node_modules/react/cjs/react.development.js:789:22)
+      at actImplementation (node_modules/@testing-library/react-native/src/act.ts:30:25)
+      at renderWithAct (node_modules/@testing-library/react-native/src/render-act.ts:13:11)
+      at renderInternal (node_modules/@testing-library/react-native/src/render.tsx:69:33)
+      at renderInternal (node_modules/@testing-library/react-native/src/render.tsx:44:10)
+      at Object.<anonymous> (src/__tests__/components/payment/PaymentButton.test.tsx:103:15)
+
+  console.error
+    react-test-renderer is deprecated. See https://react.dev/warnings/react-test-renderer
+
+      53 |
+      54 |     it('should render part price with currency', () => {
+    > 55 |         render(<PaymentSummary {...defaultProps} />);
+         |               ^
+      56 |         
+      57 |         expect(screen.getByText('500 QAR')).toBeTruthy();
+      58 |     });
+
+      at Object.<anonymous>.process.env.NODE_ENV.exports.create (node_modules/react-test-renderer/cjs/react-test-renderer.development.js:14598:17)
+      at create (node_modules/@testing-library/react-native/src/render-act.ts:15:29)
+      at callback (node_modules/@testing-library/react-native/src/act.ts:31:24)
+      at Object.<anonymous>.process.env.NODE_ENV.exports.act (node_modules/react/cjs/react.development.js:789:22)
+      at actImplementation (node_modules/@testing-library/react-native/src/act.ts:30:25)
+      at renderWithAct (node_modules/@testing-library/react-native/src/render-act.ts:13:11)
+      at renderInternal (node_modules/@testing-library/react-native/src/render.tsx:69:33)
+      at renderInternal (node_modules/@testing-library/react-native/src/render.tsx:44:10)
+      at Object.<anonymous> (src/__tests__/components/payment/PaymentSummary.test.tsx:55:15)
+
+  console.error
+    react-test-renderer is deprecated. See https://react.dev/warnings/react-test-renderer
+
+      107 |
+      108 |     it('should display green gradient when card is complete', () => {
+    > 109 |         render(<PaymentButton {...defaultProps} cardComplete={true} />);
+          |               ^
+      110 |         
+      111 |         // Gradient should be green when enabled
+      112 |         const gradient = screen.getByTestId('payment-gradient');
+
+      at Object.<anonymous>.process.env.NODE_ENV.exports.create (node_modules/react-test-renderer/cjs/react-test-renderer.development.js:14598:17)
+      at create (node_modules/@testing-library/react-native/src/render-act.ts:15:29)
+      at callback (node_modules/@testing-library/react-native/src/act.ts:31:24)
+      at Object.<anonymous>.process.env.NODE_ENV.exports.act (node_modules/react/cjs/react.development.js:789:22)
+      at actImplementation (node_modules/@testing-library/react-native/src/act.ts:30:25)
+      at renderWithAct (node_modules/@testing-library/react-native/src/render-act.ts:13:11)
+      at renderInternal (node_modules/@testing-library/react-native/src/render.tsx:69:33)
+      at renderInternal (node_modules/@testing-library/react-native/src/render.tsx:44:10)
+      at Object.<anonymous> (src/__tests__/components/payment/PaymentButton.test.tsx:109:15)
+
+  console.error
+    react-test-renderer is deprecated. See https://react.dev/warnings/react-test-renderer
+
+      89 |
+      90 |     it('should show error if part description is missing/empty', async () => {
+    > 91 |         const { result } = renderHook(() =>
+         |                                      ^
+      92 |             useSubmitRequest({ ...baseParams, partDescription: '   ' }) // Empty string
+      93 |         );
+      94 |
+
+      at Object.<anonymous>.process.env.NODE_ENV.exports.create (node_modules/react-test-renderer/cjs/react-test-renderer.development.js:14598:17)
+      at create (node_modules/@testing-library/react-native/src/render-act.ts:15:29)
+      at callback (node_modules/@testing-library/react-native/src/act.ts:31:24)
+      at Object.<anonymous>.process.env.NODE_ENV.exports.act (node_modules/react/cjs/react.development.js:789:22)
+      at actImplementation (node_modules/@testing-library/react-native/src/act.ts:30:25)
+      at renderWithAct (node_modules/@testing-library/react-native/src/render-act.ts:13:11)
+      at renderInternal (node_modules/@testing-library/react-native/src/render.tsx:69:33)
+      at renderInternal (node_modules/@testing-library/react-native/src/render.tsx:44:10)
+      at renderHook (node_modules/@testing-library/react-native/src/render-hook.tsx:55:58)
+      at Object.<anonymous> (src/__tests__/hooks/useSubmitRequest.test.ts:91:38)
+
+  console.error
+    react-test-renderer is deprecated. See https://react.dev/warnings/react-test-renderer
+
+       98 |         });
+       99 |
+    > 100 |         const { result } = renderHook(() =>
+          |                                      ^
+      101 |             usePaymentInitialization({
+      102 |                 ...baseParams,
+      103 |                 existingOrderId: 'order-123',
+
+      at Object.<anonymous>.process.env.NODE_ENV.exports.create (node_modules/react-test-renderer/cjs/react-test-renderer.development.js:14598:17)
+      at create (node_modules/@testing-library/react-native/src/render-act.ts:15:29)
+      at callback (node_modules/@testing-library/react-native/src/act.ts:31:24)
+      at Object.<anonymous>.process.env.NODE_ENV.exports.act (node_modules/react/cjs/react.development.js:789:22)
+      at actImplementation (node_modules/@testing-library/react-native/src/act.ts:30:25)
+      at renderWithAct (node_modules/@testing-library/react-native/src/render-act.ts:13:11)
+      at renderInternal (node_modules/@testing-library/react-native/src/render.tsx:69:33)
+      at renderInternal (node_modules/@testing-library/react-native/src/render.tsx:44:10)
+      at renderHook (node_modules/@testing-library/react-native/src/render-hook.tsx:55:58)
+      at Object.<anonymous> (src/__tests__/hooks/usePaymentInitialization.test.ts:100:38)
+
+  console.error
+    react-test-renderer is deprecated. See https://react.dev/warnings/react-test-renderer
+
+      33 |
+      34 |     it('should initialize with empty state', () => {
+    > 35 |         const { result } = renderHook(() => useRequestImages(mockT, mockToast));
+         |                                      ^
+      36 |
+      37 |         expect(result.current.images).toEqual([]);
+      38 |         expect(result.current.carFrontImage).toBeNull();
+
+      at Object.<anonymous>.process.env.NODE_ENV.exports.create (node_modules/react-test-renderer/cjs/react-test-renderer.development.js:14598:17)
+      at create (node_modules/@testing-library/react-native/src/render-act.ts:15:29)
+      at callback (node_modules/@testing-library/react-native/src/act.ts:31:24)
+      at Object.<anonymous>.process.env.NODE_ENV.exports.act (node_modules/react/cjs/react.development.js:789:22)
+      at actImplementation (node_modules/@testing-library/react-native/src/act.ts:30:25)
+      at renderWithAct (node_modules/@testing-library/react-native/src/render-act.ts:13:11)
+      at renderInternal (node_modules/@testing-library/react-native/src/render.tsx:69:33)
+      at renderInternal (node_modules/@testing-library/react-native/src/render.tsx:44:10)
+      at renderHook (node_modules/@testing-library/react-native/src/render-hook.tsx:55:58)
+      at Object.<anonymous> (src/__tests__/hooks/useRequestImages.test.ts:35:38)
+
+  console.error
+    react-test-renderer is deprecated. See https://react.dev/warnings/react-test-renderer
+
+      115 |
+      116 |     it('should display gray gradient when card is incomplete', () => {
+    > 117 |         render(<PaymentButton {...defaultProps} cardComplete={false} />);
+          |               ^
+      118 |         
+      119 |         // Gradient should be gray when disabled
+      120 |         const gradient = screen.getByTestId('payment-gradient');
+
+      at Object.<anonymous>.process.env.NODE_ENV.exports.create (node_modules/react-test-renderer/cjs/react-test-renderer.development.js:14598:17)
+      at create (node_modules/@testing-library/react-native/src/render-act.ts:15:29)
+      at callback (node_modules/@testing-library/react-native/src/act.ts:31:24)
+      at Object.<anonymous>.process.env.NODE_ENV.exports.act (node_modules/react/cjs/react.development.js:789:22)
+      at actImplementation (node_modules/@testing-library/react-native/src/act.ts:30:25)
+      at renderWithAct (node_modules/@testing-library/react-native/src/render-act.ts:13:11)
+      at renderInternal (node_modules/@testing-library/react-native/src/render.tsx:69:33)
+      at renderInternal (node_modules/@testing-library/react-native/src/render.tsx:44:10)
+      at Object.<anonymous> (src/__tests__/components/payment/PaymentButton.test.tsx:117:15)
+
+  console.error
+    react-test-renderer is deprecated. See https://react.dev/warnings/react-test-renderer
+
+      59 |
+      60 |     it('should render delivery fee with currency', () => {
+    > 61 |         render(<PaymentSummary {...defaultProps} />);
+         |               ^
+      62 |         
+      63 |         expect(screen.getByText('50 QAR')).toBeTruthy();
+      64 |     });
+
+      at Object.<anonymous>.process.env.NODE_ENV.exports.create (node_modules/react-test-renderer/cjs/react-test-renderer.development.js:14598:17)
+      at create (node_modules/@testing-library/react-native/src/render-act.ts:15:29)
+      at callback (node_modules/@testing-library/react-native/src/act.ts:31:24)
+      at Object.<anonymous>.process.env.NODE_ENV.exports.act (node_modules/react/cjs/react.development.js:789:22)
+      at actImplementation (node_modules/@testing-library/react-native/src/act.ts:30:25)
+      at renderWithAct (node_modules/@testing-library/react-native/src/render-act.ts:13:11)
+      at renderInternal (node_modules/@testing-library/react-native/src/render.tsx:69:33)
+      at renderInternal (node_modules/@testing-library/react-native/src/render.tsx:44:10)
+      at Object.<anonymous> (src/__tests__/components/payment/PaymentSummary.test.tsx:61:15)
+
+  console.error
+    react-test-renderer is deprecated. See https://react.dev/warnings/react-test-renderer
+
+      109 |         (api.createRequest as jest.Mock).mockResolvedValue({ request_id: 'REQ-10001' });
+      110 |
+    > 111 |         const { result } = renderHook(() =>
+          |                                      ^
+      112 |             useSubmitRequest({
+      113 |                 ...baseParams,
+      114 |                 quantity: 4,
+
+      at Object.<anonymous>.process.env.NODE_ENV.exports.create (node_modules/react-test-renderer/cjs/react-test-renderer.development.js:14598:17)
+      at create (node_modules/@testing-library/react-native/src/render-act.ts:15:29)
+      at callback (node_modules/@testing-library/react-native/src/act.ts:31:24)
+      at Object.<anonymous>.process.env.NODE_ENV.exports.act (node_modules/react/cjs/react.development.js:789:22)
+      at actImplementation (node_modules/@testing-library/react-native/src/act.ts:30:25)
+      at renderWithAct (node_modules/@testing-library/react-native/src/render-act.ts:13:11)
+      at renderInternal (node_modules/@testing-library/react-native/src/render.tsx:69:33)
+      at renderInternal (node_modules/@testing-library/react-native/src/render.tsx:44:10)
+      at renderHook (node_modules/@testing-library/react-native/src/render-hook.tsx:55:58)
+      at Object.<anonymous> (src/__tests__/hooks/useSubmitRequest.test.ts:111:38)
+
+  console.error
+    react-test-renderer is deprecated. See https://react.dev/warnings/react-test-renderer
+
+      45 |
+      46 |     it('should create FREE_ORDER if payNowAmount is 0', async () => {
+    > 47 |         const { result } = renderHook(() =>
+         |                                      ^
+      48 |             usePaymentIntent({
+      49 |                 orderId: 'order-123',
+      50 |                 paymentType: 'full',
+
+      at Object.<anonymous>.process.env.NODE_ENV.exports.create (node_modules/react-test-renderer/cjs/react-test-renderer.development.js:14598:17)
+      at create (node_modules/@testing-library/react-native/src/render-act.ts:15:29)
+      at callback (node_modules/@testing-library/react-native/src/act.ts:31:24)
+      at Object.<anonymous>.process.env.NODE_ENV.exports.act (node_modules/react/cjs/react.development.js:789:22)
+      at actImplementation (node_modules/@testing-library/react-native/src/act.ts:30:25)
+      at renderWithAct (node_modules/@testing-library/react-native/src/render-act.ts:13:11)
+      at renderInternal (node_modules/@testing-library/react-native/src/render.tsx:69:33)
+      at renderInternal (node_modules/@testing-library/react-native/src/render.tsx:44:10)
+      at renderHook (node_modules/@testing-library/react-native/src/render-hook.tsx:55:58)
+      at Object.<anonymous> (src/__tests__/hooks/usePaymentIntent.test.ts:47:38)
+
+  console.error
+    react-test-renderer is deprecated. See https://react.dev/warnings/react-test-renderer
+
+      123 |
+      124 |     it('should display gold gradient for free order', () => {
+    > 125 |         render(<PaymentButton {...defaultProps} freeOrder={true} />);
+          |               ^
+      126 |         
+      127 |         // Gradient should be gold for free order
+      128 |         const gradient = screen.getByTestId('payment-gradient');
+
+      at Object.<anonymous>.process.env.NODE_ENV.exports.create (node_modules/react-test-renderer/cjs/react-test-renderer.development.js:14598:17)
+      at create (node_modules/@testing-library/react-native/src/render-act.ts:15:29)
+      at callback (node_modules/@testing-library/react-native/src/act.ts:31:24)
+      at Object.<anonymous>.process.env.NODE_ENV.exports.act (node_modules/react/cjs/react.development.js:789:22)
+      at actImplementation (node_modules/@testing-library/react-native/src/act.ts:30:25)
+      at renderWithAct (node_modules/@testing-library/react-native/src/render-act.ts:13:11)
+      at renderInternal (node_modules/@testing-library/react-native/src/render.tsx:69:33)
+      at renderInternal (node_modules/@testing-library/react-native/src/render.tsx:44:10)
+      at Object.<anonymous> (src/__tests__/components/payment/PaymentButton.test.tsx:125:15)
+
+  console.error
+    react-test-renderer is deprecated. See https://react.dev/warnings/react-test-renderer
+
+      65 |
+      66 |     it('should render total amount with currency', () => {
+    > 67 |         render(<PaymentSummary {...defaultProps} />);
+         |               ^
+      68 |         
+      69 |         expect(screen.getByText('550 QAR')).toBeTruthy();
+      70 |     });
+
+      at Object.<anonymous>.process.env.NODE_ENV.exports.create (node_modules/react-test-renderer/cjs/react-test-renderer.development.js:14598:17)
+      at create (node_modules/@testing-library/react-native/src/render-act.ts:15:29)
+      at callback (node_modules/@testing-library/react-native/src/act.ts:31:24)
+      at Object.<anonymous>.process.env.NODE_ENV.exports.act (node_modules/react/cjs/react.development.js:789:22)
+      at actImplementation (node_modules/@testing-library/react-native/src/act.ts:30:25)
+      at renderWithAct (node_modules/@testing-library/react-native/src/render-act.ts:13:11)
+      at renderInternal (node_modules/@testing-library/react-native/src/render.tsx:69:33)
+      at renderInternal (node_modules/@testing-library/react-native/src/render.tsx:44:10)
+      at Object.<anonymous> (src/__tests__/components/payment/PaymentSummary.test.tsx:67:15)
+
+  console.error
+    react-test-renderer is deprecated. See https://react.dev/warnings/react-test-renderer
+
+      131 |
+      132 |     it('should render security text for normal payment', () => {
+    > 133 |         render(<PaymentButton {...defaultProps} />);
+          |               ^
+      134 |         
+      135 |         expect(screen.getByText('Secured by Stripe')).toBeTruthy();
+      136 |     });
+
+      at Object.<anonymous>.process.env.NODE_ENV.exports.create (node_modules/react-test-renderer/cjs/react-test-renderer.development.js:14598:17)
+      at create (node_modules/@testing-library/react-native/src/render-act.ts:15:29)
+      at callback (node_modules/@testing-library/react-native/src/act.ts:31:24)
+      at Object.<anonymous>.process.env.NODE_ENV.exports.act (node_modules/react/cjs/react.development.js:789:22)
+      at actImplementation (node_modules/@testing-library/react-native/src/act.ts:30:25)
+      at renderWithAct (node_modules/@testing-library/react-native/src/render-act.ts:13:11)
+      at renderInternal (node_modules/@testing-library/react-native/src/render.tsx:69:33)
+      at renderInternal (node_modules/@testing-library/react-native/src/render.tsx:44:10)
+      at Object.<anonymous> (src/__tests__/components/payment/PaymentButton.test.tsx:133:15)
+
+  console.error
+    react-test-renderer is deprecated. See https://react.dev/warnings/react-test-renderer
+
+      150 |         });
+      151 |
+    > 152 |         const { result } = renderHook(() =>
+          |                                      ^
+      153 |             useSubmitRequest(baseParams)
+      154 |         );
+      155 |
+
+      at Object.<anonymous>.process.env.NODE_ENV.exports.create (node_modules/react-test-renderer/cjs/react-test-renderer.development.js:14598:17)
+      at create (node_modules/@testing-library/react-native/src/render-act.ts:15:29)
+      at callback (node_modules/@testing-library/react-native/src/act.ts:31:24)
+      at Object.<anonymous>.process.env.NODE_ENV.exports.act (node_modules/react/cjs/react.development.js:789:22)
+      at actImplementation (node_modules/@testing-library/react-native/src/act.ts:30:25)
+      at renderWithAct (node_modules/@testing-library/react-native/src/render-act.ts:13:11)
+      at renderInternal (node_modules/@testing-library/react-native/src/render.tsx:69:33)
+      at renderInternal (node_modules/@testing-library/react-native/src/render.tsx:44:10)
+      at renderHook (node_modules/@testing-library/react-native/src/render-hook.tsx:55:58)
+      at Object.<anonymous> (src/__tests__/hooks/useSubmitRequest.test.ts:152:38)
+
+  console.error
+    react-test-renderer is deprecated. See https://react.dev/warnings/react-test-renderer
+
+      72 |     it('should handle long part descriptions with truncation', () => {
+      73 |         const longDescription = 'This is a very long part description that should be truncated properly in the UI to prevent layout issues';
+    > 74 |         render(<PaymentSummary {...defaultProps} partDescription={longDescription} />);
+         |               ^
+      75 |         
+      76 |         expect(screen.getByText(longDescription)).toBeTruthy();
+      77 |     });
+
+      at Object.<anonymous>.process.env.NODE_ENV.exports.create (node_modules/react-test-renderer/cjs/react-test-renderer.development.js:14598:17)
+      at create (node_modules/@testing-library/react-native/src/render-act.ts:15:29)
+      at callback (node_modules/@testing-library/react-native/src/act.ts:31:24)
+      at Object.<anonymous>.process.env.NODE_ENV.exports.act (node_modules/react/cjs/react.development.js:789:22)
+      at actImplementation (node_modules/@testing-library/react-native/src/act.ts:30:25)
+      at renderWithAct (node_modules/@testing-library/react-native/src/render-act.ts:13:11)
+      at renderInternal (node_modules/@testing-library/react-native/src/render.tsx:69:33)
+      at renderInternal (node_modules/@testing-library/react-native/src/render.tsx:44:10)
+      at Object.<anonymous> (src/__tests__/components/payment/PaymentSummary.test.tsx:74:15)
+
+  console.error
+    react-test-renderer is deprecated. See https://react.dev/warnings/react-test-renderer
+
+      137 |
+      138 |     it('should render loyalty text for free order', () => {
+    > 139 |         render(<PaymentButton {...defaultProps} freeOrder={true} />);
+          |               ^
+      140 |         
+      141 |         expect(screen.getByText('Loyalty points at work!')).toBeTruthy();
+      142 |     });
+
+      at Object.<anonymous>.process.env.NODE_ENV.exports.create (node_modules/react-test-renderer/cjs/react-test-renderer.development.js:14598:17)
+      at create (node_modules/@testing-library/react-native/src/render-act.ts:15:29)
+      at callback (node_modules/@testing-library/react-native/src/act.ts:31:24)
+      at Object.<anonymous>.process.env.NODE_ENV.exports.act (node_modules/react/cjs/react.development.js:789:22)
+      at actImplementation (node_modules/@testing-library/react-native/src/act.ts:30:25)
+      at renderWithAct (node_modules/@testing-library/react-native/src/render-act.ts:13:11)
+      at renderInternal (node_modules/@testing-library/react-native/src/render.tsx:69:33)
+      at renderInternal (node_modules/@testing-library/react-native/src/render.tsx:44:10)
+      at Object.<anonymous> (src/__tests__/components/payment/PaymentButton.test.tsx:139:15)
+
+  console.error
+    react-test-renderer is deprecated. See https://react.dev/warnings/react-test-renderer
+
+      78 |         });
+      79 |
+    > 80 |         const { result } = renderHook(() =>
+         |                                      ^
+      81 |             usePaymentIntent({
+      82 |                 orderId: 'order-123',
+      83 |                 paymentType: 'full',
+
+      at Object.<anonymous>.process.env.NODE_ENV.exports.create (node_modules/react-test-renderer/cjs/react-test-renderer.development.js:14598:17)
+      at create (node_modules/@testing-library/react-native/src/render-act.ts:15:29)
+      at callback (node_modules/@testing-library/react-native/src/act.ts:31:24)
+      at Object.<anonymous>.process.env.NODE_ENV.exports.act (node_modules/react/cjs/react.development.js:789:22)
+      at actImplementation (node_modules/@testing-library/react-native/src/act.ts:30:25)
+      at renderWithAct (node_modules/@testing-library/react-native/src/render-act.ts:13:11)
+      at renderInternal (node_modules/@testing-library/react-native/src/render.tsx:69:33)
+      at renderInternal (node_modules/@testing-library/react-native/src/render.tsx:44:10)
+      at renderHook (node_modules/@testing-library/react-native/src/render-hook.tsx:55:58)
+      at Object.<anonymous> (src/__tests__/hooks/usePaymentIntent.test.ts:80:38)
+
+  console.error
+    react-test-renderer is deprecated. See https://react.dev/warnings/react-test-renderer
+
+      78 |
+      79 |     it('should handle zero prices', () => {
+    > 80 |         render(<PaymentSummary {...defaultProps} partPrice={0} deliveryFee={0} totalAmount={0} />);
+         |               ^
+      81 |         
+      82 |         expect(screen.getByText('0 QAR')).toBeTruthy();
+      83 |     });
+
+      at Object.<anonymous>.process.env.NODE_ENV.exports.create (node_modules/react-test-renderer/cjs/react-test-renderer.development.js:14598:17)
+      at create (node_modules/@testing-library/react-native/src/render-act.ts:15:29)
+      at callback (node_modules/@testing-library/react-native/src/act.ts:31:24)
+      at Object.<anonymous>.process.env.NODE_ENV.exports.act (node_modules/react/cjs/react.development.js:789:22)
+      at actImplementation (node_modules/@testing-library/react-native/src/act.ts:30:25)
+      at renderWithAct (node_modules/@testing-library/react-native/src/render-act.ts:13:11)
+      at renderInternal (node_modules/@testing-library/react-native/src/render.tsx:69:33)
+      at renderInternal (node_modules/@testing-library/react-native/src/render.tsx:44:10)
+      at Object.<anonymous> (src/__tests__/components/payment/PaymentSummary.test.tsx:80:15)
+
+  console.error
+    react-test-renderer is deprecated. See https://react.dev/warnings/react-test-renderer
+
+      143 |
+      144 |     it('should format pay amount with 2 decimal places', () => {
+    > 145 |         render(<PaymentButton {...defaultProps} payNowAmount={50.5} />);
+          |               ^
+      146 |         
+      147 |         expect(screen.getByText('Pay 50.50 QAR')).toBeTruthy();
+      148 |     });
+
+      at Object.<anonymous>.process.env.NODE_ENV.exports.create (node_modules/react-test-renderer/cjs/react-test-renderer.development.js:14598:17)
+      at create (node_modules/@testing-library/react-native/src/render-act.ts:15:29)
+      at callback (node_modules/@testing-library/react-native/src/act.ts:31:24)
+      at Object.<anonymous>.process.env.NODE_ENV.exports.act (node_modules/react/cjs/react.development.js:789:22)
+      at actImplementation (node_modules/@testing-library/react-native/src/act.ts:30:25)
+      at renderWithAct (node_modules/@testing-library/react-native/src/render-act.ts:13:11)
+      at renderInternal (node_modules/@testing-library/react-native/src/render.tsx:69:33)
+      at renderInternal (node_modules/@testing-library/react-native/src/render.tsx:44:10)
+      at Object.<anonymous> (src/__tests__/components/payment/PaymentButton.test.tsx:145:15)
+
+  console.error
+    react-test-renderer is deprecated. See https://react.dev/warnings/react-test-renderer
+
+      43 |         (ImagePicker.requestMediaLibraryPermissionsAsync as jest.Mock).mockResolvedValue({ status: 'denied' });
+      44 |
+    > 45 |         const { result } = renderHook(() => useRequestImages(mockT, mockToast));
+         |                                      ^
+      46 |
+      47 |         await act(async () => {
+      48 |             await result.current.handlePickImage();
+
+      at Object.<anonymous>.process.env.NODE_ENV.exports.create (node_modules/react-test-renderer/cjs/react-test-renderer.development.js:14598:17)
+      at create (node_modules/@testing-library/react-native/src/render-act.ts:15:29)
+      at callback (node_modules/@testing-library/react-native/src/act.ts:31:24)
+      at Object.<anonymous>.process.env.NODE_ENV.exports.act (node_modules/react/cjs/react.development.js:789:22)
+      at actImplementation (node_modules/@testing-library/react-native/src/act.ts:30:25)
+      at renderWithAct (node_modules/@testing-library/react-native/src/render-act.ts:13:11)
+      at renderInternal (node_modules/@testing-library/react-native/src/render.tsx:69:33)
+      at renderInternal (node_modules/@testing-library/react-native/src/render.tsx:44:10)
+      at renderHook (node_modules/@testing-library/react-native/src/render-hook.tsx:55:58)
+      at Object.<anonymous> (src/__tests__/hooks/useRequestImages.test.ts:45:38)
+
+  console.error
+    react-test-renderer is deprecated. See https://react.dev/warnings/react-test-renderer
+
+      149 |
+      150 |     it('should support RTL layout', () => {
+    > 151 |         const { rerender } = render(<PaymentButton {...defaultProps} isRTL={false} />);
+          |                                    ^
+      152 |         expect(screen.getByText('Pay 50 QAR')).toBeTruthy();
+      153 |         
+      154 |         rerender(<PaymentButton {...defaultProps} isRTL={true} />);
+
+      at Object.<anonymous>.process.env.NODE_ENV.exports.create (node_modules/react-test-renderer/cjs/react-test-renderer.development.js:14598:17)
+      at create (node_modules/@testing-library/react-native/src/render-act.ts:15:29)
+      at callback (node_modules/@testing-library/react-native/src/act.ts:31:24)
+      at Object.<anonymous>.process.env.NODE_ENV.exports.act (node_modules/react/cjs/react.development.js:789:22)
+      at actImplementation (node_modules/@testing-library/react-native/src/act.ts:30:25)
+      at renderWithAct (node_modules/@testing-library/react-native/src/render-act.ts:13:11)
+      at renderInternal (node_modules/@testing-library/react-native/src/render.tsx:69:33)
+      at renderInternal (node_modules/@testing-library/react-native/src/render.tsx:44:10)
+      at Object.<anonymous> (src/__tests__/components/payment/PaymentButton.test.tsx:151:36)
+
+  console.error
+    react-test-renderer is deprecated. See https://react.dev/warnings/react-test-renderer
+
+      109 |         });
+      110 |
+    > 111 |         const { result } = renderHook(() =>
+          |                                      ^
+      112 |             usePaymentIntent({
+      113 |                 orderId: 'order-123',
+      114 |                 paymentType: 'delivery_only',
+
+      at Object.<anonymous>.process.env.NODE_ENV.exports.create (node_modules/react-test-renderer/cjs/react-test-renderer.development.js:14598:17)
+      at create (node_modules/@testing-library/react-native/src/render-act.ts:15:29)
+      at callback (node_modules/@testing-library/react-native/src/act.ts:31:24)
+      at Object.<anonymous>.process.env.NODE_ENV.exports.act (node_modules/react/cjs/react.development.js:789:22)
+      at actImplementation (node_modules/@testing-library/react-native/src/act.ts:30:25)
+      at renderWithAct (node_modules/@testing-library/react-native/src/render-act.ts:13:11)
+      at renderInternal (node_modules/@testing-library/react-native/src/render.tsx:69:33)
+      at renderInternal (node_modules/@testing-library/react-native/src/render.tsx:44:10)
+      at renderHook (node_modules/@testing-library/react-native/src/render-hook.tsx:55:58)
+      at Object.<anonymous> (src/__tests__/hooks/usePaymentIntent.test.ts:111:38)
+
+  console.error
+    react-test-renderer is deprecated. See https://react.dev/warnings/react-test-renderer
+
+      61 |         (compressImage as jest.Mock).mockImplementation((uri) => Promise.resolve(`${uri}_compressed`));
+      62 |
+    > 63 |         const { result } = renderHook(() => useRequestImages(mockT, mockToast));
+         |                                      ^
+      64 |
+      65 |         await act(async () => {
+      66 |             await result.current.handlePickImage();
+
+      at Object.<anonymous>.process.env.NODE_ENV.exports.create (node_modules/react-test-renderer/cjs/react-test-renderer.development.js:14598:17)
+      at create (node_modules/@testing-library/react-native/src/render-act.ts:15:29)
+      at callback (node_modules/@testing-library/react-native/src/act.ts:31:24)
+      at Object.<anonymous>.process.env.NODE_ENV.exports.act (node_modules/react/cjs/react.development.js:789:22)
+      at actImplementation (node_modules/@testing-library/react-native/src/act.ts:30:25)
+      at renderWithAct (node_modules/@testing-library/react-native/src/render-act.ts:13:11)
+      at renderInternal (node_modules/@testing-library/react-native/src/render.tsx:69:33)
+      at renderInternal (node_modules/@testing-library/react-native/src/render.tsx:44:10)
+      at renderHook (node_modules/@testing-library/react-native/src/render-hook.tsx:55:58)
+      at Object.<anonymous> (src/__tests__/hooks/useRequestImages.test.ts:63:38)
+
+  console.error
+    react-test-renderer is deprecated. See https://react.dev/warnings/react-test-renderer
+
+      84 |
+      85 |     it('should handle decimal prices correctly', () => {
+    > 86 |         render(<PaymentSummary {...defaultProps} partPrice={499.99} deliveryFee={49.99} totalAmount={549.98} />);
+         |               ^
+      87 |         
+      88 |         expect(screen.getByText('500 QAR')).toBeTruthy(); // toFixed(0) rounds
+      89 |     });
+
+      at Object.<anonymous>.process.env.NODE_ENV.exports.create (node_modules/react-test-renderer/cjs/react-test-renderer.development.js:14598:17)
+      at create (node_modules/@testing-library/react-native/src/render-act.ts:15:29)
+      at callback (node_modules/@testing-library/react-native/src/act.ts:31:24)
+      at Object.<anonymous>.process.env.NODE_ENV.exports.act (node_modules/react/cjs/react.development.js:789:22)
+      at actImplementation (node_modules/@testing-library/react-native/src/act.ts:30:25)
+      at renderWithAct (node_modules/@testing-library/react-native/src/render-act.ts:13:11)
+      at renderInternal (node_modules/@testing-library/react-native/src/render.tsx:69:33)
+      at renderInternal (node_modules/@testing-library/react-native/src/render.tsx:44:10)
+      at Object.<anonymous> (src/__tests__/components/payment/PaymentSummary.test.tsx:86:15)
+
+PASS src/__tests__/hooks/usePaymentIntent.test.ts
+  usePaymentIntent
+    ✓ should do nothing if orderId is null (128 ms)
+    ✓ should create FREE_ORDER if payNowAmount is 0 (13 ms)
+    ✓ should call createFullPaymentIntent when paymentType is full (17 ms)
+    ✓ should call createDeliveryFeeIntent when paymentType is delivery_only (9 ms)
+
+  console.error
+    react-test-renderer is deprecated. See https://react.dev/warnings/react-test-renderer
+
+      81 |         (compressImage as jest.Mock).mockRejectedValue(new Error('Compression error'));
+      82 |
+    > 83 |         const { result } = renderHook(() => useRequestImages(mockT, mockToast));
+         |                                      ^
+      84 |
+      85 |         await act(async () => {
+      86 |             await result.current.handlePickImage();
+
+      at Object.<anonymous>.process.env.NODE_ENV.exports.create (node_modules/react-test-renderer/cjs/react-test-renderer.development.js:14598:17)
+      at create (node_modules/@testing-library/react-native/src/render-act.ts:15:29)
+      at callback (node_modules/@testing-library/react-native/src/act.ts:31:24)
+      at Object.<anonymous>.process.env.NODE_ENV.exports.act (node_modules/react/cjs/react.development.js:789:22)
+      at actImplementation (node_modules/@testing-library/react-native/src/act.ts:30:25)
+      at renderWithAct (node_modules/@testing-library/react-native/src/render-act.ts:13:11)
+      at renderInternal (node_modules/@testing-library/react-native/src/render.tsx:69:33)
+      at renderInternal (node_modules/@testing-library/react-native/src/render.tsx:44:10)
+      at renderHook (node_modules/@testing-library/react-native/src/render-hook.tsx:55:58)
+      at Object.<anonymous> (src/__tests__/hooks/useRequestImages.test.ts:83:38)
+
+  console.error
+    react-test-renderer is deprecated. See https://react.dev/warnings/react-test-renderer
+
+      90 |
+      91 |     it('should support RTL layout', () => {
+    > 92 |         const { rerender } = render(<PaymentSummary {...defaultProps} isRTL={false} />);
+         |                                    ^
+      93 |         expect(screen.getByText('Al-Futtaim Garage')).toBeTruthy();
+      94 |         
+      95 |         rerender(<PaymentSummary {...defaultProps} isRTL={true} />);
+
+      at Object.<anonymous>.process.env.NODE_ENV.exports.create (node_modules/react-test-renderer/cjs/react-test-renderer.development.js:14598:17)
+      at create (node_modules/@testing-library/react-native/src/render-act.ts:15:29)
+      at callback (node_modules/@testing-library/react-native/src/act.ts:31:24)
+      at Object.<anonymous>.process.env.NODE_ENV.exports.act (node_modules/react/cjs/react.development.js:789:22)
+      at actImplementation (node_modules/@testing-library/react-native/src/act.ts:30:25)
+      at renderWithAct (node_modules/@testing-library/react-native/src/render-act.ts:13:11)
+      at renderInternal (node_modules/@testing-library/react-native/src/render.tsx:69:33)
+      at renderInternal (node_modules/@testing-library/react-native/src/render.tsx:44:10)
+      at Object.<anonymous> (src/__tests__/components/payment/PaymentSummary.test.tsx:92:36)
+
+  console.error
+    react-test-renderer is deprecated. See https://react.dev/warnings/react-test-renderer
+
+      100 |         (compressImage as jest.Mock).mockImplementation((uri) => Promise.resolve(uri));
+      101 |
+    > 102 |         const { result } = renderHook(() => useRequestImages(mockT, mockToast));
+          |                                      ^
+      103 |
+      104 |         await act(async () => {
+      105 |             await result.current.handlePickImage();
+
+      at Object.<anonymous>.process.env.NODE_ENV.exports.create (node_modules/react-test-renderer/cjs/react-test-renderer.development.js:14598:17)
+      at create (node_modules/@testing-library/react-native/src/render-act.ts:15:29)
+      at callback (node_modules/@testing-library/react-native/src/act.ts:31:24)
+      at Object.<anonymous>.process.env.NODE_ENV.exports.act (node_modules/react/cjs/react.development.js:789:22)
+      at actImplementation (node_modules/@testing-library/react-native/src/act.ts:30:25)
+      at renderWithAct (node_modules/@testing-library/react-native/src/render-act.ts:13:11)
+      at renderInternal (node_modules/@testing-library/react-native/src/render.tsx:69:33)
+      at renderInternal (node_modules/@testing-library/react-native/src/render.tsx:44:10)
+      at renderHook (node_modules/@testing-library/react-native/src/render-hook.tsx:55:58)
+      at Object.<anonymous> (src/__tests__/hooks/useRequestImages.test.ts:102:38)
+
+  console.error
+    react-test-renderer is deprecated. See https://react.dev/warnings/react-test-renderer
+
+      123 |         });
+      124 |
+    > 125 |         const { result } = renderHook(() =>
+          |                                      ^
+      126 |             usePaymentInitialization({
+      127 |                 ...baseParams,
+      128 |                 existingOrderId: 'order-123',
+
+      at Object.<anonymous>.process.env.NODE_ENV.exports.create (node_modules/react-test-renderer/cjs/react-test-renderer.development.js:14598:17)
+      at create (node_modules/@testing-library/react-native/src/render-act.ts:15:29)
+      at callback (node_modules/@testing-library/react-native/src/act.ts:31:24)
+      at Object.<anonymous>.process.env.NODE_ENV.exports.act (node_modules/react/cjs/react.development.js:789:22)
+      at actImplementation (node_modules/@testing-library/react-native/src/act.ts:30:25)
+      at renderWithAct (node_modules/@testing-library/react-native/src/render-act.ts:13:11)
+      at renderInternal (node_modules/@testing-library/react-native/src/render.tsx:69:33)
+      at renderInternal (node_modules/@testing-library/react-native/src/render.tsx:44:10)
+      at renderHook (node_modules/@testing-library/react-native/src/render-hook.tsx:55:58)
+      at Object.<anonymous> (src/__tests__/hooks/usePaymentInitialization.test.ts:125:38)
+
+  console.error
+    react-test-renderer is deprecated. See https://react.dev/warnings/react-test-renderer
+
+      119 |         (compressImage as jest.Mock).mockImplementation((uri) => Promise.resolve(`${uri}_compressed`));
+      120 |
+    > 121 |         const { result } = renderHook(() => useRequestImages(mockT, mockToast));
+          |                                      ^
+      122 |
+      123 |         await act(async () => {
+      124 |             await result.current.handleTakePhoto();
+
+      at Object.<anonymous>.process.env.NODE_ENV.exports.create (node_modules/react-test-renderer/cjs/react-test-renderer.development.js:14598:17)
+      at create (node_modules/@testing-library/react-native/src/render-act.ts:15:29)
+      at callback (node_modules/@testing-library/react-native/src/act.ts:31:24)
+      at Object.<anonymous>.process.env.NODE_ENV.exports.act (node_modules/react/cjs/react.development.js:789:22)
+      at actImplementation (node_modules/@testing-library/react-native/src/act.ts:30:25)
+      at renderWithAct (node_modules/@testing-library/react-native/src/render-act.ts:13:11)
+      at renderInternal (node_modules/@testing-library/react-native/src/render.tsx:69:33)
+      at renderInternal (node_modules/@testing-library/react-native/src/render.tsx:44:10)
+      at renderHook (node_modules/@testing-library/react-native/src/render-hook.tsx:55:58)
+      at Object.<anonymous> (src/__tests__/hooks/useRequestImages.test.ts:121:38)
+
+  console.error
+    react-test-renderer is deprecated. See https://react.dev/warnings/react-test-renderer
+
+      131 |
+      132 |     it('should remove image by index', () => {
+    > 133 |         const { result } = renderHook(() => useRequestImages(mockT, mockToast));
+          |                                      ^
+      134 |
+      135 |         act(() => {
+      136 |             // Internal state manipulation to test remove since setter isn't exposed directly for images array
+
+      at Object.<anonymous>.process.env.NODE_ENV.exports.create (node_modules/react-test-renderer/cjs/react-test-renderer.development.js:14598:17)
+      at create (node_modules/@testing-library/react-native/src/render-act.ts:15:29)
+      at callback (node_modules/@testing-library/react-native/src/act.ts:31:24)
+      at Object.<anonymous>.process.env.NODE_ENV.exports.act (node_modules/react/cjs/react.development.js:789:22)
+      at actImplementation (node_modules/@testing-library/react-native/src/act.ts:30:25)
+      at renderWithAct (node_modules/@testing-library/react-native/src/render-act.ts:13:11)
+      at renderInternal (node_modules/@testing-library/react-native/src/render.tsx:69:33)
+      at renderInternal (node_modules/@testing-library/react-native/src/render.tsx:44:10)
+      at renderHook (node_modules/@testing-library/react-native/src/render-hook.tsx:55:58)
+      at Object.<anonymous> (src/__tests__/hooks/useRequestImages.test.ts:133:38)
+
+  console.error
+    react-test-renderer is deprecated. See https://react.dev/warnings/react-test-renderer
+
+      139 |
+      140 |         // Let's directly test the removal by mocking the initial state
+    > 141 |         const { result: testResult } = renderHook(() => useRequestImages(mockT, mockToast));
+          |                                                  ^
+      142 |
+      143 |         act(() => {
+      144 |             // Let's force some images by exploiting the compression fallback test
+
+      at Object.<anonymous>.process.env.NODE_ENV.exports.create (node_modules/react-test-renderer/cjs/react-test-renderer.development.js:14598:17)
+      at create (node_modules/@testing-library/react-native/src/render-act.ts:15:29)
+      at callback (node_modules/@testing-library/react-native/src/act.ts:31:24)
+      at Object.<anonymous>.process.env.NODE_ENV.exports.act (node_modules/react/cjs/react.development.js:789:22)
+      at actImplementation (node_modules/@testing-library/react-native/src/act.ts:30:25)
+      at renderWithAct (node_modules/@testing-library/react-native/src/render-act.ts:13:11)
+      at renderInternal (node_modules/@testing-library/react-native/src/render.tsx:69:33)
+      at renderInternal (node_modules/@testing-library/react-native/src/render.tsx:44:10)
+      at renderHook (node_modules/@testing-library/react-native/src/render-hook.tsx:55:58)
+      at Object.<anonymous> (src/__tests__/hooks/useRequestImages.test.ts:141:50)
+
+FAIL src/__tests__/components/payment/PaymentButton.test.tsx
+  PaymentButton
+    ✕ should render payment button when not free order (144 ms)
+    ✓ should render free order button when freeOrder is true (12 ms)
+    ✕ should call handlePayment when payment button is pressed (8 ms)
+    ✓ should call handleFreeOrder when free order button is pressed (9 ms)
+    ✕ should be disabled when card is not complete (8 ms)
+    ✕ should be disabled when loading (6 ms)
+    ✕ should show loading spinner when loading (6 ms)
+    ✓ should not show button text when loading (6 ms)
+    ✕ should display green gradient when card is complete (8 ms)
+    ✕ should display gray gradient when card is incomplete (7 ms)
+    ✕ should display gold gradient for free order (6 ms)
+    ✓ should render security text for normal payment (6 ms)
+    ✓ should render loyalty text for free order (5 ms)
+    ✓ should format pay amount with 2 decimal places (5 ms)
+    ✕ should support RTL layout (6 ms)
+
+  ● PaymentButton › should render payment button when not free order
+
+    Unable to find an element with text: Pay 50 QAR
+
+    [36m<View>[39m
+      [36m<TouchableOpacity[39m
+        [33mtestID[39m=[32m"payment-button"[39m
+      [36m>[39m
+        [36m<View>[39m
+          [36m<Text>[39m
+            [0mPay 50.00 QAR[0m
+          [36m</Text>[39m
+        [36m</View>[39m
+      [36m</TouchableOpacity>[39m
+      [36m<Text>[39m
+        [0mSecured by Stripe[0m
+      [36m</Text>[39m
+    [36m</View>[39m
+
+      47 |         render(<PaymentButton {...defaultProps} />);
+      48 |         
+    > 49 |         expect(screen.getByText('Pay 50 QAR')).toBeTruthy();
+         |                       ^
+      50 |     });
+      51 |
+      52 |     it('should render free order button when freeOrder is true', () => {
+
+      at Object.<anonymous> (src/__tests__/components/payment/PaymentButton.test.tsx:49:23)
+
+  ● PaymentButton › should call handlePayment when payment button is pressed
+
+    Unable to find an element with text: Pay 50 QAR
+
+    [36m<View>[39m
+      [36m<TouchableOpacity[39m
+        [33mtestID[39m=[32m"payment-button"[39m
+      [36m>[39m
+        [36m<View>[39m
+          [36m<Text>[39m
+            [0mPay 50.00 QAR[0m
+          [36m</Text>[39m
+        [36m</View>[39m
+      [36m</TouchableOpacity>[39m
+      [36m<Text>[39m
+        [0mSecured by Stripe[0m
+      [36m</Text>[39m
+    [36m</View>[39m
+
+      60 |         render(<PaymentButton {...defaultProps} handlePayment={handlePaymentMock} />);
+      61 |         
+    > 62 |         const payButton = screen.getByText('Pay 50 QAR').parent?.parent;
+         |                                  ^
+      63 |         if (payButton) {
+      64 |             fireEvent.press(payButton);
+      65 |         }
+
+      at Object.<anonymous> (src/__tests__/components/payment/PaymentButton.test.tsx:62:34)
+
+  ● PaymentButton › should be disabled when card is not complete
+
+    Unable to find an element with text: Pay 50 QAR
+
+    [36m<View>[39m
+      [36m<TouchableOpacity[39m
+        [33mtestID[39m=[32m"payment-button"[39m
+      [36m>[39m
+        [36m<View>[39m
+          [36m<Text>[39m
+            [0mPay 50.00 QAR[0m
+          [36m</Text>[39m
+        [36m</View>[39m
+      [36m</TouchableOpacity>[39m
+      [36m<Text>[39m
+        [0mSecured by Stripe[0m
+      [36m</Text>[39m
+    [36m</View>[39m
+
+      83 |         render(<PaymentButton {...defaultProps} cardComplete={false} />);
+      84 |         
+    > 85 |         const payButton = screen.getByText('Pay 50 QAR').parent?.parent;
+         |                                  ^
+      86 |         expect(payButton?.props.accessibilityState?.disabled).toBe(true);
+      87 |     });
+      88 |
+
+      at Object.<anonymous> (src/__tests__/components/payment/PaymentButton.test.tsx:85:34)
+
+  ● PaymentButton › should be disabled when loading
+
+    Unable to find an element with text: Pay 50 QAR
+
+    [36m<View>[39m
+      [36m<TouchableOpacity[39m
+        [33mtestID[39m=[32m"payment-button"[39m
+      [36m>[39m
+        [36m<View>[39m
+          [36m<ActivityIndicator />[39m
+        [36m</View>[39m
+      [36m</TouchableOpacity>[39m
+      [36m<Text>[39m
+        [0mSecured by Stripe[0m
+      [36m</Text>[39m
+    [36m</View>[39m
+
+      90 |         render(<PaymentButton {...defaultProps} isLoading={true} />);
+      91 |         
+    > 92 |         const payButton = screen.getByText('Pay 50 QAR').parent?.parent;
+         |                                  ^
+      93 |         expect(payButton?.props.accessibilityState?.disabled).toBe(true);
+      94 |     });
+      95 |
+
+      at Object.<anonymous> (src/__tests__/components/payment/PaymentButton.test.tsx:92:34)
+
+  ● PaymentButton › should show loading spinner when loading
+
+    Unable to find an element with testID: activity-indicator
+
+    [36m<View>[39m
+      [36m<TouchableOpacity[39m
+        [33mtestID[39m=[32m"payment-button"[39m
+      [36m>[39m
+        [36m<View>[39m
+          [36m<ActivityIndicator />[39m
+        [36m</View>[39m
+      [36m</TouchableOpacity>[39m
+      [36m<Text>[39m
+        [0mSecured by Stripe[0m
+      [36m</Text>[39m
+    [36m</View>[39m
+
+       97 |         const { getByTestId } = render(<PaymentButton {...defaultProps} isLoading={true} />);
+       98 |         
+    >  99 |         expect(getByTestId('activity-indicator')).toBeTruthy();
+          |                ^
+      100 |     });
+      101 |
+      102 |     it('should not show button text when loading', () => {
+
+      at Object.<anonymous> (src/__tests__/components/payment/PaymentButton.test.tsx:99:16)
+
+  ● PaymentButton › should display green gradient when card is complete
+
+    Unable to find an element with testID: payment-gradient
+
+    [36m<View>[39m
+      [36m<TouchableOpacity[39m
+        [33mtestID[39m=[32m"payment-button"[39m
+      [36m>[39m
+        [36m<View>[39m
+          [36m<Text>[39m
+            [0mPay 50.00 QAR[0m
+          [36m</Text>[39m
+        [36m</View>[39m
+      [36m</TouchableOpacity>[39m
+      [36m<Text>[39m
+        [0mSecured by Stripe[0m
+      [36m</Text>[39m
+    [36m</View>[39m
+
+      110 |         
+      111 |         // Gradient should be green when enabled
+    > 112 |         const gradient = screen.getByTestId('payment-gradient');
+          |                                 ^
+      113 |         expect(gradient.props.colors).toEqual(['#22c55e', '#16a34a']);
+      114 |     });
+      115 |
+
+      at Object.<anonymous> (src/__tests__/components/payment/PaymentButton.test.tsx:112:33)
+
+  ● PaymentButton › should display gray gradient when card is incomplete
+
+    Unable to find an element with testID: payment-gradient
+
+    [36m<View>[39m
+      [36m<TouchableOpacity[39m
+        [33mtestID[39m=[32m"payment-button"[39m
+      [36m>[39m
+        [36m<View>[39m
+          [36m<Text>[39m
+            [0mPay 50.00 QAR[0m
+          [36m</Text>[39m
+        [36m</View>[39m
+      [36m</TouchableOpacity>[39m
+      [36m<Text>[39m
+        [0mSecured by Stripe[0m
+      [36m</Text>[39m
+    [36m</View>[39m
+
+      118 |         
+      119 |         // Gradient should be gray when disabled
+    > 120 |         const gradient = screen.getByTestId('payment-gradient');
+          |                                 ^
+      121 |         expect(gradient.props.colors).toEqual(['#9ca3af', '#6b7280']);
+      122 |     });
+      123 |
+
+      at Object.<anonymous> (src/__tests__/components/payment/PaymentButton.test.tsx:120:33)
+
+  ● PaymentButton › should display gold gradient for free order
+
+    Unable to find an element with testID: payment-gradient
+
+    [36m<View>[39m
+      [36m<TouchableOpacity[39m
+        [33mtestID[39m=[32m"free-order-button"[39m
+      [36m>[39m
+        [36m<View>[39m
+          [36m<Text>[39m
+            [0mClaim Free Order[0m
+          [36m</Text>[39m
+        [36m</View>[39m
+      [36m</TouchableOpacity>[39m
+      [36m<Text>[39m
+        [0mLoyalty points at work![0m
+      [36m</Text>[39m
+    [36m</View>[39m
+
+      126 |         
+      127 |         // Gradient should be gold for free order
+    > 128 |         const gradient = screen.getByTestId('payment-gradient');
+          |                                 ^
+      129 |         expect(gradient.props.colors).toEqual(['#FFD700', '#FFA500']);
+      130 |     });
+      131 |
+
+      at Object.<anonymous> (src/__tests__/components/payment/PaymentButton.test.tsx:128:33)
+
+  ● PaymentButton › should support RTL layout
+
+    Unable to find an element with text: Pay 50 QAR
+
+    [36m<View>[39m
+      [36m<TouchableOpacity[39m
+        [33mtestID[39m=[32m"payment-button"[39m
+      [36m>[39m
+        [36m<View>[39m
+          [36m<Text>[39m
+            [0mPay 50.00 QAR[0m
+          [36m</Text>[39m
+        [36m</View>[39m
+      [36m</TouchableOpacity>[39m
+      [36m<Text>[39m
+        [0mSecured by Stripe[0m
+      [36m</Text>[39m
+    [36m</View>[39m
+
+      150 |     it('should support RTL layout', () => {
+      151 |         const { rerender } = render(<PaymentButton {...defaultProps} isRTL={false} />);
+    > 152 |         expect(screen.getByText('Pay 50 QAR')).toBeTruthy();
+          |                       ^
+      153 |         
+      154 |         rerender(<PaymentButton {...defaultProps} isRTL={true} />);
+      155 |         expect(screen.getByText('Pay 50 QAR')).toBeTruthy();
+
+      at Object.<anonymous> (src/__tests__/components/payment/PaymentButton.test.tsx:152:23)
+
+  console.error
+    react-test-renderer is deprecated. See https://react.dev/warnings/react-test-renderer
+
+      154 |         (compressImage as jest.Mock).mockImplementation((uri) => Promise.resolve(uri));
+      155 |
+    > 156 |         const { result } = renderHook(() => useRequestImages(mockT, mockToast));
+          |                                      ^
+      157 |
+      158 |         await act(async () => {
+      159 |             await result.current.handleTakeCarFrontPhoto();
+
+      at Object.<anonymous>.process.env.NODE_ENV.exports.create (node_modules/react-test-renderer/cjs/react-test-renderer.development.js:14598:17)
+      at create (node_modules/@testing-library/react-native/src/render-act.ts:15:29)
+      at callback (node_modules/@testing-library/react-native/src/act.ts:31:24)
+      at Object.<anonymous>.process.env.NODE_ENV.exports.act (node_modules/react/cjs/react.development.js:789:22)
+      at actImplementation (node_modules/@testing-library/react-native/src/act.ts:30:25)
+      at renderWithAct (node_modules/@testing-library/react-native/src/render-act.ts:13:11)
+      at renderInternal (node_modules/@testing-library/react-native/src/render.tsx:69:33)
+      at renderInternal (node_modules/@testing-library/react-native/src/render.tsx:44:10)
+      at renderHook (node_modules/@testing-library/react-native/src/render-hook.tsx:55:58)
+      at Object.<anonymous> (src/__tests__/hooks/useRequestImages.test.ts:156:38)
+
+FAIL src/__tests__/components/payment/PaymentSummary.test.tsx
+  PaymentSummary
+    ✓ should render VVIP order card with garage name (140 ms)
+    ✓ should render part description (14 ms)
+    ✓ should render part label (11 ms)
+    ✓ should render part price with currency (10 ms)
+    ✓ should render delivery fee with currency (8 ms)
+    ✓ should render total amount with currency (7 ms)
+    ✓ should handle long part descriptions with truncation (7 ms)
+    ✕ should handle zero prices (7 ms)
+    ✓ should handle decimal prices correctly (9 ms)
+    ✓ should support RTL layout (12 ms)
+
+  ● PaymentSummary › should handle zero prices
+
+    Found multiple elements with text: 0 QAR
+
+      80 |         render(<PaymentSummary {...defaultProps} partPrice={0} deliveryFee={0} totalAmount={0} />);
+      81 |         
+    > 82 |         expect(screen.getByText('0 QAR')).toBeTruthy();
+         |                       ^
+      83 |     });
+      84 |
+      85 |     it('should handle decimal prices correctly', () => {
+
+      at Object.<anonymous> (src/__tests__/components/payment/PaymentSummary.test.tsx:82:23)
+
+  console.error
+    react-test-renderer is deprecated. See https://react.dev/warnings/react-test-renderer
+
+      173 |         (compressImage as jest.Mock).mockImplementation((uri) => Promise.resolve(uri));
+      174 |
+    > 175 |         const { result } = renderHook(() => useRequestImages(mockT, mockToast));
+          |                                      ^
+      176 |
+      177 |         await act(async () => {
+      178 |             await result.current.handlePickCarRearImage();
+
+      at Object.<anonymous>.process.env.NODE_ENV.exports.create (node_modules/react-test-renderer/cjs/react-test-renderer.development.js:14598:17)
+      at create (node_modules/@testing-library/react-native/src/render-act.ts:15:29)
+      at callback (node_modules/@testing-library/react-native/src/act.ts:31:24)
+      at Object.<anonymous>.process.env.NODE_ENV.exports.act (node_modules/react/cjs/react.development.js:789:22)
+      at actImplementation (node_modules/@testing-library/react-native/src/act.ts:30:25)
+      at renderWithAct (node_modules/@testing-library/react-native/src/render-act.ts:13:11)
+      at renderInternal (node_modules/@testing-library/react-native/src/render.tsx:69:33)
+      at renderInternal (node_modules/@testing-library/react-native/src/render.tsx:44:10)
+      at renderHook (node_modules/@testing-library/react-native/src/render-hook.tsx:55:58)
+      at Object.<anonymous> (src/__tests__/hooks/useRequestImages.test.ts:175:38)
+
+PASS src/__tests__/hooks/useRequestImages.test.ts
+  useRequestImages
+    ✓ should initialize with empty state (119 ms)
+    ✓ should handle permission denied for gallery (9 ms)
+    ✓ should handle successful gallery image picking and compression (11 ms)
+    ✓ should fallback to original URI if compression fails (8 ms)
+    ✓ should cap part images at 5 (8 ms)
+    ✓ should handle camera photo capture (7 ms)
+    ✓ should remove image by index (10 ms)
+    ✓ should correctly handle taking car front photo and setting state (8 ms)
+    ✓ should correctly handle picking car rear image and setting state (14 ms)
+
+  console.error
+    react-test-renderer is deprecated. See https://react.dev/warnings/react-test-renderer
+
+      147 |         (api.createFullPaymentIntent as jest.Mock).mockRejectedValue(new Error('Network Error'));
+      148 |
+    > 149 |         const { result } = renderHook(() =>
+          |                                      ^
+      150 |             usePaymentInitialization({
+      151 |                 ...baseParams,
+      152 |                 existingOrderId: 'order-123',
+
+      at Object.<anonymous>.process.env.NODE_ENV.exports.create (node_modules/react-test-renderer/cjs/react-test-renderer.development.js:14598:17)
+      at create (node_modules/@testing-library/react-native/src/render-act.ts:15:29)
+      at callback (node_modules/@testing-library/react-native/src/act.ts:31:24)
+      at Object.<anonymous>.process.env.NODE_ENV.exports.act (node_modules/react/cjs/react.development.js:789:22)
+      at actImplementation (node_modules/@testing-library/react-native/src/act.ts:30:25)
+      at renderWithAct (node_modules/@testing-library/react-native/src/render-act.ts:13:11)
+      at renderInternal (node_modules/@testing-library/react-native/src/render.tsx:69:33)
+      at renderInternal (node_modules/@testing-library/react-native/src/render.tsx:44:10)
+      at renderHook (node_modules/@testing-library/react-native/src/render-hook.tsx:55:58)
+      at Object.<anonymous> (src/__tests__/hooks/usePaymentInitialization.test.ts:149:38)
+
+PASS src/__tests__/utils.test.ts
+  Validation Utilities
+    validateRequired
+      ✓ should fail for empty string (1 ms)
+      ✓ should fail for null (1 ms)
+      ✓ should fail for undefined
+      ✓ should fail for whitespace only
+      ✓ should pass for valid string
+      ✓ should include field name in error (1 ms)
+    validateMinLength
+      ✓ should fail for short string (1 ms)
+      ✓ should pass for string at minimum
+    validateMaxLength
+      ✓ should fail for long string (1 ms)
+      ✓ should pass for string at maximum
+    validatePhoneNumber
+      ✓ should validate Qatar phone number with country code (1 ms)
+      ✓ should validate Qatar phone without plus (1 ms)
+      ✓ should validate 8-digit Qatar number
+      ✓ should reject invalid number
+      ✓ should reject empty
+    validateEmail
+      ✓ should validate correct email (1 ms)
+      ✓ should reject invalid email
+      ✓ should reject empty email (1 ms)
+    validatePassword
+      ✓ should reject empty password
+      ✓ should reject short password (1 ms)
+      ✓ should accept valid password and return strength
+      ✓ should classify medium-strength password (1 ms)
+    validatePasswordConfirm
+      ✓ should pass when passwords match
+      ✓ should fail when passwords dont match (1 ms)
+      ✓ should fail when confirm is empty
+    validateVIN
+      ✓ should accept empty VIN (optional field)
+      ✓ should validate correct 17-char VIN
+      ✓ should reject wrong length VIN
+    validateYear
+      ✓ should accept valid year (1 ms)
+      ✓ should reject too old year
+      ✓ should reject non-number
+    validateAmount
+      ✓ should accept valid amount
+      ✓ should reject negative when min is 0 (1 ms)
+      ✓ should reject above max (1 ms)
+      ✓ should accept string amounts
+    validateForm
+      ✓ should pass when all validations pass (1 ms)
+      ✓ should fail on first invalid validation
+    sanitizeInput
+      ✓ should escape HTML characters (1 ms)
+      ✓ should escape quotes
+    cleanPhoneNumber
+      ✓ should add +974 prefix to bare number (1 ms)
+      ✓ should add + to 974 prefixed number
+      ✓ should strip spaces and dashes
+  Formatter Utilities
+    formatCurrency
+      ✓ should format number to QAR (28 ms)
+      ✓ should handle string input (1 ms)
+      ✓ should handle NaN
+      ✓ should hide symbol when requested (1 ms)
+    formatPhoneNumber
+      ✓ should format 8-digit number
+      ✓ should handle empty (1 ms)
+    formatNumber
+      ✓ should format with thousands separator (1 ms)
+      ✓ should handle decimals (1 ms)
+    formatFileSize
+      ✓ should format bytes (1 ms)
+      ✓ should format KB
+      ✓ should format MB (1 ms)
+    formatDistance
+      ✓ should format meters
+      ✓ should format kilometers (1 ms)
+    formatDuration
+      ✓ should format minutes
+      ✓ should format hours (1 ms)
+      ✓ should format hours and minutes
+    truncateText
+      ✓ should not truncate short text
+      ✓ should truncate long text with ellipsis (1 ms)
+    capitalize
+      ✓ should capitalize first letter
+      ✓ should handle empty string (1 ms)
+    formatOrderNumber
+      ✓ should pad with zeros
+      ✓ should handle numeric input (1 ms)
+    formatStatus
+      ✓ should convert snake_case to Title Case
+      ✓ should handle empty
+    formatDate
+      ✓ should format valid date (9 ms)
+      ✓ should return Invalid date for bad input
+  RTL Utilities
+    rtlFlexDirection
+      ✓ should return row for LTR (1 ms)
+      ✓ should return row-reverse for RTL
+    rtlTextAlign
+      ✓ should return left for LTR (1 ms)
+      ✓ should return right for RTL
+    rtlTextAlignEnd
+      ✓ should return right for LTR
+      ✓ should return left for RTL (1 ms)
+    rtlMarginHorizontal
+      ✓ should set marginLeft for LTR (1 ms)
+      ✓ should swap margins for RTL (1 ms)
+    rtlPaddingHorizontal
+      ✓ should set paddingLeft for LTR
+      ✓ should swap padding for RTL (7 ms)
+    rtlChevron
+      ✓ should return › for LTR forward (1 ms)
+      ✓ should return ‹ for RTL forward
+      ✓ should return ‹ for LTR back (1 ms)
+      ✓ should return › for RTL back
+    rtlArrow
+      ✓ should return → for LTR forward (1 ms)
+      ✓ should return ← for RTL forward
+    rtlScaleX
+      ✓ should return scaleX 1 for LTR (1 ms)
+      ✓ should return scaleX -1 for RTL
+    rtlWritingDirection
+      ✓ should return ltr for LTR
+      ✓ should return rtl for RTL (1 ms)
+    rtlStyle
+      ✓ should return LTR style unchanged
+      ✓ should flip flexDirection for RTL
+      ✓ should flip textAlign for RTL
+    RTL constants
+      ✓ RTL.row should return correct direction (1 ms)
+      ✓ RTL.start should return correct alignment (1 ms)
+  Error Handler Utilities
+    extractErrorMessage
+      ✓ should extract string error
+      ✓ should extract from Error object
+      ✓ should extract from response.data.error string
+      ✓ should extract from response.data.message (1 ms)
+      ✓ should extract from nested error.message
+      ✓ should return fallback for unknown format
+      ✓ should handle null
+
+PASS src/__tests__/hooks/useSubmitRequest.test.ts
+  useSubmitRequest
+    ✓ should show error if vehicle is not selected (135 ms)
+    ✓ should show VIN alert if selected vehicle is missing VIN (11 ms)
+    ✓ should show error if part description is missing/empty (12 ms)
+    ✓ should successfully submit form and correctly format description (14 ms)
+    ✓ should set isSubmitting to true while running and handle API errors (112 ms)
+
+PASS src/__tests__/hooks/usePaymentInitialization.test.ts
+  usePaymentInitialization
+    ✓ should initialize with existing order ID and create full payment intent (184 ms)
+    ✓ should create new order via acceptBid if existingOrderId is not provided (65 ms)
+    ✓ should create delivery fee intent for delivery_only payment type (62 ms)
+    ✓ should apply loyalty discount correctly during full payment (58 ms)
+    ✓ should handle API errors gracefully (61 ms)
+
+PASS src/__tests__/apiConfig.test.ts
+  API Configuration
+    Base URLs
+      ✓ should use production API base URL (1 ms)
+      ✓ should use production Socket URL
+      ✓ should have correct app metadata
+    Static Endpoints
+      ✓ should have auth endpoints (1 ms)
+      ✓ should have request endpoints (1 ms)
+      ✓ should have order endpoints (1 ms)
+      ✓ should have dashboard endpoints (1 ms)
+      ✓ should have notification endpoints (1 ms)
+      ✓ should have address endpoints
+      ✓ should have delivery endpoints (1 ms)
+      ✓ should have support ticket endpoints (1 ms)
+      ✓ should have chat endpoints (1 ms)
+      ✓ should have catalog endpoints (1 ms)
+    Dynamic Endpoints
+      ✓ should generate correct request cancel URL
+      ✓ should generate correct delete request URL
+      ✓ should generate correct bid rejection URL
+      ✓ should generate correct accept bid URL
+      ✓ should generate correct confirm delivery URL
+      ✓ should generate correct submit review URL (3 ms)
+      ✓ should generate correct cancel order URL using cancellations route (1 ms)
+      ✓ should generate correct counter-offer URLs (1 ms)
+      ✓ should generate correct notification mark-read URL (1 ms)
+      ✓ should generate correct support ticket URLs (1 ms)
+      ✓ should generate correct chat messages URL
+    Endpoint Uniqueness
+      ✓ should have no duplicate static endpoints (1 ms)
+
+  console.error
+    react-test-renderer is deprecated. See https://react.dev/warnings/react-test-renderer
+
+      17 |         });
+      18 |
+    > 19 |         const { result } = renderHook(() =>
+         |                                      ^
+      20 |             useLoyaltyCalculation({
+      21 |                 partPrice: 100,
+      22 |                 deliveryFee: 20,
+
+      at Object.<anonymous>.process.env.NODE_ENV.exports.create (node_modules/react-test-renderer/cjs/react-test-renderer.development.js:14598:17)
+      at create (node_modules/@testing-library/react-native/src/render-act.ts:15:29)
+      at callback (node_modules/@testing-library/react-native/src/act.ts:31:24)
+      at Object.<anonymous>.process.env.NODE_ENV.exports.act (node_modules/react/cjs/react.development.js:789:22)
+      at actImplementation (node_modules/@testing-library/react-native/src/act.ts:30:25)
+      at renderWithAct (node_modules/@testing-library/react-native/src/render-act.ts:13:11)
+      at renderInternal (node_modules/@testing-library/react-native/src/render.tsx:69:33)
+      at renderInternal (node_modules/@testing-library/react-native/src/render.tsx:44:10)
+      at renderHook (node_modules/@testing-library/react-native/src/render-hook.tsx:55:58)
+      at Object.<anonymous> (src/__tests__/hooks/useLoyaltyCalculation.test.ts:19:38)
+
+  console.error
+    react-test-renderer is deprecated. See https://react.dev/warnings/react-test-renderer
+
+      38 |         });
+      39 |
+    > 40 |         const { result } = renderHook(() =>
+         |                                      ^
+      41 |             useLoyaltyCalculation({
+      42 |                 partPrice: 100,
+      43 |                 deliveryFee: 20,
+
+      at Object.<anonymous>.process.env.NODE_ENV.exports.create (node_modules/react-test-renderer/cjs/react-test-renderer.development.js:14598:17)
+      at create (node_modules/@testing-library/react-native/src/render-act.ts:15:29)
+      at callback (node_modules/@testing-library/react-native/src/act.ts:31:24)
+      at Object.<anonymous>.process.env.NODE_ENV.exports.act (node_modules/react/cjs/react.development.js:789:22)
+      at actImplementation (node_modules/@testing-library/react-native/src/act.ts:30:25)
+      at renderWithAct (node_modules/@testing-library/react-native/src/render-act.ts:13:11)
+      at renderInternal (node_modules/@testing-library/react-native/src/render.tsx:69:33)
+      at renderInternal (node_modules/@testing-library/react-native/src/render.tsx:44:10)
+      at renderHook (node_modules/@testing-library/react-native/src/render-hook.tsx:55:58)
+      at Object.<anonymous> (src/__tests__/hooks/useLoyaltyCalculation.test.ts:40:38)
+
+  console.error
+    react-test-renderer is deprecated. See https://react.dev/warnings/react-test-renderer
+
+      62 |         });
+      63 |
+    > 64 |         const { result } = renderHook(() =>
+         |                                      ^
+      65 |             useLoyaltyCalculation({
+      66 |                 partPrice: 100,
+      67 |                 deliveryFee: 20,
+
+      at Object.<anonymous>.process.env.NODE_ENV.exports.create (node_modules/react-test-renderer/cjs/react-test-renderer.development.js:14598:17)
+      at create (node_modules/@testing-library/react-native/src/render-act.ts:15:29)
+      at callback (node_modules/@testing-library/react-native/src/act.ts:31:24)
+      at Object.<anonymous>.process.env.NODE_ENV.exports.act (node_modules/react/cjs/react.development.js:789:22)
+      at actImplementation (node_modules/@testing-library/react-native/src/act.ts:30:25)
+      at renderWithAct (node_modules/@testing-library/react-native/src/render-act.ts:13:11)
+      at renderInternal (node_modules/@testing-library/react-native/src/render.tsx:69:33)
+      at renderInternal (node_modules/@testing-library/react-native/src/render.tsx:44:10)
+      at renderHook (node_modules/@testing-library/react-native/src/render-hook.tsx:55:58)
+      at Object.<anonymous> (src/__tests__/hooks/useLoyaltyCalculation.test.ts:64:38)
+
+  console.error
+    react-test-renderer is deprecated. See https://react.dev/warnings/react-test-renderer
+
+      86 |         });
+      87 |
+    > 88 |         const { result } = renderHook(() =>
+         |                                      ^
+      89 |             useLoyaltyCalculation({
+      90 |                 partPrice: 100,
+      91 |                 deliveryFee: 20,
+
+      at Object.<anonymous>.process.env.NODE_ENV.exports.create (node_modules/react-test-renderer/cjs/react-test-renderer.development.js:14598:17)
+      at create (node_modules/@testing-library/react-native/src/render-act.ts:15:29)
+      at callback (node_modules/@testing-library/react-native/src/act.ts:31:24)
+      at Object.<anonymous>.process.env.NODE_ENV.exports.act (node_modules/react/cjs/react.development.js:789:22)
+      at actImplementation (node_modules/@testing-library/react-native/src/act.ts:30:25)
+      at renderWithAct (node_modules/@testing-library/react-native/src/render-act.ts:13:11)
+      at renderInternal (node_modules/@testing-library/react-native/src/render.tsx:69:33)
+      at renderInternal (node_modules/@testing-library/react-native/src/render.tsx:44:10)
+      at renderHook (node_modules/@testing-library/react-native/src/render-hook.tsx:55:58)
+      at Object.<anonymous> (src/__tests__/hooks/useLoyaltyCalculation.test.ts:88:38)
+
+  console.error
+    react-test-renderer is deprecated. See https://react.dev/warnings/react-test-renderer
+
+      23 |
+      24 |     it('should initialize with empty state', () => {
+    > 25 |         const { result } = renderHook(() => useRequestForm({ t: mockT, toast: mockToast }));
+         |                                      ^
+      26 |
+      27 |         expect(result.current.selectedVehicle).toBeNull();
+      28 |         expect(result.current.partCategory).toBe('');
+
+      at Object.<anonymous>.process.env.NODE_ENV.exports.create (node_modules/react-test-renderer/cjs/react-test-renderer.development.js:14598:17)
+      at create (node_modules/@testing-library/react-native/src/render-act.ts:15:29)
+      at callback (node_modules/@testing-library/react-native/src/act.ts:31:24)
+      at Object.<anonymous>.process.env.NODE_ENV.exports.act (node_modules/react/cjs/react.development.js:789:22)
+      at actImplementation (node_modules/@testing-library/react-native/src/act.ts:30:25)
+      at renderWithAct (node_modules/@testing-library/react-native/src/render-act.ts:13:11)
+      at renderInternal (node_modules/@testing-library/react-native/src/render.tsx:69:33)
+      at renderInternal (node_modules/@testing-library/react-native/src/render.tsx:44:10)
+      at renderHook (node_modules/@testing-library/react-native/src/render-hook.tsx:55:58)
+      at Object.<anonymous> (src/__tests__/hooks/useRequestForm.test.ts:25:38)
+
+  console.error
+    react-test-renderer is deprecated. See https://react.dev/warnings/react-test-renderer
+
+      44 |         };
+      45 |
+    > 46 |         const { result } = renderHook(() =>
+         |                                      ^
+      47 |             useRequestForm({ prefillData, t: mockT, toast: mockToast })
+      48 |         );
+      49 |
+
+      at Object.<anonymous>.process.env.NODE_ENV.exports.create (node_modules/react-test-renderer/cjs/react-test-renderer.development.js:14598:17)
+      at create (node_modules/@testing-library/react-native/src/render-act.ts:15:29)
+      at callback (node_modules/@testing-library/react-native/src/act.ts:31:24)
+      at Object.<anonymous>.process.env.NODE_ENV.exports.act (node_modules/react/cjs/react.development.js:789:22)
+      at actImplementation (node_modules/@testing-library/react-native/src/act.ts:30:25)
+      at renderWithAct (node_modules/@testing-library/react-native/src/render-act.ts:13:11)
+      at renderInternal (node_modules/@testing-library/react-native/src/render.tsx:69:33)
+      at renderInternal (node_modules/@testing-library/react-native/src/render.tsx:44:10)
+      at renderHook (node_modules/@testing-library/react-native/src/render-hook.tsx:55:58)
+      at Object.<anonymous> (src/__tests__/hooks/useRequestForm.test.ts:46:38)
+
+  console.error
+    react-test-renderer is deprecated. See https://react.dev/warnings/react-test-renderer
+
+      111 |         });
+      112 |
+    > 113 |         const { result } = renderHook(() =>
+          |                                      ^
+      114 |             useLoyaltyCalculation({
+      115 |                 partPrice: 200,
+      116 |                 deliveryFee: 50,
+
+      at Object.<anonymous>.process.env.NODE_ENV.exports.create (node_modules/react-test-renderer/cjs/react-test-renderer.development.js:14598:17)
+      at create (node_modules/@testing-library/react-native/src/render-act.ts:15:29)
+      at callback (node_modules/@testing-library/react-native/src/act.ts:31:24)
+      at Object.<anonymous>.process.env.NODE_ENV.exports.act (node_modules/react/cjs/react.development.js:789:22)
+      at actImplementation (node_modules/@testing-library/react-native/src/act.ts:30:25)
+      at renderWithAct (node_modules/@testing-library/react-native/src/render-act.ts:13:11)
+      at renderInternal (node_modules/@testing-library/react-native/src/render.tsx:69:33)
+      at renderInternal (node_modules/@testing-library/react-native/src/render.tsx:44:10)
+      at renderHook (node_modules/@testing-library/react-native/src/render-hook.tsx:55:58)
+      at Object.<anonymous> (src/__tests__/hooks/useLoyaltyCalculation.test.ts:113:38)
+
+  console.error
+    react-test-renderer is deprecated. See https://react.dev/warnings/react-test-renderer
+
+      71 |         const initialDeliveryLocation = { lat: 25.2, lng: 51.5, address: 'Doha' };
+      72 |
+    > 73 |         const { result } = renderHook(() =>
+         |                                      ^
+      74 |             useRequestForm({ initialDeliveryLocation, t: mockT, toast: mockToast })
+      75 |         );
+      76 |
+
+      at Object.<anonymous>.process.env.NODE_ENV.exports.create (node_modules/react-test-renderer/cjs/react-test-renderer.development.js:14598:17)
+      at create (node_modules/@testing-library/react-native/src/render-act.ts:15:29)
+      at callback (node_modules/@testing-library/react-native/src/act.ts:31:24)
+      at Object.<anonymous>.process.env.NODE_ENV.exports.act (node_modules/react/cjs/react.development.js:789:22)
+      at actImplementation (node_modules/@testing-library/react-native/src/act.ts:30:25)
+      at renderWithAct (node_modules/@testing-library/react-native/src/render-act.ts:13:11)
+      at renderInternal (node_modules/@testing-library/react-native/src/render.tsx:69:33)
+      at renderInternal (node_modules/@testing-library/react-native/src/render.tsx:44:10)
+      at renderHook (node_modules/@testing-library/react-native/src/render-hook.tsx:55:58)
+      at Object.<anonymous> (src/__tests__/hooks/useRequestForm.test.ts:73:38)
+
+PASS src/__tests__/hooks/useLoyaltyCalculation.test.ts
+  useLoyaltyCalculation
+    ✓ should calculate no discount when applyDiscount is false (25 ms)
+    ✓ should calculate 10% discount when applyDiscount is true on full payment type (15 ms)
+    ✓ should calculate 100% discount when VIP tier applies to full payment type (10 ms)
+    ✓ should calculate properly for delivery_only payment type (49 ms)
+    ✓ should handle null loyalty data correctly (17 ms)
+
+PASS src/__tests__/api.test.ts
+  API Service
+    Auth
+      ✓ login should POST to /auth/login with credentials (4 ms)
+      ✓ register should POST to /auth/register (1 ms)
+      ✓ changePassword should POST to /auth/change-password (1 ms)
+    Requests
+      ✓ getMyRequests should call /requests/my (1 ms)
+      ✓ getRequestDetails should call /requests/:id (1 ms)
+      ✓ cancelRequest should POST /requests/:id/cancel (1 ms)
+      ✓ deleteRequest should DELETE /requests/:id (1 ms)
+    Orders
+      ✓ getMyOrders should call /orders/my (1 ms)
+      ✓ acceptBid should POST to /orders/accept-bid/:bidId with payment method (4 ms)
+      ✓ acceptBid should default to cash payment method (1 ms)
+      ✓ rejectBid should POST to /bids/:bidId/reject (1 ms)
+      ✓ confirmDelivery should POST to /orders/:id/confirm-delivery (20 ms)
+      ✓ cancelOrder should POST to /cancellations/orders/:id/cancel/customer (1 ms)
+      ✓ getOrderDetails should call /orders/:id (1 ms)
+    Negotiations
+      ✓ should POST counter-offer to correct negotiation endpoint (1 ms)
+      ✓ should call correct negotiation history endpoint
+    Notifications
+      ✓ getNotifications should call /dashboard/notifications (1 ms)
+      ✓ markNotificationRead should POST to correct endpoint (1 ms)
+      ✓ markAllNotificationsRead should POST to read-all (1 ms)
+    Addresses
+      ✓ getAddresses should call /addresses (1 ms)
+      ✓ addAddress should POST to /addresses
+      ✓ deleteAddress should DELETE /addresses/:id (1 ms)
+    Dashboard
+      ✓ getStats should call /dashboard/customer/stats (1 ms)
+      ✓ getProfile should call /dashboard/profile (5 ms)
+      ✓ updateProfile should PUT to /dashboard/profile (1 ms)
+    Support
+      ✓ getTickets should call /support/tickets (3 ms)
+      ✓ createTicket should POST to /support/tickets (4 ms)
+    Delivery
+      ✓ getDeliveryZones should call /delivery/zones
+      ✓ calculateDeliveryFee should POST to /delivery/calculate-fee (1 ms)
+    Loyalty
+      ✓ getLoyaltyBalance should call correct endpoint (1 ms)
+      ✓ getLoyaltyHistory should call correct endpoint (1 ms)
+    Vehicles
+      ✓ getMyVehicles should call correct endpoint (1 ms)
+      ✓ addVehicle should POST with vehicle data (3 ms)
+    Error Handling
+      ✓ should throw on non-ok response (40 ms)
+      ✓ should throw on network error (5 ms)
+    Payment Flow
+      ✓ createDeliveryFeeIntent should POST to /payments/deposit/:orderId (2 ms)
+      ✓ createDeliveryFeeIntent should default loyaltyDiscount to 0
+      ✓ createFullPaymentIntent should POST to /payments/full/:orderId (1 ms)
+      ✓ confirmDeliveryFeePayment should POST to /payments/deposit/confirm/:intentId (1 ms)
+      ✓ confirmFreeOrder should POST to /payments/free/:orderId with discount (1 ms)
+      ✓ should handle payment intent creation error (1 ms)
+    Token Management
+      ✓ should store token via setToken (1 ms)
+      ✓ should clear token via clearToken (1 ms)
+
+  console.error
+    react-test-renderer is deprecated. See https://react.dev/warnings/react-test-renderer
+
+      79 |
+      80 |     it('should automatically select first vehicle if no prefill data matches', () => {
+    > 81 |         const { result } = renderHook(() => useRequestForm({ t: mockT, toast: mockToast }));
+         |                                      ^
+      82 |
+      83 |         const vehicles = [
+      84 |             { id: 1, car_make: 'Toyota', car_model: 'Camry', car_year: 2020 },
+
+      at Object.<anonymous>.process.env.NODE_ENV.exports.create (node_modules/react-test-renderer/cjs/react-test-renderer.development.js:14598:17)
+      at create (node_modules/@testing-library/react-native/src/render-act.ts:15:29)
+      at callback (node_modules/@testing-library/react-native/src/act.ts:31:24)
+      at Object.<anonymous>.process.env.NODE_ENV.exports.act (node_modules/react/cjs/react.development.js:789:22)
+      at actImplementation (node_modules/@testing-library/react-native/src/act.ts:30:25)
+      at renderWithAct (node_modules/@testing-library/react-native/src/render-act.ts:13:11)
+      at renderInternal (node_modules/@testing-library/react-native/src/render.tsx:69:33)
+      at renderInternal (node_modules/@testing-library/react-native/src/render.tsx:44:10)
+      at renderHook (node_modules/@testing-library/react-native/src/render-hook.tsx:55:58)
+      at Object.<anonymous> (src/__tests__/hooks/useRequestForm.test.ts:81:38)
+
+  console.error
+    react-test-renderer is deprecated. See https://react.dev/warnings/react-test-renderer
+
+      100 |         };
+      101 |
+    > 102 |         const { result } = renderHook(() =>
+          |                                      ^
+      103 |             useRequestForm({ prefillData, t: mockT, toast: mockToast })
+      104 |         );
+      105 |
+
+      at Object.<anonymous>.process.env.NODE_ENV.exports.create (node_modules/react-test-renderer/cjs/react-test-renderer.development.js:14598:17)
+      at create (node_modules/@testing-library/react-native/src/render-act.ts:15:29)
+      at callback (node_modules/@testing-library/react-native/src/act.ts:31:24)
+      at Object.<anonymous>.process.env.NODE_ENV.exports.act (node_modules/react/cjs/react.development.js:789:22)
+      at actImplementation (node_modules/@testing-library/react-native/src/act.ts:30:25)
+      at renderWithAct (node_modules/@testing-library/react-native/src/render-act.ts:13:11)
+      at renderInternal (node_modules/@testing-library/react-native/src/render.tsx:69:33)
+      at renderInternal (node_modules/@testing-library/react-native/src/render.tsx:44:10)
+      at renderHook (node_modules/@testing-library/react-native/src/render-hook.tsx:55:58)
+      at Object.<anonymous> (src/__tests__/hooks/useRequestForm.test.ts:102:38)
+
+  console.error
+    react-test-renderer is deprecated. See https://react.dev/warnings/react-test-renderer
+
+      117 |
+      118 |     it('should update available subcategories when category changes', () => {
+    > 119 |         const { result } = renderHook(() => useRequestForm({ t: mockT, toast: mockToast }));
+          |                                      ^
+      120 |
+      121 |         act(() => {
+      122 |             result.current.setPartCategory('Transmission');
+
+      at Object.<anonymous>.process.env.NODE_ENV.exports.create (node_modules/react-test-renderer/cjs/react-test-renderer.development.js:14598:17)
+      at create (node_modules/@testing-library/react-native/src/render-act.ts:15:29)
+      at callback (node_modules/@testing-library/react-native/src/act.ts:31:24)
+      at Object.<anonymous>.process.env.NODE_ENV.exports.act (node_modules/react/cjs/react.development.js:789:22)
+      at actImplementation (node_modules/@testing-library/react-native/src/act.ts:30:25)
+      at renderWithAct (node_modules/@testing-library/react-native/src/render-act.ts:13:11)
+      at renderInternal (node_modules/@testing-library/react-native/src/render.tsx:69:33)
+      at renderInternal (node_modules/@testing-library/react-native/src/render.tsx:44:10)
+      at renderHook (node_modules/@testing-library/react-native/src/render-hook.tsx:55:58)
+      at Object.<anonymous> (src/__tests__/hooks/useRequestForm.test.ts:119:38)
+
+  console.error
+    react-test-renderer is deprecated. See https://react.dev/warnings/react-test-renderer
+
+      134 |
+      135 |     it('should allow manual state updates', () => {
+    > 136 |         const { result } = renderHook(() => useRequestForm({ t: mockT, toast: mockToast }));
+          |                                      ^
+      137 |
+      138 |         act(() => {
+      139 |             result.current.setQuantity(4);
+
+      at Object.<anonymous>.process.env.NODE_ENV.exports.create (node_modules/react-test-renderer/cjs/react-test-renderer.development.js:14598:17)
+      at create (node_modules/@testing-library/react-native/src/render-act.ts:15:29)
+      at callback (node_modules/@testing-library/react-native/src/act.ts:31:24)
+      at Object.<anonymous>.process.env.NODE_ENV.exports.act (node_modules/react/cjs/react.development.js:789:22)
+      at actImplementation (node_modules/@testing-library/react-native/src/act.ts:30:25)
+      at renderWithAct (node_modules/@testing-library/react-native/src/render-act.ts:13:11)
+      at renderInternal (node_modules/@testing-library/react-native/src/render.tsx:69:33)
+      at renderInternal (node_modules/@testing-library/react-native/src/render.tsx:44:10)
+      at renderHook (node_modules/@testing-library/react-native/src/render-hook.tsx:55:58)
+      at Object.<anonymous> (src/__tests__/hooks/useRequestForm.test.ts:136:38)
+
+FAIL src/__tests__/components/request/VehicleIdPhotosStep.test.tsx
+  ● Test suite failed to run
+
+    Jest encountered an unexpected token
+
+    Jest failed to parse a file. This happens e.g. when your code or its dependencies use non-standard JavaScript syntax, or when Jest is not configured to support such syntax.
+
+    Out of the box Jest supports Babel, which will be used to transform your files into valid JS based on your Babel configuration.
+
+    By default "node_modules" folder is ignored by transformers.
+
+    Here's what you can do:
+     • If you are trying to use ECMAScript Modules, see https://jestjs.io/docs/ecmascript-modules for how to enable it.
+     • If you are trying to use TypeScript, see https://jestjs.io/docs/getting-started#using-typescript
+     • To have some of your "node_modules" files transformed, you can specify a custom "transformIgnorePatterns" in your config.
+     • If you need a custom transformation specify a "transform" option in your config.
+     • If you simply want to mock your non-JS modules (e.g. binary assets) you can stub them out with the "moduleNameMapper" config option.
+
+    You'll find more details and examples of these config options in the docs:
+    https://jestjs.io/docs/configuration
+    For information about custom transformations, see:
+    https://jestjs.io/docs/code-transformation
+
+    Details:
+
+    /home/user/qscrap.qa/mobile/node_modules/@expo/vector-icons/build/AntDesign.js:2
+    import createIconSet from './createIconSet';
+    ^^^^^^
+
+    SyntaxError: Cannot use import statement outside a module
+
+       7 | import { View, Text, Image, TouchableOpacity, StyleSheet } from 'react-native';
+       8 | import { Colors, Spacing, BorderRadius, FontSizes } from '../../constants/theme';
+    >  9 | import { Ionicons } from '@expo/vector-icons';
+         | ^
+      10 | import { useTranslation } from '../../contexts/LanguageContext';
+      11 | import { useTheme } from '../../contexts';
+      12 | import { rtlFlexDirection, rtlTextAlign } from '../../utils/rtl';
+
+      at Runtime.createScriptFromCode (node_modules/jest-runtime/build/index.js:1505:14)
+      at Object.<anonymous> (node_modules/@expo/vector-icons/src/Icons.ts:3:1)
+      at Object.<anonymous> (src/components/request/PhotoUploadSection.tsx:9:1)
+      at Object.<anonymous> (src/components/request/VehicleIdPhotosStep.tsx:4:1)
+      at Object.<anonymous> (src/__tests__/components/request/VehicleIdPhotosStep.test.tsx:8:1)
+
+PASS src/__tests__/hooks/useRequestForm.test.ts
+  useRequestForm
+    ✓ should initialize with empty state (29 ms)
+    ✓ should prefill data when provided (12 ms)
+    ✓ should initialize delivery location (9 ms)
+    ✓ should automatically select first vehicle if no prefill data matches (20 ms)
+    ✓ should automatically select matching vehicle based on prefill data (13 ms)
+    ✓ should update available subcategories when category changes (8 ms)
+    ✓ should allow manual state updates (7 ms)
+
+FAIL src/__tests__/components/request/VehicleSelectionStep.test.tsx
+  ● Test suite failed to run
+
+    Jest encountered an unexpected token
+
+    Jest failed to parse a file. This happens e.g. when your code or its dependencies use non-standard JavaScript syntax, or when Jest is not configured to support such syntax.
+
+    Out of the box Jest supports Babel, which will be used to transform your files into valid JS based on your Babel configuration.
+
+    By default "node_modules" folder is ignored by transformers.
+
+    Here's what you can do:
+     • If you are trying to use ECMAScript Modules, see https://jestjs.io/docs/ecmascript-modules for how to enable it.
+     • If you are trying to use TypeScript, see https://jestjs.io/docs/getting-started#using-typescript
+     • To have some of your "node_modules" files transformed, you can specify a custom "transformIgnorePatterns" in your config.
+     • If you need a custom transformation specify a "transform" option in your config.
+     • If you simply want to mock your non-JS modules (e.g. binary assets) you can stub them out with the "moduleNameMapper" config option.
+
+    You'll find more details and examples of these config options in the docs:
+    https://jestjs.io/docs/configuration
+    For information about custom transformations, see:
+    https://jestjs.io/docs/code-transformation
+
+    Details:
+
+    /home/user/qscrap.qa/mobile/node_modules/@expo/vector-icons/build/AntDesign.js:2
+    import createIconSet from './createIconSet';
+    ^^^^^^
+
+    SyntaxError: Cannot use import statement outside a module
+
+      1 | import React from 'react';
+      2 | import { View, Text, StyleSheet, TouchableOpacity } from 'react-native';
+    > 3 | import { Ionicons } from '@expo/vector-icons';
+        | ^
+      4 | import { Colors, Spacing, BorderRadius, FontSizes } from '../../constants/theme';
+      5 | import MyVehiclesSelector, { SavedVehicle } from '../MyVehiclesSelector';
+      6 |
+
+      at Runtime.createScriptFromCode (node_modules/jest-runtime/build/index.js:1505:14)
+      at Object.<anonymous> (node_modules/@expo/vector-icons/src/Icons.ts:3:1)
+      at Object.<anonymous> (src/components/request/VehicleSelectionStep.tsx:3:1)
+      at Object.<anonymous> (src/__tests__/components/request/VehicleSelectionStep.test.tsx:8:1)
+
+FAIL src/__tests__/components/request/RequestPhotosStep.test.tsx
+  ● Test suite failed to run
+
+    Jest encountered an unexpected token
+
+    Jest failed to parse a file. This happens e.g. when your code or its dependencies use non-standard JavaScript syntax, or when Jest is not configured to support such syntax.
+
+    Out of the box Jest supports Babel, which will be used to transform your files into valid JS based on your Babel configuration.
+
+    By default "node_modules" folder is ignored by transformers.
+
+    Here's what you can do:
+     • If you are trying to use ECMAScript Modules, see https://jestjs.io/docs/ecmascript-modules for how to enable it.
+     • If you are trying to use TypeScript, see https://jestjs.io/docs/getting-started#using-typescript
+     • To have some of your "node_modules" files transformed, you can specify a custom "transformIgnorePatterns" in your config.
+     • If you need a custom transformation specify a "transform" option in your config.
+     • If you simply want to mock your non-JS modules (e.g. binary assets) you can stub them out with the "moduleNameMapper" config option.
+
+    You'll find more details and examples of these config options in the docs:
+    https://jestjs.io/docs/configuration
+    For information about custom transformations, see:
+    https://jestjs.io/docs/code-transformation
+
+    Details:
+
+    /home/user/qscrap.qa/mobile/node_modules/@expo/vector-icons/build/AntDesign.js:2
+    import createIconSet from './createIconSet';
+    ^^^^^^
+
+    SyntaxError: Cannot use import statement outside a module
+
+       7 | import { View, Text, Image, TouchableOpacity, StyleSheet } from 'react-native';
+       8 | import { Colors, Spacing, BorderRadius, FontSizes } from '../../constants/theme';
+    >  9 | import { Ionicons } from '@expo/vector-icons';
+         | ^
+      10 | import { useTranslation } from '../../contexts/LanguageContext';
+      11 | import { useTheme } from '../../contexts';
+      12 | import { rtlFlexDirection, rtlTextAlign } from '../../utils/rtl';
+
+      at Runtime.createScriptFromCode (node_modules/jest-runtime/build/index.js:1505:14)
+      at Object.<anonymous> (node_modules/@expo/vector-icons/src/Icons.ts:3:1)
+      at Object.<anonymous> (src/components/request/PhotoUploadSection.tsx:9:1)
+      at Object.<anonymous> (src/components/request/RequestPhotosStep.tsx:4:1)
+      at Object.<anonymous> (src/__tests__/components/request/RequestPhotosStep.test.tsx:8:1)
+
+FAIL src/__tests__/components/payment/StripeCardField.test.tsx
+  ● Test suite failed to run
+
+    Jest encountered an unexpected token
+
+    Jest failed to parse a file. This happens e.g. when your code or its dependencies use non-standard JavaScript syntax, or when Jest is not configured to support such syntax.
+
+    Out of the box Jest supports Babel, which will be used to transform your files into valid JS based on your Babel configuration.
+
+    By default "node_modules" folder is ignored by transformers.
+
+    Here's what you can do:
+     • If you are trying to use ECMAScript Modules, see https://jestjs.io/docs/ecmascript-modules for how to enable it.
+     • If you are trying to use TypeScript, see https://jestjs.io/docs/getting-started#using-typescript
+     • To have some of your "node_modules" files transformed, you can specify a custom "transformIgnorePatterns" in your config.
+     • If you need a custom transformation specify a "transform" option in your config.
+     • If you simply want to mock your non-JS modules (e.g. binary assets) you can stub them out with the "moduleNameMapper" config option.
+
+    You'll find more details and examples of these config options in the docs:
+    https://jestjs.io/docs/configuration
+    For information about custom transformations, see:
+    https://jestjs.io/docs/code-transformation
+
+    Details:
+
+    /home/user/qscrap.qa/mobile/node_modules/@expo/vector-icons/build/AntDesign.js:2
+    import createIconSet from './createIconSet';
+    ^^^^^^
+
+    SyntaxError: Cannot use import statement outside a module
+
+      2 | import { View, Text, StyleSheet } from 'react-native';
+      3 | import { CardField } from '@stripe/stripe-react-native';
+    > 4 | import { Ionicons } from '@expo/vector-icons';
+        | ^
+      5 | import { Spacing, FontSizes, BorderRadius, Shadows } from '../../constants/theme';
+      6 | import { rtlFlexDirection } from '../../utils/rtl';
+      7 |
+
+      at Runtime.createScriptFromCode (node_modules/jest-runtime/build/index.js:1505:14)
+      at Object.<anonymous> (node_modules/@expo/vector-icons/src/Icons.ts:3:1)
+      at Object.<anonymous> (src/components/payment/StripeCardField.tsx:4:1)
+      at Object.<anonymous> (src/__tests__/components/payment/StripeCardField.test.tsx:8:1)
+
+  console.error
+    react-test-renderer is deprecated. See https://react.dev/warnings/react-test-renderer
+
+      51 |
+      52 |     it('should show error if card is not complete', async () => {
+    > 53 |         const { result } = renderHook(() =>
+         |                                      ^
+      54 |             useStripeCheckout({
+      55 |                 ...baseParams,
+      56 |                 cardComplete: false,
+
+      at Object.<anonymous>.process.env.NODE_ENV.exports.create (node_modules/react-test-renderer/cjs/react-test-renderer.development.js:14598:17)
+      at create (node_modules/@testing-library/react-native/src/render-act.ts:15:29)
+      at callback (node_modules/@testing-library/react-native/src/act.ts:31:24)
+      at Object.<anonymous>.process.env.NODE_ENV.exports.act (node_modules/react/cjs/react.development.js:789:22)
+      at actImplementation (node_modules/@testing-library/react-native/src/act.ts:30:25)
+      at renderWithAct (node_modules/@testing-library/react-native/src/render-act.ts:13:11)
+      at renderInternal (node_modules/@testing-library/react-native/src/render.tsx:69:33)
+      at renderInternal (node_modules/@testing-library/react-native/src/render.tsx:44:10)
+      at renderHook (node_modules/@testing-library/react-native/src/render-hook.tsx:55:58)
+      at Object.<anonymous> (src/__tests__/hooks/useStripeCheckout.test.ts:53:38)
+
+FAIL src/__tests__/components/request/PartDetailsStep.test.tsx
+  ● Test suite failed to run
+
+    Jest encountered an unexpected token
+
+    Jest failed to parse a file. This happens e.g. when your code or its dependencies use non-standard JavaScript syntax, or when Jest is not configured to support such syntax.
+
+    Out of the box Jest supports Babel, which will be used to transform your files into valid JS based on your Babel configuration.
+
+    By default "node_modules" folder is ignored by transformers.
+
+    Here's what you can do:
+     • If you are trying to use ECMAScript Modules, see https://jestjs.io/docs/ecmascript-modules for how to enable it.
+     • If you are trying to use TypeScript, see https://jestjs.io/docs/getting-started#using-typescript
+     • To have some of your "node_modules" files transformed, you can specify a custom "transformIgnorePatterns" in your config.
+     • If you need a custom transformation specify a "transform" option in your config.
+     • If you simply want to mock your non-JS modules (e.g. binary assets) you can stub them out with the "moduleNameMapper" config option.
+
+    You'll find more details and examples of these config options in the docs:
+    https://jestjs.io/docs/configuration
+    For information about custom transformations, see:
+    https://jestjs.io/docs/code-transformation
+
+    Details:
+
+    /home/user/qscrap.qa/mobile/node_modules/@expo/vector-icons/build/AntDesign.js:2
+    import createIconSet from './createIconSet';
+    ^^^^^^
+
+    SyntaxError: Cannot use import statement outside a module
+
+      12 | } from 'react-native';
+      13 | import { Colors, Spacing, BorderRadius, FontSizes, Shadows } from '../constants/theme';
+    > 14 | import { Ionicons } from '@expo/vector-icons';
+         | ^
+      15 | import { LinearGradient } from 'expo-linear-gradient';
+      16 | import * as Haptics from 'expo-haptics';
+      17 | import { useTranslation } from '../contexts/LanguageContext';
+
+      at Runtime.createScriptFromCode (node_modules/jest-runtime/build/index.js:1505:14)
+      at Object.<anonymous> (node_modules/@expo/vector-icons/src/Icons.ts:3:1)
+      at Object.<anonymous> (src/components/SearchableDropdown.tsx:14:1)
+      at Object.<anonymous> (src/components/request/PartDetailsStep.tsx:4:1)
+      at Object.<anonymous> (src/__tests__/components/request/PartDetailsStep.test.tsx:8:1)
+
+FAIL src/__tests__/components/payment/PaymentTypeSelector.test.tsx
+  ● Test suite failed to run
+
+    Jest encountered an unexpected token
+
+    Jest failed to parse a file. This happens e.g. when your code or its dependencies use non-standard JavaScript syntax, or when Jest is not configured to support such syntax.
+
+    Out of the box Jest supports Babel, which will be used to transform your files into valid JS based on your Babel configuration.
+
+    By default "node_modules" folder is ignored by transformers.
+
+    Here's what you can do:
+     • If you are trying to use ECMAScript Modules, see https://jestjs.io/docs/ecmascript-modules for how to enable it.
+     • If you are trying to use TypeScript, see https://jestjs.io/docs/getting-started#using-typescript
+     • To have some of your "node_modules" files transformed, you can specify a custom "transformIgnorePatterns" in your config.
+     • If you need a custom transformation specify a "transform" option in your config.
+     • If you simply want to mock your non-JS modules (e.g. binary assets) you can stub them out with the "moduleNameMapper" config option.
+
+    You'll find more details and examples of these config options in the docs:
+    https://jestjs.io/docs/configuration
+    For information about custom transformations, see:
+    https://jestjs.io/docs/code-transformation
+
+    Details:
+
+    /home/user/qscrap.qa/mobile/node_modules/@expo/vector-icons/build/AntDesign.js:2
+    import createIconSet from './createIconSet';
+    ^^^^^^
+
+    SyntaxError: Cannot use import statement outside a module
+
+      1 | import React from 'react';
+      2 | import { View, Text, TouchableOpacity, StyleSheet } from 'react-native';
+    > 3 | import { Ionicons } from '@expo/vector-icons';
+        | ^
+      4 | import * as Haptics from 'expo-haptics';
+      5 | import { Spacing, FontSizes, BorderRadius, Shadows } from '../../constants/theme';
+      6 | import { rtlFlexDirection } from '../../utils/rtl';
+
+      at Runtime.createScriptFromCode (node_modules/jest-runtime/build/index.js:1505:14)
+      at Object.<anonymous> (node_modules/@expo/vector-icons/src/Icons.ts:3:1)
+      at Object.<anonymous> (src/components/payment/PaymentTypeSelector.tsx:3:1)
+      at Object.<anonymous> (src/__tests__/components/payment/PaymentTypeSelector.test.tsx:8:1)
+
+  console.error
+    react-test-renderer is deprecated. See https://react.dev/warnings/react-test-renderer
+
+      67 |
+      68 |     it('should show error if clientSecret is null', async () => {
+    > 69 |         const { result } = renderHook(() =>
+         |                                      ^
+      70 |             useStripeCheckout({
+      71 |                 ...baseParams,
+      72 |                 clientSecret: null,
+
+      at Object.<anonymous>.process.env.NODE_ENV.exports.create (node_modules/react-test-renderer/cjs/react-test-renderer.development.js:14598:17)
+      at create (node_modules/@testing-library/react-native/src/render-act.ts:15:29)
+      at callback (node_modules/@testing-library/react-native/src/act.ts:31:24)
+      at Object.<anonymous>.process.env.NODE_ENV.exports.act (node_modules/react/cjs/react.development.js:789:22)
+      at actImplementation (node_modules/@testing-library/react-native/src/act.ts:30:25)
+      at renderWithAct (node_modules/@testing-library/react-native/src/render-act.ts:13:11)
+      at renderInternal (node_modules/@testing-library/react-native/src/render.tsx:69:33)
+      at renderInternal (node_modules/@testing-library/react-native/src/render.tsx:44:10)
+      at renderHook (node_modules/@testing-library/react-native/src/render-hook.tsx:55:58)
+      at Object.<anonymous> (src/__tests__/hooks/useStripeCheckout.test.ts:69:38)
+
+  console.error
+    react-test-renderer is deprecated. See https://react.dev/warnings/react-test-renderer
+
+      88 |         (api.confirmDeliveryFeePayment as jest.Mock).mockResolvedValue({});
+      89 |
+    > 90 |         const { result } = renderHook(() => useStripeCheckout(baseParams));
+         |                                      ^
+      91 |
+      92 |         act(() => {
+      93 |             result.current.handlePayment();
+
+      at Object.<anonymous>.process.env.NODE_ENV.exports.create (node_modules/react-test-renderer/cjs/react-test-renderer.development.js:14598:17)
+      at create (node_modules/@testing-library/react-native/src/render-act.ts:15:29)
+      at callback (node_modules/@testing-library/react-native/src/act.ts:31:24)
+      at Object.<anonymous>.process.env.NODE_ENV.exports.act (node_modules/react/cjs/react.development.js:789:22)
+      at actImplementation (node_modules/@testing-library/react-native/src/act.ts:30:25)
+      at renderWithAct (node_modules/@testing-library/react-native/src/render-act.ts:13:11)
+      at renderInternal (node_modules/@testing-library/react-native/src/render.tsx:69:33)
+      at renderInternal (node_modules/@testing-library/react-native/src/render.tsx:44:10)
+      at renderHook (node_modules/@testing-library/react-native/src/render-hook.tsx:55:58)
+      at Object.<anonymous> (src/__tests__/hooks/useStripeCheckout.test.ts:90:38)
+
+  console.error
+    react-test-renderer is deprecated. See https://react.dev/warnings/react-test-renderer
+
+      114 |         });
+      115 |
+    > 116 |         const { result } = renderHook(() => useStripeCheckout(baseParams));
+          |                                      ^
+      117 |
+      118 |         act(() => {
+      119 |             result.current.handlePayment();
+
+      at Object.<anonymous>.process.env.NODE_ENV.exports.create (node_modules/react-test-renderer/cjs/react-test-renderer.development.js:14598:17)
+      at create (node_modules/@testing-library/react-native/src/render-act.ts:15:29)
+      at callback (node_modules/@testing-library/react-native/src/act.ts:31:24)
+      at Object.<anonymous>.process.env.NODE_ENV.exports.act (node_modules/react/cjs/react.development.js:789:22)
+      at actImplementation (node_modules/@testing-library/react-native/src/act.ts:30:25)
+      at renderWithAct (node_modules/@testing-library/react-native/src/render-act.ts:13:11)
+      at renderInternal (node_modules/@testing-library/react-native/src/render.tsx:69:33)
+      at renderInternal (node_modules/@testing-library/react-native/src/render.tsx:44:10)
+      at renderHook (node_modules/@testing-library/react-native/src/render-hook.tsx:55:58)
+      at Object.<anonymous> (src/__tests__/hooks/useStripeCheckout.test.ts:116:38)
+
+  console.error
+    react-test-renderer is deprecated. See https://react.dev/warnings/react-test-renderer
+
+      131 |         const discountObj = { discountOnTotal: 100 };
+      132 |
+    > 133 |         const { result } = renderHook(() => useStripeCheckout(baseParams));
+          |                                      ^
+      134 |
+      135 |         act(() => {
+      136 |             result.current.handleFreeOrder(discountObj);
+
+      at Object.<anonymous>.process.env.NODE_ENV.exports.create (node_modules/react-test-renderer/cjs/react-test-renderer.development.js:14598:17)
+      at create (node_modules/@testing-library/react-native/src/render-act.ts:15:29)
+      at callback (node_modules/@testing-library/react-native/src/act.ts:31:24)
+      at Object.<anonymous>.process.env.NODE_ENV.exports.act (node_modules/react/cjs/react.development.js:789:22)
+      at actImplementation (node_modules/@testing-library/react-native/src/act.ts:30:25)
+      at renderWithAct (node_modules/@testing-library/react-native/src/render-act.ts:13:11)
+      at renderInternal (node_modules/@testing-library/react-native/src/render.tsx:69:33)
+      at renderInternal (node_modules/@testing-library/react-native/src/render.tsx:44:10)
+      at renderHook (node_modules/@testing-library/react-native/src/render-hook.tsx:55:58)
+      at Object.<anonymous> (src/__tests__/hooks/useStripeCheckout.test.ts:133:38)
+
+PASS src/__tests__/hooks/useStripeCheckout.test.ts
+  useStripeCheckout
+    ✓ should show error if card is not complete (96 ms)
+    ✓ should show error if clientSecret is null (7 ms)
+    ✓ should handle successful payment confirmation (14 ms)
+    ✓ should handle Stripe error during confirmation (8 ms)
+    ✓ should handle FREE_ORDER execution (9 ms)
+
+FAIL src/__tests__/components/payment/LoyaltyDiscountCard.test.tsx
+  ● Test suite failed to run
+
+    Jest encountered an unexpected token
+
+    Jest failed to parse a file. This happens e.g. when your code or its dependencies use non-standard JavaScript syntax, or when Jest is not configured to support such syntax.
+
+    Out of the box Jest supports Babel, which will be used to transform your files into valid JS based on your Babel configuration.
+
+    By default "node_modules" folder is ignored by transformers.
+
+    Here's what you can do:
+     • If you are trying to use ECMAScript Modules, see https://jestjs.io/docs/ecmascript-modules for how to enable it.
+     • If you are trying to use TypeScript, see https://jestjs.io/docs/getting-started#using-typescript
+     • To have some of your "node_modules" files transformed, you can specify a custom "transformIgnorePatterns" in your config.
+     • If you need a custom transformation specify a "transform" option in your config.
+     • If you simply want to mock your non-JS modules (e.g. binary assets) you can stub them out with the "moduleNameMapper" config option.
+
+    You'll find more details and examples of these config options in the docs:
+    https://jestjs.io/docs/configuration
+    For information about custom transformations, see:
+    https://jestjs.io/docs/code-transformation
+
+    Details:
+
+    /home/user/qscrap.qa/mobile/node_modules/@expo/vector-icons/build/AntDesign.js:2
+    import createIconSet from './createIconSet';
+    ^^^^^^
+
+    SyntaxError: Cannot use import statement outside a module
+
+      1 | import React from 'react';
+      2 | import { View, Text, Switch, StyleSheet } from 'react-native';
+    > 3 | import { Ionicons } from '@expo/vector-icons';
+        | ^
+      4 | import { LinearGradient } from 'expo-linear-gradient';
+      5 | import * as Haptics from 'expo-haptics';
+      6 | import { Spacing, FontSizes, BorderRadius } from '../../constants/theme';
+
+      at Runtime.createScriptFromCode (node_modules/jest-runtime/build/index.js:1505:14)
+      at Object.<anonymous> (node_modules/@expo/vector-icons/src/Icons.ts:3:1)
+      at Object.<anonymous> (src/components/payment/LoyaltyDiscountCard.tsx:3:1)
+      at Object.<anonymous> (src/__tests__/components/payment/LoyaltyDiscountCard.test.tsx:8:1)
+
+Test Suites: 10 failed, 10 passed, 20 total
+Tests:       11 failed, 234 passed, 245 total
+Snapshots:   0 total
+Time:        2.715 s
+Ran all test suites.

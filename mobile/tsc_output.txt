@@ -1,0 +1,16 @@
+src/__tests__/components/payment/StripeCardField.test.tsx(46,33): error TS2352: Conversion of type 'ForwardRefExoticComponent<Props & RefAttributes<Methods>>' to type 'Mock<any, any, any>' may be a mistake because neither type sufficiently overlaps with the other. If this was intentional, convert the expression to 'unknown' first.
+  Type 'ForwardRefExoticComponent<Props & RefAttributes<Methods>>' is missing the following properties from type 'Mock<any, any, any>': getMockName, mock, mockClear, mockReset, and 13 more.
+src/__tests__/components/request/VehicleSelectionStep.test.tsx(75,75): error TS2322: Type '{ vehicle_id: string; car_make: string; car_model: string; car_year: string; vin_number: string; }' is not assignable to type 'Vehicle'.
+  Types of property 'car_year' are incompatible.
+    Type 'string' is not assignable to type 'number'.
+src/__tests__/components/request/VehicleSelectionStep.test.tsx(90,75): error TS2322: Type '{ vehicle_id: string; car_make: string; car_model: string; car_year: string; vin_number: null; }' is not assignable to type 'Vehicle'.
+  Types of property 'car_year' are incompatible.
+    Type 'string' is not assignable to type 'number'.
+src/__tests__/hooks/useSubmitRequest.test.ts(157,13): error TS7034: Variable 'promise' implicitly has type 'any' in some locations where its type cannot be determined.
+src/__tests__/hooks/useSubmitRequest.test.ts(165,19): error TS7005: Variable 'promise' implicitly has an 'any' type.
+src/components/DeliveryLocationWidget.tsx(36,34): error TS2347: Untyped function calls may not accept type arguments.
+src/components/DeliveryLocationWidget.tsx(42,48): error TS7006: Parameter 'a' implicitly has an 'any' type.
+src/hooks/useBadgeCounts.tsx(62,36): error TS2347: Untyped function calls may not accept type arguments.
+src/hooks/useStripeCheckout.ts(91,64): error TS2554: Expected 1 arguments, but got 2.
+src/screens/PaymentScreen.tsx(292,21): error TS2322: Type '(calculateDiscount: any) => Promise<void>' is not assignable to type '() => void'.
+  Target signature provides too few arguments. Expected 1 or more, but got 0.

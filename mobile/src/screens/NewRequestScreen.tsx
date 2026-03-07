@@ -3,41 +3,46 @@ import { handleApiError } from '../utils/errorHandler';
 // QScrap New Request Screen - 2026 Premium Refactored Edition
 // No VIN - Uses Saved Vehicles - Stepped Wizard - Modern UI
 
-import React, { useState, useRef, useEffect } from 'react';
+import React, { useRef, useEffect } from 'react';
 import {
     View,
     Text,
     StyleSheet,
     ScrollView,
-    TextInput,
     TouchableOpacity,
     ActivityIndicator,
-    Alert,
-    Image,
     KeyboardAvoidingView,
     Platform,
     Animated,
 } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { LinearGradient } from 'expo-linear-gradient';
-import * as ImagePicker from 'expo-image-picker';
 import * as Haptics from 'expo-haptics';
 import { useNavigation, useRoute, RouteProp } from '@react-navigation/native';
 import { NativeStackNavigationProp } from '@react-navigation/native-stack';
 import { RootStackParamList } from '../../App';
-import { api } from '../services/api';
 import { Colors, Spacing, BorderRadius, FontSizes } from '../constants/theme';
 import { Ionicons } from '@expo/vector-icons';
 import { useTheme } from '../contexts/ThemeContext';
 import { useTranslation } from '../contexts/LanguageContext';
 import { rtlFlexDirection, rtlTextAlign } from '../utils/rtl';
 import { useToast } from '../components/Toast';
-import MyVehiclesSelector, { SavedVehicle } from '../components/MyVehiclesSelector';
-import SearchableDropdown from '../components/SearchableDropdown';
-import PartSpecsCard from '../components/request/PartSpecsCard';
-import PhotoUploadSection from '../components/request/PhotoUploadSection';
+
+import VehicleSelectionStep from '../components/request/VehicleSelectionStep';
+import PartDetailsStep from '../components/request/PartDetailsStep';
+import RequestPhotosStep from '../components/request/RequestPhotosStep';
+import VehicleIdPhotosStep from '../components/request/VehicleIdPhotosStep';
+
+
+
+
 import { PART_CATEGORIES, PART_SUBCATEGORIES } from '../constants/categoryData';
+
 import { compressImage } from '../utils/imageCompressor';
+import { useRequestImages } from '../hooks/useRequestImages';
+import { useSubmitRequest } from '../hooks/useSubmitRequest';
+import { useRequestForm } from '../hooks/useRequestForm';
+
 
 type NavigationProp = NativeStackNavigationProp<RootStackParamList>;
 type NewRequestRouteProp = RouteProp<RootStackParamList, 'NewRequest'>;
@@ -68,38 +73,69 @@ export default function NewRequestScreen() {
         { value: 'used', label: t('newRequest.usedOnly'), icon: 'leaf-outline', color: '#F59E0B' },
     ];
 
-    // Extract prefill data from route params (for Order Again)
-    const prefillData: PrefillData | undefined = route.params?.prefill;
 
-    // Selected Vehicle
-    const [selectedVehicle, setSelectedVehicle] = useState<SavedVehicle | null>(null);
+    const prefillData = route.params?.prefill;
+    const initialDeliveryLocation = route.params?.deliveryLocation;
 
-    // Part Details
-    const [partCategory, setPartCategory] = useState('');
-    const [partSubCategory, setPartSubCategory] = useState('');
-    const [partDescription, setPartDescription] = useState('');
-    const [partNumber, setPartNumber] = useState('');
-    const [condition, setCondition] = useState('any');
-    const [availableSubCategories, setAvailableSubCategories] = useState<string[]>([]);
+    const {
+        selectedVehicle,
+        setSelectedVehicle,
+        handleVehiclesLoaded,
+        partCategory,
+        setPartCategory,
+        partSubCategory,
+        setPartSubCategory,
+        availableSubCategories,
+        partDescription,
+        setPartDescription,
+        partNumber,
+        setPartNumber,
+        condition,
+        setCondition,
+        quantity,
+        setQuantity,
+        side,
+        setSide,
+        deliveryLocation,
+    } = useRequestForm({ prefillData, initialDeliveryLocation, t, toast });
 
-    // Part Specifications - Quantity and Side
-    const [quantity, setQuantity] = useState<number>(1);
-    const [side, setSide] = useState<'left' | 'right' | 'both' | 'na'>('na');
+    const {
+        images,
+        carFrontImage,
+        carRearImage,
+        setCarFrontImage,
+        setCarRearImage,
+        handlePickImage,
+        handleTakePhoto,
+        handleRemoveImage,
+        handlePickCarFrontImage,
+        handlePickCarRearImage,
+        handleTakeCarFrontPhoto,
+        handleTakeCarRearPhoto,
+    } = useRequestImages(t, toast);
 
-    // Photos - Split into Part Damage and Vehicle ID
-    const [images, setImages] = useState<string[]>([]);  // Part damage photos
-    const [carFrontImage, setCarFrontImage] = useState<string | null>(null);  // Vehicle front ID
-    const [carRearImage, setCarRearImage] = useState<string | null>(null);    // Vehicle rear ID
+    const { isSubmitting, handleSubmit } = useSubmitRequest({
+        selectedVehicle,
+        partDescription,
+        quantity,
+        side,
+        partCategory,
+        partSubCategory,
+        partNumber,
+        condition,
+        deliveryLocation,
+        images,
+        carFrontImage,
+        carRearImage,
+        t,
+        toast,
+        navigation,
+    });
 
-    // Delivery location for driver navigation (lat/lng captured from HomeScreen)
-    const [deliveryLocation, setDeliveryLocation] = useState<{
-        lat: number | null;
-        lng: number | null;
-        address: string;
-    }>({ lat: null, lng: null, address: '' });
-
-    // Loading
-    const [isSubmitting, setIsSubmitting] = useState(false);
+    const handleVehicleSelect = (vehicle: any) => {
+        Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
+        setSelectedVehicle(vehicle);
+    };
 
     // Animations
     const fadeAnim = useRef(new Animated.Value(0)).current;
@@ -119,378 +155,6 @@ export default function NewRequestScreen() {
             }),
         ]).start();
     }, []);
-
-    // Handle Order Again prefill - VVIP Quality Implementation
-    useEffect(() => {
-        if (!prefillData) return;
-
-        // Pre-fill part description
-        if (prefillData.partDescription) {
-            setPartDescription(prefillData.partDescription);
-        }
-
-        // Pre-fill part category
-        if (prefillData.partCategory) {
-            setPartCategory(prefillData.partCategory);
-        }
-
-        // Pre-fill part subcategory (after category is set)
-        if (prefillData.partSubCategory) {
-            // Delay to ensure category is processed first
-            setTimeout(() => {
-                setPartSubCategory(prefillData.partSubCategory!);
-            }, 100);
-        }
-
-        // Note: Images are NOT pre-filled as they may be outdated.
-        // User should take fresh photos for the new request.
-
-        // Show success toast to indicate pre-fill
-        if (prefillData.partDescription || prefillData.partCategory) {
-            setTimeout(() => {
-                toast.info(t('newRequest.orderAgain'), t('newRequest.prefilledMsg'));
-            }, 500);
-        }
-    }, [prefillData]);
-
-    // Apply delivery location from HomeScreen for driver navigation
-    useEffect(() => {
-        const locationFromNav = route.params?.deliveryLocation;
-        if (locationFromNav) {
-            setDeliveryLocation({
-                lat: locationFromNav.lat,
-                lng: locationFromNav.lng,
-                address: locationFromNav.address,
-            });
-        }
-    }, [route.params?.deliveryLocation]);
-
-    // Auto-select vehicle when vehicles are loaded
-    const handleVehiclesLoaded = (vehicles: SavedVehicle[]) => {
-        if (vehicles.length === 0) return;
-
-        // If we have prefill data (Order Again), try to find exact match
-        if (prefillData?.carMake) {
-            const matchingVehicle = vehicles.find(v =>
-                v.car_make.toLowerCase() === prefillData.carMake?.toLowerCase() &&
-                v.car_model.toLowerCase() === prefillData.carModel?.toLowerCase() &&
-                v.car_year === prefillData.carYear
-            );
-            if (matchingVehicle) {
-                setSelectedVehicle(matchingVehicle);
-                return;
-            }
-        }
-
-        // Always auto-select the first vehicle (sorted by last_used_at or is_primary)
-        // Backend returns vehicles sorted: primary first, then by last_used_at DESC
-        setSelectedVehicle(vehicles[0]);
-    };
-
-    // Update subcategories when category changes
-    useEffect(() => {
-        if (partCategory && PART_SUBCATEGORIES[partCategory]) {
-            setAvailableSubCategories(PART_SUBCATEGORIES[partCategory]);
-            setPartSubCategory('');
-        } else {
-            setAvailableSubCategories([]);
-        }
-    }, [partCategory]);
-
-    const handleVehicleSelect = (vehicle: SavedVehicle) => {
-        Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
-        setSelectedVehicle(vehicle);
-    };
-
-    const handlePickImage = async () => {
-        const { status } = await ImagePicker.requestMediaLibraryPermissionsAsync();
-        if (status !== 'granted') {
-            toast.error(t('common.permissionDenied'), t('common.galleryPermission'));
-            return;
-        }
-
-        const result = await ImagePicker.launchImageLibraryAsync({
-            mediaTypes: ImagePicker.MediaTypeOptions.Images,
-            allowsMultipleSelection: true,
-            quality: 0.8,
-            selectionLimit: 5 - images.length,
-        });
-
-        if (!result.canceled && result.assets) {
-            // Compress images before adding to state
-            const compressedImages = await Promise.all(
-                result.assets.map(async asset => {
-                    try {
-                        return await compressImage(asset.uri, {
-                            maxWidth: 1920,
-                            quality: 0.7,
-                            format: 'jpeg',
-                        });
-                    } catch (error) {
-                        return asset.uri; // Fallback to original
-                    }
-                })
-            );
-            setImages(prev => [...prev, ...compressedImages].slice(0, 5));
-            Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success);
-        }
-    };
-
-    const handleTakePhoto = async () => {
-        const { status } = await ImagePicker.requestCameraPermissionsAsync();
-        if (status !== 'granted') {
-            toast.error(t('common.permissionDenied'), t('common.cameraPermission'));
-            return;
-        }
-
-        const result = await ImagePicker.launchCameraAsync({
-            quality: 0.8,
-            allowsEditing: true,
-        });
-
-        if (!result.canceled && result.assets[0]) {
-            try {
-                const compressed = await compressImage(result.assets[0].uri, {
-                    maxWidth: 1920,
-                    quality: 0.7,
-                    format: 'jpeg',
-                });
-                setImages(prev => [...prev, compressed].slice(0, 5));
-            } catch (error) {
-                setImages(prev => [...prev, result.assets[0].uri].slice(0, 5));
-            }
-            Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success);
-        }
-    };
-
-    const handleRemoveImage = (index: number) => {
-        Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
-        setImages(prev => prev.filter((_, i) => i !== index));
-    };
-
-    // Vehicle ID Photo Handlers
-    const handlePickCarFrontImage = async () => {
-        const { status } = await ImagePicker.requestMediaLibraryPermissionsAsync();
-        if (status !== 'granted') {
-            toast.error(t('common.permissionDenied'), t('common.galleryPermission'));
-            return;
-        }
-        const result = await ImagePicker.launchImageLibraryAsync({
-            mediaTypes: ImagePicker.MediaTypeOptions.Images,
-            quality: 0.8,
-            allowsEditing: true,
-        });
-        if (!result.canceled && result.assets[0]) {
-            try {
-                const compressed = await compressImage(result.assets[0].uri, {
-                    maxWidth: 1920,
-                    quality: 0.7,
-                    format: 'jpeg',
-                });
-                setCarFrontImage(compressed);
-            } catch (error) {
-                setCarFrontImage(result.assets[0].uri);
-            }
-            Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success);
-        }
-    };
-
-    const handlePickCarRearImage = async () => {
-        const { status } = await ImagePicker.requestMediaLibraryPermissionsAsync();
-        if (status !== 'granted') {
-            toast.error(t('common.permissionDenied'), t('common.galleryPermission'));
-            return;
-        }
-        const result = await ImagePicker.launchImageLibraryAsync({
-            mediaTypes: ImagePicker.MediaTypeOptions.Images,
-            quality: 0.8,
-            allowsEditing: true,
-        });
-        if (!result.canceled && result.assets[0]) {
-            try {
-                const compressed = await compressImage(result.assets[0].uri, {
-                    maxWidth: 1920,
-                    quality: 0.7,
-                    format: 'jpeg',
-                });
-                setCarRearImage(compressed);
-            } catch (error) {
-                setCarRearImage(result.assets[0].uri);
-            }
-            Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success);
-        }
-    };
-
-    const handleTakeCarFrontPhoto = async () => {
-        const { status } = await ImagePicker.requestCameraPermissionsAsync();
-        if (status !== 'granted') {
-            toast.error(t('common.permissionDenied'), t('common.cameraPermission'));
-            return;
-        }
-        const result = await ImagePicker.launchCameraAsync({ quality: 0.8, allowsEditing: true });
-        if (!result.canceled && result.assets[0]) {
-            try {
-                const compressed = await compressImage(result.assets[0].uri, {
-                    maxWidth: 1920,
-                    quality: 0.7,
-                    format: 'jpeg',
-                });
-                setCarFrontImage(compressed);
-            } catch (error) {
-                setCarFrontImage(result.assets[0].uri);
-            }
-            Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success);
-        }
-    };
-
-    const handleTakeCarRearPhoto = async () => {
-        const { status } = await ImagePicker.requestCameraPermissionsAsync();
-        if (status !== 'granted') {
-            toast.error(t('common.permissionDenied'), t('common.cameraPermission'));
-            return;
-        }
-        const result = await ImagePicker.launchCameraAsync({ quality: 0.8, allowsEditing: true });
-        if (!result.canceled && result.assets[0]) {
-            try {
-                const compressed = await compressImage(result.assets[0].uri, {
-                    maxWidth: 1920,
-                    quality: 0.7,
-                    format: 'jpeg',
-                });
-                setCarRearImage(compressed);
-            } catch (error) {
-                setCarRearImage(result.assets[0].uri);
-            }
-            Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success);
-        }
-    };
-
-    const handleSubmit = async () => {
-        // Prevent double submission
-        if (isSubmitting) {
-            return;
-        }
-
-        // Validation
-        if (!selectedVehicle) {
-            toast.error(t('newRequest.missingVehicle'), t('newRequest.pleaseSelectVehicle'));
-            return;
-        }
-
-        // VIN is now REQUIRED for Qatar spare parts matching
-        if (!selectedVehicle.vin_number) {
-            Alert.alert(
-                t('newRequest.vinRequired'),
-                t('newRequest.vinRequiredMessage'),
-                [
-                    { text: t('common.cancel'), style: 'cancel' },
-                    {
-                        text: t('newRequest.addVin'),
-                        onPress: () => navigation.navigate('MyVehicles'),
-                        style: 'default'
-                    }
-                ]
-            );
-            return;
-        }
-
-        if (!partDescription.trim()) {
-            toast.error(t('newRequest.missingDescription'), t('newRequest.pleaseDescribePart'));
-            return;
-        }
-
-        setIsSubmitting(true);
-        Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Medium);
-
-        try {
-            const formData = new FormData();
-
-            // Vehicle data
-            formData.append('car_make', selectedVehicle.car_make);
-            formData.append('car_model', selectedVehicle.car_model);
-            formData.append('car_year', selectedVehicle.car_year.toString());
-            if (selectedVehicle.vin_number) {
-                formData.append('vin_number', selectedVehicle.vin_number);
-            }
-
-            // Part data - Build final description with specs
-            let finalDescription = partDescription.trim();
-
-            // Append quantity if more than 1
-            if (quantity > 1) {
-                finalDescription += `\n\n${t('newRequest.quantity')}: ${quantity} ${t('newRequest.pcs')}`;
-            }
-
-            // Append side/position if specified
-            if (side !== 'na') {
-                const sideLabels: Record<string, string> = {
-                    left: t('newRequest.leftDriver'),
-                    right: t('newRequest.rightPassenger'),
-                    both: t('newRequest.bothSides')
-                };
-                finalDescription += `\n${t('newRequest.position')}: ${sideLabels[side]}`;
-            }
-
-            formData.append('part_description', finalDescription);
-            if (partCategory) formData.append('part_category', partCategory);
-            if (partSubCategory) formData.append('part_subcategory', partSubCategory);
-            if (partNumber.trim()) formData.append('part_number', partNumber.trim());
-            formData.append('condition_required', condition);
-
-            // Delivery location - critical for driver navigation
-            if (deliveryLocation.lat && deliveryLocation.lng) {
-                formData.append('delivery_lat', deliveryLocation.lat.toString());
-                formData.append('delivery_lng', deliveryLocation.lng.toString());
-                formData.append('delivery_address_text', deliveryLocation.address);
-            }
-
-            // Part Damage Photos
-            images.forEach((uri, index) => {
-                const uriParts = uri.split('.');
-                const fileType = uriParts[uriParts.length - 1];
-                formData.append('images', {
-                    uri,
-                    name: `part_${index}.${fileType}`,
-                    type: `image/${fileType}`,
-                } as any);
-            });
-
-            // Vehicle ID Photos (for Qatar scrap yards)
-            if (carFrontImage) {
-                const frontParts = carFrontImage.split('.');
-                const frontType = frontParts[frontParts.length - 1];
-                formData.append('car_front_image', {
-                    uri: carFrontImage,
-                    name: `car_front.${frontType}`,
-                    type: `image/${frontType}`,
-                } as any);
-            }
-
-            if (carRearImage) {
-                const rearParts = carRearImage.split('.');
-                const rearType = rearParts[rearParts.length - 1];
-                formData.append('car_rear_image', {
-                    uri: carRearImage,
-                    name: `car_rear.${rearType}`,
-                    type: `image/${rearType}`,
-                } as any);
-            }
-
-            const response = await api.createRequest(formData);
-
-            Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success);
-            toast.success(t('newRequest.requestCreated'), t('newRequest.garagesReviewing'));
-
-            // Navigate to request details
-            navigation.replace('RequestDetail', { requestId: response.request_id });
-
-        } catch (error: any) {
-            logError('[NewRequest] Submit error:', error);
-            handleApiError(error, toast);
-        } finally {
-            setIsSubmitting(false);
-        }
-    };
 
     // VIN is now required for submission
     const hasVIN = selectedVehicle?.vin_number && selectedVehicle.vin_number.length === 17;
@@ -547,203 +211,68 @@ export default function NewRequestScreen() {
                             </View>
                         </Animated.View>
 
-                        {/* 1. Select Vehicle */}
-                        <View style={[styles.section, { backgroundColor: colors.surface }]}>
-                            <View style={[styles.sectionHeader, { flexDirection: rtlFlexDirection(isRTL) }]}>
-                                <View style={[styles.stepBadge, { backgroundColor: Colors.primary + '15' }, isRTL && { marginRight: 0, marginLeft: Spacing.md }]}>
-                                    <Text style={[styles.stepNumber, { color: Colors.primary }]}>1</Text>
-                                </View>
-                                <View style={{ flex: 1 }}>
-                                    <Text style={[styles.sectionTitle, { color: colors.text, textAlign: rtlTextAlign(isRTL) }]}>{t('newRequest.selectVehicle')}</Text>
-                                    <Text style={[styles.sectionSubtitle, { color: colors.textSecondary, textAlign: rtlTextAlign(isRTL) }]}>
-                                        {t('newRequest.chooseFromCars')}
-                                    </Text>
-                                </View>
-                            </View>
 
-                            <MyVehiclesSelector
-                                onSelect={handleVehicleSelect}
-                                selectedVehicleId={selectedVehicle?.vehicle_id}
-                                onVehiclesLoaded={handleVehiclesLoaded}
-                            />
+                        <VehicleSelectionStep
+                            colors={colors}
+                            t={t}
+                            isRTL={isRTL}
+                            rtlFlexDirection={rtlFlexDirection}
+                            rtlTextAlign={rtlTextAlign}
+                            selectedVehicle={selectedVehicle}
+                            handleVehicleSelect={handleVehicleSelect}
+                            handleVehiclesLoaded={handleVehiclesLoaded}
+                            navigation={navigation}
+                        />
 
-                            {selectedVehicle && (
-                                <View style={[styles.selectedVehicleBadge, { backgroundColor: Colors.primary + '10' }]}>
-                                    <Ionicons name="checkmark-circle" size={20} color={Colors.primary} />
-                                    <View style={{ flex: 1 }}>
-                                        <Text style={[styles.selectedText, { color: Colors.primary }]}>
-                                            {selectedVehicle.car_make} {selectedVehicle.car_model} ({selectedVehicle.car_year})
-                                        </Text>
-                                        {selectedVehicle.vin_number ? (
-                                            <Text style={styles.vinStatusGreen}>
-                                                {t('newRequest.vinVerified', { vin: selectedVehicle.vin_number })}
-                                            </Text>
-                                        ) : (
-                                            <TouchableOpacity
-                                                onPress={() => navigation.navigate('MyVehicles')}
-                                                style={styles.vinWarningBtn}
-                                            >
-                                                <Text style={styles.vinStatusRed}>
-                                                    {t('newRequest.tapToAddVin')}
-                                                </Text>
-                                            </TouchableOpacity>
-                                        )}
-                                    </View>
-                                </View>
-                            )}
+                        <PartDetailsStep
+                            colors={colors}
+                            t={t}
+                            isRTL={isRTL}
+                            rtlFlexDirection={rtlFlexDirection}
+                            rtlTextAlign={rtlTextAlign}
+                            partCategory={partCategory}
+                            setPartCategory={setPartCategory}
+                            availableSubCategories={availableSubCategories}
+                            partSubCategory={partSubCategory}
+                            setPartSubCategory={setPartSubCategory}
+                            partDescription={partDescription}
+                            setPartDescription={setPartDescription}
+                            quantity={quantity}
+                            setQuantity={setQuantity}
+                            side={side}
+                            setSide={setSide}
+                            partNumber={partNumber}
+                            setPartNumber={setPartNumber}
+                            condition={condition}
+                            setCondition={setCondition}
+                            CONDITION_OPTIONS={CONDITION_OPTIONS}
+                        />
 
-                            {!selectedVehicle && (
-                                <TouchableOpacity
-                                    onPress={() => navigation.navigate('MyVehicles')}
-                                    style={styles.addVehicleButton}
-                                >
-                                    <Text style={[styles.addVehicleText, { color: Colors.primary }]}>
-                                        {t('newRequest.addNewVehicle')}
-                                    </Text>
-                                </TouchableOpacity>
-                            )}
-                        </View>
+                        <RequestPhotosStep
+                            colors={colors}
+                            t={t}
+                            isRTL={isRTL}
+                            rtlTextAlign={rtlTextAlign}
+                            images={images}
+                            handlePickImage={handlePickImage}
+                            handleTakePhoto={handleTakePhoto}
+                            handleRemoveImage={handleRemoveImage}
+                        />
 
-                        {/* 2. Part Details */}
-                        <View style={[styles.section, { backgroundColor: colors.surface }]}>
-                            <View style={[styles.sectionHeader, { flexDirection: rtlFlexDirection(isRTL) }]}>
-                                <View style={[styles.stepBadge, { backgroundColor: '#F59E0B15' }, isRTL && { marginRight: 0, marginLeft: Spacing.md }]}>
-                                    <Text style={[styles.stepNumber, { color: '#F59E0B' }]}>2</Text>
-                                </View>
-                                <View style={{ flex: 1 }}>
-                                    <Text style={[styles.sectionTitle, { color: colors.text, textAlign: rtlTextAlign(isRTL) }]}>{t('newRequest.partDetails')}</Text>
-                                    <Text style={[styles.sectionSubtitle, { color: colors.textSecondary, textAlign: rtlTextAlign(isRTL) }]}>
-                                        {t('newRequest.whatDoYouNeed')}
-                                    </Text>
-                                </View>
-                            </View>
-
-                            {/* Category (Optional) */}
-                            <SearchableDropdown
-                                label={t('newRequest.categoryOptional')}
-                                placeholder={t('newRequest.categoryPlaceholder')}
-                                items={PART_CATEGORIES}
-                                value={partCategory}
-                                onSelect={setPartCategory}
-                            />
-
-                            {/* Subcategory (Optional) */}
-                            {partCategory && availableSubCategories.length > 0 && (
-                                <SearchableDropdown
-                                    label={t('newRequest.subcategoryOptional')}
-                                    placeholder={t('newRequest.selectSubcategory')}
-                                    items={availableSubCategories}
-                                    value={partSubCategory}
-                                    onSelect={setPartSubCategory}
-                                />
-                            )}
-
-                            {/* Part Description */}
-                            <View style={styles.inputGroup}>
-                                <Text style={[styles.label, { color: colors.text, textAlign: rtlTextAlign(isRTL) }]}>
-                                    {t('newRequest.description')} *
-                                </Text>
-                                <TextInput
-                                    style={[
-                                        styles.textArea,
-                                        {
-                                            backgroundColor: colors.background,
-                                            color: colors.text,
-                                            borderColor: colors.border,
-                                            textAlign: rtlTextAlign(isRTL)
-                                        },
-                                    ]}
-                                    placeholder={t('newRequest.descriptionPlaceholder')}
-                                    placeholderTextColor={colors.textMuted}
-                                    value={partDescription}
-                                    onChangeText={setPartDescription}
-                                    multiline
-                                    numberOfLines={4}
-                                    textAlignVertical="top"
-                                />
-                                <Text style={[styles.charCount, { color: colors.textMuted }]}>
-                                    {partDescription.length}/500
-                                </Text>
-                            </View>
-
-                            <PartSpecsCard
-                                quantity={quantity}
-                                onQuantityChange={setQuantity}
-                                side={side}
-                                onSideChange={setSide}
-                                partNumber={partNumber}
-                                onPartNumberChange={setPartNumber}
-                                condition={condition}
-                                onConditionChange={setCondition}
-                                conditionOptions={CONDITION_OPTIONS}
-                            />
-                        </View>
-
-                        {/* 3. Photos */}
-                        <View style={[styles.section, { backgroundColor: colors.surface }]}>
-                            <View style={styles.sectionHeader}>
-                                <View style={[styles.stepBadge, { backgroundColor: '#22C55E15' }]}>
-                                    <Text style={[styles.stepNumber, { color: '#22C55E' }]}>3</Text>
-                                </View>
-                                <View style={{ flex: 1 }}>
-                                    <Text style={[styles.sectionTitle, { color: colors.text, textAlign: rtlTextAlign(isRTL) }]}>
-                                        {t('newRequest.photosOptional')}
-                                    </Text>
-                                    <Text style={[styles.sectionSubtitle, { color: colors.textSecondary, textAlign: rtlTextAlign(isRTL) }]}>
-                                        {t('newRequest.addUpTo5')}
-                                    </Text>
-                                </View>
-                            </View>
-
-                            <PhotoUploadSection
-                                images={images}
-                                maxImages={5}
-                                onPickImage={handlePickImage}
-                                onTakePhoto={handleTakePhoto}
-                                onRemoveImage={handleRemoveImage}
-                            />
-                        </View>
-
-                        {/* 4. Vehicle ID Photos */}
-                        <View style={[styles.section, { backgroundColor: colors.surface }]}>
-                            <View style={styles.sectionHeader}>
-                                <View style={[styles.stepBadge, { backgroundColor: '#F59E0B15' }]}>
-                                    <Text style={[styles.stepNumber, { color: '#F59E0B' }]}>4</Text>
-                                </View>
-                                <View style={{ flex: 1 }}>
-                                    <Text style={[styles.sectionTitle, { color: colors.text, textAlign: rtlTextAlign(isRTL) }]}>
-                                        {t('newRequest.vehicleIdPhotos')}
-                                    </Text>
-                                    <Text style={[styles.sectionSubtitle, { color: colors.textSecondary, textAlign: rtlTextAlign(isRTL) }]}>
-                                        {t('newRequest.helpGaragesIdentify')}
-                                    </Text>
-                                </View>
-                            </View>
-
-                            <Text style={[styles.photoLabel, { color: colors.textSecondary, marginBottom: 8, textAlign: rtlTextAlign(isRTL) }]}>
-                                {t('newRequest.frontView')}
-                            </Text>
-                            <PhotoUploadSection
-                                images={carFrontImage ? [carFrontImage] : []}
-                                maxImages={1}
-                                onPickImage={handlePickCarFrontImage}
-                                onTakePhoto={handleTakeCarFrontPhoto}
-                                onRemoveImage={() => setCarFrontImage(null)}
-                                fullWidth
-                            />
-
-                            <Text style={[styles.photoLabel, { color: colors.textSecondary, marginBottom: 8, textAlign: rtlTextAlign(isRTL) }]}>
-                                {t('newRequest.rearView')}
-                            </Text>
-                            <PhotoUploadSection
-                                images={carRearImage ? [carRearImage] : []}
-                                maxImages={1}
-                                onPickImage={handlePickCarRearImage}
-                                onTakePhoto={handleTakeCarRearPhoto}
-                                onRemoveImage={() => setCarRearImage(null)}
-                                fullWidth
-                            />
-                        </View>
+                        <VehicleIdPhotosStep
+                            colors={colors}
+                            t={t}
+                            isRTL={isRTL}
+                            rtlTextAlign={rtlTextAlign}
+                            carFrontImage={carFrontImage}
+                            handlePickCarFrontImage={handlePickCarFrontImage}
+                            handleTakeCarFrontPhoto={handleTakeCarFrontPhoto}
+                            setCarFrontImage={setCarFrontImage}
+                            carRearImage={carRearImage}
+                            handlePickCarRearImage={handlePickCarRearImage}
+                            handleTakeCarRearPhoto={handleTakeCarRearPhoto}
+                            setCarRearImage={setCarRearImage}
+                        />
 
                         <View style={{ height: 120 }} />
                     </Animated.View>
@@ -831,92 +360,6 @@ const styles = StyleSheet.create({
     proTipContent: { flex: 1 },
     proTipTitle: { fontSize: FontSizes.sm, fontWeight: '700', color: '#92400E', marginBottom: 2, textAlign: 'left' }, // rtlTextAlign applied inline
     proTipText: { fontSize: FontSizes.sm, color: '#78350F', lineHeight: 18, textAlign: 'left' }, // rtlTextAlign applied inline
-    section: {
-        borderRadius: BorderRadius.lg,
-        padding: Spacing.lg,
-        marginBottom: Spacing.md,
-    },
-    sectionHeader: {
-        flexDirection: 'row',
-        alignItems: 'center',
-        marginBottom: Spacing.lg,
-        gap: Spacing.md,
-    },
-    stepBadge: {
-        width: 36,
-        height: 36,
-        borderRadius: 18,
-        alignItems: 'center',
-        justifyContent: 'center',
-    },
-    stepNumber: { fontSize: FontSizes.md, fontWeight: '800' },
-    sectionTitle: { fontSize: FontSizes.lg, fontWeight: '700' },
-    sectionSubtitle: { fontSize: FontSizes.sm, marginTop: 2 },
-    selectedVehicleBadge: {
-        flexDirection: 'row',
-        alignItems: 'center',
-        padding: Spacing.md,
-        borderRadius: BorderRadius.md,
-        marginTop: Spacing.md,
-        gap: Spacing.sm,
-    },
-    checkIcon: { fontSize: 18 },
-    selectedText: { fontSize: FontSizes.md, fontWeight: '600' },
-    vinStatusGreen: {
-        fontSize: FontSizes.xs,
-        color: '#22C55E',
-        marginTop: 2,
-    },
-    vinStatusAmber: {
-        fontSize: FontSizes.xs,
-        color: '#F59E0B',
-        marginTop: 2,
-    },
-    vinStatusRed: {
-        fontSize: FontSizes.xs,
-        color: '#EF4444',
-        fontWeight: '600',
-    },
-    vinWarningBtn: {
-        marginTop: 4,
-        paddingVertical: 4,
-        paddingHorizontal: 8,
-        backgroundColor: '#FEE2E2',
-        borderRadius: BorderRadius.sm,
-    },
-    addVehicleButton: {
-        padding: Spacing.md,
-        alignItems: 'center',
-        marginTop: Spacing.sm,
-    },
-    addVehicleText: { fontSize: FontSizes.md, fontWeight: '600' },
-    inputGroup: { marginBottom: Spacing.md },
-    label: {
-        fontSize: FontSizes.sm,
-        fontWeight: '600',
-        marginBottom: Spacing.xs,
-    },
-    input: {
-        borderWidth: 1,
-        borderRadius: BorderRadius.md,
-        paddingHorizontal: Spacing.md,
-        paddingVertical: Spacing.sm,
-        fontSize: FontSizes.md,
-    },
-    textArea: {
-        borderWidth: 1,
-        borderRadius: BorderRadius.md,
-        paddingHorizontal: Spacing.md,
-        paddingVertical: Spacing.sm,
-        fontSize: FontSizes.md,
-        minHeight: 120,
-    },
-    charCount: {
-        fontSize: FontSizes.xs,
-        marginTop: Spacing.xs,
-        textAlign: 'right',
-    },
-    photoLabel: { fontSize: FontSizes.sm, fontWeight: '600', marginBottom: 8 },
     footer: {
         paddingHorizontal: Spacing.lg,
         paddingTop: Spacing.md,
