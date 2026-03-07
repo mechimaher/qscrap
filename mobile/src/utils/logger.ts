@@ -17,6 +17,9 @@ export const warn = isDev
 
 export const error = console.error.bind(console); // Keep errors for crash reporting
 
+// Alias for backward compatibility
+export const logError = error;
+
 export const info = isDev
     ? console.info.bind(console)
     : () => { };

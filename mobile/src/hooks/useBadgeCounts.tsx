@@ -1,4 +1,4 @@
-import { log, warn, error as logError } from '../utils/logger';
+import { log, warn, logError } from '../utils/logger';
 /**
  * BadgeCountsContext
  * Provides shared badge counts across the entire app

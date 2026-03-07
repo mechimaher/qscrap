@@ -1,4 +1,4 @@
-import { log, warn, error } from "../utils/logger";
+import { log, warn, error as logError } from "../utils/logger";
 import { API_BASE_URL, API_ENDPOINTS } from "../config/api";
 import * as SecureStore from "expo-secure-store";
 import { User } from "./types";

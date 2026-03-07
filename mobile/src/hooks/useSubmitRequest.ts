@@ -2,7 +2,7 @@ import { useState } from 'react';
 import { Alert } from 'react-native';
 import * as Haptics from 'expo-haptics';
 import { api } from '../services/api';
-import { log, error as logError } from '../utils/logger';
+import { error as logError } from '../utils/logger';
 import { handleApiError } from '../utils/errorHandler';
 
 interface SubmitParams {

@@ -1,4 +1,4 @@
-import { log, warn, error as logError } from '../utils/logger';
+import { log, warn, logError } from '../utils/logger';
 // QScrap Socket Service - Real-time Updates for Bids, Orders, Tracking
 import { useEffect, useRef, useState, useCallback } from 'react';
 import { io, Socket } from 'socket.io-client';

@@ -1,6 +1,6 @@
 import { useState, useEffect, useRef, useCallback } from 'react';
 import { api } from '../services/api';
-import { log, error as logError } from '../utils/logger';
+import { logError } from '../utils/logger';
 import { handleApiError } from '../utils/errorHandler';
 
 interface PaymentIntentParams {
