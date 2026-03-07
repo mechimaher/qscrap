@@ -34,4 +34,4 @@ export const createLogger = (tag: string) => ({
     info: (...args: any[]) => info(`[${tag}]`, ...args),
 });
 
-export default { log, warn, error, info, createLogger };
+export default { log, warn, error, logError, info, createLogger };
