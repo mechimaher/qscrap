@@ -54,7 +54,7 @@ export const LoyaltyDiscountCard: React.FC<LoyaltyDiscountCardProps> = ({
                             {loyaltyData.tier.toUpperCase()} • {loyaltyData.discountPercentage}% {t('payment.off')}
                         </Text>
                         <Text style={styles.vvipLoyaltySavings}>
-                            {applyDiscount ? t('payment.save', { amount: paymentType === 'full' ? calculateDiscount.discountOnTotal : calculateDiscount.discountOnPart }) : t('payment.tapToApply')}
+                            {applyDiscount ? t('payment.save').replace('{{amount}}', (paymentType === 'full' ? calculateDiscount.discountOnTotal : calculateDiscount.discountOnPart).toString()) : t('payment.tapToApply')}
                         </Text>
                     </View>
                 </View>

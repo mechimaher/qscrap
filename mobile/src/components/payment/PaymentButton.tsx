@@ -63,7 +63,7 @@ export const PaymentButton: React.FC<PaymentButtonProps> = ({
                             <ActivityIndicator color="#fff" />
                         ) : (
                             <Text style={styles.payButtonText}>
-                                {t('payment.pay', { amount: payNowAmount.toFixed(2) })}
+                                {t('payment.pay').replace('{{amount}}', payNowAmount.toFixed(2))}
                             </Text>
                         )}
                     </LinearGradient>

@@ -33,13 +33,13 @@ export const DeliveryLocationWidget: React.FC<DeliveryLocationWidgetProps> = ({ 
     const loadAddresses = async () => {
         try {
             setIsLoading(true);
-            const result = await api.request<{ addresses: Address[] }>('/addresses');
+            const result = await api.request('/addresses') as { addresses: Address[] };
             const addresses = result.addresses || [];
             setSavedAddresses(addresses);
 
             // Set default address for display (but DON'T trigger onLocationChange)
             // Let user explicitly select - triggering callback here closes the modal!
-            const defaultAddr = addresses.find(a => a.is_default) || addresses[0];
+            const defaultAddr = addresses.find((a: Address) => a.is_default) || addresses[0];
             if (defaultAddr) {
                 setCurrentAddress(defaultAddr);
                 // REMOVED: onLocationChange?.(defaultAddr); - this was closing modal prematurely
@@ -411,4 +411,3 @@ const styles = StyleSheet.create({
     },
 });
 
-export default DeliveryLocationWidget;

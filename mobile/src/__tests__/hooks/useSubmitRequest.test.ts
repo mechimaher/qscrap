@@ -154,7 +154,7 @@ describe('useSubmitRequest', () => {
         );
 
         // Run submit asynchronously
-        let promise;
+        let promise: Promise<void> | undefined;
         act(() => {
             promise = result.current.handleSubmit();
         });

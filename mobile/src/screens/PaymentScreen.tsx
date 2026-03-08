@@ -289,7 +289,7 @@ export default function PaymentScreen() {
 
                 <PaymentButton
                     freeOrder={freeOrder}
-                    handleFreeOrder={handleFreeOrder}
+                    handleFreeOrder={() => handleFreeOrder(calculateDiscount)}
                     isLoading={isLoading}
                     cardComplete={cardComplete}
                     handlePayment={handlePayment}

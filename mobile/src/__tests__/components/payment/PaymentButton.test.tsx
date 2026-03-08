@@ -45,69 +45,69 @@ describe('PaymentButton', () => {
 
     it('should render payment button when not free order', () => {
         render(<PaymentButton {...defaultProps} />);
-        
+
         expect(screen.getByText('Pay 50 QAR')).toBeTruthy();
     });
 
     it('should render free order button when freeOrder is true', () => {
         render(<PaymentButton {...defaultProps} freeOrder={true} />);
-        
+
         expect(screen.getByText('Claim Free Order')).toBeTruthy();
     });
 
     it('should call handlePayment when payment button is pressed', () => {
         const handlePaymentMock = jest.fn();
         render(<PaymentButton {...defaultProps} handlePayment={handlePaymentMock} />);
-        
+
         const payButton = screen.getByText('Pay 50 QAR').parent?.parent;
         if (payButton) {
             fireEvent.press(payButton);
         }
-        
+
         expect(handlePaymentMock).toHaveBeenCalled();
     });
 
     it('should call handleFreeOrder when free order button is pressed', () => {
         const handleFreeOrderMock = jest.fn();
         render(<PaymentButton {...defaultProps} freeOrder={true} handleFreeOrder={handleFreeOrderMock} />);
-        
+
         const freeButton = screen.getByText('Claim Free Order').parent?.parent;
         if (freeButton) {
             fireEvent.press(freeButton);
         }
-        
+
         expect(handleFreeOrderMock).toHaveBeenCalled();
     });
 
     it('should be disabled when card is not complete', () => {
         render(<PaymentButton {...defaultProps} cardComplete={false} />);
-        
+
         const payButton = screen.getByText('Pay 50 QAR').parent?.parent;
         expect(payButton?.props.accessibilityState?.disabled).toBe(true);
     });
 
     it('should be disabled when loading', () => {
         render(<PaymentButton {...defaultProps} isLoading={true} />);
-        
+
         const payButton = screen.getByText('Pay 50 QAR').parent?.parent;
         expect(payButton?.props.accessibilityState?.disabled).toBe(true);
     });
 
     it('should show loading spinner when loading', () => {
         const { getByTestId } = render(<PaymentButton {...defaultProps} isLoading={true} />);
-        
+
         expect(getByTestId('activity-indicator')).toBeTruthy();
     });
 
     it('should not show button text when loading', () => {
         render(<PaymentButton {...defaultProps} isLoading={true} />);
-        
+
         expect(screen.queryByText('Pay 50 QAR')).toBeNull();
     });
 
     it('should display green gradient when card is complete', () => {
         render(<PaymentButton {...defaultProps} cardComplete={true} />);
-        
+
         // Gradient should be green when enabled
         const gradient = screen.getByTestId('payment-gradient');
         expect(gradient.props.colors).toEqual(['#22c55e', '#16a34a']);
@@ -115,7 +115,7 @@ describe('PaymentButton', () => {
 
     it('should display gray gradient when card is incomplete', () => {
         render(<PaymentButton {...defaultProps} cardComplete={false} />);
-        
+
         // Gradient should be gray when disabled
         const gradient = screen.getByTestId('payment-gradient');
         expect(gradient.props.colors).toEqual(['#9ca3af', '#6b7280']);
@@ -123,7 +123,7 @@ describe('PaymentButton', () => {
 
     it('should display gold gradient for free order', () => {
         render(<PaymentButton {...defaultProps} freeOrder={true} />);
-        
+
         // Gradient should be gold for free order
         const gradient = screen.getByTestId('payment-gradient');
         expect(gradient.props.colors).toEqual(['#FFD700', '#FFA500']);
@@ -131,27 +131,28 @@ describe('PaymentButton', () => {
 
     it('should render security text for normal payment', () => {
         render(<PaymentButton {...defaultProps} />);
-        
+
         expect(screen.getByText('Secured by Stripe')).toBeTruthy();
     });
 
     it('should render loyalty text for free order', () => {
         render(<PaymentButton {...defaultProps} freeOrder={true} />);
-        
+
         expect(screen.getByText('Loyalty points at work!')).toBeTruthy();
     });
 
     it('should format pay amount with 2 decimal places', () => {
         render(<PaymentButton {...defaultProps} payNowAmount={50.5} />);
-        
+
         expect(screen.getByText('Pay 50.50 QAR')).toBeTruthy();
     });
 
     it('should support RTL layout', () => {
-        const { rerender } = render(<PaymentButton {...defaultProps} isRTL={false} />);
+        // PaymentButton doesn't use isRTL directly in its props
+        const { rerender } = render(<PaymentButton {...defaultProps} />);
         expect(screen.getByText('Pay 50 QAR')).toBeTruthy();
-        
-        rerender(<PaymentButton {...defaultProps} isRTL={true} />);
+
+        rerender(<PaymentButton {...defaultProps} />);
         expect(screen.getByText('Pay 50 QAR')).toBeTruthy();
     });
 });

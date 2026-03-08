@@ -88,7 +88,7 @@ export function useStripeCheckout({
                 toast.show({
                     type: 'info',
                     title: t('payment.paymentProcessing'),
-                    message: t('payment.paymentProcessingMsg', { status: paymentIntent?.status }),
+                    message: t('payment.paymentProcessingMsg') + (paymentIntent?.status ? ` (${paymentIntent.status})` : ''),
                 });
                 setTimeout(() => {
                     navigation.reset({
