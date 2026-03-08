@@ -128,7 +128,7 @@ export const BiometricLogin: React.FC<BiometricLoginProps> = ({
                 if (credentials?.phone && credentials?.password) {
                     // Auto-login with stored credentials
                     const loginResult = await login(credentials.phone, credentials.password);
-                    
+
                     if (loginResult.success) {
                         onSuccess?.();
                     } else {
@@ -136,16 +136,22 @@ export const BiometricLogin: React.FC<BiometricLoginProps> = ({
                         await api.clearBiometricCredentials();
                         Alert.alert(
                             t('common.error'),
-                            'Login failed. Please login manually with your password.',
+                            loginResult.error || 'Login failed. Please login manually with your password.',
                             [{ text: t('common.ok') }]
                         );
                         onFail?.();
                     }
                 } else {
-                    // No credentials stored
+                    // No credentials stored - provide helpful message
+                    const missingInfo = !credentials 
+                        ? 'Biometric login was not set up. Please login with your password first.'
+                        : !credentials.phone 
+                            ? 'Phone number not saved. Please login manually.'
+                            : 'Password not saved. Please login manually.';
+                    
                     Alert.alert(
                         t('common.error'),
-                        'No biometric credentials found. Please login manually.',
+                        missingInfo,
                         [{ text: t('common.ok') }]
                     );
                     onFail?.();

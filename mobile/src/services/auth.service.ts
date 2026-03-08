@@ -1,4 +1,4 @@
-import { apiClient } from "./apiClient";
+import { apiClient, BIOMETRIC_PHONE, BIOMETRIC_PASSWORD, BIOMETRIC_ENABLED } from "./apiClient";
 import { API_ENDPOINTS, API_BASE_URL } from "../config/api";
 import { log, warn, error } from "../utils/logger";
 import * as SecureStore from "expo-secure-store";
@@ -153,16 +153,24 @@ export class AuthService {
     async getBiometricCredentials(): Promise<{ phone: string; password: string } | null> {
         try {
             const enabled = await SecureStore.getItemAsync(BIOMETRIC_ENABLED);
+            log('[API] Biometric enabled flag:', enabled);
+
             if (enabled !== 'true') {
+                warn('[API] Biometric not enabled');
                 return null;
             }
 
             const phone = await SecureStore.getItemAsync(BIOMETRIC_PHONE);
             const password = await SecureStore.getItemAsync(BIOMETRIC_PASSWORD);
 
+            log('[API] Retrieved phone:', phone ? '***' + phone.slice(-4) : 'null');
+            log('[API] Password exists:', !!password);
+
             if (phone && password) {
                 return { phone, password };
             }
+
+            warn('[API] Phone or password missing');
             return null;
         } catch (error) {
             warn('[API] Failed to get biometric credentials:', error);

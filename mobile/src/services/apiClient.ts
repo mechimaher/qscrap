@@ -6,9 +6,9 @@ import { User } from "./types";
 const TOKEN_KEY = 'qscrap_token';
 const REFRESH_TOKEN_KEY = 'qscrap_refresh_token';
 const USER_KEY = 'qscrap_user';
-const BIOMETRIC_PHONE = 'qscrap_biometric_phone';
-const BIOMETRIC_PASSWORD = 'qscrap_biometric_password';
-const BIOMETRIC_ENABLED = 'qscrap_biometric_enabled';
+export const BIOMETRIC_PHONE = 'qscrap_biometric_phone';
+export const BIOMETRIC_PASSWORD = 'qscrap_biometric_password';
+export const BIOMETRIC_ENABLED = 'qscrap_biometric_enabled';
 
 export class ApiClient {
     private token: string | null = null;
