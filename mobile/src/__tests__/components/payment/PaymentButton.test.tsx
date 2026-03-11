@@ -46,7 +46,7 @@ describe('PaymentButton', () => {
     it('should render payment button when not free order', () => {
         render(<PaymentButton {...defaultProps} />);
 
-        expect(screen.getByText('Pay 50 QAR')).toBeTruthy();
+        expect(screen.getByText('Pay 50.00 QAR')).toBeTruthy();
     });
 
     it('should render free order button when freeOrder is true', () => {
@@ -59,7 +59,7 @@ describe('PaymentButton', () => {
         const handlePaymentMock = jest.fn();
         render(<PaymentButton {...defaultProps} handlePayment={handlePaymentMock} />);
 
-        const payButton = screen.getByText('Pay 50 QAR').parent?.parent;
+        const payButton = screen.getByTestId('payment-button');
         if (payButton) {
             fireEvent.press(payButton);
         }
@@ -71,7 +71,7 @@ describe('PaymentButton', () => {
         const handleFreeOrderMock = jest.fn();
         render(<PaymentButton {...defaultProps} freeOrder={true} handleFreeOrder={handleFreeOrderMock} />);
 
-        const freeButton = screen.getByText('Claim Free Order').parent?.parent;
+        const freeButton = screen.getByTestId('free-order-button');
         if (freeButton) {
             fireEvent.press(freeButton);
         }
@@ -82,15 +82,16 @@ describe('PaymentButton', () => {
     it('should be disabled when card is not complete', () => {
         render(<PaymentButton {...defaultProps} cardComplete={false} />);
 
-        const payButton = screen.getByText('Pay 50 QAR').parent?.parent;
-        expect(payButton?.props.accessibilityState?.disabled).toBe(true);
+        const payButton = screen.getByTestId('payment-button');
+        expect(payButton.props.disabled).toBe(true);
     });
 
     it('should be disabled when loading', () => {
         render(<PaymentButton {...defaultProps} isLoading={true} />);
 
-        const payButton = screen.getByText('Pay 50 QAR').parent?.parent;
-        expect(payButton?.props.accessibilityState?.disabled).toBe(true);
+        // The text is not rendered when loading, so we find the button by its test ID
+        const payButton = screen.getByTestId('payment-button');
+        expect(payButton.props.disabled).toBe(true);
     });
 
     it('should show loading spinner when loading', () => {
@@ -102,7 +103,7 @@ describe('PaymentButton', () => {
     it('should not show button text when loading', () => {
         render(<PaymentButton {...defaultProps} isLoading={true} />);
 
-        expect(screen.queryByText('Pay 50 QAR')).toBeNull();
+        expect(screen.queryByText('Pay 50.00 QAR')).toBeNull();
     });
 
     it('should display green gradient when card is complete', () => {
@@ -150,9 +151,9 @@ describe('PaymentButton', () => {
     it('should support RTL layout', () => {
         // PaymentButton doesn't use isRTL directly in its props
         const { rerender } = render(<PaymentButton {...defaultProps} />);
-        expect(screen.getByText('Pay 50 QAR')).toBeTruthy();
+        expect(screen.getByText('Pay 50.00 QAR')).toBeTruthy();
 
         rerender(<PaymentButton {...defaultProps} />);
-        expect(screen.getByText('Pay 50 QAR')).toBeTruthy();
+        expect(screen.getByText('Pay 50.00 QAR')).toBeTruthy();
     });
 });

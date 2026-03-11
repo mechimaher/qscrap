@@ -135,9 +135,9 @@ export default function ProfileScreen() {
             accessibilityRole="button"
             accessibilityLabel={label}
         >
-            <View style={[styles.menuIconBg, danger && styles.menuIconBgDanger, rtlMarginHorizontal(isRTL, 0, Spacing.md)]}
+            <View style={[styles.menuIconBg, { backgroundColor: colors.surfaceSecondary }, danger && { backgroundColor: colors.danger + '20' }, rtlMarginHorizontal(isRTL, 0, Spacing.md)]}
             >
-                <Ionicons name={icon as any} size={18} color={danger ? '#EF4444' : '#525252'} />
+                <Ionicons name={icon as any} size={18} color={danger ? colors.danger : colors.textSecondary} />
             </View>
             <Text style={[styles.menuLabel, { color: danger ? '#EF4444' : colors.text }]}>{label}</Text>
             {badge ? (
@@ -274,12 +274,12 @@ export default function ProfileScreen() {
                 </View>
 
                 {/* Version Footer */}
-                <View style={styles.versionContainer}>
-                    <View style={styles.versionBadge}>
-                        <Text style={styles.versionText}>{t('profile.version', { version: APP_VERSION })}</Text>
+                <View style={[styles.versionContainer]}>
+                    <View style={[styles.versionBadge, { backgroundColor: colors.surfaceSecondary }]}>
+                        <Text style={[styles.versionText, { color: colors.textSecondary }]}>{t('profile.version', { version: APP_VERSION })}</Text>
                     </View>
-                    <Text style={styles.copyrightText}>{t('profile.allRightsReserved', { year: new Date().getFullYear() })}</Text>
-                    <Text style={styles.madeWithText}>{t('profile.madeInQatar')}</Text>
+                    <Text style={[styles.copyrightText, { color: colors.textMuted }]}>{t('profile.allRightsReserved', { year: new Date().getFullYear() })}</Text>
+                    <Text style={[styles.madeWithText, { color: colors.textMuted }]}>{t('profile.madeInQatar')}</Text>
                 </View>
 
                 <View style={{ height: 100 }} />
@@ -298,7 +298,6 @@ export default function ProfileScreen() {
 const styles = StyleSheet.create({
     container: {
         flex: 1,
-        backgroundColor: '#FAFAFA',
     },
     scrollView: {
         flex: 1,
@@ -309,9 +308,7 @@ const styles = StyleSheet.create({
         alignItems: 'center',
         paddingHorizontal: Spacing.lg,
         paddingVertical: Spacing.md,
-        backgroundColor: '#fff',
         borderBottomWidth: 1,
-        borderBottomColor: '#F0F0F0',
     },
     headerTitle: {
         fontSize: FontSizes.xxl,
@@ -405,7 +402,6 @@ const styles = StyleSheet.create({
         letterSpacing: 1,
     },
     menuCard: {
-        backgroundColor: '#fff',
         borderRadius: BorderRadius.xl,
         overflow: 'hidden',
         ...Shadows.sm,
@@ -415,19 +411,14 @@ const styles = StyleSheet.create({
         alignItems: 'center',
         padding: Spacing.md,
         borderBottomWidth: 1,
-        borderBottomColor: '#F5F5F5',
     },
     menuIconBg: {
         width: 40,
         height: 40,
         borderRadius: 20,
-        backgroundColor: '#F5F5F5',
         justifyContent: 'center',
         alignItems: 'center',
         marginRight: Spacing.md,
-    },
-    menuIconBgDanger: {
-        backgroundColor: '#FEE2E2',
     },
     menuIcon: {
         fontSize: 18,
@@ -462,7 +453,6 @@ const styles = StyleSheet.create({
         paddingHorizontal: Spacing.lg,
     },
     versionBadge: {
-        backgroundColor: '#F0F0F0',
         paddingHorizontal: Spacing.md,
         paddingVertical: Spacing.xs,
         borderRadius: BorderRadius.full,

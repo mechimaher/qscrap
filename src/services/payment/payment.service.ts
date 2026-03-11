@@ -13,6 +13,7 @@ import { PaymentGateway, PaymentIntent, PaymentMethod, PaymentStatus, CreatePaym
 import { StripePaymentProvider } from './stripe.provider';
 import { MockPaymentProvider } from './mock.provider';
 import logger from '../../utils/logger';
+import { EscrowService } from '../escrow.service';
 
 export interface DepositResult {
     intentId: string;
@@ -32,9 +33,11 @@ export interface CancellationRefundResult {
 export class PaymentService {
     private provider: PaymentGateway;
     private pool: Pool;
+    private escrowService: EscrowService;
 
     constructor(pool: Pool, providerType?: 'stripe' | 'mock') {
         this.pool = pool;
+        this.escrowService = new EscrowService(pool);
 
         // Select provider based on config or environment
         const type = providerType || process.env.PAYMENT_PROVIDER || 'mock';
@@ -115,6 +118,16 @@ export class PaymentService {
             throw error;
         } finally {
             client.release();
+        }
+    }
+
+    async cancelPaymentIntent(providerIntentId: string): Promise<void> {
+        try {
+            await this.provider.cancelPaymentIntent(providerIntentId);
+            logger.info('Cancelled payment intent', { providerIntentId });
+        } catch (err) {
+            logger.warn('Cancel payment intent failed', { providerIntentId, error: (err as Error).message });
+            throw err;
         }
     }
 
@@ -217,7 +230,8 @@ export class PaymentService {
             // Get order details AND intent type for correct status updates
             const orderResult = await client.query(`
                 SELECT o.order_id, o.order_number, o.customer_id, o.garage_id, 
-                       o.total_amount, o.delivery_fee, pr.part_description,
+                       o.total_amount, o.delivery_fee, o.commission_rate, o.platform_fee, o.garage_payout_amount,
+                       pr.part_description,
                        pi.intent_type, pi.amount as payment_amount
                 FROM orders o
                 JOIN payment_intents pi ON pi.order_id = o.order_id
@@ -270,6 +284,11 @@ export class PaymentService {
             // Send notifications to garage (async, don't block)
             this.notifyGarageOfConfirmedOrder(order).catch(err =>
                 logger.error('Notification error', { error: (err as Error).message })
+            );
+
+            // Create escrow record (async, best-effort to avoid blocking payment)
+            this.ensureEscrowForOrder(order).catch(err =>
+                logger.error('Escrow creation failed', { error: (err as Error).message, orderId: order.order_id })
             );
 
             return true;
@@ -325,6 +344,45 @@ export class PaymentService {
 
         } catch (err) {
             logger.error('Garage notification failed', { error: (err as Error).message });
+        }
+    }
+
+    /**
+    * Ensure an escrow transaction exists for the order.
+    * Best-effort: logs errors but does not block payment confirmation.
+    */
+    private async ensureEscrowForOrder(order: any): Promise<void> {
+        try {
+            const existing = await this.escrowService.getEscrowByOrder(order.order_id);
+            if (existing) return;
+
+            const deliveryFee = parseFloat(order.delivery_fee || 0);
+            const totalAmount = parseFloat(order.total_amount || order.payment_amount || 0);
+            const partPrice = order.part_price !== undefined && order.part_price !== null
+                ? parseFloat(order.part_price)
+                : (Number.isFinite(totalAmount) ? totalAmount - deliveryFee : 0);
+            const amount = Number.isFinite(partPrice) ? Math.max(0, partPrice) : 0;
+            const platformFeePercent = order.commission_rate
+                ? parseFloat(order.commission_rate) * 100
+                : 0;
+
+            if (Number.isNaN(amount) || amount <= 0) {
+                logger.warn('Escrow skipped due to invalid amount', { orderId: order.order_id, amount });
+                return;
+            }
+
+            await this.escrowService.createEscrow({
+                orderId: order.order_id,
+                customerId: order.customer_id,
+                sellerId: order.garage_id,
+                amount,
+                platformFeePercent,
+                deliveryFee,
+                inspectionWindowHours: 48,
+            });
+            logger.info('Escrow created for order', { orderId: order.order_id, amount });
+        } catch (err) {
+            logger.error('ensureEscrowForOrder failed', { error: (err as Error).message, orderId: order.order_id });
         }
     }
 

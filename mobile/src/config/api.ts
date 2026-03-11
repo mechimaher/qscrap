@@ -35,6 +35,9 @@ export const API_ENDPOINTS = {
     MY_ORDERS: '/orders/my',
     ACCEPT_BID: (bidId: string) => `/orders/accept-bid/${bidId}`,
     CONFIRM_DELIVERY: (orderId: string) => `/orders/${orderId}/confirm-delivery`,
+    UNDO_ORDER: (orderId: string) => `/orders/${orderId}/undo`,
+    DELIVERY_OTP: (orderId: string) => `/orders/${orderId}/otp`,
+    REFRESH_DELIVERY_OTP: (orderId: string) => `/orders/${orderId}/otp/regenerate`,
     SUBMIT_REVIEW: (orderId: string) => `/orders/${orderId}/review`,
     // FIXED: Order cancellation uses /cancellations/orders/...
     CANCEL_ORDER: (orderId: string) => `/cancellations/orders/${orderId}/cancel/customer`,

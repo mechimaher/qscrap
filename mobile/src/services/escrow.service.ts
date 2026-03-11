@@ -1,7 +1,6 @@
 import { apiClient } from "./apiClient";
 import { API_ENDPOINTS, API_BASE_URL } from "../config/api";
 import { log, warn, error } from "../utils/logger";
-import * as SecureStore from "expo-secure-store";
 import { User, AuthResponse, Request, Bid, Order, Stats, Address, Product, Notification, SupportTicket, Vehicle, LoyaltyTransaction, PaymentMethod, UrgentAction } from "./types";
 
 export class EscrowService {
@@ -25,10 +24,10 @@ export class EscrowService {
         });
     }
 
-    async raiseEscrowDispute(escrowId: string, reason: string, photos?: string[]): Promise<{ success: boolean; dispute_id: string; message?: string }> {
+    async raiseEscrowDispute(escrowId: string, reason: string, photos?: string[], note?: string): Promise<{ success: boolean; dispute_id: string; message?: string }> {
         return apiClient.request(`/escrow/${escrowId}/dispute`, {
             method: 'POST',
-            body: JSON.stringify({ reason, photos })
+            body: JSON.stringify({ reason, photos, note })
         });
     }
 

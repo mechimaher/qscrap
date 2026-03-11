@@ -83,6 +83,7 @@ export interface Order {
     driver_name?: string;
     driver_phone?: string;
     driver_id?: string;
+    delivery_otp?: string;
     delivery_lat?: number;
     delivery_lng?: number;
     driver_lat?: number;

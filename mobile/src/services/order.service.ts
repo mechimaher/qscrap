@@ -1,7 +1,6 @@
 import { apiClient } from "./apiClient";
 import { API_ENDPOINTS, API_BASE_URL } from "../config/api";
 import { log, warn, error } from "../utils/logger";
-import * as SecureStore from "expo-secure-store";
 import { User, AuthResponse, Request, Bid, Order, Stats, Address, Product, Notification, SupportTicket, Vehicle, LoyaltyTransaction, PaymentMethod, UrgentAction } from "./types";
 
 export class OrderService {
@@ -25,6 +24,23 @@ export class OrderService {
 
     async confirmDelivery(orderId: string): Promise<{ success: boolean; message: string }> {
         return apiClient.request(API_ENDPOINTS.CONFIRM_DELIVERY(orderId), {
+            method: 'POST',
+        });
+    }
+
+    async undoOrder(orderId: string, reason = 'panic_button'): Promise<{ success: boolean; message?: string; expired?: boolean }> {
+        return apiClient.request(API_ENDPOINTS.UNDO_ORDER(orderId), {
+            method: 'POST',
+            body: JSON.stringify({ reason })
+        });
+    }
+
+    async getDeliveryOtp(orderId: string): Promise<{ otp_code: string; expires_at?: string; attempts_remaining?: number }> {
+        return apiClient.request(API_ENDPOINTS.DELIVERY_OTP(orderId));
+    }
+
+    async regenerateDeliveryOtp(orderId: string): Promise<{ otp_code: string; expires_at?: string }> {
+        return apiClient.request(API_ENDPOINTS.REFRESH_DELIVERY_OTP(orderId), {
             method: 'POST',
         });
     }

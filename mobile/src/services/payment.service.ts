@@ -1,28 +1,9 @@
 import { apiClient } from "./apiClient";
 import { API_ENDPOINTS, API_BASE_URL } from "../config/api";
 import { log, warn, error } from "../utils/logger";
-import * as SecureStore from "expo-secure-store";
 import { User, AuthResponse, Request, Bid, Order, Stats, Address, Product, Notification, SupportTicket, Vehicle, LoyaltyTransaction, PaymentMethod, UrgentAction } from "./types";
 
 export class PaymentService {
-    async processPayment(paymentData: {
-            order_id: string;
-            amount: number;
-            card_number: string;
-            expiry_month: string;
-            expiry_year: string;
-            cvv: string;
-            cardholder_name: string;
-        }): Promise<{
-            success: boolean;
-            transaction_id: string;
-            receipt_url?: string;
-        }> {
-        return apiClient.request('/payments/process', {
-            method: 'POST',
-            body: JSON.stringify(paymentData)
-        });
-    }
 
     async getTestCards(): Promise<{ cards: PaymentMethod[] }> {
         return apiClient.request('/payments/test-cards');

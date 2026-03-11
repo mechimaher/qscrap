@@ -22,6 +22,7 @@ export interface EscrowTransaction {
     buyer_confirmed_at?: Date;
     released_at?: Date;
     dispute_raised_at?: Date;
+    dispute_reason?: string;
     created_at: Date;
 }
 
@@ -67,24 +68,34 @@ export class EscrowService {
 
         const platformFee = amount * (platformFeePercent / 100);
         const sellerPayout = amount - platformFee;
+        const inspectionExpiresAt = new Date(Date.now() + inspectionWindowHours * 60 * 60 * 1000);
 
-        const result = await this.pool.query(`
-            INSERT INTO escrow_transactions (
-                order_id, customer_id, seller_id, amount, platform_fee,
-                seller_payout, delivery_fee, inspection_window_hours
-            )
-            VALUES ($1, $2, $3, $4, $5, $6, $7, $8)
-            RETURNING *
-        `, [orderId, customerId, sellerId, amount, platformFee, sellerPayout, deliveryFee, inspectionWindowHours]);
+        try {
+            const result = await this.pool.query(`
+                INSERT INTO escrow_transactions (
+                    order_id, customer_id, seller_id, amount, platform_fee,
+                    seller_payout, delivery_fee, inspection_window_hours, inspection_expires_at
+                )
+                VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9)
+                RETURNING *
+            `, [orderId, customerId, sellerId, amount, platformFee, sellerPayout, deliveryFee, inspectionWindowHours, inspectionExpiresAt]);
 
-        logger.info('[Escrow] Created escrow', {
-            escrow_id: result.rows[0].escrow_id,
-            order_id: orderId,
-            amount,
-            expires_at: result.rows[0].inspection_expires_at
-        });
+            logger.info('[Escrow] Created escrow', {
+                escrow_id: result.rows[0].escrow_id,
+                order_id: orderId,
+                amount,
+                expires_at: result.rows[0].inspection_expires_at
+            });
 
-        return result.rows[0];
+            return result.rows[0];
+        } catch (err: any) {
+            // If unique constraint exists and we hit duplicate, return existing
+            if (err.code === '23505') {
+                const existing = await this.getEscrowByOrder(orderId);
+                if (existing) return existing;
+            }
+            throw err;
+        }
     }
 
     /**
@@ -143,7 +154,8 @@ export class EscrowService {
     /**
      * Raise a dispute
      */
-    async raiseDispute(escrowId: string, userId: string, reason: string): Promise<EscrowTransaction> {
+    async raiseDispute(escrowId: string, userId: string, reason: string, note?: string): Promise<EscrowTransaction> {
+        const reasonText = note ? `${reason} — ${note}` : reason;
         const result = await this.pool.query(`
             UPDATE escrow_transactions
             SET 
@@ -153,7 +165,7 @@ export class EscrowService {
                 updated_at = NOW()
             WHERE escrow_id = $1 AND status = 'held' AND customer_id = $3
             RETURNING *
-        `, [escrowId, reason, userId]);
+        `, [escrowId, reasonText, userId]);
 
         if (result.rows.length === 0) {
             throw new Error('Escrow not found, not in held status, or user not authorized');

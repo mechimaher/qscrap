@@ -124,10 +124,7 @@ module.exports = ({ config }) => {
             'expo-localization',
             [
                 '@stripe/stripe-react-native',
-                {
-                    merchantIdentifier: 'merchant.qa.qscrap.app',
-                    enableGooglePay: true,
-                },
+                {},
             ],
             'expo-font',
             [

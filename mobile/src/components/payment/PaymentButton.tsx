@@ -12,6 +12,7 @@ interface PaymentButtonProps {
     payNowAmount: number;
     t: (key: string) => string;
     colors: any;
+    disabled?: boolean;
 }
 
 export const PaymentButton: React.FC<PaymentButtonProps> = ({
@@ -23,7 +24,10 @@ export const PaymentButton: React.FC<PaymentButtonProps> = ({
     payNowAmount,
     t,
     colors,
+    disabled = false,
 }) => {
+    const isButtonDisabled = isLoading || disabled;
+    
     return (
         <View style={[styles.footer, { backgroundColor: colors.surface }]}>
             {freeOrder ? (
@@ -32,14 +36,15 @@ export const PaymentButton: React.FC<PaymentButtonProps> = ({
                     testID="free-order-button"
                     style={styles.payButton}
                     onPress={handleFreeOrder}
-                    disabled={isLoading}
+                    disabled={isButtonDisabled}
                 >
                     <LinearGradient
+                        testID="payment-gradient"
                         colors={['#FFD700', '#FFA500']}
                         style={styles.payGradient}
                     >
                         {isLoading ? (
-                            <ActivityIndicator color="#fff" />
+                            <ActivityIndicator testID="activity-indicator" color="#fff" />
                         ) : (
                             <Text style={[styles.payButtonText, { color: '#1a1a2e' }]}>
                                 {t('payment.freeOrderClaim')}
@@ -51,16 +56,17 @@ export const PaymentButton: React.FC<PaymentButtonProps> = ({
                 /* Normal Payment Button */
                 <TouchableOpacity
                     testID="payment-button"
-                    style={[styles.payButton, (!cardComplete || isLoading) && styles.payButtonDisabled]}
+                    style={[styles.payButton, (!cardComplete || isButtonDisabled) && styles.payButtonDisabled]}
                     onPress={handlePayment}
-                    disabled={!cardComplete || isLoading}
+                    disabled={!cardComplete || isButtonDisabled}
                 >
                     <LinearGradient
+                        testID="payment-gradient"
                         colors={cardComplete ? ['#22c55e', '#16a34a'] : ['#9ca3af', '#6b7280']}
                         style={styles.payGradient}
                     >
                         {isLoading ? (
-                            <ActivityIndicator color="#fff" />
+                            <ActivityIndicator testID="activity-indicator" color="#fff" />
                         ) : (
                             <Text style={styles.payButtonText}>
                                 {t('payment.pay').replace('{{amount}}', payNowAmount.toFixed(2))}

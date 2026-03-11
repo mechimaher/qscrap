@@ -73,6 +73,41 @@ jest.mock('expo-image', () => {
     };
 });
 
+// Mock @sentry/react-native
+jest.mock('@sentry/react-native', () => ({
+    init: jest.fn(),
+    captureException: jest.fn(),
+    captureMessage: jest.fn(),
+    setUser: jest.fn(),
+    setContext: jest.fn(),
+    setTag: jest.fn(),
+    setExtra: jest.fn(),
+    addBreadcrumb: jest.fn(),
+    withScope: jest.fn((cb) => cb({ setTag: jest.fn(), setExtra: jest.fn() })),
+    Severity: { Error: 'error', Warning: 'warning', Info: 'info' },
+    wrap: jest.fn((component) => component),
+    ReactNativeTracing: jest.fn(),
+    ReactNavigationInstrumentation: jest.fn(() => ({
+        registerNavigationContainer: jest.fn(),
+    })),
+}));
+
+// Mock @expo/vector-icons
+jest.mock('@expo/vector-icons', () => {
+    const React = require('react');
+    const { Text } = require('react-native');
+    const mockIcon = (props) => React.createElement(Text, { testID: props.name, ...props }, props.name || 'icon');
+    return {
+        Ionicons: mockIcon,
+        MaterialIcons: mockIcon,
+        FontAwesome: mockIcon,
+        AntDesign: mockIcon,
+        Entypo: mockIcon,
+        Feather: mockIcon,
+        MaterialCommunityIcons: mockIcon,
+    };
+});
+
 // Mock expo-linear-gradient
 jest.mock('expo-linear-gradient', () => {
     const { View } = require('react-native');
@@ -88,6 +123,35 @@ jest.mock('expo-location', () => ({
         coords: { latitude: 25.2854, longitude: 51.531 },
     }),
     reverseGeocodeAsync: jest.fn().mockResolvedValue([{ city: 'Doha', country: 'Qatar' }]),
+}));
+
+// Mock expo-localization
+jest.mock('expo-localization', () => ({
+    locale: 'en-US',
+    locales: ['en-US'],
+    getLocales: jest.fn(() => [{ languageTag: 'en-US', languageCode: 'en', regionCode: 'US' }]),
+    useLocales: jest.fn(() => [{ languageTag: 'en-US', languageCode: 'en', regionCode: 'US' }]),
+    getCalendars: jest.fn(() => [{ calendar: 'gregory', timeZone: 'Asia/Qatar', uses24hourClock: false }]),
+}));
+
+// Mock expo-updates
+jest.mock('expo-updates', () => ({
+    reloadAsync: jest.fn(),
+    checkForUpdateAsync: jest.fn(),
+    fetchUpdateAsync: jest.fn(),
+    isEnabled: false,
+    channel: 'default',
+    updateId: null,
+    releaseChannel: 'default',
+}));
+
+// Mock expo-image-picker
+jest.mock('expo-image-picker', () => ({
+    launchImageLibraryAsync: jest.fn().mockResolvedValue({ canceled: true, assets: [] }),
+    launchCameraAsync: jest.fn().mockResolvedValue({ canceled: true, assets: [] }),
+    requestMediaLibraryPermissionsAsync: jest.fn().mockResolvedValue({ status: 'granted' }),
+    requestCameraPermissionsAsync: jest.fn().mockResolvedValue({ status: 'granted' }),
+    MediaTypeOptions: { Images: 'Images', Videos: 'Videos', All: 'All' },
 }));
 
 // Mock expo-notifications

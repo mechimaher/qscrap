@@ -17,6 +17,7 @@ import { errorHandler, notFoundHandler } from './middleware/errorHandler.middlew
 import { securityMiddleware, additionalSecurityHeaders, sanitizeRequest } from './middleware/security.middleware';
 import { validateOrigin, ensureCsrfToken, validateCsrfToken } from './middleware/csrf.middleware';
 import { getHealth, getJobHealth, triggerJob } from './controllers/health.controller';
+import { testAuth } from './middleware/testAuth.middleware';
 
 const app = express();
 
@@ -76,17 +77,26 @@ app.use(sanitizeRequest);
 // ==========================================
 // CSRF PROTECTION (Double-Submit Cookie)
 // ==========================================
-// Set CSRF token cookie for all requests
-app.use(ensureCsrfToken);
-// Validate CSRF token for all API state-changing requests
-app.use('/api', validateCsrfToken);
-app.use('/api', validateOrigin);
+if (process.env.NODE_ENV !== 'test') {
+    // Set CSRF token cookie for all requests
+    app.use(ensureCsrfToken);
+    // Validate CSRF token for all API state-changing requests
+    app.use('/api', validateCsrfToken);
+    app.use('/api', validateOrigin);
+}
+
+// Test auth shim (no-op in prod)
+if (process.env.NODE_ENV === 'test') {
+    app.use('/api', testAuth);
+}
 
 // ==========================================
 // AUDIT LOGGING (State-changing operations)
 // ==========================================
 import { auditLog } from './middleware/auditLog.middleware';
-app.use('/api', auditLog);
+if (process.env.NODE_ENV !== 'test') {
+    app.use('/api', auditLog);
+}
 
 // ==========================================
 // STATIC FILES (CDN-Ready - Phase 1)

@@ -9,6 +9,9 @@ import pool from '../config/db';
 import logger from '../utils/logger';
 import { emitToUser, emitToGarage, emitToOperations } from '../utils/socketIO';
 import { getErrorMessage } from '../types';
+import { getPaymentService } from './payment';
+
+const paymentService = getPaymentService(pool);
 
 // ============================================
 // TYPES
@@ -472,7 +475,8 @@ export async function undoOrder(
         // Lock order for update
         const orderResult = await client.query(
             `SELECT order_id, order_status, customer_id, garage_id, bid_id, request_id,
-                    undo_deadline, undo_used, order_number
+                    undo_deadline, undo_used, order_number,
+                    deposit_intent_id, final_payment_intent_id
              FROM orders WHERE order_id = $1 FOR UPDATE`,
             [orderId]
         );
@@ -562,6 +566,17 @@ export async function undoOrder(
             UPDATE part_requests SET status = 'active', updated_at = NOW()
             WHERE request_id = $1
         `, [order.request_id]);
+
+        // Attempt to cancel payment intents (best-effort)
+        try {
+            if (order.final_payment_intent_id) {
+                await paymentService.cancelPaymentIntent(order.final_payment_intent_id);
+            } else if (order.deposit_intent_id) {
+                await paymentService.cancelPaymentIntent(order.deposit_intent_id);
+            }
+        } catch (cancelErr) {
+            logger.warn('Undo payment cancel failed', { orderId, error: getErrorMessage(cancelErr) });
+        }
 
         // Record in order history
         await client.query(`

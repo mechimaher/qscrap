@@ -18,6 +18,7 @@ import { Image } from 'expo-image';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { LinearGradient } from 'expo-linear-gradient';
 import * as Haptics from 'expo-haptics';
+import * as Clipboard from 'expo-clipboard';
 import { useNavigation, useRoute, useFocusEffect } from '@react-navigation/native';
 import { NativeStackNavigationProp } from '@react-navigation/native-stack';
 import { api, Order } from '../services/api';
@@ -89,6 +90,11 @@ export default function OrderDetailScreen() {
     const [isConfirming, setIsConfirming] = useState(false);
     const [isCancelling, setIsCancelling] = useState(false);
     const [isDownloadingInvoice, setIsDownloadingInvoice] = useState(false);
+    const [deliveryOtp, setDeliveryOtp] = useState<string | null>(null);
+    const [otpExpiresAt, setOtpExpiresAt] = useState<string | null>(null);
+    const [isOtpLoading, setIsOtpLoading] = useState(false);
+    const [escrowStatus, setEscrowStatus] = useState<any>(null);
+    const [isFreezingEscrow, setIsFreezingEscrow] = useState(false);
 
     // Review modal state
     const [showReviewModal, setShowReviewModal] = useState(false);
@@ -98,18 +104,55 @@ export default function OrderDetailScreen() {
     const [deliveryRating, setDeliveryRating] = useState(5);
     const [reviewText, setReviewText] = useState('');
     const [isSubmittingReview, setIsSubmittingReview] = useState(false);
+    const [showEscrowModal, setShowEscrowModal] = useState(false);
+    const [disputeReason, setDisputeReason] = useState<'defective' | 'wrong_part' | 'damaged' | 'missing'>('defective');
+    const [disputeNote, setDisputeNote] = useState('');
+
+    const loadDeliveryOtp = useCallback(async (silent = true) => {
+        setIsOtpLoading(true);
+        try {
+            const otpResponse = await api.getDeliveryOtp(orderId);
+            if (otpResponse?.otp_code) {
+                setDeliveryOtp(otpResponse.otp_code);
+                setOtpExpiresAt(otpResponse.expires_at || null);
+            }
+        } catch (error) {
+            if (!silent) {
+                handleApiError(error, toast, { useAlert: true, customMessage: t('order.otpLoadFailed') });
+            }
+        } finally {
+            setIsOtpLoading(false);
+        }
+    }, [orderId, toast, t]);
+
+    const loadEscrowStatus = useCallback(async () => {
+        try {
+            const status = await api.getEscrowStatus(orderId);
+            setEscrowStatus(status);
+        } catch (error) {
+            // Silent fail to avoid blocking screen; escrow card will stay hidden
+        }
+    }, [orderId]);
 
     const loadOrderDetails = useCallback(async () => {
         try {
             const data = await api.getMyOrders();
             const foundOrder = data.orders?.find((o: Order) => o.order_id === orderId);
             setOrder(foundOrder || null);
+            if (foundOrder) {
+                if (foundOrder.delivery_otp) {
+                    setDeliveryOtp(foundOrder.delivery_otp);
+                } else {
+                    loadDeliveryOtp(true);
+                }
+                loadEscrowStatus();
+            }
         } catch (error) {
             handleApiError(error, toast, { customMessage: t('order.loadFailed'), useAlert: true });
         } finally {
             setIsLoading(false);
         }
-    }, [orderId]);
+    }, [orderId, loadDeliveryOtp, loadEscrowStatus, t, toast]);
 
     useFocusEffect(useCallback(() => { loadOrderDetails(); }, [loadOrderDetails]));
 
@@ -264,6 +307,56 @@ export default function OrderDetailScreen() {
         });
     };
 
+    const getEscrowCountdown = () => {
+        if (!escrowStatus?.inspection_expires_at) return null;
+        const expiry = new Date(escrowStatus.inspection_expires_at).getTime();
+        if (Number.isNaN(expiry)) return null;
+        const diff = expiry - Date.now();
+        if (diff <= 0) return t('order.escrowExpiresNow');
+        const minutes = Math.max(1, Math.round(diff / 60000));
+        if (minutes >= 60) {
+            const hrs = Math.floor(minutes / 60);
+            const mins = minutes % 60;
+            return t('order.escrowExpiresIn', { time: `${hrs}h ${mins}m` });
+        }
+        return t('order.escrowExpiresIn', { time: `${minutes}m` });
+    };
+
+    const getOtpExpiryLabel = () => {
+        if (!otpExpiresAt) return null;
+        const expiry = new Date(otpExpiresAt).getTime();
+        if (Number.isNaN(expiry)) return null;
+        const diff = expiry - Date.now();
+        if (diff <= 0) return t('order.otpExpiresSoon');
+        const minutes = Math.max(1, Math.round(diff / 60000));
+        if (minutes >= 60) {
+            const hrs = Math.floor(minutes / 60);
+            const mins = minutes % 60;
+            return t('order.otpExpiresIn', { time: `${hrs}h ${mins}m` });
+        }
+        return t('order.otpExpiresIn', { time: `${minutes}m` });
+    };
+
+    const handleFreezeFunds = async () => {
+        if (!escrowStatus?.escrow_id) {
+            toast.error(t('common.error'), t('order.escrowUnavailable'));
+            return;
+        }
+        setIsFreezingEscrow(true);
+        Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Heavy);
+        try {
+            await api.raiseEscrowDispute(escrowStatus.escrow_id, disputeReason, undefined, disputeNote.trim() || undefined);
+            setEscrowStatus((prev: any) => prev ? { ...prev, status: 'disputed' } : prev);
+            Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success);
+            Alert.alert(t('order.escrowFrozenTitle'), t('order.escrowFrozenBody'));
+            setShowEscrowModal(false);
+        } catch (error: any) {
+            handleApiError(error, toast, { useAlert: true });
+        } finally {
+            setIsFreezingEscrow(false);
+        }
+    };
+
     // Star rating component
     const StarRating = ({ rating, onRatingChange, label }: { rating: number; onRatingChange: (r: number) => void; label: string }) => (
         <View style={styles.ratingRow}>
@@ -336,6 +429,58 @@ export default function OrderDetailScreen() {
 
                 {/* Timeline */}
                 <VisualTimeline status={order.order_status} colors={colors} t={t} />
+
+                {/* Sanitization Promise */}
+                <View style={[styles.sanitizationCard, { backgroundColor: colors.surfaceSecondary }]}>
+                    <Ionicons name="sparkles-outline" size={18} color={Colors.success} style={{ marginRight: Spacing.sm }} />
+                    <Text style={[styles.sanitizationText, { color: colors.textSecondary, textAlign: rtlTextAlign(isRTL) }]}>
+                        {t('order.sanitizationPromise')}
+                    </Text>
+                </View>
+
+                {/* Delivery OTP */}
+                {(deliveryOtp || isOtpLoading) && (
+                    <View style={[styles.otpCard, { backgroundColor: colors.surface }]}>
+                        <View style={[styles.otpHeader, { flexDirection: rtlFlexDirection(isRTL) }]}>
+                            <Text style={[styles.sectionTitle, { marginBottom: 0, color: colors.text }]}>{t('order.deliveryOtpTitle')}</Text>
+                            {getOtpExpiryLabel() && (
+                                <Text style={[styles.otpExpiry, { color: colors.textSecondary }]}>
+                                    {getOtpExpiryLabel()}
+                                </Text>
+                            )}
+                        </View>
+                        {isOtpLoading ? (
+                            <ActivityIndicator color={Colors.primary} />
+                        ) : (
+                            <>
+                                <Text style={styles.otpCode}>{deliveryOtp}</Text>
+                                <Text style={[styles.otpHint, { color: colors.textSecondary, textAlign: rtlTextAlign(isRTL) }]}>
+                                    {t('order.otpInstruction')}
+                                </Text>
+                                <View style={[styles.otpActions, { flexDirection: rtlFlexDirection(isRTL) }]}>
+                                    <TouchableOpacity
+                                        style={styles.otpActionButton}
+                                        onPress={async () => {
+                                            if (!deliveryOtp) return;
+                                            await Clipboard.setStringAsync(deliveryOtp);
+                                            Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
+                                        }}
+                                    >
+                                        <Ionicons name="copy-outline" size={18} color={Colors.primary} />
+                                        <Text style={[styles.otpActionText, { color: Colors.primary }]}>{t('tracking.copyOtp')}</Text>
+                                    </TouchableOpacity>
+                                    <TouchableOpacity
+                                        style={styles.otpActionButton}
+                                        onPress={() => loadDeliveryOtp(false)}
+                                    >
+                                        <Ionicons name="refresh" size={18} color={Colors.primary} />
+                                        <Text style={[styles.otpActionText, { color: Colors.primary }]}>{t('tracking.refreshOtp')}</Text>
+                                    </TouchableOpacity>
+                                </View>
+                            </>
+                        )}
+                    </View>
+                )}
 
                 {/* Order Details */}
                 <View style={[styles.detailsCard, { backgroundColor: colors.surface }]}>
@@ -415,6 +560,13 @@ export default function OrderDetailScreen() {
                             {t('common.total')}
                         </Text>
                         <Text style={[styles.totalValue, { color: statusConfig.color, textAlign: rtlTextAlign(isRTL) }]}>{order.total_amount} {t('common.currency')}</Text>
+                    </View>
+
+                    <View style={[styles.detailRow, { flexDirection: rtlFlexDirection(isRTL) }]}>
+                        <Ionicons name="images-outline" size={18} color={Colors.primary} style={{ marginRight: Spacing.xs }} />
+                        <Text style={[styles.detailValue, { color: colors.textSecondary, textAlign: rtlTextAlign(isRTL), flex: 1 }]}>
+                            {t('order.visualGuarantee')}
+                        </Text>
                     </View>
 
                     {order.order_status === 'completed' && (
@@ -517,6 +669,36 @@ export default function OrderDetailScreen() {
                     </TouchableOpacity>
                 )}
 
+                {/* Escrow shield + Report Issue */}
+                {escrowStatus?.status === 'held' && (
+                        <View style={[styles.escrowCard, { backgroundColor: colors.surface }]}>
+                            <View style={{ flex: 1 }}>
+                                <Text style={[styles.escrowTitle, { color: colors.text }]}>{t('order.escrowShield')}</Text>
+                                <Text style={[styles.escrowSubtitle, { color: colors.textSecondary }]}>{getEscrowCountdown() || t('order.escrowExpiresFallback')}</Text>
+                            </View>
+                            <TouchableOpacity
+                                style={[styles.freezeButton, isFreezingEscrow && { opacity: 0.7 }]}
+                                onPress={() => setShowEscrowModal(true)}
+                                disabled={isFreezingEscrow}
+                            >
+                                {isFreezingEscrow ? (
+                                    <ActivityIndicator color="#fff" />
+                                ) : (
+                                <Text style={styles.freezeButtonText}>{t('order.freezeFunds')}</Text>
+                            )}
+                        </TouchableOpacity>
+                    </View>
+                )}
+
+                {escrowStatus?.status === 'disputed' && (
+                    <View style={[styles.escrowCard, { backgroundColor: colors.surface }]}>
+                        <Ionicons name="shield-checkmark" size={20} color={Colors.success} style={{ marginRight: Spacing.sm }} />
+                        <Text style={[styles.escrowSubtitle, { color: colors.text }]}>
+                            {t('order.escrowFrozen')}
+                        </Text>
+                    </View>
+                )}
+
                 {/* Continue Payment - For pending_payment orders */}
                 {order.order_status === 'pending_payment' && (
                     <TouchableOpacity
@@ -567,6 +749,71 @@ export default function OrderDetailScreen() {
 
                 <View style={{ height: 100 }} />
             </ScrollView>
+
+            {/* Escrow Dispute Modal */}
+            <Modal visible={showEscrowModal} transparent animationType="slide" onRequestClose={() => setShowEscrowModal(false)}>
+                <View style={styles.modalOverlay}>
+                    <View style={[styles.modalContent, { backgroundColor: colors.surface }]}>
+                        <Text style={[styles.modalTitle, { color: colors.text }]}>{t('order.freezeFunds')}</Text>
+                        <Text style={[styles.modalSubtitle, { color: colors.textSecondary }]}>
+                            {t('order.freezeFundsSubtitle')}
+                        </Text>
+
+                        {[
+                            { key: 'defective', label: t('order.reasonDefective') },
+                            { key: 'wrong_part', label: t('order.reasonWrongPart') },
+                            { key: 'damaged', label: t('order.reasonDamaged') },
+                            { key: 'missing', label: t('order.reasonMissing') },
+                        ].map((item) => (
+                            <TouchableOpacity
+                                key={item.key}
+                                style={[
+                                    styles.reasonRow,
+                                    { borderColor: disputeReason === item.key ? Colors.primary : colors.border }
+                                ]}
+                                onPress={() => setDisputeReason(item.key as any)}
+                            >
+                                <Ionicons
+                                    name={disputeReason === item.key ? 'radio-button-on' : 'radio-button-off'}
+                                    size={20}
+                                    color={disputeReason === item.key ? Colors.primary : colors.textSecondary}
+                                />
+                                <Text style={[styles.reasonText, { color: colors.text }]}>{item.label}</Text>
+                            </TouchableOpacity>
+                        ))}
+
+                        <Text style={[styles.reviewInputLabel, { color: colors.textSecondary }]}>{t('order.reasonNote')}</Text>
+                        <TextInput
+                            style={[styles.reviewInput, { backgroundColor: colors.background, color: colors.text, borderColor: colors.border }]}
+                            placeholder={t('order.reasonNotePlaceholder')}
+                            placeholderTextColor={colors.textMuted}
+                            value={disputeNote}
+                            onChangeText={setDisputeNote}
+                            multiline
+                            numberOfLines={3}
+                        />
+
+                        <View style={[styles.modalButtons, { flexDirection: rtlFlexDirection(isRTL) }]}>
+                            <TouchableOpacity style={[styles.skipButton, { borderColor: colors.border }]} onPress={() => setShowEscrowModal(false)}>
+                                <Text style={[styles.skipButtonText, { color: colors.textSecondary }]}>{t('common.cancel')}</Text>
+                            </TouchableOpacity>
+                            <TouchableOpacity
+                                style={[styles.submitButton, isFreezingEscrow && { opacity: 0.7 }]}
+                                onPress={handleFreezeFunds}
+                                disabled={isFreezingEscrow}
+                            >
+                                <LinearGradient colors={[Colors.primary, '#B31D4A']} style={styles.submitGradient}>
+                                    {isFreezingEscrow ? (
+                                        <ActivityIndicator color="#fff" size="small" />
+                                    ) : (
+                                        <Text style={styles.submitButtonText}>{t('order.freezeFunds')}</Text>
+                                    )}
+                                </LinearGradient>
+                            </TouchableOpacity>
+                        </View>
+                    </View>
+                </View>
+            </Modal>
 
             {/* Review Modal */}
             <Modal visible={showReviewModal} transparent animationType="slide" onRequestClose={() => setShowReviewModal(false)}>
@@ -677,6 +924,34 @@ const styles = StyleSheet.create({
     divider: { height: 1, backgroundColor: Colors.light.borderLight, marginVertical: Spacing.md },
     totalLabel: { fontSize: FontSizes.lg, fontWeight: '700' },
     totalValue: { fontSize: FontSizes.xl, fontWeight: '800' },
+    sanitizationCard: {
+        marginHorizontal: Spacing.lg,
+        marginBottom: Spacing.md,
+        padding: Spacing.md,
+        borderRadius: BorderRadius.lg,
+        borderWidth: 1,
+        borderColor: Colors.light.borderLight,
+        flexDirection: 'row',
+        alignItems: 'center',
+        ...Shadows.sm,
+    },
+    sanitizationText: { fontSize: FontSizes.sm, flex: 1 },
+    otpCard: {
+        marginHorizontal: Spacing.lg,
+        marginBottom: Spacing.lg,
+        padding: Spacing.lg,
+        borderRadius: BorderRadius.lg,
+        borderWidth: 1,
+        borderColor: Colors.light.borderLight,
+        ...Shadows.md
+    },
+    otpHeader: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center' },
+    otpExpiry: { fontSize: FontSizes.sm },
+    otpCode: { fontSize: FontSizes.xxxl, fontWeight: '800', letterSpacing: 4, marginVertical: Spacing.xs, color: Colors.light.text },
+    otpHint: { fontSize: FontSizes.sm, marginBottom: Spacing.sm },
+    otpActions: { flexDirection: 'row', gap: Spacing.lg, marginTop: Spacing.xs },
+    otpActionButton: { flexDirection: 'row', alignItems: 'center', gap: Spacing.xs },
+    otpActionText: { fontSize: FontSizes.sm, fontWeight: '700' },
     invoiceButton: { marginTop: Spacing.lg, borderRadius: BorderRadius.xl, overflow: 'hidden', ...Shadows.md },
     invoiceGradient: { flexDirection: 'row', alignItems: 'center', justifyContent: 'center', paddingVertical: Spacing.md },
     invoiceIcon: { fontSize: 20, marginRight: Spacing.sm },
@@ -700,6 +975,26 @@ const styles = StyleSheet.create({
     confirmGradient: { flexDirection: 'row', paddingVertical: Spacing.lg, alignItems: 'center', justifyContent: 'center' },
     confirmIcon: { fontSize: 20, marginRight: Spacing.sm },
     confirmText: { fontSize: FontSizes.lg, fontWeight: '800', color: '#fff' },
+    escrowCard: {
+        marginHorizontal: Spacing.lg,
+        marginBottom: Spacing.lg,
+        padding: Spacing.lg,
+        borderRadius: BorderRadius.xl,
+        borderWidth: 1,
+        borderColor: Colors.light.borderLight,
+        flexDirection: 'row',
+        alignItems: 'center',
+        ...Shadows.sm,
+    },
+    escrowTitle: { fontSize: FontSizes.md, fontWeight: '700' },
+    escrowSubtitle: { fontSize: FontSizes.sm, color: Colors.light.textSecondary },
+    freezeButton: {
+        backgroundColor: Colors.error,
+        paddingVertical: Spacing.sm,
+        paddingHorizontal: Spacing.md,
+        borderRadius: BorderRadius.lg,
+    },
+    freezeButtonText: { color: '#fff', fontWeight: '800' },
 
     metaInfo: { alignItems: 'center', marginTop: Spacing.md },
     metaText: { fontSize: FontSizes.sm, color: Colors.light.textMuted },
@@ -724,6 +1019,17 @@ const styles = StyleSheet.create({
     star: { fontSize: 28, marginHorizontal: 2 },
     reviewInputLabel: { fontSize: FontSizes.sm, fontWeight: '600', marginTop: Spacing.lg, marginBottom: Spacing.sm },
     reviewInput: { borderWidth: 1, borderRadius: BorderRadius.lg, padding: Spacing.md, fontSize: FontSizes.md, minHeight: 100 },
+    reasonRow: {
+        flexDirection: 'row',
+        alignItems: 'center',
+        gap: Spacing.sm,
+        paddingVertical: Spacing.sm,
+        paddingHorizontal: Spacing.md,
+        borderWidth: 1,
+        borderRadius: BorderRadius.lg,
+        marginTop: Spacing.sm,
+    },
+    reasonText: { fontSize: FontSizes.md, fontWeight: '600', flex: 1 },
     modalButtons: { flexDirection: 'row', gap: Spacing.md, marginTop: Spacing.lg },
     skipButton: { flex: 1, paddingVertical: Spacing.md, borderRadius: BorderRadius.xl, borderWidth: 1, alignItems: 'center' },
     skipButtonText: { fontSize: FontSizes.md, fontWeight: '600' },

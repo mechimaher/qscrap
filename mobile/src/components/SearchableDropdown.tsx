@@ -12,6 +12,7 @@ import {
 } from 'react-native';
 import { Colors, Spacing, BorderRadius, FontSizes, Shadows } from '../constants/theme';
 import { Ionicons } from '@expo/vector-icons';
+import { useTheme } from '../contexts/ThemeContext';
 import { LinearGradient } from 'expo-linear-gradient';
 import * as Haptics from 'expo-haptics';
 import { useTranslation } from '../contexts/LanguageContext';
@@ -35,6 +36,7 @@ export default function SearchableDropdown({
     disabled = false,
 }: SearchableDropdownProps) {
     const { t, isRTL } = useTranslation();
+    const { colors } = useTheme();
     const [visible, setVisible] = useState(false);
     const [search, setSearch] = useState('');
     const [filteredItems, setFilteredItems] = useState(items);
@@ -72,18 +74,18 @@ export default function SearchableDropdown({
 
     return (
         <View style={styles.container}>
-            {label && <Text style={styles.label}>{label}</Text>}
+            {label && <Text style={[styles.label, { color: colors.textSecondary }]}>{label}</Text>}
 
             <TouchableOpacity
-                style={[styles.selector, disabled && styles.disabled, { flexDirection: rtlFlexDirection(isRTL) }]}
+                style={[styles.selector, { backgroundColor: colors.surfaceSecondary, borderColor: colors.border }, disabled && styles.disabled, { flexDirection: rtlFlexDirection(isRTL) }]}
                 onPress={() => !disabled && setVisible(true)}
                 activeOpacity={0.7}
                 disabled={disabled}
             >
-                <Text style={[styles.valueText, !value && styles.placeholderText, { textAlign: rtlTextAlign(isRTL) }]}>
+                <Text style={[styles.valueText, { color: colors.text }, !value && { color: colors.textMuted }, { textAlign: rtlTextAlign(isRTL) }]}>
                     {value || placeholder}
                 </Text>
-                <Text style={[styles.arrowIcon, isRTL ? { marginRight: Spacing.sm, marginLeft: 0 } : { marginLeft: Spacing.sm }]}>▼</Text>
+                <Text style={[styles.arrowIcon, { color: colors.textMuted }, isRTL ? { marginRight: Spacing.sm, marginLeft: 0 } : { marginLeft: Spacing.sm }]}>▼</Text>
             </TouchableOpacity>
 
             <Modal
@@ -96,22 +98,22 @@ export default function SearchableDropdown({
                     behavior={Platform.OS === 'ios' ? 'padding' : undefined}
                     style={styles.modalOverlay}
                 >
-                    <View style={styles.modalContent}>
+                    <View style={[styles.modalContent, { backgroundColor: colors.surface }]}>
                         <View style={[styles.modalHeader, { flexDirection: rtlFlexDirection(isRTL) }]}>
-                            <Text style={styles.modalTitle}>{placeholder}</Text>
+                            <Text style={[styles.modalTitle, { color: colors.text }]}>{placeholder}</Text>
                             <TouchableOpacity onPress={() => setVisible(false)} style={styles.closeButton}>
-                                <Text style={styles.closeIcon}>✕</Text>
+                                <Text style={[styles.closeIcon, { color: colors.text }]}>✕</Text>
                             </TouchableOpacity>
                         </View>
 
                         {!isCustom ? (
                             <>
-                                <View style={[styles.searchContainer, { flexDirection: rtlFlexDirection(isRTL) }]}>
-                                    <Ionicons name="search" size={16} color="#9CA3AF" style={isRTL ? { marginLeft: Spacing.sm } : { marginRight: Spacing.sm }} />
+                                <View style={[styles.searchContainer, { backgroundColor: colors.surfaceSecondary, borderColor: colors.border, flexDirection: rtlFlexDirection(isRTL) }]}>
+                                    <Ionicons name="search" size={16} color={colors.textMuted} style={isRTL ? { marginLeft: Spacing.sm } : { marginRight: Spacing.sm }} />
                                     <TextInput
-                                        style={[styles.searchInput, { textAlign: rtlTextAlign(isRTL) }]}
+                                        style={[styles.searchInput, { color: colors.text, textAlign: rtlTextAlign(isRTL) }]}
                                         placeholder={t('common.searchPlaceholder')}
-                                        placeholderTextColor="#999"
+                                        placeholderTextColor={colors.textMuted}
                                         value={search}
                                         onChangeText={setSearch}
                                         autoFocus={true}
@@ -124,11 +126,12 @@ export default function SearchableDropdown({
                                     style={styles.list}
                                     renderItem={({ item }) => (
                                         <TouchableOpacity
-                                            style={[styles.item, { flexDirection: rtlFlexDirection(isRTL) }]}
+                                            style={[styles.item, { borderBottomColor: colors.border }, { flexDirection: rtlFlexDirection(isRTL) }]}
                                             onPress={() => handleSelect(item)}
                                         >
                                             <Text style={[
                                                 styles.itemText,
+                                                { color: colors.text },
                                                 item === value && styles.selectedItemText,
                                                 item === t('common.other') && styles.otherItemText
                                             ]}>
@@ -138,17 +141,17 @@ export default function SearchableDropdown({
                                         </TouchableOpacity>
                                     )}
                                     ListEmptyComponent={
-                                        <Text style={styles.emptyText}>{t('common.noMatches')}</Text>
+                                        <Text style={[styles.emptyText, { color: colors.textSecondary }]}>{t('common.noMatches')}</Text>
                                     }
                                 />
                             </>
                         ) : (
                             <View style={styles.customContainer}>
-                                <Text style={[styles.customLabel, { textAlign: rtlTextAlign(isRTL) }]}>{t('common.enterManually')}</Text>
+                                <Text style={[styles.customLabel, { color: colors.text, textAlign: rtlTextAlign(isRTL) }]}>{t('common.enterManually')}</Text>
                                 <TextInput
-                                    style={[styles.customInput, { textAlign: rtlTextAlign(isRTL) }]}
+                                    style={[styles.customInput, { backgroundColor: colors.surfaceSecondary, color: colors.text, borderColor: colors.border, textAlign: rtlTextAlign(isRTL) }]}
                                     placeholder={t('common.typeValue', { label: label || 'value' })}
-                                    placeholderTextColor="#999"
+                                    placeholderTextColor={colors.textMuted}
                                     value={customValue}
                                     onChangeText={setCustomValue}
                                     autoFocus={true}
@@ -162,10 +165,10 @@ export default function SearchableDropdown({
                                     </LinearGradient>
                                 </TouchableOpacity>
                                 <TouchableOpacity
-                                    style={styles.backButton}
+                                    style={[styles.backButton, { backgroundColor: colors.surfaceSecondary }]}
                                     onPress={() => setIsCustom(false)}
                                 >
-                                    <Text style={styles.backButtonText}>{t('common.backToList')}</Text>
+                                    <Text style={[styles.backButtonText, { color: colors.text }]}>{t('common.backToList')}</Text>
                                 </TouchableOpacity>
                             </View>
                         )}
@@ -238,23 +241,20 @@ const styles = StyleSheet.create({
     closeButton: {
         padding: Spacing.sm,
     },
-    closeIcon: { fontSize: 20, color: '#525252' },
+    closeIcon: { fontSize: 20 },
     searchContainer: {
         flexDirection: 'row',
         alignItems: 'center',
-        backgroundColor: '#F8F9FA',
         borderRadius: BorderRadius.lg,
         marginHorizontal: Spacing.lg,
         paddingHorizontal: Spacing.md,
         height: 48,
         marginBottom: Spacing.md,
         borderWidth: 1,
-        borderColor: '#E8E8E8',
     },
     searchIcon: { fontSize: 16, marginRight: Spacing.sm },
     searchInput: {
         flex: 1,
-        color: '#1a1a2e',
         fontSize: FontSizes.md,
     },
     list: { paddingHorizontal: Spacing.lg },
@@ -264,11 +264,9 @@ const styles = StyleSheet.create({
         alignItems: 'center',
         paddingVertical: Spacing.md,
         borderBottomWidth: 1,
-        borderBottomColor: '#F0F0F0',
     },
     itemText: {
         fontSize: FontSizes.md,
-        color: '#1a1a2e',
     },
     selectedItemText: {
         color: Colors.primary,

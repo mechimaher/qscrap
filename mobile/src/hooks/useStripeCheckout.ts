@@ -1,4 +1,4 @@
-import { useState, useCallback } from 'react';
+import { useState, useCallback, useRef, useEffect } from 'react';
 import { useStripe } from '@stripe/stripe-react-native';
 import * as Haptics from 'expo-haptics';
 import { api } from '../services/api';
@@ -24,8 +24,28 @@ export function useStripeCheckout({
 }: StripeCheckoutParams) {
     const { confirmPayment } = useStripe();
     const [isLoading, setIsLoading] = useState(false);
+    
+    // 30-Second Undo Window
+    const [isCountingDown, setIsCountingDown] = useState(false);
+    const [countdown, setCountdown] = useState(30);
+    const timerRef = useRef<NodeJS.Timeout | null>(null);
 
-    const handlePayment = useCallback(async () => {
+    useEffect(() => {
+        return () => {
+            if (timerRef.current) {
+                clearInterval(timerRef.current);
+            }
+        };
+    }, []);
+
+    const cancelCheckout = useCallback(() => {
+        if (timerRef.current) clearInterval(timerRef.current);
+        setIsCountingDown(false);
+        setCountdown(30);
+        Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success);
+    }, []);
+
+    const executePayment = async () => {
         if (!clientSecret || !cardComplete) {
             toast.error(t('common.error'), t('payment.enterCardDetails'));
             return;
@@ -101,8 +121,33 @@ export function useStripeCheckout({
             handleApiError(error, toast);
         } finally {
             setIsLoading(false);
+            setIsCountingDown(false);
         }
-    }, [clientSecret, cardComplete, orderId, toast, t, navigation, confirmPayment]);
+    };
+
+    const handlePayment = useCallback(() => {
+        if (!clientSecret || !cardComplete) {
+            toast.error(t('common.error'), t('payment.enterCardDetails'));
+            return;
+        }
+
+        Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Medium);
+        setIsCountingDown(true);
+        setCountdown(30);
+
+        if (timerRef.current) clearInterval(timerRef.current);
+        
+        timerRef.current = setInterval(() => {
+            setCountdown((prev) => {
+                if (prev <= 1) {
+                    if (timerRef.current) clearInterval(timerRef.current);
+                    executePayment();
+                    return 0;
+                }
+                return prev - 1;
+            });
+        }, 1000);
+    }, [clientSecret, cardComplete, t, toast]);
 
     const handleFreeOrder = useCallback(async (calculateDiscount: any) => {
         if (!orderId) {
@@ -144,5 +189,9 @@ export function useStripeCheckout({
         setIsLoading,
         handlePayment,
         handleFreeOrder,
+        isCountingDown,
+        countdown,
+        cancelCheckout,
+        executePayment, // Expose to bypass countdown if user taps "Pay Now"
     };
 }

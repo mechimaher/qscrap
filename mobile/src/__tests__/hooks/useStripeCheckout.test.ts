@@ -90,7 +90,7 @@ describe('useStripeCheckout', () => {
         const { result } = renderHook(() => useStripeCheckout(baseParams));
 
         act(() => {
-            result.current.handlePayment();
+            result.current.executePayment();
         });
 
         await waitFor(() => {
@@ -116,7 +116,7 @@ describe('useStripeCheckout', () => {
         const { result } = renderHook(() => useStripeCheckout(baseParams));
 
         act(() => {
-            result.current.handlePayment();
+            result.current.executePayment();
         });
 
         await waitFor(() => {

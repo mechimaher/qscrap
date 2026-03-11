@@ -15,7 +15,7 @@ jest.mock('../../../components/MyVehiclesSelector', () => {
         return (
             <View testID="my-vehicles-selector">
                 <TouchableOpacity onPress={() => onSelect({ vehicle_id: 'v1', car_make: 'Toyota', car_model: 'Camry', car_year: 2024 })}>
-                    <Text>Select Vehicle</Text>
+                    <Text>Pick Vehicle</Text>
                 </TouchableOpacity>
                 <TouchableOpacity onPress={() => onVehiclesLoaded([{ vehicle_id: 'v1', car_make: 'Toyota', car_model: 'Camry', car_year: 2024 }])}>
                     <Text>Load Vehicles</Text>
@@ -37,7 +37,7 @@ describe('VehicleSelectionStep', () => {
             const translations: Record<string, string> = {
                 'newRequest.selectVehicle': 'Select Vehicle',
                 'newRequest.chooseFromCars': 'Choose from your saved vehicles',
-                'newRequest.vinVerified': 'VIN {{vin}} verified',
+                'newRequest.vinVerified': 'VIN verified',
             };
             return translations[key] || key;
         },
@@ -82,7 +82,7 @@ describe('VehicleSelectionStep', () => {
         const handleVehicleSelectMock = jest.fn();
         render(<VehicleSelectionStep {...defaultProps} handleVehicleSelect={handleVehicleSelectMock} />);
 
-        const selectButton = screen.getByText('Select Vehicle');
+        const selectButton = screen.getByText('Pick Vehicle');
         fireEvent.press(selectButton);
 
         expect(handleVehicleSelectMock).toHaveBeenCalledWith({
@@ -127,7 +127,7 @@ describe('VehicleSelectionStep', () => {
         };
         render(<VehicleSelectionStep {...defaultProps} selectedVehicle={selectedVehicle} />);
 
-        expect(screen.getByText('VIN 1234567890 verified')).toBeTruthy();
+        expect(screen.getByText('VIN verified')).toBeTruthy();
     });
 
     it('should not display VIN text when vehicle has no VIN', () => {

@@ -13,6 +13,7 @@ import {
 import { Ionicons } from '@expo/vector-icons';
 import { useTheme } from '../contexts';
 import { Spacing, BorderRadius, FontSize } from '../constants';
+import { useTranslation } from '../contexts/LanguageContext';
 import { t } from '../utils/i18nHelper';
 
 interface InputProps extends Omit<TextInputProps, 'style'> {
@@ -56,6 +57,7 @@ export const Input: React.FC<InputProps> = ({
     ...textInputProps
 }) => {
     const { colors } = useTheme();
+    const { isRTL } = useTranslation();
     const [isFocused, setIsFocused] = useState(false);
     const [showPassword, setShowPassword] = useState(false);
     const labelAnim = useRef(new Animated.Value(value ? 1 : 0)).current;
@@ -94,7 +96,7 @@ export const Input: React.FC<InputProps> = ({
 
     const labelStyle = {
         position: 'absolute' as const,
-        left: icon ? 48 : Spacing.lg,
+        ...(isRTL ? { right: icon ? 48 : Spacing.lg } : { left: icon ? 48 : Spacing.lg }),
         top: labelAnim.interpolate({
             inputRange: [0, 1],
             outputRange: [16, -8],
@@ -134,13 +136,13 @@ export const Input: React.FC<InputProps> = ({
                     },
                 ]}
             >
-                {/* Left Icon */}
+                {/* Left/Start Icon */}
                 {icon && (
                     <Ionicons
                         name={icon}
                         size={20}
                         color={isFocused ? colors.primary : colors.textMuted}
-                        style={styles.leftIcon}
+                        style={[styles.absoluteIcon, isRTL ? { right: Spacing.lg } : { left: Spacing.lg }]}
                     />
                 )}
 
@@ -163,8 +165,16 @@ export const Input: React.FC<InputProps> = ({
                         styles.input,
                         {
                             color: colors.text,
-                            paddingLeft: icon ? 48 : Spacing.lg,
-                            paddingRight: (rightIcon || isPassword) ? 48 : Spacing.lg,
+                            textAlign: isRTL ? 'right' : 'left',
+                            ...(isRTL
+                                ? {
+                                      paddingRight: icon ? 48 : Spacing.lg,
+                                      paddingLeft: (rightIcon || isPassword) ? 48 : Spacing.lg,
+                                  }
+                                : {
+                                      paddingLeft: icon ? 48 : Spacing.lg,
+                                      paddingRight: (rightIcon || isPassword) ? 48 : Spacing.lg,
+                                  }),
                         },
                     ]}
                     placeholderTextColor={colors.textMuted}
@@ -172,8 +182,8 @@ export const Input: React.FC<InputProps> = ({
                     accessibilityState={{ disabled: textInputProps.editable === false }}
                 />
 
-                {/* Right Icon / Password Toggle / Success/Error Icon */}
-                <View style={styles.rightIconContainer}>
+                {/* Right/End Icon / Password Toggle / Success/Error Icon */}
+                <View style={[styles.rightIconContainer, isRTL ? { left: Spacing.lg, right: undefined } : { right: Spacing.lg, left: undefined }]}>
                     {isPassword && (
                         <TouchableOpacity
                             onPress={() => setShowPassword(!showPassword)}
@@ -235,9 +245,8 @@ const styles = StyleSheet.create({
         minHeight: 56,
         position: 'relative',
     },
-    leftIcon: {
+    absoluteIcon: {
         position: 'absolute',
-        left: Spacing.lg,
         zIndex: 1,
     },
     input: {

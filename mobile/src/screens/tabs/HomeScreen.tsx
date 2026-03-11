@@ -307,6 +307,7 @@ export default function HomeScreen() {
             <ScrollView
                 style={styles.scrollView}
                 showsVerticalScrollIndicator={false}
+                contentContainerStyle={{ paddingBottom: 80 }}
                 refreshControl={
                     <RefreshControl
                         refreshing={refreshing}
@@ -358,8 +359,6 @@ export default function HomeScreen() {
                     <Text style={[styles.sectionTitle, { color: colors.text, marginBottom: Spacing.md, paddingHorizontal: Spacing.lg, textAlign: rtlTextAlign(isRTL) }]}>{t('home.howItWorks')}</Text>
                     <HowItWorksCarousel onGetStarted={handleNewRequest} autoPlay={true} />
                 </View>
-
-                <View style={{ height: 80 }} />
             </ScrollView>
 
 
