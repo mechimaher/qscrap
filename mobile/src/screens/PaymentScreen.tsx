@@ -147,15 +147,7 @@ export default function PaymentScreen() {
     }, []);
 
     // 4. Handle Stripe Checkouts
-    const {
-        isLoading,
-        handlePayment,
-        handleFreeOrder,
-        isCountingDown,
-        countdown,
-        cancelCheckout,
-        executePayment,
-    } = useStripeCheckout({
+    const { isLoading, handlePayment, handleFreeOrder } = useStripeCheckout({
         clientSecret,
         cardComplete,
         orderId,
@@ -163,29 +155,6 @@ export default function PaymentScreen() {
         t,
         toast,
     });
-
-    const handleUndoOrder = useCallback(async () => {
-        cancelCheckout();
-        if (!orderId) {
-            navigation.goBack();
-            return;
-        }
-        try {
-            // reuse payment loading state to keep one spinner source
-            await api.undoOrder(orderId, 'panic_button');
-            toast.show({
-                type: 'success',
-                title: t('payment.undo'),
-                message: t('payment.undoSuccess') || t('cancel.success'),
-            });
-            navigation.reset({
-                index: 0,
-                routes: [{ name: 'Main', params: { screen: 'Orders' } }],
-            });
-        } catch (error: any) {
-            handleApiError(error, toast, { useAlert: true, customMessage: t('payment.undoFailed') || undefined });
-        }
-    }, [cancelCheckout, orderId, navigation, t, toast]);
 
     // Aggregate loading state
     const isComponentLoading = isCreatingOrder || isInitLoading || isLoading;
@@ -264,40 +233,6 @@ export default function PaymentScreen() {
                     <View style={{ width: 60 }} />
                 </View>
 
-                {isCountingDown && (
-                    <View style={[StyleSheet.absoluteFill, styles.countdownOverlay, { backgroundColor: colors.background }]}>
-                        <View style={styles.countdownContent}>
-                            <View style={styles.countdownCircle}>
-                                <Text style={styles.countdownNumber}>{countdown}</Text>
-                            </View>
-                            <Text style={[styles.countdownText, { color: colors.text }]}>
-                                {t('payment.capturingIn') || 'Capturing Payment in'}
-                            </Text>
-                            <Text style={[styles.countdownSubText, { color: colors.textSecondary }]}>
-                                {t('payment.undoNotice') || 'You can still undo this action.'}
-                            </Text>
-
-                            <TouchableOpacity
-                                style={styles.undoButton}
-                                onPress={handleUndoOrder}
-                            >
-                                <Ionicons name="close-circle-outline" size={24} color="#EF4444" />
-                                <Text style={styles.undoButtonText}>{t('payment.undo') || 'Undo'}</Text>
-                            </TouchableOpacity>
-
-                            <TouchableOpacity
-                                style={styles.skipButton}
-                                onPress={() => {
-                                    cancelCheckout(); // stop timer to avoid duplicate charge
-                                    executePayment();
-                                }}
-                            >
-                                <Text style={styles.skipButtonText}>{t('payment.payNow') || 'Pay Now'}</Text>
-                            </TouchableOpacity>
-                        </View>
-                    </View>
-                )}
-
                 <KeyboardAvoidingView
                     style={{ flex: 1 }}
                     behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
@@ -361,7 +296,6 @@ export default function PaymentScreen() {
                     payNowAmount={payNowAmount}
                     t={t}
                     colors={colors}
-                    disabled={isCountingDown}
                 />
             </SafeAreaView>
         </StripeProvider>
@@ -427,70 +361,5 @@ const styles = StyleSheet.create({
     content: {
         flex: 1,
         padding: Spacing.lg,
-    },
-    countdownOverlay: {
-        zIndex: 100,
-        justifyContent: 'center',
-        alignItems: 'center',
-        padding: Spacing.xl,
-    },
-    countdownContent: {
-        alignItems: 'center',
-        padding: Spacing.xl,
-        borderRadius: BorderRadius.xl,
-        width: '100%',
-    },
-    countdownCircle: {
-        width: 120,
-        height: 120,
-        borderRadius: 60,
-        borderWidth: 4,
-        borderColor: Colors.primary,
-        justifyContent: 'center',
-        alignItems: 'center',
-        marginBottom: Spacing.xl,
-    },
-    countdownNumber: {
-        fontSize: 48,
-        fontWeight: '800',
-        color: Colors.primary,
-    },
-    countdownText: {
-        fontSize: FontSizes.xl,
-        fontWeight: '700',
-        marginBottom: Spacing.sm,
-    },
-    countdownSubText: {
-        fontSize: FontSizes.md,
-        textAlign: 'center',
-        marginBottom: Spacing.xl * 1.5,
-    },
-    undoButton: {
-        flexDirection: 'row',
-        alignItems: 'center',
-        justifyContent: 'center',
-        backgroundColor: '#FEE2E2',
-        paddingVertical: 16,
-        paddingHorizontal: 32,
-        borderRadius: BorderRadius.lg,
-        width: '100%',
-        marginBottom: Spacing.md,
-    },
-    undoButtonText: {
-        color: '#EF4444',
-        fontSize: FontSizes.lg,
-        fontWeight: '700',
-        marginLeft: Spacing.sm,
-    },
-    skipButton: {
-        paddingVertical: 16,
-        paddingHorizontal: 32,
-        width: '100%',
-    },
-    skipButtonText: {
-        color: Colors.primary,
-        fontSize: FontSizes.md,
-        fontWeight: '600',
-        textAlign: 'center',
     },
 });

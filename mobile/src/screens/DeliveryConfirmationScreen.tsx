@@ -17,8 +17,7 @@ import { LinearGradient } from 'expo-linear-gradient';
 import * as ImagePicker from 'expo-image-picker';
 import * as Haptics from 'expo-haptics';
 import { Ionicons } from '@expo/vector-icons';
-import { useNavigation, useRoute, RouteProp } from '@react-navigation/native';
-import { RootStackParamList } from '../../App';
+import { useNavigation, useRoute } from '@react-navigation/native';
 import { useTheme } from '../contexts/ThemeContext';
 import { api } from '../services/api';
 import { Colors, Spacing, BorderRadius, FontSizes } from '../constants/theme';
@@ -26,11 +25,9 @@ import { useTranslation } from '../contexts/LanguageContext';
 import { extractErrorMessage } from '../utils/errorHandler';
 import { rtlFlexDirection, rtlTextAlign } from '../utils/rtl';
 
-type DeliveryConfirmationRouteProp = RouteProp<RootStackParamList, 'DeliveryConfirmation'>;
-
 export default function DeliveryConfirmationScreen() {
     const navigation = useNavigation<any>();
-    const route = useRoute<DeliveryConfirmationRouteProp>();
+    const route = useRoute<any>();
     const { colors } = useTheme();
     const { t, isRTL } = useTranslation();
 

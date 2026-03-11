@@ -134,18 +134,7 @@ export type RootStackParamList = {
     _cacheKey?: string; // Cache-busting key
   };
   // DeliveryTracking removed — consolidated into Tracking
-  DeliveryConfirmation: { 
-    order: {
-      order_id: string;
-      order_number?: string;
-      part_name?: string;
-      garage_name?: string;
-    };
-    escrow: {
-      escrow_id: string;
-      inspection_expires_at?: string;
-    }
-  };
+  DeliveryConfirmation: { order?: any; escrow?: any };
   // Vehicles
   MyVehicles: undefined;
   // Temporary / Mixed

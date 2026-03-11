@@ -395,20 +395,18 @@ describe('Integration: Critical User Flows', () => {
                     },
                 ],
             });
-            const eligibility = await api.request(API_ENDPOINTS.DELETION_ELIGIBILITY) as any;
+            const eligibility = await api.checkDeletionEligibility();
             expect(eligibility.canDelete).toBe(false);
             expect(eligibility.blockers).toHaveLength(1);
 
             // Step 2: After resolving blockers, check again
             mockFetch({ canDelete: true, blockers: [] });
-            const recheck = await api.request(API_ENDPOINTS.DELETION_ELIGIBILITY) as any;
+            const recheck = await api.checkDeletionEligibility();
             expect(recheck.canDelete).toBe(true);
 
             // Step 3: Delete account
             mockFetch({ success: true, message: 'Account deleted' });
-            const deleteResult = await api.request(API_ENDPOINTS.DELETE_ACCOUNT, {
-                method: 'DELETE',
-            }) as any;
+            const deleteResult = await api.deleteAccount();
             expect(deleteResult.success).toBe(true);
 
             expect(global.fetch).toHaveBeenCalledTimes(3);

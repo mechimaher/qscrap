@@ -1,6 +1,7 @@
 import React from 'react';
 import { View, Text, TouchableOpacity, ActivityIndicator, StyleSheet } from 'react-native';
 import { LinearGradient } from 'expo-linear-gradient';
+import { PlatformPay, PlatformPayButton } from '@stripe/stripe-react-native';
 import { Spacing, FontSizes, BorderRadius } from '../../constants/theme';
 
 interface PaymentButtonProps {
@@ -9,10 +10,12 @@ interface PaymentButtonProps {
     isLoading: boolean;
     cardComplete: boolean;
     handlePayment: () => void;
+    handlePlatformPay: () => void;
+    platformPayReady: boolean;
+    platformPayLabel: 'apple' | 'google' | null;
     payNowAmount: number;
     t: (key: string) => string;
     colors: any;
-    disabled?: boolean;
 }
 
 export const PaymentButton: React.FC<PaymentButtonProps> = ({
@@ -21,13 +24,13 @@ export const PaymentButton: React.FC<PaymentButtonProps> = ({
     isLoading,
     cardComplete,
     handlePayment,
+    handlePlatformPay,
+    platformPayReady,
+    platformPayLabel,
     payNowAmount,
     t,
     colors,
-    disabled = false,
 }) => {
-    const isButtonDisabled = isLoading || disabled;
-    
     return (
         <View style={[styles.footer, { backgroundColor: colors.surface }]}>
             {freeOrder ? (
@@ -36,15 +39,14 @@ export const PaymentButton: React.FC<PaymentButtonProps> = ({
                     testID="free-order-button"
                     style={styles.payButton}
                     onPress={handleFreeOrder}
-                    disabled={isButtonDisabled}
+                    disabled={isLoading}
                 >
                     <LinearGradient
-                        testID="payment-gradient"
                         colors={['#FFD700', '#FFA500']}
                         style={styles.payGradient}
                     >
                         {isLoading ? (
-                            <ActivityIndicator testID="activity-indicator" color="#fff" />
+                            <ActivityIndicator color="#fff" />
                         ) : (
                             <Text style={[styles.payButtonText, { color: '#1a1a2e' }]}>
                                 {t('payment.freeOrderClaim')}
@@ -53,31 +55,54 @@ export const PaymentButton: React.FC<PaymentButtonProps> = ({
                     </LinearGradient>
                 </TouchableOpacity>
             ) : (
-                /* Normal Payment Button */
-                <TouchableOpacity
-                    testID="payment-button"
-                    style={[styles.payButton, (!cardComplete || isButtonDisabled) && styles.payButtonDisabled]}
-                    onPress={handlePayment}
-                    disabled={!cardComplete || isButtonDisabled}
-                >
-                    <LinearGradient
-                        testID="payment-gradient"
-                        colors={cardComplete ? ['#22c55e', '#16a34a'] : ['#9ca3af', '#6b7280']}
-                        style={styles.payGradient}
-                    >
-                        {isLoading ? (
-                            <ActivityIndicator testID="activity-indicator" color="#fff" />
-                        ) : (
-                            <Text style={styles.payButtonText}>
-                                {t('payment.pay').replace('{{amount}}', payNowAmount.toFixed(2))}
+                <>
+                    {platformPayReady && (
+                        <View style={{ marginBottom: Spacing.md }}>
+                            <PlatformPayButton
+                                type={PlatformPay.ButtonType.Pay}
+                                appearance={PlatformPay.ButtonStyle.Black}
+                                borderRadius={12}
+                                style={styles.platformPayButton}
+                                onPress={handlePlatformPay}
+                                disabled={isLoading}
+                            />
+                            <Text style={styles.secureText}>
+                                {platformPayLabel === 'apple'
+                                    ? t('payment.applePayExpress')
+                                    : t('payment.googlePayExpress')}
                             </Text>
-                        )}
-                    </LinearGradient>
-                </TouchableOpacity>
+                        </View>
+                    )}
+
+                    {/* Normal Payment Button */}
+                    <TouchableOpacity
+                        testID="payment-button"
+                        style={[styles.payButton, (!cardComplete || isLoading) && styles.payButtonDisabled]}
+                        onPress={handlePayment}
+                        disabled={!cardComplete || isLoading}
+                    >
+                        <LinearGradient
+                            colors={cardComplete ? ['#22c55e', '#16a34a'] : ['#9ca3af', '#6b7280']}
+                            style={styles.payGradient}
+                        >
+                            {isLoading ? (
+                                <ActivityIndicator color="#fff" />
+                            ) : (
+                                <Text style={styles.payButtonText}>
+                                    {t('payment.pay').replace('{{amount}}', payNowAmount.toFixed(2))}
+                                </Text>
+                            )}
+                        </LinearGradient>
+                    </TouchableOpacity>
+                </>
             )}
 
             <Text style={styles.secureText}>
-                {freeOrder ? t('payment.loyaltyAtWork') : t('payment.securedByStripe')}
+                {freeOrder
+                    ? t('payment.loyaltyAtWork')
+                    : platformPayReady
+                        ? t('payment.securedByStripePlatform')
+                        : t('payment.securedByStripe')}
             </Text>
         </View>
     );
@@ -110,6 +135,11 @@ const styles = StyleSheet.create({
         color: '#fff',
         fontSize: FontSizes.lg,
         fontWeight: '800',
+    },
+    platformPayButton: {
+        height: 52,
+        width: '100%',
+        justifyContent: 'center',
     },
     secureText: {
         textAlign: 'center',

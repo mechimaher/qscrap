@@ -5,45 +5,6 @@
 
 import React from 'react';
 import { render, fireEvent, screen } from '@testing-library/react-native';
-
-// Mock contexts before component imports
-jest.mock('../../../contexts/LanguageContext', () => ({
-    useTranslation: () => ({ t: (key: string) => key, language: 'en', isRTL: false }),
-    useLanguage: () => ({ language: 'en', isRTL: false, setLanguage: jest.fn(), t: (key: string) => key, translations: {} }),
-    useRTL: () => false,
-}));
-jest.mock('../../../contexts/AuthContext', () => ({
-    useAuth: () => ({ user: null, isAuthenticated: false }),
-}));
-jest.mock('../../../contexts/ThemeContext', () => ({
-    useTheme: () => ({ colors: { surface: '#fff', text: '#000', textSecondary: '#666', textMuted: '#999', background: '#fff', primary: '#3B82F6', border: '#E5E7EB' }, isDark: false, setTheme: jest.fn() }),
-}));
-// Also mock barrel export (PartSpecsCard imports from '../../contexts')
-jest.mock('../../../contexts', () => ({
-    useAuth: () => ({ user: null, isAuthenticated: false }),
-    useTheme: () => ({ colors: { surface: '#fff', text: '#000', textSecondary: '#666', textMuted: '#999', background: '#fff', primary: '#3B82F6', border: '#E5E7EB' }, isDark: false, setTheme: jest.fn() }),
-    useTranslation: () => ({ t: (key: string) => key, language: 'en', isRTL: false }),
-    useLanguage: () => ({ language: 'en', isRTL: false, setLanguage: jest.fn(), t: (key: string) => key, translations: {} }),
-    useRTL: () => false,
-    LanguageProvider: ({ children }: any) => children,
-}));
-// Mock SearchableDropdown to avoid complex internal rendering
-jest.mock('../../../components/SearchableDropdown', () => {
-    const React = require('react');
-    const { View, Text, TouchableOpacity } = require('react-native');
-    return {
-        __esModule: true,
-        default: ({ label, placeholder, value, onSelect }: any) => (
-            React.createElement(View, { testID: 'searchable-dropdown' },
-                label ? React.createElement(Text, null, label) : null,
-                React.createElement(TouchableOpacity, { onPress: () => onSelect('test') },
-                    React.createElement(Text, null, value || placeholder)
-                )
-            )
-        ),
-    };
-});
-
 import PartDetailsStep from '../../../components/request/PartDetailsStep';
 
 describe('PartDetailsStep', () => {
@@ -52,20 +13,18 @@ describe('PartDetailsStep', () => {
             surface: '#FFFFFF',
             text: '#1F2937',
             textSecondary: '#6B7280',
-            textMuted: '#9CA3AF',
-            background: '#F9FAFB',
-            border: '#E5E7EB',
         },
         t: (key: string) => {
             const translations: Record<string, string> = {
                 'newRequest.partDetails': 'Part Details',
-                'newRequest.whatDoYouNeed': 'What part do you need?',
-                'newRequest.categoryOptional': 'Category (Optional)',
-                'newRequest.categoryPlaceholder': 'Select a category',
-                'newRequest.subcategoryOptional': 'Subcategory (Optional)',
-                'newRequest.selectSubcategory': 'Select subcategory',
-                'newRequest.description': 'Description',
-                'newRequest.descriptionPlaceholder': 'Describe the part you need...',
+                'newRequest.specifyPartInfo': 'Specify part information',
+                'newRequest.category': 'Category',
+                'newRequest.selectCategory': 'Select category',
+                'newRequest.condition': 'Condition',
+                'newRequest.partNumber': 'Part Number (Optional)',
+                'newRequest.enterPartNumber': 'Enter part number',
+                'newRequest.quantity': 'Quantity',
+                'newRequest.side': 'Side',
             };
             return translations[key] || key;
         },
@@ -74,20 +33,15 @@ describe('PartDetailsStep', () => {
         rtlTextAlign: (isRTL: boolean) => isRTL ? 'right' : 'left',
         partCategory: '',
         partSubCategory: '',
-        partDescription: '',
-        setPartDescription: jest.fn(),
         condition: 'any',
         quantity: 1,
         side: 'na' as const,
-        partNumber: '',
         setPartCategory: jest.fn(),
         setPartSubCategory: jest.fn(),
         setCondition: jest.fn(),
         setQuantity: jest.fn(),
         setSide: jest.fn(),
-        setPartNumber: jest.fn(),
-        availableSubCategories: [],
-        CONDITION_OPTIONS: ['any', 'new', 'used'],
+        availableSubCategories: ['Engine', 'Transmission', 'Suspension'],
     };
 
     beforeEach(() => {
@@ -103,7 +57,7 @@ describe('PartDetailsStep', () => {
     it('should render step subtitle', () => {
         render(<PartDetailsStep {...defaultProps} />);
         
-        expect(screen.getByText('What part do you need?')).toBeTruthy();
+        expect(screen.getByText('Specify part information')).toBeTruthy();
     });
 
     it('should display step number badge', () => {
@@ -115,26 +69,91 @@ describe('PartDetailsStep', () => {
     it('should render category dropdown label', () => {
         render(<PartDetailsStep {...defaultProps} />);
         
-        expect(screen.getByText('Category (Optional)')).toBeTruthy();
+        expect(screen.getByText('Category')).toBeTruthy();
     });
 
-    it('should render description label', () => {
+    it('should render category placeholder', () => {
         render(<PartDetailsStep {...defaultProps} />);
         
-        // Component renders "Description *" (with asterisk for required)
-        expect(screen.getByText(/Description/)).toBeTruthy();
+        expect(screen.getByText('Select category')).toBeTruthy();
     });
 
-    it('should render description input with placeholder', () => {
+    it('should call setPartCategory when category is selected', () => {
+        const setPartCategoryMock = jest.fn();
+        render(<PartDetailsStep {...defaultProps} setPartCategory={setPartCategoryMock} />);
+        
+        const categoryDropdown = screen.getByText('Select category');
+        fireEvent.press(categoryDropdown);
+        
+        expect(setPartCategoryMock).toHaveBeenCalled();
+    });
+
+    it('should render condition selector', () => {
         render(<PartDetailsStep {...defaultProps} />);
         
-        expect(screen.getByPlaceholderText('Describe the part you need...')).toBeTruthy();
+        expect(screen.getByText('Condition')).toBeTruthy();
     });
 
-    it('should display character count', () => {
-        render(<PartDetailsStep {...defaultProps} partDescription="test" />);
+    it('should display current condition value', () => {
+        render(<PartDetailsStep {...defaultProps} condition="any" />);
         
-        expect(screen.getByText('4/500')).toBeTruthy();
+        expect(screen.getByText('any')).toBeTruthy();
+    });
+
+    it('should call setCondition when condition is changed', () => {
+        const setConditionMock = jest.fn();
+        render(<PartDetailsStep {...defaultProps} setCondition={setConditionMock} />);
+        
+        const conditionSelector = screen.getByText('any');
+        fireEvent.press(conditionSelector);
+        
+        expect(setConditionMock).toHaveBeenCalled();
+    });
+
+    it('should render quantity selector', () => {
+        render(<PartDetailsStep {...defaultProps} />);
+        
+        expect(screen.getByText('Quantity')).toBeTruthy();
+    });
+
+    it('should display current quantity value', () => {
+        render(<PartDetailsStep {...defaultProps} quantity={2} />);
+        
+        expect(screen.getByText('2')).toBeTruthy();
+    });
+
+    it('should call setQuantity when quantity is changed', () => {
+        const setQuantityMock = jest.fn();
+        render(<PartDetailsStep {...defaultProps} setQuantity={setQuantityMock} />);
+        
+        const incrementButton = screen.getByTestId('quantity-increment');
+        if (incrementButton) {
+            fireEvent.press(incrementButton);
+        }
+        
+        expect(setQuantityMock).toHaveBeenCalled();
+    });
+
+    it('should render side selector', () => {
+        render(<PartDetailsStep {...defaultProps} />);
+        
+        expect(screen.getByText('Side')).toBeTruthy();
+    });
+
+    it('should call setSide when side is changed', () => {
+        const setSideMock = jest.fn();
+        render(<PartDetailsStep {...defaultProps} setSide={setSideMock} />);
+        
+        const sideSelector = screen.getByText('na');
+        fireEvent.press(sideSelector);
+        
+        expect(setSideMock).toHaveBeenCalled();
+    });
+
+    it('should render part number input', () => {
+        render(<PartDetailsStep {...defaultProps} />);
+        
+        expect(screen.getByText('Part Number (Optional)')).toBeTruthy();
     });
 
     it('should support RTL layout', () => {
@@ -145,15 +164,9 @@ describe('PartDetailsStep', () => {
         expect(screen.getByText('Part Details')).toBeTruthy();
     });
 
-    it('should show subcategory dropdown when category is selected', () => {
-        render(<PartDetailsStep {...defaultProps} partCategory="Engine" availableSubCategories={['Oil Filter', 'Spark Plug']} />);
+    it('should display subcategory dropdown when category is selected', () => {
+        render(<PartDetailsStep {...defaultProps} partCategory="Engine" availableSubCategories={['Engine']} />);
         
-        expect(screen.getByText('Subcategory (Optional)')).toBeTruthy();
-    });
-
-    it('should hide subcategory when no category selected', () => {
-        render(<PartDetailsStep {...defaultProps} partCategory="" availableSubCategories={[]} />);
-        
-        expect(screen.queryByText('Subcategory (Optional)')).toBeNull();
+        expect(screen.getByText('Engine')).toBeTruthy();
     });
 });

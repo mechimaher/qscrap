@@ -57,14 +57,13 @@ describe('PaymentTypeSelector', () => {
     it('should display delivery fee for delivery_only option', () => {
         const { getByText } = render(<PaymentTypeSelector {...defaultProps} />);
 
-        // Fee and currency are separate Text nodes
-        expect(getByText('50')).toBeTruthy();
+        expect(getByText('50 QAR')).toBeTruthy();
     });
 
     it('should display total amount for full payment option', () => {
         const { getByText } = render(<PaymentTypeSelector {...defaultProps} />);
 
-        expect(getByText('550')).toBeTruthy();
+        expect(getByText('550 QAR')).toBeTruthy();
     });
 
     it('should highlight selected payment type', () => {
@@ -144,10 +143,10 @@ describe('PaymentTypeSelector', () => {
     });
 
     it('should display correct icons for each option', () => {
-        const { getByText } = render(<PaymentTypeSelector {...defaultProps} />);
+        const { getByTestId } = render(<PaymentTypeSelector {...defaultProps} />);
 
-        // Ionicons mock renders icon name as text
-        expect(getByText('car-sport')).toBeTruthy();
-        expect(getByText('card')).toBeTruthy();
+        // Icons should be present (car for delivery, card for full)
+        expect(getByTestId('car-sport')).toBeTruthy();
+        expect(getByTestId('card')).toBeTruthy();
     });
 });

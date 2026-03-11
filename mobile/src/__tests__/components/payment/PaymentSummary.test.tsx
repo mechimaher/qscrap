@@ -79,8 +79,7 @@ describe('PaymentSummary', () => {
     it('should handle zero prices', () => {
         render(<PaymentSummary {...defaultProps} partPrice={0} deliveryFee={0} totalAmount={0} />);
         
-        // All three price fields show '0 QAR' so use getAllByText
-        expect(screen.getAllByText('0 QAR').length).toBeGreaterThanOrEqual(1);
+        expect(screen.getByText('0 QAR')).toBeTruthy();
     });
 
     it('should handle decimal prices correctly', () => {

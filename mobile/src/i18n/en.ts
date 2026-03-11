@@ -644,13 +644,6 @@ export const en = {
         escrowFrozenTitle: 'Funds Frozen',
         escrowFrozenBody: 'We have frozen the payout and opened an arbitration ticket. Support will contact you.',
         escrowUnavailable: 'Escrow unavailable for this order. Please contact support.',
-        freezeFundsSubtitle: 'We hold your payment for 48 hours. Tell us what went wrong and we will pause payout.',
-        reasonDefective: 'Part is defective / not working',
-        reasonWrongPart: 'Wrong part was delivered',
-        reasonDamaged: 'Part arrived damaged',
-        reasonMissing: 'Part or components are missing',
-        reasonNote: 'Additional details (optional)',
-        reasonNotePlaceholder: 'Describe the problem so we can help faster',
     },
 
     // =============================================
@@ -1162,11 +1155,6 @@ export const en = {
         codAmount: 'COD Amount',
         pay: 'Pay {{amount}} QAR',
         off: 'OFF',
-        capturingIn: 'Capturing Payment in',
-        undoNotice: 'You can still undo this action.',
-        undo: 'Undo',
-        undoSuccess: 'Order cancelled within the grace window.',
-        undoFailed: 'Undo window expired. Please contact support.',
     },
 
     // =============================================

@@ -9,9 +9,6 @@ import pool from '../config/db';
 import logger from '../utils/logger';
 import { emitToUser, emitToGarage, emitToOperations } from '../utils/socketIO';
 import { getErrorMessage } from '../types';
-import { getPaymentService } from './payment';
-
-const paymentService = getPaymentService(pool);
 
 // ============================================
 // TYPES
@@ -475,8 +472,7 @@ export async function undoOrder(
         // Lock order for update
         const orderResult = await client.query(
             `SELECT order_id, order_status, customer_id, garage_id, bid_id, request_id,
-                    undo_deadline, undo_used, order_number,
-                    deposit_intent_id, final_payment_intent_id
+                    undo_deadline, undo_used, order_number
              FROM orders WHERE order_id = $1 FOR UPDATE`,
             [orderId]
         );

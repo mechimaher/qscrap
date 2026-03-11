@@ -63,8 +63,7 @@ describe('StripeCardField', () => {
     it('should render security indicator with lock icon', () => {
         render(<StripeCardField {...defaultProps} />);
 
-        // Ionicons mock renders text with the icon name
-        expect(screen.getByText('lock-closed')).toBeTruthy();
+        expect(screen.getByTestId('lock-closed')).toBeTruthy();
     });
 
     it('should render security text', () => {
@@ -77,8 +76,7 @@ describe('StripeCardField', () => {
         render(<StripeCardField {...defaultProps} />);
 
         const cardField = screen.getByTestId('card-field');
-        // CardField uses onCardChange prop (not onChange)
-        fireEvent(cardField, 'onCardChange', { complete: true });
+        fireEvent(cardField, 'onChange', { complete: true });
 
         expect(mockSetCardComplete).toHaveBeenCalledWith(true);
     });
@@ -87,8 +85,13 @@ describe('StripeCardField', () => {
         const { getByText } = render(<StripeCardField {...defaultProps} />);
 
         const title = getByText('Card Details');
-        // Title should have the theme text color applied
-        expect(title).toBeTruthy();
+        expect(title.props.style).toEqual(
+            expect.arrayContaining([
+                expect.objectContaining({
+                    color: '#1F2937',
+                }),
+            ])
+        );
     });
 
     it('should support RTL layout', () => {
@@ -99,24 +102,36 @@ describe('StripeCardField', () => {
         expect(screen.getByText('Card Details')).toBeTruthy();
     });
 
-    it('should render card field component', () => {
+    it('should have proper card field styling', () => {
         render(<StripeCardField {...defaultProps} />);
 
-        // CardField is mocked to a View with testID
         const cardField = screen.getByTestId('card-field');
-        expect(cardField).toBeTruthy();
+        expect(cardField.props.style).toEqual(
+            expect.arrayContaining([
+                expect.objectContaining({
+                    backgroundColor: '#FFFFFF',
+                    textColor: '#1F2937',
+                }),
+            ])
+        );
     });
 
-    it('should render all expected sections', () => {
+    it('should display placeholder text for card number', () => {
         render(<StripeCardField {...defaultProps} />);
 
-        // Card details section
-        expect(screen.getByText('Card Details')).toBeTruthy();
-        // Card input label
-        expect(screen.getByText('Enter your card information')).toBeTruthy();
-        // Security text
-        expect(screen.getByText('Your card information is secure')).toBeTruthy();
-        // Lock icon
-        expect(screen.getByText('lock-closed')).toBeTruthy();
+        // CardField should have placeholder configured
+        const cardField = screen.getByTestId('card-field');
+        expect(cardField.props.placeholders).toEqual({
+            number: '1234 1234 1234 1234',
+            expiration: 'MM/YY',
+            cvc: 'CVC',
+        });
+    });
+
+    it('should not include postal code field', () => {
+        render(<StripeCardField {...defaultProps} />);
+
+        const cardField = screen.getByTestId('card-field');
+        expect(cardField.props.postalCodeEnabled).toBe(false);
     });
 });
