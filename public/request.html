@@ -27,9 +27,9 @@
     <link rel="icon" type="image/x-icon" href="/favicon.ico">
 
     <!-- Design System -->
-    <link rel="stylesheet" href="/css/design-tokens.css">
-    <link rel="stylesheet" href="/css/main.css">
-    <link rel="stylesheet" href="/css/customer-request.css?v=2.1">
+    <link rel="stylesheet" href="/css/design-tokens.min.css">
+    <link rel="stylesheet" href="/css/main.min.css">
+    <link rel="stylesheet" href="/css/customer-request.min.css">
 
 
 </head>
@@ -624,10 +624,13 @@
      SCRIPTS
 ═══════════════════════════════════════════════════════════════════ -->
     <!-- Footer Component Loader -->
-    <script src="/js/components/footer-loader.js" defer></script>
+    <script src="/js/components/footer-loader.min.js" defer></script>
 
     <!-- Customer request logic -->
-    <script src="/js/customer-request.js?v=2.2" defer></script>
+    <script src="/js/customer-request.min.js" defer></script>
+
+    <!-- Service Worker for Offline Support & Caching -->
+    <script src="/js/register-sw.js" defer></script>
 </body>
 
 </html>

@@ -24,7 +24,7 @@
 
     <link rel="stylesheet" href="/css/design-tokens.min.css">
     <link rel="stylesheet" href="/css/main.min.css">
-    <link rel="stylesheet" href="/css/legal-pages.css?v=20260303">
+    <link rel="stylesheet" href="/css/legal-pages.min.css">
 </head>
 
 <body>
@@ -295,10 +295,13 @@
 
     <!-- Footer Component Loader -->
     <footer id="footer-container" aria-label="Site footer"></footer>
-    <script src="/js/components/footer-loader.js" defer></script>
+    <script src="/js/components/footer-loader.min.js" defer></script>
 
     <!-- i18n System -->
-    <script src="/js/legal-pages.js"></script>
+    <script src="/js/legal-pages.min.js"></script>
+
+    <!-- Service Worker for Offline Support & Caching -->
+    <script src="/js/register-sw.js" defer></script>
 </body>
 
 </html>

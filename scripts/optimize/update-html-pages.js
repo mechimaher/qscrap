@@ -1,0 +1,77 @@
+#!/usr/bin/env node
+/**
+ * QScrap HTML Update Script
+ * Updates HTML files to use minified CSS/JS and registers Service Worker
+ */
+
+const fs = require('fs');
+const path = require('path');
+
+const PUBLIC_DIR = path.join(__dirname, '../../public');
+
+function updateHTMLFiles() {
+    console.log('📄 Updating HTML files for performance optimization...\n');
+    
+    const files = fs.readdirSync(PUBLIC_DIR).filter(f => f.endsWith('.html'));
+    
+    files.forEach(file => {
+        const filePath = path.join(PUBLIC_DIR, file);
+        let content = fs.readFileSync(filePath, 'utf8');
+        let modified = false;
+        
+        // 1. Update CSS links to use .min.css
+        // Matches href="/css/filename.css" or href="/css/filename.css?v=..."
+        const cssRegex = /href="(\/css\/[^"]+)\.css(\?[^"]+)?"/g;
+        if (cssRegex.test(content)) {
+            content = content.replace(cssRegex, (match, p1) => {
+                // Don't replace if it's already minified
+                if (p1.endsWith('.min')) return match;
+                
+                // Check if .min.css exists
+                const minFile = path.join(PUBLIC_DIR, `${p1}.min.css`);
+                if (fs.existsSync(minFile)) {
+                    modified = true;
+                    return `href="${p1}.min.css"`;
+                }
+                return match;
+            });
+        }
+        
+        // 2. Update JS links to use .min.js
+        // Matches src="/js/filename.js" or src="/js/filename.js?v=..."
+        // Excludes known minified or specific files
+        const jsRegex = /src="(\/js\/(?!register-sw|chart|tsparticles)[^"]+)\.js(\?[^"]+)?"/g;
+        if (jsRegex.test(content)) {
+            content = content.replace(jsRegex, (match, p1) => {
+                // Don't replace if it's already minified
+                if (p1.endsWith('.min')) return match;
+                
+                // Check if .min.js exists
+                const minFile = path.join(PUBLIC_DIR, `${p1}.min.js`);
+                if (fs.existsSync(minFile)) {
+                    modified = true;
+                    return `src="${p1}.min.js"`;
+                }
+                return match;
+            });
+        }
+        
+        // 3. Register Service Worker before </body>
+        if (!content.includes('register-sw.js') && content.includes('</body>')) {
+            const swRegistration = '\n    <!-- Service Worker for Offline Support & Caching -->\n    <script src="/js/register-sw.js" defer></script>\n';
+            content = content.replace('</body>', swRegistration + '</body>');
+            modified = true;
+        }
+        
+        if (modified) {
+            fs.writeFileSync(filePath, content);
+            console.log(`✅ Updated ${file}`);
+        } else {
+            console.log(`ℹ️  No changes needed for ${file}`);
+        }
+    });
+    
+    console.log('\n✨ HTML optimization complete!');
+}
+
+updateHTMLFiles();
