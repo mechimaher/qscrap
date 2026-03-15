@@ -56,7 +56,29 @@ function updateHTMLFiles() {
             });
         }
         
-        // 3. Register Service Worker before </body>
+        // 3. Update Images to use WebP (specifically the logo)
+        const logoRegex = /src="\/assets\/images\/qscrap-logo\.png(\?v=[^"]+)?"/g;
+        if (logoRegex.test(content)) {
+            content = content.replace(logoRegex, 'src="/assets/images/qscrap-logo.webp"');
+            modified = true;
+        }
+
+        // 4. Fix Preload mismatch for logo
+        // This addresses the user's specific warning
+        const preloadLogoRegex = /<link rel="preload" as="image" href="\/assets\/images\/qscrap-logo\.(png|webp)"([^>]*)>/g;
+        if (preloadLogoRegex.test(content)) {
+            content = content.replace(preloadLogoRegex, '<link rel="preload" as="image" href="/assets/images/qscrap-logo.webp" transition-style="fade-in" fetchpriority="high">');
+            modified = true;
+        }
+
+        // 5. Fix QR Code 503 Errors (Switch to QuickChart as fallback/alternative)
+        if (content.includes('qrserver.com')) {
+            content = content.replace(/https:\/\/api\.qrserver\.com\/v1\/create-qr-code\/\?size=120x120&data=([^&]+)&bgcolor=ffffff&color=8D1B3D&format=svg/g, 
+                'https://quickchart.io/qr?size=120&text=$1&light=ffffff&dark=8D1B3D');
+            modified = true;
+        }
+
+        // 6. Register Service Worker before </body>
         if (!content.includes('register-sw.js') && content.includes('</body>')) {
             const swRegistration = '\n    <!-- Service Worker for Offline Support & Caching -->\n    <script src="/js/register-sw.js" defer></script>\n';
             content = content.replace('</body>', swRegistration + '</body>');
