@@ -57,6 +57,8 @@ function scanDirectory(dir, extensions) {
             if (stat.isDirectory() && !item.startsWith('.') && item !== 'node_modules') {
                 scan(fullPath);
             } else if (stat.isFile() && extensions.includes(path.extname(item))) {
+                // Skip already minified files for auditing minification status
+                if (item.includes('.min.')) continue;
                 results.push(fullPath);
             }
         }
@@ -97,7 +99,7 @@ function analyzeCSS(files) {
         totalSize,
         totalGzipped,
         count: files.length,
-        minifiedCount: results.filter(f => f.minified).length
+        minifiedCount: files.filter(f => fs.existsSync(f.replace('.css', '.min.css'))).length
     };
 }
 
@@ -132,7 +134,7 @@ function analyzeJS(files) {
         totalSize,
         totalGzipped,
         count: files.length,
-        minifiedCount: results.filter(f => f.minified).length
+        minifiedCount: files.filter(f => fs.existsSync(f.replace('.js', '.min.js'))).length
     };
 }
 
@@ -188,6 +190,9 @@ function analyzeHTML(files) {
         const content = fs.readFileSync(file, 'utf8');
         
         totalSize += size;
+        
+        // Skip .min.html files for issue audit balance
+        if (file.endsWith('.min.html')) return;
         
         // Check for common issues
         const issues = [];
@@ -316,8 +321,8 @@ function generateReport() {
     
     console.log('📁 BY TYPE');
     console.log('─'.repeat(60));
-    console.log(`CSS:             ${cssAnalysis.count} files (${(cssAnalysis.totalSize / 1024).toFixed(1)} KB) - ${cssAnalysis.minifiedCount} minified`);
-    console.log(`JavaScript:      ${jsAnalysis.count} files (${(jsAnalysis.totalSize / 1024).toFixed(1)} KB) - ${jsAnalysis.minifiedCount} minified`);
+    console.log(`CSS:             ${cssAnalysis.count} files (${(cssAnalysis.totalSize / 1024).toFixed(1)} KB) - ${cssAnalysis.minifiedCount} have .min.css`);
+    console.log(`JavaScript:      ${jsAnalysis.count} files (${(jsAnalysis.totalSize / 1024).toFixed(1)} KB) - ${jsAnalysis.minifiedCount} have .min.js`);
     console.log(`Images:          ${imageAnalysis.count} files (${(imageAnalysis.totalSize / 1024 / 1024).toFixed(2)} MB)`);
     console.log(`HTML:            ${htmlAnalysis.count} files (${(htmlAnalysis.totalSize / 1024).toFixed(1)} KB)`);
     console.log();

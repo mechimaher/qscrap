@@ -8,7 +8,7 @@
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
     <link href="/assets/bootstrap-icons/bootstrap-icons.css" rel="stylesheet">
     <!-- Shared CSS (must come before module CSS) -->
-    <link rel="stylesheet" href="css/shared.css">
+    <link rel="stylesheet" href="css/shared.min.css">
     <link rel="stylesheet" href="css/garage-dashboard.css?v=2.4">
     <!-- Google Maps Location Picker - Upgraded from Leaflet Jan 27, 2026 -->
     <style>
@@ -1557,10 +1557,10 @@
         })();
     </script>
     <!-- Shared JS utilities (must come before module JS) -->
-    <script src="js/shared/utils.js"></script>
-    <script src="js/shared/toast.js"></script>
-    <script src="js/shared/modal.js"></script>
-    <script src="js/pagination-utils.js"></script>
+    <script src="js/shared/utils.min.js"></script>
+    <script src="js/shared/toast.min.js"></script>
+    <script src="js/shared/modal.min.js"></script>
+    <script src="js/pagination-utils.min.js"></script>
     <script>
         const script = document.createElement('script');
         // PERMANENT FIX: Use timestamp to prevent caching issues
@@ -1573,7 +1573,10 @@
     </script>
 
     <!-- Service Worker for Offline Support & Caching -->
-    <script src="/js/register-sw.js" defer></script>
+    <script src="/js/register-sw.min.js" defer></script>
+
+    <!-- Service Worker for Offline Support & Caching -->
+    <script src="/js/register-sw.min.js" defer></script>
 </body>
 
 </html>

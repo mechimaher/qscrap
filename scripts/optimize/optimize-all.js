@@ -157,6 +157,24 @@ function runAllOptimizations() {
         name: 'optimize-images',
         success: runScript('optimize-images.js', '🖼️  Image Optimization (WebP)')
     });
+
+    // Run HTML optimization (Minification)
+    results.push({
+        name: 'optimize-html',
+        success: runScript('optimize-html.js', '📄 HTML Minification')
+    });
+
+    // Run Critical CSS Extraction
+    results.push({
+        name: 'extract-critical-css',
+        success: runScript('extract-critical-css.js', '📝 Critical CSS Extraction')
+    });
+
+    // Run HTML Updates (Links & SW)
+    results.push({
+        name: 'update-html-pages',
+        success: runScript('update-html-pages.js', '🔗 HTML Asset Updating')
+    });
     
     // Generate final report
     generateReport(results);

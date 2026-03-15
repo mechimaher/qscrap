@@ -1,5 +1,5 @@
 {
-  "timestamp": "2026-03-15T20:27:16.033Z",
+  "timestamp": "2026-03-15T21:48:21.120Z",
   "scripts": [
     {
       "name": "performance-audit",
@@ -16,11 +16,23 @@
     {
       "name": "optimize-images",
       "success": true
+    },
+    {
+      "name": "optimize-html",
+      "success": true
+    },
+    {
+      "name": "extract-critical-css",
+      "success": true
+    },
+    {
+      "name": "update-html-pages",
+      "success": true
     }
   ],
   "summary": {
-    "total": 4,
-    "successful": 4,
+    "total": 7,
+    "successful": 7,
     "failed": 0
   }
 }

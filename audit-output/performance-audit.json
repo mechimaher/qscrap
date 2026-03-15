@@ -1,10 +1,10 @@
 {
-  "timestamp": "2026-03-15T20:29:06.715Z",
+  "timestamp": "2026-03-15T21:48:21.280Z",
   "summary": {
-    "totalFiles": 173,
-    "totalSize": 22436934,
-    "totalGzipped": 627475,
-    "compressionRatio": "22.7"
+    "totalFiles": 142,
+    "totalSize": 21308453,
+    "totalGzipped": 328811,
+    "compressionRatio": "21.0"
   },
   "css": {
     "files": [
@@ -16,13 +16,6 @@
         "ratio": "16.5"
       },
       {
-        "file": "css/admin-dashboard.min.css",
-        "size": 39997,
-        "gzipped": 7453,
-        "minified": true,
-        "ratio": "18.6"
-      },
-      {
         "file": "css/components/footer.css",
         "size": 5057,
         "gzipped": 1341,
@@ -30,11 +23,11 @@
         "ratio": "26.5"
       },
       {
-        "file": "css/components/footer.min.css",
-        "size": 3637,
-        "gzipped": 1043,
-        "minified": true,
-        "ratio": "28.7"
+        "file": "css/critical.css",
+        "size": 53672,
+        "gzipped": 11509,
+        "minified": false,
+        "ratio": "21.4"
       },
       {
         "file": "css/customer/auth.css",
@@ -44,25 +37,11 @@
         "ratio": "39.9"
       },
       {
-        "file": "css/customer/auth.min.css",
-        "size": 971,
-        "gzipped": 446,
-        "minified": true,
-        "ratio": "45.9"
-      },
-      {
         "file": "css/customer/chat.css",
         "size": 6455,
         "gzipped": 1613,
         "minified": false,
         "ratio": "25.0"
-      },
-      {
-        "file": "css/customer/chat.min.css",
-        "size": 4710,
-        "gzipped": 1391,
-        "minified": true,
-        "ratio": "29.5"
       },
       {
         "file": "css/customer/components.css",
@@ -72,25 +51,11 @@
         "ratio": "21.2"
       },
       {
-        "file": "css/customer/components.min.css",
-        "size": 11447,
-        "gzipped": 2866,
-        "minified": true,
-        "ratio": "25.0"
-      },
-      {
         "file": "css/customer/dashboard.css",
         "size": 36936,
         "gzipped": 6526,
         "minified": false,
         "ratio": "17.7"
-      },
-      {
-        "file": "css/customer/dashboard.min.css",
-        "size": 26693,
-        "gzipped": 5274,
-        "minified": true,
-        "ratio": "19.8"
       },
       {
         "file": "css/customer/layout.css",
@@ -100,25 +65,11 @@
         "ratio": "26.9"
       },
       {
-        "file": "css/customer/layout.min.css",
-        "size": 4326,
-        "gzipped": 1338,
-        "minified": true,
-        "ratio": "30.9"
-      },
-      {
         "file": "css/customer/variables.css",
         "size": 4035,
         "gzipped": 1377,
         "minified": false,
         "ratio": "34.1"
-      },
-      {
-        "file": "css/customer/variables.min.css",
-        "size": 2614,
-        "gzipped": 954,
-        "minified": true,
-        "ratio": "36.5"
       },
       {
         "file": "css/customer-request.css",
@@ -128,25 +79,11 @@
         "ratio": "17.9"
       },
       {
-        "file": "css/customer-request.min.css",
-        "size": 23363,
-        "gzipped": 4606,
-        "minified": true,
-        "ratio": "19.7"
-      },
-      {
         "file": "css/design-tokens.css",
         "size": 9133,
         "gzipped": 2498,
         "minified": false,
         "ratio": "27.4"
-      },
-      {
-        "file": "css/design-tokens.min.css",
-        "size": 6312,
-        "gzipped": 1925,
-        "minified": true,
-        "ratio": "30.5"
       },
       {
         "file": "css/garage-dashboard.css",
@@ -156,25 +93,11 @@
         "ratio": "15.9"
       },
       {
-        "file": "css/garage-dashboard.min.css",
-        "size": 59286,
-        "gzipped": 10662,
-        "minified": true,
-        "ratio": "18.0"
-      },
-      {
         "file": "css/legal-pages.css",
         "size": 11747,
         "gzipped": 2997,
         "minified": false,
         "ratio": "25.5"
-      },
-      {
-        "file": "css/legal-pages.min.css",
-        "size": 8287,
-        "gzipped": 2424,
-        "minified": true,
-        "ratio": "29.3"
       },
       {
         "file": "css/main.css",
@@ -184,25 +107,11 @@
         "ratio": "16.4"
       },
       {
-        "file": "css/main.min.css",
-        "size": 31644,
-        "gzipped": 6959,
-        "minified": true,
-        "ratio": "22.0"
-      },
-      {
         "file": "css/operations-dashboard.css",
         "size": 49844,
         "gzipped": 9233,
         "minified": false,
         "ratio": "18.5"
-      },
-      {
-        "file": "css/operations-dashboard.min.css",
-        "size": 35126,
-        "gzipped": 7258,
-        "minified": true,
-        "ratio": "20.7"
       },
       {
         "file": "css/shared.css",
@@ -212,31 +121,17 @@
         "ratio": "22.1"
       },
       {
-        "file": "css/shared.min.css",
-        "size": 17391,
-        "gzipped": 4193,
-        "minified": true,
-        "ratio": "24.1"
-      },
-      {
         "file": "css/website.css",
         "size": 40986,
         "gzipped": 7594,
         "minified": false,
         "ratio": "18.5"
-      },
-      {
-        "file": "css/website.min.css",
-        "size": 34407,
-        "gzipped": 7177,
-        "minified": true,
-        "ratio": "20.9"
       }
     ],
-    "totalSize": 761035,
-    "totalGzipped": 149405,
-    "count": 32,
-    "minifiedCount": 16
+    "totalSize": 504496,
+    "totalGzipped": 94945,
+    "count": 17,
+    "minifiedCount": 17
   },
   "js": {
     "files": [
@@ -248,32 +143,11 @@
         "ratio": "31.8"
       },
       {
-        "file": "js/about.min.js",
-        "size": 11535,
-        "gzipped": 4234,
-        "minified": true,
-        "ratio": "36.7"
-      },
-      {
         "file": "js/admin-dashboard.js",
         "size": 109248,
         "gzipped": 20621,
         "minified": false,
         "ratio": "18.9"
-      },
-      {
-        "file": "js/admin-dashboard.min.js",
-        "size": 73667,
-        "gzipped": 15238,
-        "minified": true,
-        "ratio": "20.7"
-      },
-      {
-        "file": "js/chart.min.js",
-        "size": 205399,
-        "gzipped": 69740,
-        "minified": true,
-        "ratio": "34.0"
       },
       {
         "file": "js/components/footer-loader.js",
@@ -283,25 +157,11 @@
         "ratio": "33.0"
       },
       {
-        "file": "js/components/footer-loader.min.js",
-        "size": 2275,
-        "gzipped": 1093,
-        "minified": true,
-        "ratio": "48.0"
-      },
-      {
         "file": "js/customer-request.js",
         "size": 78285,
         "gzipped": 20455,
         "minified": false,
         "ratio": "26.1"
-      },
-      {
-        "file": "js/customer-request.min.js",
-        "size": 50484,
-        "gzipped": 17047,
-        "minified": true,
-        "ratio": "33.8"
       },
       {
         "file": "js/finance-dashboard.js",
@@ -311,25 +171,11 @@
         "ratio": "19.9"
       },
       {
-        "file": "js/finance-dashboard.min.js",
-        "size": 54953,
-        "gzipped": 12248,
-        "minified": true,
-        "ratio": "22.3"
-      },
-      {
         "file": "js/garage-dashboard.js",
         "size": 265633,
         "gzipped": 56403,
         "minified": false,
         "ratio": "21.2"
-      },
-      {
-        "file": "js/garage-dashboard.min.js",
-        "size": 181451,
-        "gzipped": 39389,
-        "minified": true,
-        "ratio": "21.7"
       },
       {
         "file": "js/homepage.js",
@@ -339,25 +185,11 @@
         "ratio": "27.0"
       },
       {
-        "file": "js/homepage.min.js",
-        "size": 20363,
-        "gzipped": 6667,
-        "minified": true,
-        "ratio": "32.7"
-      },
-      {
         "file": "js/legal-pages.js",
         "size": 51318,
         "gzipped": 14043,
         "minified": false,
         "ratio": "27.4"
-      },
-      {
-        "file": "js/legal-pages.min.js",
-        "size": 43240,
-        "gzipped": 13090,
-        "minified": true,
-        "ratio": "30.3"
       },
       {
         "file": "js/operations-dashboard.js",
@@ -367,25 +199,11 @@
         "ratio": "19.8"
       },
       {
-        "file": "js/operations-dashboard.min.js",
-        "size": 140681,
-        "gzipped": 28717,
-        "minified": true,
-        "ratio": "20.4"
-      },
-      {
         "file": "js/pagination-utils.js",
         "size": 3633,
         "gzipped": 1231,
         "minified": false,
         "ratio": "33.9"
-      },
-      {
-        "file": "js/pagination-utils.min.js",
-        "size": 1879,
-        "gzipped": 768,
-        "minified": true,
-        "ratio": "40.9"
       },
       {
         "file": "js/partners.js",
@@ -395,25 +213,11 @@
         "ratio": "29.0"
       },
       {
-        "file": "js/partners.min.js",
-        "size": 34686,
-        "gzipped": 11282,
-        "minified": true,
-        "ratio": "32.5"
-      },
-      {
         "file": "js/register-sw.js",
         "size": 6645,
         "gzipped": 2068,
         "minified": false,
         "ratio": "31.1"
-      },
-      {
-        "file": "js/register-sw.min.js",
-        "size": 3267,
-        "gzipped": 1310,
-        "minified": true,
-        "ratio": "40.1"
       },
       {
         "file": "js/shared/dom-utils.js",
@@ -423,25 +227,11 @@
         "ratio": "43.3"
       },
       {
-        "file": "js/shared/dom-utils.min.js",
-        "size": 351,
-        "gzipped": 220,
-        "minified": true,
-        "ratio": "62.7"
-      },
-      {
         "file": "js/shared/modal.js",
         "size": 10935,
         "gzipped": 2942,
         "minified": false,
         "ratio": "26.9"
-      },
-      {
-        "file": "js/shared/modal.min.js",
-        "size": 4427,
-        "gzipped": 1774,
-        "minified": true,
-        "ratio": "40.1"
       },
       {
         "file": "js/shared/toast.js",
@@ -451,13 +241,6 @@
         "ratio": "33.7"
       },
       {
-        "file": "js/shared/toast.min.js",
-        "size": 1649,
-        "gzipped": 704,
-        "minified": true,
-        "ratio": "42.7"
-      },
-      {
         "file": "js/shared/utils.js",
         "size": 11367,
         "gzipped": 3632,
@@ -465,31 +248,17 @@
         "ratio": "32.0"
       },
       {
-        "file": "js/shared/utils.min.js",
-        "size": 4987,
-        "gzipped": 1999,
-        "minified": true,
-        "ratio": "40.1"
-      },
-      {
         "file": "js/support-dashboard.js",
         "size": 135543,
         "gzipped": 24912,
         "minified": false,
         "ratio": "18.4"
-      },
-      {
-        "file": "js/support-dashboard.min.js",
-        "size": 100065,
-        "gzipped": 18684,
-        "minified": true,
-        "ratio": "18.7"
       }
     ],
-    "totalSize": 1999596,
-    "totalGzipped": 478070,
-    "count": 35,
-    "minifiedCount": 18
+    "totalSize": 1064237,
+    "totalGzipped": 233866,
+    "count": 17,
+    "minifiedCount": 17
   },
   "images": {
     "files": [
@@ -502,6 +271,18 @@
       {
         "file": "assets/hero-car-parts.webp",
         "size": 82718,
+        "type": ".webp",
+        "webpAvailable": true
+      },
+      {
+        "file": "assets/images/apple-touch-icon.png",
+        "size": 45699,
+        "type": ".png",
+        "webpAvailable": true
+      },
+      {
+        "file": "assets/images/apple-touch-icon.webp",
+        "size": 15848,
         "type": ".webp",
         "webpAvailable": true
       },
@@ -1022,20 +803,20 @@
         "webpAvailable": true
       }
     ],
-    "totalSize": 18915682,
-    "count": 88,
+    "totalSize": 18977229,
+    "count": 90,
     "byType": {
       ".jpg": {
         "count": 33,
         "size": 10076977
       },
       ".webp": {
-        "count": 44,
-        "size": 7086576
+        "count": 45,
+        "size": 7102424
       },
       ".png": {
-        "count": 11,
-        "size": 1752129
+        "count": 12,
+        "size": 1797828
       }
     },
     "webpCoverage": 100
@@ -1044,28 +825,28 @@
     "files": [
       {
         "file": "404.html",
-        "size": 23059,
-        "gzipped": 5655,
+        "size": 23173,
+        "gzipped": 5657,
         "issues": [],
-        "scriptCount": 2,
+        "scriptCount": 3,
         "cssCount": 4
       },
       {
         "file": "about.html",
-        "size": 40194,
-        "gzipped": 8250,
+        "size": 40308,
+        "gzipped": 8247,
         "issues": [],
-        "scriptCount": 3,
+        "scriptCount": 4,
         "cssCount": 1
       },
       {
         "file": "admin-dashboard.html",
-        "size": 52028,
-        "gzipped": 7236,
+        "size": 52156,
+        "gzipped": 7241,
         "issues": [
           "Missing meta description"
         ],
-        "scriptCount": 2,
+        "scriptCount": 3,
         "cssCount": 4
       },
       {
@@ -1091,8 +872,92 @@
       },
       {
         "file": "finance-dashboard.html",
-        "size": 61359,
-        "gzipped": 8941,
+        "size": 61483,
+        "gzipped": 8945,
+        "issues": [
+          "Missing meta description",
+          "Many script tags - consider bundling"
+        ],
+        "scriptCount": 8,
+        "cssCount": 4
+      },
+      {
+        "file": "garage-dashboard.html",
+        "size": 84917,
+        "gzipped": 14010,
+        "issues": [
+          "Missing meta description",
+          "Many script tags - consider bundling"
+        ],
+        "scriptCount": 9,
+        "cssCount": 4
+      },
+      {
+        "file": "index.html",
+        "size": 62719,
+        "gzipped": 11436,
+        "issues": [
+          "Many CSS files - consider bundling"
+        ],
+        "scriptCount": 5,
+        "cssCount": 7
+      },
+      {
+        "file": "operations-dashboard.html",
+        "size": 71216,
+        "gzipped": 9995,
+        "issues": [
+          "Many script tags - consider bundling"
+        ],
+        "scriptCount": 9,
+        "cssCount": 5
+      },
+      {
+        "file": "partners.html",
+        "size": 134385,
+        "gzipped": 23096,
+        "issues": [],
+        "scriptCount": 5,
+        "cssCount": 1
+      },
+      {
+        "file": "privacy.html",
+        "size": 20636,
+        "gzipped": 4698,
+        "issues": [],
+        "scriptCount": 4,
+        "cssCount": 4
+      },
+      {
+        "file": "refund.html",
+        "size": 16666,
+        "gzipped": 3906,
+        "issues": [],
+        "scriptCount": 4,
+        "cssCount": 4
+      },
+      {
+        "file": "request.html",
+        "size": 39897,
+        "gzipped": 7107,
+        "issues": [],
+        "scriptCount": 4,
+        "cssCount": 4
+      },
+      {
+        "file": "setup.html",
+        "size": 18635,
+        "gzipped": 4254,
+        "issues": [
+          "Missing meta description"
+        ],
+        "scriptCount": 3,
+        "cssCount": 1
+      },
+      {
+        "file": "support-dashboard.html",
+        "size": 48384,
+        "gzipped": 7385,
         "issues": [
           "Missing meta description",
           "Many script tags - consider bundling"
@@ -1101,131 +966,35 @@
         "cssCount": 4
       },
       {
-        "file": "garage-dashboard.html",
-        "size": 84777,
-        "gzipped": 14005,
-        "issues": [
-          "Missing meta description",
-          "Many script tags - consider bundling"
-        ],
-        "scriptCount": 8,
-        "cssCount": 4
-      },
-      {
-        "file": "index.html",
-        "size": 62657,
-        "gzipped": 11433,
-        "issues": [
-          "Many CSS files - consider bundling"
-        ],
-        "scriptCount": 4,
-        "cssCount": 7
-      },
-      {
-        "file": "operations-dashboard.html",
-        "size": 71076,
-        "gzipped": 9989,
-        "issues": [
-          "Many script tags - consider bundling"
-        ],
-        "scriptCount": 8,
-        "cssCount": 5
-      },
-      {
-        "file": "partners.html",
-        "size": 134271,
-        "gzipped": 23099,
-        "issues": [],
-        "scriptCount": 4,
-        "cssCount": 1
-      },
-      {
-        "file": "privacy.html",
-        "size": 20522,
-        "gzipped": 4700,
-        "issues": [],
-        "scriptCount": 3,
-        "cssCount": 4
-      },
-      {
-        "file": "refund.html",
-        "size": 16552,
-        "gzipped": 3907,
-        "issues": [],
-        "scriptCount": 3,
-        "cssCount": 4
-      },
-      {
-        "file": "request.html",
-        "size": 39795,
-        "gzipped": 7113,
-        "issues": [],
-        "scriptCount": 3,
-        "cssCount": 4
-      },
-      {
-        "file": "setup.html",
-        "size": 18515,
-        "gzipped": 4252,
-        "issues": [
-          "Missing meta description"
-        ],
-        "scriptCount": 2,
-        "cssCount": 1
-      },
-      {
-        "file": "support-dashboard.html",
-        "size": 48248,
-        "gzipped": 7380,
-        "issues": [
-          "Missing meta description",
-          "Many script tags - consider bundling"
-        ],
-        "scriptCount": 6,
-        "cssCount": 4
-      },
-      {
         "file": "terms.html",
-        "size": 17135,
-        "gzipped": 3797,
+        "size": 17249,
+        "gzipped": 3796,
         "issues": [],
-        "scriptCount": 3,
+        "scriptCount": 4,
         "cssCount": 4
       },
       {
         "file": "verify.html",
-        "size": 25532,
-        "gzipped": 5703,
+        "size": 25652,
+        "gzipped": 5704,
         "issues": [],
-        "scriptCount": 2,
+        "scriptCount": 3,
         "cssCount": 2
       },
       {
         "file": "website.html",
-        "size": 25161,
-        "gzipped": 5890,
+        "size": 25275,
+        "gzipped": 5889,
         "issues": [],
-        "scriptCount": 2,
+        "scriptCount": 3,
         "cssCount": 3
       }
     ],
-    "totalSize": 760621,
+    "totalSize": 762491,
     "count": 18,
     "issuesCount": 13
   },
   "recommendations": [
-    {
-      "priority": "high",
-      "category": "CSS",
-      "issue": "16 CSS files not minified",
-      "action": "Run minification on all CSS files"
-    },
-    {
-      "priority": "high",
-      "category": "JavaScript",
-      "issue": "17 JS files not minified",
-      "action": "Run minification on all JS files"
-    },
     {
       "priority": "medium",
       "category": "HTML",

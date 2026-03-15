@@ -40,7 +40,7 @@ function updateHTMLFiles() {
         // 2. Update JS links to use .min.js
         // Matches src="/js/filename.js" or src="/js/filename.js?v=..."
         // Excludes known minified or specific files
-        const jsRegex = /src="(\/js\/(?!register-sw|chart|tsparticles)[^"]+)\.js(\?[^"]+)?"/g;
+        const jsRegex = /src="(\/js\/(?!chart|tsparticles)[^"]+)\.js(\?[^"]+)?"/g;
         if (jsRegex.test(content)) {
             content = content.replace(jsRegex, (match, p1) => {
                 // Don't replace if it's already minified
@@ -79,9 +79,12 @@ function updateHTMLFiles() {
         }
 
         // 6. Register Service Worker before </body>
-        if (!content.includes('register-sw.js') && content.includes('</body>')) {
-            const swRegistration = '\n    <!-- Service Worker for Offline Support & Caching -->\n    <script src="/js/register-sw.js" defer></script>\n';
+        if (!content.includes('register-sw.min.js') && !content.includes('register-sw.js') && content.includes('</body>')) {
+            const swRegistration = '\n    <!-- Service Worker for Offline Support & Caching -->\n    <script src="/js/register-sw.min.js" defer></script>\n';
             content = content.replace('</body>', swRegistration + '</body>');
+            modified = true;
+        } else if (content.includes('register-sw.js')) {
+            content = content.replace('register-sw.js', 'register-sw.min.js');
             modified = true;
         }
         
