@@ -565,6 +565,8 @@ export async function undoOrder(
 
         // Attempt to cancel payment intents (best-effort)
         try {
+            const { getPaymentService } = await import('./payment');
+            const paymentService = getPaymentService(pool);
             if (order.final_payment_intent_id) {
                 await paymentService.cancelPaymentIntent(order.final_payment_intent_id);
             } else if (order.deposit_intent_id) {
