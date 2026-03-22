@@ -387,6 +387,8 @@
             align-items: center;
             justify-content: space-between;
             padding: 16px 24px;
+            flex-wrap: nowrap;
+            gap: 8px;
         }
 
         .nav-logo {
@@ -2283,20 +2285,22 @@
             /* ===== Mobile Navigation Fix ===== */
             .nav-container {
                 padding: 12px 16px;
-                flex-wrap: wrap;
+                flex-wrap: nowrap;
                 justify-content: space-between;
-                gap: 8px;
+                gap: 6px;
             }
 
             .nav-logo img {
                 max-height: 40px;
-                max-width: 150px;
+                max-width: 120px;
             }
 
             .nav-links-group {
-                gap: 8px;
-                flex-wrap: wrap;
+                gap: 6px;
+                flex-wrap: nowrap;
                 justify-content: flex-end;
+                flex-shrink: 1;
+                min-width: 0;
             }
 
             .language-switcher {
@@ -2306,13 +2310,13 @@
             }
 
             .lang-btn {
-                padding: 6px 10px;
-                font-size: 12px;
+                padding: 5px 8px;
+                font-size: 11px;
             }
 
             .nav-back-link {
                 order: 2;
-                padding: 6px 10px;
+                padding: 6px 8px;
                 font-size: 12px;
             }
 
@@ -2322,8 +2326,9 @@
 
             .nav-cta {
                 order: 3;
-                padding: 10px 18px;
-                font-size: 12px;
+                padding: 8px 14px;
+                font-size: 11px;
+                white-space: nowrap;
             }
         }
 
@@ -2335,13 +2340,12 @@
 
             .nav-logo img {
                 max-height: 35px;
-                max-width: 120px;
+                max-width: 100px;
             }
 
             .nav-links-group {
-                width: 100%;
-                justify-content: space-between;
-                margin-top: 8px;
+                justify-content: flex-end;
+                gap: 4px;
             }
 
             .language-switcher {
@@ -2449,7 +2453,7 @@
     <nav class="nav" id="mainNav">
         <div class="nav-container">
             <a href="/" class="nav-logo">
-                <img src="/assets/images/qscrap-logo.webp" alt="QScrap Logo" data-i18n-alt="logo.alt">
+                <img src="/assets/images/qscrap-logo.webp" width="200" height="60" alt="QScrap Logo" data-i18n-alt="logo.alt">
             </a>
             <div class="nav-links-group">
                 <!-- Language Switcher -->

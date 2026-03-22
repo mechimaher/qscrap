@@ -61,8 +61,16 @@ async function convertToWebP(filePath, quality = 80) {
     try {
         const webpPath = filePath.replace(path.extname(filePath), '.webp');
         
-        await sharp(filePath)
-            .webp({ quality })
+        const metadata = await sharp(filePath).metadata();
+        let pipeline = sharp(filePath);
+        
+        // Resize if too large (Max 2000px width for web)
+        if (metadata.width > 2000) {
+            pipeline = pipeline.resize(2000);
+        }
+
+        await pipeline
+            .webp({ quality, effort: 6 })
             .toFile(webpPath);
         
         const originalSize = fs.statSync(filePath).size;
@@ -99,7 +107,11 @@ async function optimizeInPlace(filePath) {
         if (ext === '.png') {
             // Optimize PNG
             const tempPath = filePath + '.tmp.png';
-            await sharp(filePath)
+            const metadata = await sharp(filePath).metadata();
+            let pipeline = sharp(filePath);
+            if (metadata.width > 2000) pipeline = pipeline.resize(2000);
+            
+            await pipeline
                 .png({ compressionLevel: 9, palette: true })
                 .toFile(tempPath);
             
@@ -113,7 +125,11 @@ async function optimizeInPlace(filePath) {
         } else if (ext === '.jpg' || ext === '.jpeg') {
             // Optimize JPEG
             const tempPath = filePath + '.tmp.jpg';
-            await sharp(filePath)
+            const metadata = await sharp(filePath).metadata();
+            let pipeline = sharp(filePath);
+            if (metadata.width > 2000) pipeline = pipeline.resize(2000);
+
+            await pipeline
                 .jpeg({ quality: 85, mozjpeg: true })
                 .toFile(tempPath);
             

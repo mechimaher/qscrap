@@ -1614,19 +1614,20 @@ html[dir="rtl"] .footer-legal-ar {
     align-items: center;
     justify-content: center;
     gap: 8px;
-    padding: 12px 24px;  /* Larger padding for prominence */
+    padding: 12px 24px;
     background: linear-gradient(135deg, var(--vvip-gold) 0%, var(--vvip-gold-light) 100%);
-    color: var(--vvip-maroon-dark);
+    color: #3D0A15;
     border: none;
-    border-radius: 24px;  /* More rounded for premium feel */
-    font-size: 14px;  /* Slightly larger */
-    font-weight: 800;  /* Bolder */
+    border-radius: 24px;
+    font-size: 14px;
+    font-weight: 800;
     cursor: pointer;
     transition: all 0.3s ease;
     box-shadow: 0 4px 20px var(--vvip-gold-dim);
     margin-top: 8px;
     text-decoration: none;
-    letter-spacing: 0.3px;  /* Premium touch */
+    letter-spacing: 0.3px;
+    text-shadow: 0 1px 0 rgba(255, 255, 255, 0.3);
 }
 
 .vvip-cta-btn:hover {
@@ -1947,7 +1948,7 @@ html[dir="rtl"] .vvip-widget-container {
     margin-top: 16px;
     font-size: 14px;
     font-weight: 700;
-    color: var(--vvip-maroon-dark);
+    color: rgba(255, 255, 255, 0.9);
     text-align: center;
     letter-spacing: 0.5px;
     text-transform: uppercase;

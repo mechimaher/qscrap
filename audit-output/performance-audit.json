@@ -1,8 +1,8 @@
 {
-  "timestamp": "2026-03-15T21:48:21.280Z",
+  "timestamp": "2026-03-15T22:07:42.969Z",
   "summary": {
     "totalFiles": 142,
-    "totalSize": 21308453,
+    "totalSize": 21308744,
     "totalGzipped": 328811,
     "compressionRatio": "21.0"
   },
@@ -825,16 +825,16 @@
     "files": [
       {
         "file": "404.html",
-        "size": 23173,
-        "gzipped": 5657,
+        "size": 23197,
+        "gzipped": 5666,
         "issues": [],
         "scriptCount": 3,
         "cssCount": 4
       },
       {
         "file": "about.html",
-        "size": 40308,
-        "gzipped": 8247,
+        "size": 40332,
+        "gzipped": 8257,
         "issues": [],
         "scriptCount": 4,
         "cssCount": 1
@@ -894,8 +894,8 @@
       },
       {
         "file": "index.html",
-        "size": 62719,
-        "gzipped": 11436,
+        "size": 62770,
+        "gzipped": 11452,
         "issues": [
           "Many CSS files - consider bundling"
         ],
@@ -914,32 +914,32 @@
       },
       {
         "file": "partners.html",
-        "size": 134385,
-        "gzipped": 23096,
+        "size": 134409,
+        "gzipped": 23108,
         "issues": [],
         "scriptCount": 5,
         "cssCount": 1
       },
       {
         "file": "privacy.html",
-        "size": 20636,
-        "gzipped": 4698,
+        "size": 20660,
+        "gzipped": 4709,
         "issues": [],
         "scriptCount": 4,
         "cssCount": 4
       },
       {
         "file": "refund.html",
-        "size": 16666,
-        "gzipped": 3906,
+        "size": 16690,
+        "gzipped": 3918,
         "issues": [],
         "scriptCount": 4,
         "cssCount": 4
       },
       {
         "file": "request.html",
-        "size": 39897,
-        "gzipped": 7107,
+        "size": 39969,
+        "gzipped": 7119,
         "issues": [],
         "scriptCount": 4,
         "cssCount": 4
@@ -967,8 +967,8 @@
       },
       {
         "file": "terms.html",
-        "size": 17249,
-        "gzipped": 3796,
+        "size": 17273,
+        "gzipped": 3807,
         "issues": [],
         "scriptCount": 4,
         "cssCount": 4
@@ -983,14 +983,14 @@
       },
       {
         "file": "website.html",
-        "size": 25275,
-        "gzipped": 5889,
+        "size": 25299,
+        "gzipped": 5898,
         "issues": [],
         "scriptCount": 3,
         "cssCount": 3
       }
     ],
-    "totalSize": 762491,
+    "totalSize": 762782,
     "count": 18,
     "issuesCount": 13
   },

@@ -56,20 +56,39 @@ function updateHTMLFiles() {
             });
         }
         
-        // 3. Update Images to use WebP (specifically the logo)
-        const logoRegex = /src="\/assets\/images\/qscrap-logo\.png(\?v=[^"]+)?"/g;
+        // 3. Update Images to use WebP (specifically the logo, including bilingual)
+        const logoRegex = /src="\/assets\/images\/(qscrap-logo(?:-ar)?)\.png(\?v=[^"]+)?"/g;
         if (logoRegex.test(content)) {
-            content = content.replace(logoRegex, 'src="/assets/images/qscrap-logo.webp"');
+            content = content.replace(logoRegex, 'src="/assets/images/$1.webp"');
             modified = true;
         }
 
         // 4. Fix Preload mismatch for logo
-        // This addresses the user's specific warning
-        const preloadLogoRegex = /<link rel="preload" as="image" href="\/assets\/images\/qscrap-logo\.(png|webp)"([^>]*)>/g;
+        // This addresses the user's specific warning and bilingual variants
+        const preloadLogoRegex = /<link rel="preload" as="image" href="\/assets\/images\/qscrap-logo(?:-ar)?\.(png|webp)"([^>]*)>/g;
         if (preloadLogoRegex.test(content)) {
-            content = content.replace(preloadLogoRegex, '<link rel="preload" as="image" href="/assets/images/qscrap-logo.webp" transition-style="fade-in" fetchpriority="high">');
+            // Determine which version to preload based on whether the page seems to be Arabic
+            const isArabic = file.includes('-ar') || content.includes('lang="ar"');
+            const targetLogo = isArabic ? 'qscrap-logo-ar.webp' : 'qscrap-logo.webp';
+            content = content.replace(preloadLogoRegex, `<link rel="preload" as="image" href="/assets/images/${targetLogo}" transition-style="fade-in" fetchpriority="high">`);
             modified = true;
         }
+
+        // 5. Add width/height to known large images to fix CLS
+        // This is a surgical fix for the hero and common images
+        const imgDimensions = {
+            'qscrap-logo.webp': { w: 200, h: 60 },
+            'qscrap-logo-ar.webp': { w: 200, h: 60 },
+            'hero-car-parts.webp': { w: 1920, h: 1080 }
+        };
+
+        Object.entries(imgDimensions).forEach(([img, dim]) => {
+            const regex = new RegExp(`src="[^"]*${img}"(?![^>]*width=)`, 'g');
+            if (regex.test(content)) {
+                content = content.replace(regex, `src="/assets/images/${img}" width="${dim.w}" height="${dim.h}"`);
+                modified = true;
+            }
+        });
 
         // 5. Fix QR Code 503 Errors (Switch to QuickChart as fallback/alternative)
         if (content.includes('qrserver.com')) {
