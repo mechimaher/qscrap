@@ -101,7 +101,7 @@ self.addEventListener('fetch', (event) => {
         event.respondWith(cacheFirstStrategy(request, IMAGE_CACHE));
     } else if (isAPIRequest(url)) {
         event.respondWith(networkFirstStrategy(request, DYNAMIC_CACHE));
-    } else if (isHTMLRequest(url)) {
+    } else if (isHTMLRequest(request, url)) {
         event.respondWith(staleWhileRevalidateStrategy(request, DYNAMIC_CACHE));
     } else {
         event.respondWith(cacheFirstStrategy(request, STATIC_CACHE));
@@ -126,7 +126,7 @@ function isAPIRequest(url) {
 /**
  * Check if request is for HTML
  */
-function isHTMLRequest(url) {
+function isHTMLRequest(request, url) {
     return url.pathname.endsWith('.html') || 
            url.pathname === '/' ||
            request.headers.get('accept')?.includes('text/html');
