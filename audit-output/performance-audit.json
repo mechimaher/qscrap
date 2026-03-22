@@ -1,9 +1,9 @@
 {
-  "timestamp": "2026-03-22T20:31:50.880Z",
+  "timestamp": "2026-03-22T21:22:37.121Z",
   "summary": {
     "totalFiles": 142,
-    "totalSize": 21306975,
-    "totalGzipped": 328703,
+    "totalSize": 21306722,
+    "totalGzipped": 328686,
     "compressionRatio": "21.0"
   },
   "css": {
@@ -24,10 +24,10 @@
       },
       {
         "file": "css/critical.css",
-        "size": 53177,
-        "gzipped": 11451,
+        "size": 52943,
+        "gzipped": 11430,
         "minified": false,
-        "ratio": "21.5"
+        "ratio": "21.6"
       },
       {
         "file": "css/customer/auth.css",
@@ -101,8 +101,8 @@
       },
       {
         "file": "css/main.css",
-        "size": 60790,
-        "gzipped": 10074,
+        "size": 60771,
+        "gzipped": 10078,
         "minified": false,
         "ratio": "16.6"
       },
@@ -128,8 +128,8 @@
         "ratio": "18.5"
       }
     ],
-    "totalSize": 503178,
-    "totalGzipped": 94844,
+    "totalSize": 502925,
+    "totalGzipped": 94827,
     "count": 17,
     "minifiedCount": 17
   },

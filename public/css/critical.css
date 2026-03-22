@@ -374,17 +374,16 @@ body{font-family: var(--font-sans);
             box-sizing: border-box;}
 html{scroll-behavior: smooth;
 	    /* Safe viewport height for mobile browsers */
-	    --vh-fallback: 1vh;
-	    overflow-x: hidden !important;}
+	    --vh-fallback: 1vh;}
 html{--vh: 1dvh;}
 body{font-family: var(--font-sans);
 	    background: var(--color-bg-primary);
 	    color: var(--color-text-primary);
 	    font-size: var(--text-base);
 	    line-height: 1.6;
-	    overflow-x: hidden !important;
 	    -webkit-font-smoothing: antialiased;
 	    -moz-osx-font-smoothing: grayscale;}
+body.home{overflow-x: hidden !important;}
 .container{max-width: 1280px;
             margin: 0 auto;
             padding: 0 var(--container-padding);}

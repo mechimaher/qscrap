@@ -119,7 +119,6 @@
 	    scroll-behavior: smooth;
 	    /* Safe viewport height for mobile browsers */
 	    --vh-fallback: 1vh;
-	    overflow-x: hidden !important;
 	}
 
         /* Override for browsers supporting dvh */
@@ -135,9 +134,12 @@
 	    color: var(--color-text-primary);
 	    font-size: var(--text-base);
 	    line-height: 1.6;
-	    overflow-x: hidden !important;
 	    -webkit-font-smoothing: antialiased;
 	    -moz-osx-font-smoothing: grayscale;
+	}
+
+	body.home {
+	    overflow-x: hidden !important;
 	}
 
         .container {
