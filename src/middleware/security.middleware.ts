@@ -13,7 +13,7 @@ export const securityMiddleware = helmet({
             styleSrc: ["'self'", "'unsafe-inline'", "https://fonts.googleapis.com", "https://cdn.jsdelivr.net", "https://unpkg.com"],
             fontSrc: ["'self'", "https://fonts.gstatic.com", "https://cdn.jsdelivr.net"],
             // TODO: Remove 'unsafe-inline' after dashboard inline <script> refactor
-            scriptSrc: ["'self'", "'unsafe-inline'", "https://unpkg.com", "https://cdn.jsdelivr.net", "https://cdn.socket.io", "https://static.cloudflareinsights.com", "https://maps.googleapis.com", "https://js.stripe.com", "https://browser.sentry-cdn.com"],
+            scriptSrc: ["'self'", "'unsafe-inline'", "https://unpkg.com", "https://cdn.jsdelivr.net", "https://cdn.socket.io", "https://static.cloudflareinsights.com", "https://maps.googleapis.com", "https://js.stripe.com", "https://browser.sentry-cdn.com", "https://qscrap.qa", "https://www.qscrap.qa", "https://challenges.cloudflare.com"],
             // TODO: Remove 'unsafe-inline' after dashboard onclick refactor (150+ handlers)
             scriptSrcAttr: ["'unsafe-inline'"],
             imgSrc: ["'self'", "data:", "blob:", "https:"],
