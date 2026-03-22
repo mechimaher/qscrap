@@ -22,7 +22,7 @@ const CRITICAL_SELECTORS = [
     
     // Navigation
     '.nav', '.nav-container', '.nav-logo', '.nav-logo img',
-    '.nav-links', '.nav-link', '.nav-cta',
+    '.nav-links', '.nav-link',
     '.lang-switcher', '.lang-btn',
     '.mobile-menu-btn',
     
@@ -104,7 +104,7 @@ function extractCriticalCSS(cssContent) {
         .nav-links{display:flex;align-items:center;gap:32px}
         .nav-link{text-decoration:none;color:var(--text-secondary);font-weight:500;font-size:15px;transition:color 0.2s ease}
         .nav-link:hover{color:var(--qatar-maroon)}
-        .nav-cta{display:inline-flex;align-items:center;gap:8px;padding:10px 20px;background:var(--qatar-maroon);color:var(--white);text-decoration:none;border-radius:var(--radius-full);font-weight:600;font-size:14px;transition:all 0.2s ease}
+        
         .nav-cta:hover{background:var(--qatar-maroon-dark);transform:translateY(-1px)}
         .lang-switcher{display:flex;gap:4px;background:var(--qatar-maroon-lighter);border-radius:var(--radius-full);padding:4px}
         .lang-btn{padding:6px 12px;border:none;background:transparent;border-radius:var(--radius-full);font-size:13px;font-weight:500;cursor:pointer;color:var(--slate);transition:all 0.2s ease}

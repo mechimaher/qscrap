@@ -110,7 +110,7 @@ const legalTranslations = {
 
         'refund.contact.company': 'QScrap Services & Trading L.L.C',
         'refund.contact.companyAr': 'كيوسكراب للخدمات والتجارة ذ.م.م',
-        'refund.contact.cr': 'CR No: [CR Number]',
+        'refund.contact.cr': 'CR No: Pending',
 
         // ===== TERMS OF SERVICE =====
         'terms.title': 'Terms of Service',
@@ -184,7 +184,7 @@ const legalTranslations = {
 
         'terms.s11.title': 'Commercial Disclosure',
         'terms.s11.l1.i1': 'Legal Entity: QScrap Services & Trading L.L.C',
-        'terms.s11.l1.i2': 'Commercial Registration No.: [CR NUMBER]',
+        'terms.s11.l1.i2': 'Commercial Registration No.: Pending',
         'terms.s11.l1.i3': 'Registered Address: Doha, Qatar',
         'terms.s11.l1.i4': 'Email: legal@qscrap.qa',
 
@@ -310,7 +310,7 @@ const legalTranslations = {
 
         'privacy.s14.title': 'Contact Information',
         'privacy.s14.l1.i1': 'QScrap Services & Trading L.L.C',
-        'privacy.s14.l1.i2': 'Commercial Registration No.: [CR NUMBER]',
+        'privacy.s14.l1.i2': 'Commercial Registration No.: Pending',
         'privacy.s14.l1.i3': 'Email: <a href="mailto:privacy@qscrap.qa">privacy@qscrap.qa</a>',
 
         // Privacy Contact Card
@@ -447,7 +447,7 @@ const legalTranslations = {
         'refund.contact.website': 'الموقع',
         'refund.contact.company': 'كيوسكراب للخدمات والتجارة ذ.م.م',
         'refund.contact.companyAr': 'QScrap Services & Trading L.L.C',
-        'refund.contact.cr': 'سجل تجاري رقم: [CR Number]',
+        'refund.contact.cr': 'سجل تجاري رقم: Pending',
 
         // ===== TERMS OF SERVICE (Arabic) =====
         'terms.title': 'شروط الخدمة',
@@ -519,7 +519,7 @@ const legalTranslations = {
 
         'terms.s11.title': 'الإفصاح التجاري',
         'terms.s11.l1.i1': 'الاسم القانوني: كيوسكراب للخدمات والتجارة ذ.م.م',
-        'terms.s11.l1.i2': 'رقم السجل التجاري: [CR NUMBER]',
+        'terms.s11.l1.i2': 'رقم السجل التجاري: Pending',
         'terms.s11.l1.i3': 'العنوان المسجل في قطر: الدوحة، قطر',
         'terms.s11.l1.i4': 'البريد الإلكتروني: legal@qscrap.qa',
 
@@ -645,7 +645,7 @@ const legalTranslations = {
 
         'privacy.s14.title': 'معلومات التواصل',
         'privacy.s14.l1.i1': 'كيوسكراب للخدمات والتجارة ذ.م.م',
-        'privacy.s14.l1.i2': 'سجل تجاري رقم: [CR NUMBER]',
+        'privacy.s14.l1.i2': 'سجل تجاري رقم: Pending',
         'privacy.s14.l1.i3': 'البريد الإلكتروني: <a href="mailto:privacy@qscrap.qa">privacy@qscrap.qa</a>',
 
         // Privacy Contact Card (Arabic)

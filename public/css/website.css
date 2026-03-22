@@ -1616,7 +1616,7 @@ html[dir="rtl"] .footer-legal-ar {
     gap: 8px;
     padding: 12px 24px;
     background: linear-gradient(135deg, var(--vvip-gold) 0%, var(--vvip-gold-light) 100%);
-    color: #3D0A15;
+    color: #3D0A15 !important;
     border: none;
     border-radius: 24px;
     font-size: 14px;
@@ -1627,7 +1627,7 @@ html[dir="rtl"] .footer-legal-ar {
     margin-top: 8px;
     text-decoration: none;
     letter-spacing: 0.3px;
-    text-shadow: 0 1px 0 rgba(255, 255, 255, 0.3);
+    text-shadow: 0 1px 0 rgba(255, 255, 255, 0.4) !important;
 }
 
 .vvip-cta-btn:hover {

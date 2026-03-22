@@ -14,7 +14,7 @@
         .nav-links{display:flex;align-items:center;gap:32px}
         .nav-link{text-decoration:none;color:var(--text-secondary);font-weight:500;font-size:15px;transition:color 0.2s ease}
         .nav-link:hover{color:var(--qatar-maroon)}
-        .nav-cta{display:inline-flex;align-items:center;gap:8px;padding:10px 20px;background:var(--qatar-maroon);color:var(--white);text-decoration:none;border-radius:var(--radius-full);font-weight:600;font-size:14px;transition:all 0.2s ease}
+        
         .nav-cta:hover{background:var(--qatar-maroon-dark);transform:translateY(-1px)}
         .lang-switcher{display:flex;gap:4px;background:var(--qatar-maroon-lighter);border-radius:var(--radius-full);padding:4px}
         .lang-btn{padding:6px 12px;border:none;background:transparent;border-radius:var(--radius-full);font-size:13px;font-weight:500;cursor:pointer;color:var(--slate);transition:all 0.2s ease}
@@ -373,17 +373,18 @@ body{font-family: var(--font-sans);
             padding: 0;
             box-sizing: border-box;}
 html{scroll-behavior: smooth;
-            /* Safe viewport height for mobile browsers */
-            --vh-fallback: 1vh;}
+	    /* Safe viewport height for mobile browsers */
+	    --vh-fallback: 1vh;
+	    overflow-x: hidden !important;}
 html{--vh: 1dvh;}
 body{font-family: var(--font-sans);
-            background: var(--color-bg-primary);
-            color: var(--color-text-primary);
-            font-size: var(--text-base);
-            line-height: 1.6;
-            overflow-x: hidden;
-            -webkit-font-smoothing: antialiased;
-            -moz-osx-font-smoothing: grayscale;}
+	    background: var(--color-bg-primary);
+	    color: var(--color-text-primary);
+	    font-size: var(--text-base);
+	    line-height: 1.6;
+	    overflow-x: hidden !important;
+	    -webkit-font-smoothing: antialiased;
+	    -moz-osx-font-smoothing: grayscale;}
 .container{max-width: 1280px;
             margin: 0 auto;
             padding: 0 var(--container-padding);}
@@ -473,13 +474,13 @@ to{opacity: 1;
             transition: all 0.3s ease;}
 .nav.scrolled{box-shadow: 0 4px 30px rgba(0, 0, 0, 0.08);}
 .nav-container{max-width: 1280px;
-            margin: 0 auto;
-            display: flex;
-            align-items: center;
-            justify-content: space-between;
-            padding: 16px 24px;
-            flex-wrap: wrap;
-            gap: 12px;}
+	    margin: 0 auto;
+	    display: flex;
+	    align-items: center;
+	    justify-content: space-between;
+	    padding: 16px 24px;
+	    flex-wrap: nowrap !important;
+	    gap: 12px;}
 .nav-logo{display: flex;
             align-items: center;
             gap: 12px;
@@ -652,9 +653,10 @@ to{opacity: 1;
             color: rgba(255, 255, 255, 0.6);
             margin-top: 4px;}
 /* ===== Infinite Parts Carousel ===== */
-        .parts-showcase{padding: 80px 0;
-            background: var(--mist);
-            overflow: hidden;}
+	.parts-showcase{padding: 80px 0;
+	    background: var(--mist);
+	    overflow: hidden;
+	    overflow-x: hidden !important;}
 /* ===== How It Works Section ===== */
         /* ===== VVVIP 2030 How It Works Section ===== */
         .how-it-works{padding: 140px 24px;
@@ -727,32 +729,20 @@ to{opacity: 1;
 /* Floating widget clearance — only on mobile stacked layout */
 
         /* ===== Mobile Navigation CTA Fix ===== */
-        /* Ensure CTA buttons have enough space for text */
-        .nav-cta{padding: 10px 16px;
-            font-size: 12px;
-            white-space: nowrap;
-            flex-shrink: 0;}
-.nav-cta svg{flex-shrink: 0;}
-.nav-cta{padding: 10px 12px;
-                justify-content: center;}
-.nav-cta span{display: none;}
+        /* Hide desktop CTA on mobile — mobile menu panel has them */
+	    .nav-container .nav-cta,
+	    .nav-cta{display: none !important;}
 .nav-logo img{max-height: 40px;
                 max-width: 130px;}
-.nav-cta{padding: 8px 12px;
-                font-size: 11px;}
 .nav-logo img{max-height: 45px;
                 max-width: 150px;}
 .hero-stats{flex-direction: row;
                 flex-wrap: wrap;
                 justify-content: center;}
-/* Ensure nav CTA buttons have enough space */
-            .nav-cta{padding: 10px 18px;
-                font-size: 13px;}
-/* Desktop nav with full-size CTAs */
-            .nav-cta{padding: 12px 24px;
-                font-size: 14px;}
-/* Show horizontal nav only on larger screens */
+/* Show horizontal nav and CTAs only on larger screens */
             .nav-links{display: flex;}
+.nav-container .nav-cta,
+	            .nav-cta{display: inline-flex !important;}
 .mobile-menu-btn{display: none;}
 .container{max-width: 1280px;}
 .container{max-width: 1400px;}
@@ -1308,19 +1298,20 @@ html[dir="rtl"] .footer-legal-ar{display: block;}
     align-items: center;
     justify-content: center;
     gap: 8px;
-    padding: 12px 24px;  /* Larger padding for prominence */
+    padding: 12px 24px;
     background: linear-gradient(135deg, var(--vvip-gold) 0%, var(--vvip-gold-light) 100%);
-    color: var(--vvip-maroon-dark);
+    color: #3D0A15 !important;
     border: none;
-    border-radius: 24px;  /* More rounded for premium feel */
-    font-size: 14px;  /* Slightly larger */
-    font-weight: 800;  /* Bolder */
+    border-radius: 24px;
+    font-size: 14px;
+    font-weight: 800;
     cursor: pointer;
     transition: all 0.3s ease;
     box-shadow: 0 4px 20px var(--vvip-gold-dim);
     margin-top: 8px;
     text-decoration: none;
-    letter-spacing: 0.3px;  /* Premium touch */}
+    letter-spacing: 0.3px;
+    text-shadow: 0 1px 0 rgba(255, 255, 255, 0.4) !important;}
 /* ===== Touch Active State (Mobile) ===== */
 .vvip-widget-active.vvip-orb{width: 280px;
     height: 80px;

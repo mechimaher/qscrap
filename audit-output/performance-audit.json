@@ -1,9 +1,9 @@
 {
-  "timestamp": "2026-03-15T22:07:42.969Z",
+  "timestamp": "2026-03-22T20:31:50.880Z",
   "summary": {
     "totalFiles": 142,
-    "totalSize": 21308744,
-    "totalGzipped": 328811,
+    "totalSize": 21306975,
+    "totalGzipped": 328703,
     "compressionRatio": "21.0"
   },
   "css": {
@@ -24,10 +24,10 @@
       },
       {
         "file": "css/critical.css",
-        "size": 53672,
-        "gzipped": 11509,
+        "size": 53177,
+        "gzipped": 11451,
         "minified": false,
-        "ratio": "21.4"
+        "ratio": "21.5"
       },
       {
         "file": "css/customer/auth.css",
@@ -101,10 +101,10 @@
       },
       {
         "file": "css/main.css",
-        "size": 61540,
-        "gzipped": 10100,
+        "size": 60790,
+        "gzipped": 10074,
         "minified": false,
-        "ratio": "16.4"
+        "ratio": "16.6"
       },
       {
         "file": "css/operations-dashboard.css",
@@ -122,14 +122,14 @@
       },
       {
         "file": "css/website.css",
-        "size": 40986,
-        "gzipped": 7594,
+        "size": 40913,
+        "gzipped": 7577,
         "minified": false,
         "ratio": "18.5"
       }
     ],
-    "totalSize": 504496,
-    "totalGzipped": 94945,
+    "totalSize": 503178,
+    "totalGzipped": 94844,
     "count": 17,
     "minifiedCount": 17
   },
@@ -186,8 +186,8 @@
       },
       {
         "file": "js/legal-pages.js",
-        "size": 51318,
-        "gzipped": 14043,
+        "size": 51294,
+        "gzipped": 14036,
         "minified": false,
         "ratio": "27.4"
       },
@@ -255,8 +255,8 @@
         "ratio": "18.4"
       }
     ],
-    "totalSize": 1064237,
-    "totalGzipped": 233866,
+    "totalSize": 1064213,
+    "totalGzipped": 233859,
     "count": 17,
     "minifiedCount": 17
   },
@@ -825,28 +825,28 @@
     "files": [
       {
         "file": "404.html",
-        "size": 23197,
+        "size": 23145,
         "gzipped": 5666,
         "issues": [],
-        "scriptCount": 3,
+        "scriptCount": 2,
         "cssCount": 4
       },
       {
         "file": "about.html",
-        "size": 40332,
-        "gzipped": 8257,
+        "size": 40280,
+        "gzipped": 8258,
         "issues": [],
-        "scriptCount": 4,
+        "scriptCount": 3,
         "cssCount": 1
       },
       {
         "file": "admin-dashboard.html",
-        "size": 52156,
-        "gzipped": 7241,
+        "size": 52104,
+        "gzipped": 7244,
         "issues": [
           "Missing meta description"
         ],
-        "scriptCount": 3,
+        "scriptCount": 2,
         "cssCount": 4
       },
       {
@@ -872,92 +872,8 @@
       },
       {
         "file": "finance-dashboard.html",
-        "size": 61483,
-        "gzipped": 8945,
-        "issues": [
-          "Missing meta description",
-          "Many script tags - consider bundling"
-        ],
-        "scriptCount": 8,
-        "cssCount": 4
-      },
-      {
-        "file": "garage-dashboard.html",
-        "size": 84917,
-        "gzipped": 14010,
-        "issues": [
-          "Missing meta description",
-          "Many script tags - consider bundling"
-        ],
-        "scriptCount": 9,
-        "cssCount": 4
-      },
-      {
-        "file": "index.html",
-        "size": 62770,
-        "gzipped": 11452,
-        "issues": [
-          "Many CSS files - consider bundling"
-        ],
-        "scriptCount": 5,
-        "cssCount": 7
-      },
-      {
-        "file": "operations-dashboard.html",
-        "size": 71216,
-        "gzipped": 9995,
-        "issues": [
-          "Many script tags - consider bundling"
-        ],
-        "scriptCount": 9,
-        "cssCount": 5
-      },
-      {
-        "file": "partners.html",
-        "size": 134409,
-        "gzipped": 23108,
-        "issues": [],
-        "scriptCount": 5,
-        "cssCount": 1
-      },
-      {
-        "file": "privacy.html",
-        "size": 20660,
-        "gzipped": 4709,
-        "issues": [],
-        "scriptCount": 4,
-        "cssCount": 4
-      },
-      {
-        "file": "refund.html",
-        "size": 16690,
-        "gzipped": 3918,
-        "issues": [],
-        "scriptCount": 4,
-        "cssCount": 4
-      },
-      {
-        "file": "request.html",
-        "size": 39969,
-        "gzipped": 7119,
-        "issues": [],
-        "scriptCount": 4,
-        "cssCount": 4
-      },
-      {
-        "file": "setup.html",
-        "size": 18635,
-        "gzipped": 4254,
-        "issues": [
-          "Missing meta description"
-        ],
-        "scriptCount": 3,
-        "cssCount": 1
-      },
-      {
-        "file": "support-dashboard.html",
-        "size": 48384,
-        "gzipped": 7385,
+        "size": 61431,
+        "gzipped": 8947,
         "issues": [
           "Missing meta description",
           "Many script tags - consider bundling"
@@ -966,31 +882,115 @@
         "cssCount": 4
       },
       {
-        "file": "terms.html",
-        "size": 17273,
-        "gzipped": 3807,
+        "file": "garage-dashboard.html",
+        "size": 84865,
+        "gzipped": 14013,
+        "issues": [
+          "Missing meta description",
+          "Many script tags - consider bundling"
+        ],
+        "scriptCount": 8,
+        "cssCount": 4
+      },
+      {
+        "file": "index.html",
+        "size": 62718,
+        "gzipped": 11452,
+        "issues": [
+          "Many CSS files - consider bundling"
+        ],
+        "scriptCount": 4,
+        "cssCount": 7
+      },
+      {
+        "file": "operations-dashboard.html",
+        "size": 71164,
+        "gzipped": 9996,
+        "issues": [
+          "Many script tags - consider bundling"
+        ],
+        "scriptCount": 8,
+        "cssCount": 5
+      },
+      {
+        "file": "partners.html",
+        "size": 134770,
+        "gzipped": 23173,
         "issues": [],
         "scriptCount": 4,
+        "cssCount": 1
+      },
+      {
+        "file": "privacy.html",
+        "size": 20604,
+        "gzipped": 4701,
+        "issues": [],
+        "scriptCount": 3,
+        "cssCount": 4
+      },
+      {
+        "file": "refund.html",
+        "size": 16638,
+        "gzipped": 3918,
+        "issues": [],
+        "scriptCount": 3,
+        "cssCount": 4
+      },
+      {
+        "file": "request.html",
+        "size": 39917,
+        "gzipped": 7122,
+        "issues": [],
+        "scriptCount": 3,
+        "cssCount": 4
+      },
+      {
+        "file": "setup.html",
+        "size": 18583,
+        "gzipped": 4255,
+        "issues": [
+          "Missing meta description"
+        ],
+        "scriptCount": 2,
+        "cssCount": 1
+      },
+      {
+        "file": "support-dashboard.html",
+        "size": 48332,
+        "gzipped": 7387,
+        "issues": [
+          "Missing meta description",
+          "Many script tags - consider bundling"
+        ],
+        "scriptCount": 6,
+        "cssCount": 4
+      },
+      {
+        "file": "terms.html",
+        "size": 17217,
+        "gzipped": 3798,
+        "issues": [],
+        "scriptCount": 3,
         "cssCount": 4
       },
       {
         "file": "verify.html",
-        "size": 25652,
-        "gzipped": 5704,
+        "size": 25600,
+        "gzipped": 5707,
         "issues": [],
-        "scriptCount": 3,
+        "scriptCount": 2,
         "cssCount": 2
       },
       {
         "file": "website.html",
-        "size": 25299,
-        "gzipped": 5898,
+        "size": 25247,
+        "gzipped": 5897,
         "issues": [],
-        "scriptCount": 3,
+        "scriptCount": 2,
         "cssCount": 3
       }
     ],
-    "totalSize": 762782,
+    "totalSize": 762355,
     "count": 18,
     "issuesCount": 13
   },
