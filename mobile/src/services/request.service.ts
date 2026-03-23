@@ -1,7 +1,22 @@
-import { apiClient } from "./apiClient";
-import { API_ENDPOINTS, API_BASE_URL } from "../config/api";
-import { log, warn, error } from "../utils/logger";
-import { User, AuthResponse, Request, Bid, Order, Stats, Address, Product, Notification, SupportTicket, Vehicle, LoyaltyTransaction, PaymentMethod, UrgentAction } from "./types";
+import { apiClient } from './apiClient';
+import { API_ENDPOINTS, API_BASE_URL } from '../config/api';
+import { log, warn, error } from '../utils/logger';
+import {
+    User,
+    AuthResponse,
+    Request,
+    Bid,
+    Order,
+    Stats,
+    Address,
+    Product,
+    Notification,
+    SupportTicket,
+    Vehicle,
+    LoyaltyTransaction,
+    PaymentMethod,
+    UrgentAction
+} from './types';
 
 export class RequestService {
     async getMyRequests(): Promise<{ requests: Request[] }> {
@@ -23,11 +38,11 @@ export class RequestService {
             const response = await fetch(`${API_BASE_URL}${API_ENDPOINTS.REQUESTS}`, {
                 method: 'POST',
                 headers: {
-                    Authorization: `Bearer ${token}`,
+                    Authorization: `Bearer ${token}`
                     // Don't set Content-Type for FormData - browser sets it with boundary
                 },
                 body: formData,
-                signal: controller.signal,
+                signal: controller.signal
             });
 
             clearTimeout(timeoutId);
@@ -50,13 +65,13 @@ export class RequestService {
 
     async cancelRequest(requestId: string): Promise<{ success: boolean; message: string }> {
         return apiClient.request(API_ENDPOINTS.CANCEL_REQUEST(requestId), {
-            method: 'POST',
+            method: 'POST'
         });
     }
 
     async deleteRequest(requestId: string): Promise<{ success: boolean; message: string }> {
         return apiClient.request(API_ENDPOINTS.DELETE_REQUEST(requestId), {
-            method: 'DELETE',
+            method: 'DELETE'
         });
     }
 

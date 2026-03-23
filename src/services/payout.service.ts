@@ -1,9 +1,9 @@
 /**
  * QScrap Payout Service
- * 
+ *
  * Centralized service for payout management with proper reversal logic.
  * Ensures financial integrity between payouts and refunds.
- * 
+ *
  * Premium 2026 features:
  * - Payout creation on delivery confirmation
  * - Automatic reversal on refund
@@ -42,7 +42,8 @@ export interface PayoutResult {
  */
 export async function createPayout(orderId: string): Promise<PayoutResult> {
     try {
-        const result = await pool.query(`
+        const result = await pool.query(
+            `
             INSERT INTO garage_payouts 
             (garage_id, order_id, gross_amount, commission_amount, net_amount, scheduled_for)
             SELECT garage_id, order_id, part_price, platform_fee, garage_payout_amount, 
@@ -50,7 +51,9 @@ export async function createPayout(orderId: string): Promise<PayoutResult> {
             FROM orders o WHERE o.order_id = $1
             AND NOT EXISTS (SELECT 1 FROM garage_payouts gp WHERE gp.order_id = o.order_id)
             RETURNING payout_id
-        `, [orderId]);
+        `,
+            [orderId]
+        );
 
         if (result.rowCount === 0) {
             return {

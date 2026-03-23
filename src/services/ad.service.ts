@@ -117,16 +117,13 @@ export class AdService {
         interaction_type: 'view' | 'click' | 'conversion';
     }): Promise<void> {
         try {
-            await pool.query(
-                'SELECT record_ad_interaction($1, $2, $3, $4, $5)',
-                [
-                    data.campaign_id,
-                    data.placement_id || null,
-                    data.customer_id || null,
-                    data.ip_address,
-                    data.interaction_type
-                ]
-            );
+            await pool.query('SELECT record_ad_interaction($1, $2, $3, $4, $5)', [
+                data.campaign_id,
+                data.placement_id || null,
+                data.customer_id || null,
+                data.ip_address,
+                data.interaction_type
+            ]);
         } catch (error) {
             logger.error('Error recording impression', { error: (error as Error).message });
             // Don't throw - impressions shouldn't break user experience
@@ -136,15 +133,12 @@ export class AdService {
     /**
      * Get active ads for placement
      */
-    static async getActiveAdsForPlacement(
-        placementType: string,
-        limit: number = 5
-    ): Promise<any[]> {
+    static async getActiveAdsForPlacement(placementType: string, limit: number = 5): Promise<any[]> {
         try {
-            const result = await pool.query(
-                'SELECT * FROM get_active_ads_for_placement($1, $2)',
-                [placementType, limit]
-            );
+            const result = await pool.query('SELECT * FROM get_active_ads_for_placement($1, $2)', [
+                placementType,
+                limit
+            ]);
 
             return result.rows;
         } catch (error) {
@@ -156,10 +150,7 @@ export class AdService {
     /**
      * Update campaign status
      */
-    static async updateCampaignStatus(
-        campaignId: string,
-        status: 'active' | 'paused' | 'completed'
-    ): Promise<void> {
+    static async updateCampaignStatus(campaignId: string, status: 'active' | 'paused' | 'completed'): Promise<void> {
         try {
             await pool.query(
                 `UPDATE ad_campaigns 
@@ -178,9 +169,7 @@ export class AdService {
      */
     static async getPricing(): Promise<any[]> {
         try {
-            const result = await pool.query(
-                `SELECT * FROM ad_pricing ORDER BY min_daily_budget ASC`
-            );
+            const result = await pool.query(`SELECT * FROM ad_pricing ORDER BY min_daily_budget ASC`);
 
             return result.rows;
         } catch (error) {
@@ -192,11 +181,7 @@ export class AdService {
     /**
      * Admin: Approve/reject campaign
      */
-    static async reviewCampaign(
-        campaignId: string,
-        approved: boolean,
-        reviewedBy: string
-    ): Promise<void> {
+    static async reviewCampaign(campaignId: string, approved: boolean, reviewedBy: string): Promise<void> {
         try {
             await pool.query(
                 `UPDATE ad_campaigns 

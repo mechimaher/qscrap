@@ -5,6 +5,8 @@ import { handleApiError } from '../utils/errorHandler';
 
 interface PaymentInitializationParams {
     existingOrderId: string | undefined;
+    orderId: string | null;
+    setOrderId: (id: string | null) => void;
     bidId: string;
     paymentType: 'delivery_only' | 'full';
     applyDiscount: boolean;
@@ -22,6 +24,8 @@ interface PaymentInitializationParams {
 
 export function usePaymentInitialization({
     existingOrderId,
+    orderId,
+    setOrderId,
     bidId,
     paymentType,
     applyDiscount,
@@ -36,7 +40,6 @@ export function usePaymentInitialization({
     toast,
     navigation
 }: PaymentInitializationParams) {
-    const [orderId, setOrderId] = useState<string | null>(existingOrderId || null);
     const [intentError, setIntentError] = useState<string | null>(null);
     const [isCreatingOrder, setIsCreatingOrder] = useState(false);
     const isInitializing = useRef(false);
@@ -48,7 +51,7 @@ export function usePaymentInitialization({
 
         isInitializing.current = true;
         setIsCreatingOrder(true);
-        let orderIdToUse = existingOrderId;
+        let orderIdToUse = orderId || existingOrderId;
         try {
             if (!orderIdToUse) {
                 const orderResult = await api.acceptBid(bidId, 'card');
@@ -57,17 +60,14 @@ export function usePaymentInitialization({
                 }
                 orderIdToUse = orderResult.order_id;
                 setOrderId(orderIdToUse || null);
-            } else {
-                setOrderId(orderIdToUse || null);
+            }
+            if (!orderIdToUse) {
+                throw new Error('Order ID is required');
             }
 
             let currentDiscount = 0;
             if (applyDiscount && loyaltyData && loyaltyData.discountPercentage > 0) {
                 currentDiscount = Math.round(totalAmount * (loyaltyData.discountPercentage / 100));
-            }
-
-            if (!orderIdToUse) {
-                throw new Error('Order ID is required');
             }
 
             let paymentResult;
@@ -76,18 +76,20 @@ export function usePaymentInitialization({
                 setPaymentAmount(paymentResult.breakdown?.total || totalAmount);
                 setDiscountAmount(currentDiscount);
             } else {
-                const partDiscount = applyDiscount && loyaltyData && loyaltyData.discountPercentage > 0
-                    ? Math.round(partPrice * (loyaltyData.discountPercentage / 100))
-                    : 0;
+                const partDiscount =
+                    applyDiscount && loyaltyData && loyaltyData.discountPercentage > 0
+                        ? Math.round(partPrice * (loyaltyData.discountPercentage / 100))
+                        : 0;
                 paymentResult = await api.createDeliveryFeeIntent(orderIdToUse, partDiscount);
                 setPaymentAmount(deliveryFee);
             }
 
             if (!paymentResult.intent?.clientSecret) {
                 const result = paymentResult as any;
-                const errorMsg = typeof result.error === 'string'
-                    ? result.error
-                    : (result.error?.message || result.message || t('payment.failed'));
+                const errorMsg =
+                    typeof result.error === 'string'
+                        ? result.error
+                        : result.error?.message || result.message || t('payment.failed');
                 throw new Error(errorMsg);
             }
 
@@ -105,7 +107,24 @@ export function usePaymentInitialization({
             setIsCreatingOrder(false);
             isInitializing.current = false;
         }
-    }, [existingOrderId, bidId, paymentType, applyDiscount, loyaltyData, totalAmount, partPrice, deliveryFee, setClientSecret, setPaymentAmount, setDiscountAmount, t, toast, navigation]);
+    }, [
+        existingOrderId,
+        orderId,
+        setOrderId,
+        bidId,
+        paymentType,
+        applyDiscount,
+        loyaltyData,
+        totalAmount,
+        partPrice,
+        deliveryFee,
+        setClientSecret,
+        setPaymentAmount,
+        setDiscountAmount,
+        t,
+        toast,
+        navigation
+    ]);
 
     const retryPaymentIntent = useCallback(async () => {
         if (!orderId) {
@@ -118,7 +137,6 @@ export function usePaymentInitialization({
         setIntentError(null);
 
         try {
-
             let currentDiscount = 0;
             if (applyDiscount && loyaltyData && loyaltyData.discountPercentage > 0) {
                 currentDiscount = Math.round(totalAmount * (loyaltyData.discountPercentage / 100));
@@ -130,18 +148,20 @@ export function usePaymentInitialization({
                 setPaymentAmount(paymentResult.breakdown?.total || totalAmount);
                 setDiscountAmount(currentDiscount);
             } else {
-                const partDiscount = applyDiscount && loyaltyData && loyaltyData.discountPercentage > 0
-                    ? Math.round(partPrice * (loyaltyData.discountPercentage / 100))
-                    : 0;
+                const partDiscount =
+                    applyDiscount && loyaltyData && loyaltyData.discountPercentage > 0
+                        ? Math.round(partPrice * (loyaltyData.discountPercentage / 100))
+                        : 0;
                 paymentResult = await api.createDeliveryFeeIntent(orderId, partDiscount);
                 setPaymentAmount(deliveryFee);
             }
 
             if (!paymentResult.intent?.clientSecret) {
                 const result = paymentResult as any;
-                const errorMsg = typeof result.error === 'string'
-                    ? result.error
-                    : (result.error?.message || result.message || t('payment.failed'));
+                const errorMsg =
+                    typeof result.error === 'string'
+                        ? result.error
+                        : result.error?.message || result.message || t('payment.failed');
                 throw new Error(errorMsg);
             }
 
@@ -154,13 +174,27 @@ export function usePaymentInitialization({
         } finally {
             setIsCreatingOrder(false);
         }
-    }, [orderId, paymentType, applyDiscount, loyaltyData, totalAmount, partPrice, deliveryFee, setClientSecret, setPaymentAmount, setDiscountAmount, t, toast, initializePayment]);
+    }, [
+        orderId,
+        paymentType,
+        applyDiscount,
+        loyaltyData,
+        totalAmount,
+        partPrice,
+        deliveryFee,
+        setClientSecret,
+        setPaymentAmount,
+        setDiscountAmount,
+        t,
+        toast,
+        initializePayment
+    ]);
 
     return {
         orderId,
         intentError,
         isCreatingOrder,
         initializePayment,
-        retryPaymentIntent,
+        retryPaymentIntent
     };
 }

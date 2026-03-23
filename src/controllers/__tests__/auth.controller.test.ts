@@ -61,7 +61,6 @@ import * as authController from '../../controllers/auth.controller';
 import pool from '../../config/db';
 import { Request, Response } from 'express';
 
-
 describe('Auth Controller', () => {
     let mockRequest: Partial<Request>;
     let mockResponse: Partial<Response>;
@@ -284,9 +283,7 @@ describe('Auth Controller', () => {
             await authController.login(mockRequest as Request, mockResponse as Response);
 
             expect(mockStatus).toHaveBeenCalledWith(401);
-            expect(mockJson).toHaveBeenCalledWith(
-                expect.objectContaining({ error: 'Invalid credentials' })
-            );
+            expect(mockJson).toHaveBeenCalledWith(expect.objectContaining({ error: 'Invalid credentials' }));
         });
 
         it('should handle account deactivated error', async () => {
@@ -363,9 +360,7 @@ describe('Auth Controller', () => {
             await authController.refreshToken(mockRequest as Request, mockResponse as Response);
 
             expect(mockStatus).toHaveBeenCalledWith(400);
-            expect(mockJson).toHaveBeenCalledWith(
-                expect.objectContaining({ error: 'refreshToken is required' })
-            );
+            expect(mockJson).toHaveBeenCalledWith(expect.objectContaining({ error: 'refreshToken is required' }));
         });
 
         it('should handle expired refresh token', async () => {
@@ -432,9 +427,7 @@ describe('Auth Controller', () => {
             await authController.deleteAccount(mockRequest as Request, mockResponse as Response);
 
             expect(mockStatus).toHaveBeenCalledWith(401);
-            expect(mockJson).toHaveBeenCalledWith(
-                expect.objectContaining({ error: 'Unauthorized' })
-            );
+            expect(mockJson).toHaveBeenCalledWith(expect.objectContaining({ error: 'Unauthorized' }));
         });
 
         it('should handle user not found', async () => {
@@ -445,9 +438,7 @@ describe('Auth Controller', () => {
             await authController.deleteAccount(mockRequest as Request, mockResponse as Response);
 
             expect(mockStatus).toHaveBeenCalledWith(404);
-            expect(mockJson).toHaveBeenCalledWith(
-                expect.objectContaining({ error: 'User not found' })
-            );
+            expect(mockJson).toHaveBeenCalledWith(expect.objectContaining({ error: 'User not found' }));
         });
     });
 
@@ -478,9 +469,7 @@ describe('Auth Controller', () => {
             await authController.checkDeletionEligibility(mockRequest as Request, mockResponse as Response);
 
             expect(mockStatus).toHaveBeenCalledWith(401);
-            expect(mockJson).toHaveBeenCalledWith(
-                expect.objectContaining({ error: 'Unauthorized' })
-            );
+            expect(mockJson).toHaveBeenCalledWith(expect.objectContaining({ error: 'Unauthorized' }));
         });
     });
 

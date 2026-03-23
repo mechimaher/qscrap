@@ -19,26 +19,36 @@ describe('Escrow Routes', () => {
     const garageId = '22222222-2222-2222-2222-222222222222';
 
     beforeAll(async () => {
-        await pool.query(`
+        await pool.query(
+            `
             INSERT INTO users (user_id, phone_number, password_hash, user_type, full_name)
             VALUES ($1, '5551', 'x', 'customer', 'Test Customer')
             ON CONFLICT (user_id) DO NOTHING;
-        `, [customerId]);
-        await pool.query(`
+        `,
+            [customerId]
+        );
+        await pool.query(
+            `
             INSERT INTO users (user_id, phone_number, password_hash, user_type, full_name)
             VALUES ($1, '5552', 'x', 'garage', 'Test Garage')
             ON CONFLICT (user_id) DO NOTHING;
-        `, [garageId]);
+        `,
+            [garageId]
+        );
 
-        await pool.query(`
+        await pool.query(
+            `
             INSERT INTO garages (garage_id, garage_name, phone_number)
             VALUES ($1, 'Test Garage', '5552')
             ON CONFLICT (garage_id) DO NOTHING;
-        `, [garageId]);
+        `,
+            [garageId]
+        );
 
         // Minimal order row to satisfy FK
         orderId = '33333333-3333-3333-3333-333333333333';
-        await pool.query(`
+        await pool.query(
+            `
             INSERT INTO orders (
                 order_id, order_number, customer_id, garage_id, part_price, commission_rate,
                 platform_fee, delivery_fee, total_amount, garage_payout_amount, payment_method,
@@ -46,7 +56,9 @@ describe('Escrow Routes', () => {
             )
             VALUES ($1, 'TEST-001', $2, $3, 90, 0.10, 9, 10, 109, 90, 'card', 'paid', 'confirmed')
             ON CONFLICT (order_id) DO NOTHING;
-        `, [orderId, customerId, garageId]);
+        `,
+            [orderId, customerId, garageId]
+        );
 
         await createUser(customerId, 'customer', '5551');
         await createUser(garageId, 'garage', '5552');
@@ -58,7 +70,7 @@ describe('Escrow Routes', () => {
             customerId,
             garageId,
             total: 109,
-            deliveryFee: 10,
+            deliveryFee: 10
         });
 
         const escrow = await escrowService.createEscrow({
@@ -68,7 +80,7 @@ describe('Escrow Routes', () => {
             amount: 109,
             platformFeePercent: 10,
             deliveryFee: 10,
-            inspectionWindowHours: 48,
+            inspectionWindowHours: 48
         });
         escrowId = escrow.escrow_id;
     });
@@ -79,9 +91,7 @@ describe('Escrow Routes', () => {
     });
 
     it('returns escrow for order when customer is authorized', async () => {
-        const res = await request(app)
-            .get(`/api/v1/escrow/order/${orderId}`)
-            .set(authHeader(customerId, 'customer'));
+        const res = await request(app).get(`/api/v1/escrow/order/${orderId}`).set(authHeader(customerId, 'customer'));
         // debug
         // eslint-disable-next-line no-console
         console.log('get escrow status', res.status, res.body);

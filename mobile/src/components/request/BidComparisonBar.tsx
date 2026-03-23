@@ -11,7 +11,7 @@ const BidComparisonBar = ({ bids, colors }: { bids: Bid[]; colors: any }) => {
     const { t, isRTL } = useTranslation();
     if (bids.length < 2) return null;
 
-    const prices = bids.map(b => Number(b.bid_amount));
+    const prices = bids.map((b) => Number(b.bid_amount));
     const minPrice = Math.min(...prices);
     const maxPrice = Math.max(...prices);
     const range = maxPrice - minPrice;
@@ -20,7 +20,9 @@ const BidComparisonBar = ({ bids, colors }: { bids: Bid[]; colors: any }) => {
 
     return (
         <View style={[styles.comparisonContainer, { backgroundColor: colors.surface }]}>
-            <Text style={[styles.comparisonTitle, { textAlign: rtlTextAlign(isRTL) }]}>{t('requestDetail.priceRange')}</Text>
+            <Text style={[styles.comparisonTitle, { textAlign: rtlTextAlign(isRTL) }]}>
+                {t('requestDetail.priceRange')}
+            </Text>
             <View style={styles.comparisonBar}>
                 <LinearGradient
                     colors={['#22C55E', '#F59E0B', '#EF4444']}
@@ -33,7 +35,13 @@ const BidComparisonBar = ({ bids, colors }: { bids: Bid[]; colors: any }) => {
                         return (
                             <View
                                 key={bid.bid_id}
-                                style={[styles.comparisonDot, { left: isRTL ? undefined : `${position}%`, right: isRTL ? `${position}%` : undefined }]}
+                                style={[
+                                    styles.comparisonDot,
+                                    {
+                                        left: isRTL ? undefined : `${position}%`,
+                                        right: isRTL ? `${position}%` : undefined
+                                    }
+                                ]}
                             >
                                 <View style={styles.comparisonDotInner} />
                             </View>
@@ -42,8 +50,12 @@ const BidComparisonBar = ({ bids, colors }: { bids: Bid[]; colors: any }) => {
                 </LinearGradient>
             </View>
             <View style={[styles.comparisonLabels, { flexDirection: rtlFlexDirection(isRTL) }]}>
-                <Text style={styles.comparisonMin}>{minPrice} {t('common.qar')}</Text>
-                <Text style={styles.comparisonMax}>{maxPrice} {t('common.qar')}</Text>
+                <Text style={styles.comparisonMin}>
+                    {minPrice} {t('common.qar')}
+                </Text>
+                <Text style={styles.comparisonMax}>
+                    {maxPrice} {t('common.qar')}
+                </Text>
             </View>
         </View>
     );
@@ -55,7 +67,7 @@ const styles = StyleSheet.create({
         marginBottom: Spacing.lg,
         padding: Spacing.md,
         borderRadius: BorderRadius.lg,
-        ...Shadows.sm,
+        ...Shadows.sm
     },
     comparisonTitle: { fontSize: FontSizes.sm, fontWeight: '600', marginBottom: Spacing.sm },
     comparisonBar: { height: 8, borderRadius: 4, overflow: 'hidden' },
@@ -67,7 +79,7 @@ const styles = StyleSheet.create({
         height: 16,
         marginLeft: -8,
         justifyContent: 'center',
-        alignItems: 'center',
+        alignItems: 'center'
     },
     comparisonDotInner: {
         width: 12,
@@ -75,15 +87,15 @@ const styles = StyleSheet.create({
         borderRadius: 6,
         backgroundColor: '#fff',
         borderWidth: 2,
-        borderColor: '#1a1a2e',
+        borderColor: '#1a1a2e'
     },
     comparisonLabels: {
         flexDirection: 'row',
         justifyContent: 'space-between',
-        marginTop: Spacing.sm,
+        marginTop: Spacing.sm
     },
     comparisonMin: { fontSize: FontSizes.sm, color: '#22C55E', fontWeight: '600' },
-    comparisonMax: { fontSize: FontSizes.sm, color: '#EF4444', fontWeight: '600' },
+    comparisonMax: { fontSize: FontSizes.sm, color: '#EF4444', fontWeight: '600' }
 });
 
 export default BidComparisonBar;

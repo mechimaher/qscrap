@@ -91,13 +91,14 @@ export class EmailService {
     async send(to: string, subject: string, html: string, text?: string): Promise<boolean> {
         try {
             const info = await withRetry(
-                () => this.transporter.sendMail({
-                    from: `"${this.fromName}" <${this.fromEmail}>`,
-                    to,
-                    subject,
-                    html,
-                    text: text || this.stripHtml(html)
-                }),
+                () =>
+                    this.transporter.sendMail({
+                        from: `"${this.fromName}" <${this.fromEmail}>`,
+                        to,
+                        subject,
+                        html,
+                        text: text || this.stripHtml(html)
+                    }),
                 { label: 'nodemailer.sendMail' }
             );
 
@@ -287,7 +288,6 @@ export class EmailService {
             .replace(/\s+/g, ' ')
             .trim();
     }
-
 
     /**
      * Send B2B Garage Welcome Email with Magic Link

@@ -1,7 +1,7 @@
 /**
  * Cancellation Service - BRAIN v3.0 Compliant
  * Handles all cancellation workflows: requests, bids, and orders
- * 
+ *
  * Fee Structure (Cancellation-Refund-BRAIN.md v3.0):
  * - Before payment: 0%
  * - After payment (confirmed): 5%
@@ -33,7 +33,7 @@ import { getFraudDetectionService } from './fraud-detection.service';
 import { smsService } from '../sms.service';
 
 export class CancellationService {
-    constructor(private pool: Pool) { }
+    constructor(private pool: Pool) {}
 
     /**
      * Cancel a request (by customer)
@@ -84,7 +84,7 @@ export class CancellationService {
             await client.query('COMMIT');
 
             // Notify all bidding garages (Persistent + Socket)
-            const garageIds = bidsResult.rows.map(r => r.garage_id);
+            const garageIds = bidsResult.rows.map((r) => r.garage_id);
             for (const garageId of garageIds) {
                 await createNotification({
                     userId: garageId,
@@ -195,7 +195,7 @@ export class CancellationService {
     /**
      * Calculate cancellation fee based on order status
      * BRAIN v3.0 Compliant - See Cancellation-Refund-BRAIN.md
-     * 
+     *
      * Fee Structure:
      * - BEFORE_PAYMENT: 0%
      * - AFTER_PAYMENT (confirmed): 5% (covers 2% tx + 1% refund + 2% admin)
@@ -320,7 +320,7 @@ export class CancellationService {
 
         const totalAmount = parseFloat(String(order.total_amount));
         const deliveryFee = parseFloat(String(order.delivery_fee || 0));
-        const partPrice = parseFloat(String(order.part_price || (totalAmount - deliveryFee)));
+        const partPrice = parseFloat(String(order.part_price || totalAmount - deliveryFee));
 
         // BRAIN v3.1: Apply customer-friendly fee policy
         let finalFee = feeInfo.fee;
@@ -348,9 +348,7 @@ export class CancellationService {
         }
 
         // Calculate refund with adjusted fee
-        const refundAmount = feeInfo.canCancel
-            ? totalAmount - finalFee - feeInfo.deliveryFeeRetained
-            : 0;
+        const refundAmount = feeInfo.canCancel ? totalAmount - finalFee - feeInfo.deliveryFeeRetained : 0;
 
         return {
             order_id: orderId,
@@ -441,8 +439,17 @@ export class CancellationService {
                   cancellation_fee, refund_amount, status)
                  VALUES ($1, $2, 'customer', $3, $4, $5, $6, $7, $8, $9, 'processed')
                  RETURNING cancellation_id`,
-                [orderId, customerId, reasonCode || 'changed_mind', reasonText,
-                    order.order_status, minutesSinceOrder, feeInfo.feeRate, finalFee, refundAmount]
+                [
+                    orderId,
+                    customerId,
+                    reasonCode || 'changed_mind',
+                    reasonText,
+                    order.order_status,
+                    minutesSinceOrder,
+                    feeInfo.feeRate,
+                    finalFee,
+                    refundAmount
+                ]
             );
 
             // Update order status
@@ -485,8 +492,14 @@ export class CancellationService {
                       delivery_fee_retained, refund_status)
                      VALUES ($1, $2, $3, $4, $5, $6, 'processing')
                      RETURNING refund_id`,
-                    [orderId, cancelResult.rows[0].cancellation_id, order.total_amount,
-                        refundableAmount, feeInfo.fee, deliveryFee]
+                    [
+                        orderId,
+                        cancelResult.rows[0].cancellation_id,
+                        order.total_amount,
+                        refundableAmount,
+                        feeInfo.fee,
+                        deliveryFee
+                    ]
                 );
 
                 if (piResult.rows.length > 0 && piResult.rows[0].provider_intent_id) {
@@ -498,18 +511,21 @@ export class CancellationService {
                         });
 
                         // G-04 FIX: Add idempotency key for Stripe-level duplicate protection
-                        const stripeRefund = await stripe.refunds.create({
-                            payment_intent: piResult.rows[0].provider_intent_id,
-                            amount: Math.round(refundableAmount * 100), // cents
-                            metadata: {
-                                order_id: orderId,
-                                order_number: order.order_number,
-                                reason: 'customer_cancellation',
-                                delivery_fee_retained: deliveryFee.toString()
+                        const stripeRefund = await stripe.refunds.create(
+                            {
+                                payment_intent: piResult.rows[0].provider_intent_id,
+                                amount: Math.round(refundableAmount * 100), // cents
+                                metadata: {
+                                    order_id: orderId,
+                                    order_number: order.order_number,
+                                    reason: 'customer_cancellation',
+                                    delivery_fee_retained: deliveryFee.toString()
+                                }
+                            },
+                            {
+                                idempotencyKey: `customer_cancel_${orderId}_${refundInsert.rows[0].refund_id}`
                             }
-                        }, {
-                            idempotencyKey: `customer_cancel_${orderId}_${refundInsert.rows[0].refund_id}`
-                        });
+                        );
 
                         // Update refund as completed
                         await client.query(
@@ -522,10 +538,9 @@ export class CancellationService {
                         );
 
                         // Update order payment status
-                        await client.query(
-                            `UPDATE orders SET payment_status = 'refunded' WHERE order_id = $1`,
-                            [orderId]
-                        );
+                        await client.query(`UPDATE orders SET payment_status = 'refunded' WHERE order_id = $1`, [
+                            orderId
+                        ]);
 
                         stripeRefundResult = {
                             refund_id: stripeRefund.id,
@@ -533,7 +548,11 @@ export class CancellationService {
                             status: 'completed'
                         };
 
-                        logger.info('Auto-refund processed', { refundId: stripeRefund.id, amount: refundableAmount, deliveryFeeRetained: deliveryFee });
+                        logger.info('Auto-refund processed', {
+                            refundId: stripeRefund.id,
+                            amount: refundableAmount,
+                            deliveryFeeRetained: deliveryFee
+                        });
                     } catch (stripeErr: any) {
                         logger.error('Stripe refund failed', { error: stripeErr.message });
                         // Mark refund as failed, Operations can retry
@@ -548,9 +567,9 @@ export class CancellationService {
 
             // BRAIN v3.0: Garage compensation - MANUAL REVIEW WORKFLOW
             // Philosophy: "Customer is King" - Support/Finance team decides if garage deserves compensation
-            // 
+            //
             // When customer cancels during/after preparation:
-            // 1. Payout is marked as "pending_compensation_review" 
+            // 1. Payout is marked as "pending_compensation_review"
             // 2. Support/Finance team reviews the reason
             // 3. They approve (garage gets 5%) or deny (garage gets 0 + possible penalty)
 
@@ -623,9 +642,10 @@ export class CancellationService {
             await client.query('COMMIT');
 
             // Notify garage (Persistent + Socket) - include compensation info
-            const compensationNote = garageCompensation > 0
-                ? ` You will receive ${garageCompensation.toFixed(2)} QAR compensation for your work.`
-                : '';
+            const compensationNote =
+                garageCompensation > 0
+                    ? ` You will receive ${garageCompensation.toFixed(2)} QAR compensation for your work.`
+                    : '';
             await createNotification({
                 userId: order.garage_id,
                 type: 'order_cancelled',
@@ -695,7 +715,10 @@ export class CancellationService {
                     action: 'return_to_garage'
                 });
 
-                logger.info('Driver notified of cancellation', { driverId: order.driver_id, orderNumber: order.order_number });
+                logger.info('Driver notified of cancellation', {
+                    driverId: order.driver_id,
+                    orderNumber: order.order_number
+                });
             }
 
             // Notify customer about refund (in-app)
@@ -805,8 +828,15 @@ export class CancellationService {
                   refund_amount, status)
                  VALUES ($1, $2, 'garage', $3, $4, $5, $6, 0, $7, 'processed')
                  RETURNING cancellation_id`,
-                [orderId, garageId, reasonCode || 'stock_out', reasonText,
-                    order.order_status, minutesSinceOrder, refundAmount]
+                [
+                    orderId,
+                    garageId,
+                    reasonCode || 'stock_out',
+                    reasonText,
+                    order.order_status,
+                    minutesSinceOrder,
+                    refundAmount
+                ]
             );
 
             // Update order status
@@ -868,18 +898,21 @@ export class CancellationService {
                         });
 
                         // G-04 FIX: Add idempotency key for Stripe-level duplicate protection
-                        const stripeRefund = await stripe.refunds.create({
-                            payment_intent: piResult.rows[0].provider_intent_id,
-                            amount: Math.round(refundAmount * 100),
-                            metadata: {
-                                order_id: orderId,
-                                order_number: order.order_number,
-                                reason: 'garage_cancellation',
-                                cancelled_by: 'garage'
+                        const stripeRefund = await stripe.refunds.create(
+                            {
+                                payment_intent: piResult.rows[0].provider_intent_id,
+                                amount: Math.round(refundAmount * 100),
+                                metadata: {
+                                    order_id: orderId,
+                                    order_number: order.order_number,
+                                    reason: 'garage_cancellation',
+                                    cancelled_by: 'garage'
+                                }
+                            },
+                            {
+                                idempotencyKey: `garage_cancel_${orderId}_${refundInsert.rows[0].refund_id}`
                             }
-                        }, {
-                            idempotencyKey: `garage_cancel_${orderId}_${refundInsert.rows[0].refund_id}`
-                        });
+                        );
 
                         await client.query(
                             `UPDATE refunds SET 
@@ -890,10 +923,9 @@ export class CancellationService {
                             [refundInsert.rows[0].refund_id, stripeRefund.id]
                         );
 
-                        await client.query(
-                            `UPDATE orders SET payment_status = 'refunded' WHERE order_id = $1`,
-                            [orderId]
-                        );
+                        await client.query(`UPDATE orders SET payment_status = 'refunded' WHERE order_id = $1`, [
+                            orderId
+                        ]);
 
                         stripeRefundResult = { refund_id: stripeRefund.id, amount: refundAmount };
                         logger.info('Garage-Cancel auto-refund', { refundId: stripeRefund.id, amount: refundAmount });
@@ -1059,7 +1091,7 @@ export class CancellationService {
     /**
      * Cancel order (by driver)
      * Handles various driver cancellation scenarios with appropriate fee attribution
-     * 
+     *
      * Fee Attribution:
      * - cant_find_garage: Platform absorbs, reassign order
      * - part_damaged_at_pickup: Garage fault, full refund to customer
@@ -1138,8 +1170,16 @@ export class CancellationService {
                   refund_amount, status)
                  VALUES ($1, $2, 'driver', $3, $4, $5, $6, $7, $8, 'processed')
                  RETURNING cancellation_id`,
-                [orderId, driverId, reasonCode, reasonText,
-                    order.order_status, minutesSinceOrder, cancellationFee, refundAmount]
+                [
+                    orderId,
+                    driverId,
+                    reasonCode,
+                    reasonText,
+                    order.order_status,
+                    minutesSinceOrder,
+                    cancellationFee,
+                    refundAmount
+                ]
             );
 
             // Update order status
@@ -1176,8 +1216,14 @@ export class CancellationService {
                       delivery_fee_retained, refund_status)
                      VALUES ($1, $2, $3, $4, $5, $6, 'processing')
                      RETURNING refund_id`,
-                    [orderId, cancelResult.rows[0].cancellation_id, totalAmount,
-                        refundAmount, cancellationFee, faultParty === 'customer' ? deliveryFee : 0]
+                    [
+                        orderId,
+                        cancelResult.rows[0].cancellation_id,
+                        totalAmount,
+                        refundAmount,
+                        cancellationFee,
+                        faultParty === 'customer' ? deliveryFee : 0
+                    ]
                 );
 
                 if (piResult.rows.length > 0 && piResult.rows[0].provider_intent_id) {
@@ -1189,18 +1235,21 @@ export class CancellationService {
                         });
 
                         // G-04 FIX: Add idempotency key for Stripe-level duplicate protection
-                        const stripeRefund = await stripe.refunds.create({
-                            payment_intent: piResult.rows[0].provider_intent_id,
-                            amount: Math.round(refundAmount * 100),
-                            metadata: {
-                                order_id: orderId,
-                                order_number: order.order_number,
-                                reason: `driver_${reasonCode}`,
-                                fault_party: faultParty
+                        const stripeRefund = await stripe.refunds.create(
+                            {
+                                payment_intent: piResult.rows[0].provider_intent_id,
+                                amount: Math.round(refundAmount * 100),
+                                metadata: {
+                                    order_id: orderId,
+                                    order_number: order.order_number,
+                                    reason: `driver_${reasonCode}`,
+                                    fault_party: faultParty
+                                }
+                            },
+                            {
+                                idempotencyKey: `driver_cancel_${orderId}_${refundInsert.rows[0].refund_id}`
                             }
-                        }, {
-                            idempotencyKey: `driver_cancel_${orderId}_${refundInsert.rows[0].refund_id}`
-                        });
+                        );
 
                         await client.query(
                             `UPDATE refunds SET 
@@ -1211,13 +1260,16 @@ export class CancellationService {
                             [refundInsert.rows[0].refund_id, stripeRefund.id]
                         );
 
-                        await client.query(
-                            `UPDATE orders SET payment_status = 'refunded' WHERE order_id = $1`,
-                            [orderId]
-                        );
+                        await client.query(`UPDATE orders SET payment_status = 'refunded' WHERE order_id = $1`, [
+                            orderId
+                        ]);
 
                         stripeRefundResult = { refund_id: stripeRefund.id, amount: refundAmount };
-                        logger.info('Driver-Cancel refund', { refundId: stripeRefund.id, amount: refundAmount, faultParty });
+                        logger.info('Driver-Cancel refund', {
+                            refundId: stripeRefund.id,
+                            amount: refundAmount,
+                            faultParty
+                        });
                     } catch (stripeErr: any) {
                         logger.error('Driver-Cancel Stripe refund failed', { error: stripeErr.message });
                         await client.query(
@@ -1231,12 +1283,19 @@ export class CancellationService {
 
             // If garage fault, record penalty
             if (faultParty === 'garage') {
-                await client.query(`
+                await client.query(
+                    `
                     INSERT INTO garage_penalties 
                     (garage_id, order_id, penalty_type, amount, status, notes)
                     VALUES ($1, $2, 'driver_reported_damage', $3, 'pending', $4)
-                `, [order.garage_id, orderId, GARAGE_PENALTIES.DAMAGED_PART_PENALTY_QAR,
-                `Driver reported part damaged at pickup: ${reasonText || 'No details'}`]);
+                `,
+                    [
+                        order.garage_id,
+                        orderId,
+                        GARAGE_PENALTIES.DAMAGED_PART_PENALTY_QAR,
+                        `Driver reported part damaged at pickup: ${reasonText || 'No details'}`
+                    ]
+                );
             }
 
             // Cancel garage payout
@@ -1361,11 +1420,7 @@ export class CancellationService {
         refund_amount?: number;
     }> {
         const client = await this.pool.connect();
-        const {
-            refund_type = 'full',
-            notify_customer = true,
-            notify_garage = true
-        } = options;
+        const { refund_type = 'full', notify_customer = true, notify_garage = true } = options;
 
         try {
             await client.query('BEGIN');
@@ -1432,9 +1487,10 @@ export class CancellationService {
                 );
 
                 if (paymentIntentResult.rows.length > 0) {
-                    refundAmount = refund_type === 'partial'
-                        ? (options.partial_refund_amount || parseFloat(order.total_amount))
-                        : parseFloat(order.total_amount);
+                    refundAmount =
+                        refund_type === 'partial'
+                            ? options.partial_refund_amount || parseFloat(order.total_amount)
+                            : parseFloat(order.total_amount);
 
                     try {
                         // Type-safe Stripe import
@@ -1460,18 +1516,19 @@ export class CancellationService {
                              (order_id, original_amount, refund_amount, refund_status, 
                               stripe_refund_id, processed_by, processed_at, refund_reason)
                              VALUES ($1, $2, $3, 'completed', $4, $5, NOW(), $6)`,
-                            [orderId, order.total_amount, refundAmount, stripeRefund.id,
-                                operationsUserId, reason]
+                            [orderId, order.total_amount, refundAmount, stripeRefund.id, operationsUserId, reason]
                         );
 
                         // Update payment status
-                        await client.query(
-                            `UPDATE orders SET payment_status = 'refunded' WHERE order_id = $1`,
-                            [orderId]
-                        );
+                        await client.query(`UPDATE orders SET payment_status = 'refunded' WHERE order_id = $1`, [
+                            orderId
+                        ]);
 
                         refundProcessed = true;
-                        logger.info('Operations refund processed', { amount: refundAmount, orderNumber: order.order_number });
+                        logger.info('Operations refund processed', {
+                            amount: refundAmount,
+                            orderNumber: order.order_number
+                        });
                     } catch (stripeErr: any) {
                         logger.error('Operations Stripe refund failed', { error: stripeErr.message });
                         // Log failed refund for manual processing
@@ -1480,8 +1537,13 @@ export class CancellationService {
                              (order_id, original_amount, refund_amount, refund_status, 
                               processed_by, refund_reason)
                              VALUES ($1, $2, $3, 'failed', $4, $5)`,
-                            [orderId, order.total_amount, refundAmount, operationsUserId,
-                                `${reason} (Stripe error: ${stripeErr.message})`]
+                            [
+                                orderId,
+                                order.total_amount,
+                                refundAmount,
+                                operationsUserId,
+                                `${reason} (Stripe error: ${stripeErr.message})`
+                            ]
                         );
                     }
                 }

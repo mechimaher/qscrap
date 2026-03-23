@@ -5,15 +5,7 @@
  */
 
 import React, { useState, useEffect } from 'react';
-import {
-    View,
-    Text,
-    StyleSheet,
-    Modal,
-    TouchableOpacity,
-    ActivityIndicator,
-    ScrollView,
-} from 'react-native';
+import { View, Text, StyleSheet, Modal, TouchableOpacity, ActivityIndicator, ScrollView } from 'react-native';
 import { LinearGradient } from 'expo-linear-gradient';
 import * as Haptics from 'expo-haptics';
 import { useTheme } from '../contexts/ThemeContext';
@@ -108,31 +100,40 @@ export default function AccountDeletionModal({ visible, onClose, onNavigate }: P
 
     const getBlockerIcon = (type: string): string => {
         switch (type) {
-            case 'active_orders': return 'cube-outline';
-            case 'open_tickets': return 'ticket-outline';
-            case 'active_disputes': return 'warning-outline';
-            case 'pending_refunds': return 'cash-outline';
-            case 'active_requests': return 'document-text-outline';
-            default: return 'alert-circle-outline';
+            case 'active_orders':
+                return 'cube-outline';
+            case 'open_tickets':
+                return 'ticket-outline';
+            case 'active_disputes':
+                return 'warning-outline';
+            case 'pending_refunds':
+                return 'cash-outline';
+            case 'active_requests':
+                return 'document-text-outline';
+            default:
+                return 'alert-circle-outline';
         }
     };
 
     const getActionButtonLabel = (action: string): string => {
         switch (action) {
-            case 'view_orders': return t('deletion.viewOrders');
-            case 'view_support': return t('deletion.viewTickets');
-            case 'view_requests': return t('deletion.viewRequests');
-            case 'contact_support': return t('deletion.contactSupport');
-            default: return t('common.view');
+            case 'view_orders':
+                return t('deletion.viewOrders');
+            case 'view_support':
+                return t('deletion.viewTickets');
+            case 'view_requests':
+                return t('deletion.viewRequests');
+            case 'contact_support':
+                return t('deletion.contactSupport');
+            default:
+                return t('common.view');
         }
     };
 
     const renderLoading = () => (
         <View style={styles.centerContent}>
             <ActivityIndicator size="large" color={Colors.primary} />
-            <Text style={[styles.loadingText, { color: colors.textSecondary }]}>
-                {t('deletion.checking')}
-            </Text>
+            <Text style={[styles.loadingText, { color: colors.textSecondary }]}>{t('deletion.checking')}</Text>
         </View>
     );
 
@@ -154,16 +155,29 @@ export default function AccountDeletionModal({ visible, onClose, onNavigate }: P
                 {blockers.map((blocker, index) => (
                     <View
                         key={index}
-                        style={[styles.blockerCard, {
-                            backgroundColor: colors.surface,
-                            borderColor: colors.border,
-                            flexDirection: rtlFlexDirection(isRTL)
-                        }]}
+                        style={[
+                            styles.blockerCard,
+                            {
+                                backgroundColor: colors.surface,
+                                borderColor: colors.border,
+                                flexDirection: rtlFlexDirection(isRTL)
+                            }
+                        ]}
                     >
                         <View style={[styles.blockerInfo, { flexDirection: rtlFlexDirection(isRTL) }]}>
-                            <Ionicons name={getBlockerIcon(blocker.type) as any} size={24} color={Colors.primary} style={{ marginRight: Spacing.sm }} />
+                            <Ionicons
+                                name={getBlockerIcon(blocker.type) as any}
+                                size={24}
+                                color={Colors.primary}
+                                style={{ marginRight: Spacing.sm }}
+                            />
                             <View style={styles.blockerTextContainer}>
-                                <Text style={[styles.blockerMessage, { color: colors.text, textAlign: rtlTextAlign(isRTL) }]}>
+                                <Text
+                                    style={[
+                                        styles.blockerMessage,
+                                        { color: colors.text, textAlign: rtlTextAlign(isRTL) }
+                                    ]}
+                                >
                                     {t(`deletion.${blocker.type}`, { count: blocker.count }) || blocker.message}
                                 </Text>
                             </View>
@@ -172,9 +186,7 @@ export default function AccountDeletionModal({ visible, onClose, onNavigate }: P
                             style={styles.actionButton}
                             onPress={() => handleBlockerAction(blocker.action)}
                         >
-                            <Text style={styles.actionButtonText}>
-                                {getActionButtonLabel(blocker.action)}
-                            </Text>
+                            <Text style={styles.actionButtonText}>{getActionButtonLabel(blocker.action)}</Text>
                         </TouchableOpacity>
                     </View>
                 ))}
@@ -204,7 +216,9 @@ export default function AccountDeletionModal({ visible, onClose, onNavigate }: P
             </Text>
 
             {/* Warning Points */}
-            <View style={[styles.warningBox, { backgroundColor: Colors.error + '08', borderColor: Colors.error + '20' }]}>
+            <View
+                style={[styles.warningBox, { backgroundColor: Colors.error + '08', borderColor: Colors.error + '20' }]}
+            >
                 <Text style={[styles.warningText, { color: colors.text, textAlign: rtlTextAlign(isRTL) }]}>
                     {t('deletion.warning1')}
                 </Text>
@@ -225,14 +239,8 @@ export default function AccountDeletionModal({ visible, onClose, onNavigate }: P
                     <Text style={[styles.cancelButtonText, { color: colors.text }]}>{t('common.keep')}</Text>
                 </TouchableOpacity>
 
-                <TouchableOpacity
-                    style={styles.deleteButton}
-                    onPress={handleDelete}
-                >
-                    <LinearGradient
-                        colors={[Colors.error, '#b91c1c'] as const}
-                        style={styles.deleteGradient}
-                    >
+                <TouchableOpacity style={styles.deleteButton} onPress={handleDelete}>
+                    <LinearGradient colors={[Colors.error, '#b91c1c'] as const} style={styles.deleteGradient}>
                         <Text style={styles.deleteButtonText}>{t('common.delete')}</Text>
                     </LinearGradient>
                 </TouchableOpacity>
@@ -243,19 +251,12 @@ export default function AccountDeletionModal({ visible, onClose, onNavigate }: P
     const renderDeleting = () => (
         <View style={styles.centerContent}>
             <ActivityIndicator size="large" color={Colors.error} />
-            <Text style={[styles.loadingText, { color: colors.textSecondary }]}>
-                {t('deletion.deleting')}
-            </Text>
+            <Text style={[styles.loadingText, { color: colors.textSecondary }]}>{t('deletion.deleting')}</Text>
         </View>
     );
 
     return (
-        <Modal
-            visible={visible}
-            transparent
-            animationType="fade"
-            onRequestClose={onClose}
-        >
+        <Modal visible={visible} transparent animationType="fade" onRequestClose={onClose}>
             <View style={styles.overlay}>
                 <View style={[styles.modal, { backgroundColor: colors.background }]}>
                     {modalState === 'loading' && renderLoading()}
@@ -274,21 +275,21 @@ const styles = StyleSheet.create({
         backgroundColor: 'rgba(0, 0, 0, 0.6)',
         justifyContent: 'center',
         alignItems: 'center',
-        padding: Spacing.lg,
+        padding: Spacing.lg
     },
     modal: {
         width: '100%',
         maxWidth: 400,
         borderRadius: BorderRadius.xl,
         ...Shadows.lg,
-        maxHeight: '80%',
+        maxHeight: '80%'
     },
     centerContent: {
         padding: Spacing.xl * 2,
-        alignItems: 'center',
+        alignItems: 'center'
     },
     content: {
-        padding: Spacing.xl,
+        padding: Spacing.xl
     },
     iconContainer: {
         width: 72,
@@ -298,30 +299,30 @@ const styles = StyleSheet.create({
         justifyContent: 'center',
         alignItems: 'center',
         alignSelf: 'center',
-        marginBottom: Spacing.lg,
+        marginBottom: Spacing.lg
     },
     icon: {
-        fontSize: 36,
+        fontSize: 36
     },
     title: {
         fontSize: FontSizes.xl,
         fontWeight: '700',
         textAlign: 'center',
-        marginBottom: Spacing.sm,
+        marginBottom: Spacing.sm
     },
     subtitle: {
         fontSize: FontSizes.md,
         textAlign: 'center',
         marginBottom: Spacing.xl,
-        lineHeight: 22,
+        lineHeight: 22
     },
     loadingText: {
         marginTop: Spacing.md,
-        fontSize: FontSizes.md,
+        fontSize: FontSizes.md
     },
     blockersList: {
         maxHeight: 250,
-        marginBottom: Spacing.lg,
+        marginBottom: Spacing.lg
     },
     blockerCard: {
         flexDirection: 'row',
@@ -330,84 +331,84 @@ const styles = StyleSheet.create({
         padding: Spacing.md,
         borderRadius: BorderRadius.lg,
         borderWidth: 1,
-        marginBottom: Spacing.sm,
+        marginBottom: Spacing.sm
     },
     blockerInfo: {
         flexDirection: 'row',
         alignItems: 'center',
-        flex: 1,
+        flex: 1
     },
     blockerIcon: {
         fontSize: 24,
-        marginRight: Spacing.sm,
+        marginRight: Spacing.sm
     },
     blockerTextContainer: {
-        flex: 1,
+        flex: 1
     },
     blockerMessage: {
         fontSize: FontSizes.sm,
-        fontWeight: '500',
+        fontWeight: '500'
     },
     actionButton: {
         backgroundColor: Colors.primary + '15',
         paddingHorizontal: Spacing.md,
         paddingVertical: Spacing.xs,
         borderRadius: BorderRadius.md,
-        marginLeft: Spacing.sm,
+        marginLeft: Spacing.sm
     },
     actionButtonText: {
         color: Colors.primary,
         fontSize: FontSizes.xs,
-        fontWeight: '600',
+        fontWeight: '600'
     },
     closeButton: {
         padding: Spacing.md,
         borderRadius: BorderRadius.lg,
         borderWidth: 1,
-        alignItems: 'center',
+        alignItems: 'center'
     },
     closeButtonText: {
         fontSize: FontSizes.md,
-        fontWeight: '600',
+        fontWeight: '600'
     },
     warningBox: {
         padding: Spacing.lg,
         borderRadius: BorderRadius.lg,
         borderWidth: 1,
-        marginBottom: Spacing.xl,
+        marginBottom: Spacing.xl
     },
     warningText: {
         fontSize: FontSizes.sm,
         marginBottom: Spacing.sm,
-        lineHeight: 20,
+        lineHeight: 20
     },
     buttonRow: {
         flexDirection: 'row',
-        gap: Spacing.md,
+        gap: Spacing.md
     },
     cancelButton: {
         flex: 1,
         padding: Spacing.md,
         borderRadius: BorderRadius.lg,
         borderWidth: 1,
-        alignItems: 'center',
+        alignItems: 'center'
     },
     cancelButtonText: {
         fontSize: FontSizes.md,
-        fontWeight: '600',
+        fontWeight: '600'
     },
     deleteButton: {
         flex: 1,
         borderRadius: BorderRadius.lg,
-        overflow: 'hidden',
+        overflow: 'hidden'
     },
     deleteGradient: {
         padding: Spacing.md,
-        alignItems: 'center',
+        alignItems: 'center'
     },
     deleteButtonText: {
         color: '#fff',
         fontSize: FontSizes.md,
-        fontWeight: '700',
-    },
+        fontWeight: '700'
+    }
 });

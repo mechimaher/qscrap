@@ -69,10 +69,10 @@ export interface ReturnPreview {
     hours_remaining: number;
     part_price: number;
     delivery_fee: number;
-    return_fee: number;        // 20% of part price
-    delivery_fee_retained: number;  // 100% of delivery
+    return_fee: number; // 20% of part price
+    delivery_fee_retained: number; // 100% of delivery
     refund_amount: number;
-    reason?: string;           // If can_return is false
+    reason?: string; // If can_return is false
 }
 
 export interface ReturnResult {

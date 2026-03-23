@@ -1,7 +1,7 @@
 /**
  * Payment Service
  * Orchestrates payment operations with provider-agnostic architecture
- * 
+ *
  * Business Model: Delivery Fee Upfront
  * - Customer pays delivery fee at checkout (via card)
  * - Part cost is Cash on Delivery
@@ -9,7 +9,13 @@
  */
 
 import { Pool } from 'pg';
-import { PaymentGateway, PaymentIntent, PaymentMethod, PaymentStatus, CreatePaymentOptions } from './payment-gateway.interface';
+import {
+    PaymentGateway,
+    PaymentIntent,
+    PaymentMethod,
+    PaymentStatus,
+    CreatePaymentOptions
+} from './payment-gateway.interface';
 import { StripePaymentProvider } from './stripe.provider';
 import { MockPaymentProvider } from './mock.provider';
 import logger from '../../utils/logger';
@@ -87,20 +93,35 @@ export class PaymentService {
             });
 
             // Store in database
-            await client.query(`
+            await client.query(
+                `
                 INSERT INTO payment_intents 
                 (intent_id, order_id, customer_id, amount, currency, intent_type, provider, provider_intent_id, provider_client_secret, status)
                 VALUES (gen_random_uuid(), $1, $2, $3, $4, 'deposit', $5, $6, $7, $8)
-            `, [orderId, customerId, deliveryFee, currency, this.provider.providerName, intent.id, intent.clientSecret, intent.status]);
+            `,
+                [
+                    orderId,
+                    customerId,
+                    deliveryFee,
+                    currency,
+                    this.provider.providerName,
+                    intent.id,
+                    intent.clientSecret,
+                    intent.status
+                ]
+            );
 
             // Update order with deposit info
-            await client.query(`
+            await client.query(
+                `
                 UPDATE orders 
                 SET deposit_amount = $2, 
                     deposit_status = 'pending',
                     payment_method = 'card'
                 WHERE order_id = $1
-            `, [orderId, deliveryFee]);
+            `,
+                [orderId, deliveryFee]
+            );
 
             await client.query('COMMIT');
 
@@ -165,21 +186,36 @@ export class PaymentService {
             });
 
             // Store in database with intent_type = 'full'
-            await client.query(`
+            await client.query(
+                `
                 INSERT INTO payment_intents 
                 (intent_id, order_id, customer_id, amount, currency, intent_type, provider, provider_intent_id, provider_client_secret, status)
                 VALUES (gen_random_uuid(), $1, $2, $3, $4, 'full', $5, $6, $7, $8)
-            `, [orderId, customerId, totalAmount, currency, this.provider.providerName, intent.id, intent.clientSecret, intent.status]);
+            `,
+                [
+                    orderId,
+                    customerId,
+                    totalAmount,
+                    currency,
+                    this.provider.providerName,
+                    intent.id,
+                    intent.clientSecret,
+                    intent.status
+                ]
+            );
 
             // Update order with full payment info
             // payment_method = 'card_full' signals driver POD to skip COD collection
-            await client.query(`
+            await client.query(
+                `
                 UPDATE orders 
                 SET deposit_amount = $2, 
                     deposit_status = 'pending',
                     payment_method = 'card_full'
                 WHERE order_id = $1
-            `, [orderId, deliveryFee]); // Still track delivery fee in deposit_amount
+            `,
+                [orderId, deliveryFee]
+            ); // Still track delivery fee in deposit_amount
 
             await client.query('COMMIT');
 
@@ -221,14 +257,18 @@ export class PaymentService {
             }
 
             // Update payment intent
-            await client.query(`
+            await client.query(
+                `
                 UPDATE payment_intents 
                 SET status = 'succeeded', updated_at = NOW()
                 WHERE provider_intent_id = $1
-            `, [providerIntentId]);
+            `,
+                [providerIntentId]
+            );
 
             // Get order details AND intent type for correct status updates
-            const orderResult = await client.query(`
+            const orderResult = await client.query(
+                `
                 SELECT o.order_id, o.order_number, o.customer_id, o.garage_id, 
                        o.total_amount, o.delivery_fee, o.commission_rate, o.platform_fee, o.garage_payout_amount,
                        pr.part_description,
@@ -237,7 +277,9 @@ export class PaymentService {
                 JOIN payment_intents pi ON pi.order_id = o.order_id
                 LEFT JOIN part_requests pr ON o.request_id = pr.request_id
                 WHERE pi.provider_intent_id = $1
-            `, [providerIntentId]);
+            `,
+                [providerIntentId]
+            );
 
             if (orderResult.rows.length === 0) {
                 throw new Error('Order not found for payment intent');
@@ -249,23 +291,29 @@ export class PaymentService {
             // Update order: deposit status = paid, order status = confirmed
             // For FULL payments, also set payment_status = 'paid'
             if (isFullPayment) {
-                await client.query(`
+                await client.query(
+                    `
                     UPDATE orders 
                     SET deposit_status = 'paid',
                         payment_status = 'paid',
                         order_status = 'confirmed',
                         updated_at = NOW()
                     WHERE order_id = $1
-                `, [order.order_id]);
+                `,
+                    [order.order_id]
+                );
                 logger.info('Full payment confirmed', { orderNumber: order.order_number, paymentStatus: 'paid' });
             } else {
-                await client.query(`
+                await client.query(
+                    `
                     UPDATE orders 
                     SET deposit_status = 'paid',
                         order_status = 'confirmed',
                         updated_at = NOW()
                     WHERE order_id = $1
-                `, [order.order_id]);
+                `,
+                    [order.order_id]
+                );
                 logger.info('Deposit confirmed', { orderNumber: order.order_number, status: 'confirmed' });
             }
 
@@ -273,21 +321,24 @@ export class PaymentService {
             const reason = isFullPayment
                 ? 'Full payment confirmed (part + delivery)'
                 : 'Delivery fee payment confirmed';
-            await client.query(`
+            await client.query(
+                `
                 INSERT INTO order_status_history 
                 (order_id, old_status, new_status, changed_by, changed_by_type, reason)
                 VALUES ($1, 'pending_payment', 'confirmed', $2, 'system', $3)
-            `, [order.order_id, order.customer_id, reason]);
+            `,
+                [order.order_id, order.customer_id, reason]
+            );
 
             await client.query('COMMIT');
 
             // Send notifications to garage (async, don't block)
-            this.notifyGarageOfConfirmedOrder(order).catch(err =>
+            this.notifyGarageOfConfirmedOrder(order).catch((err) =>
                 logger.error('Notification error', { error: (err as Error).message })
             );
 
             // Create escrow record (async, best-effort to avoid blocking payment)
-            this.ensureEscrowForOrder(order).catch(err =>
+            this.ensureEscrowForOrder(order).catch((err) =>
                 logger.error('Escrow creation failed', { error: (err as Error).message, orderId: order.order_id })
             );
 
@@ -317,7 +368,7 @@ export class PaymentService {
                 {
                     type: 'order_confirmed',
                     orderId: order.order_id,
-                    orderNumber: order.order_number,
+                    orderNumber: order.order_number
                 },
                 { channelId: 'orders', sound: true }
             );
@@ -330,7 +381,7 @@ export class PaymentService {
                 message: `Order #${order.order_number} is confirmed and paid. Please start preparing the part.`,
                 data: {
                     order_id: order.order_id,
-                    order_number: order.order_number,
+                    order_number: order.order_number
                 },
                 target_role: 'garage'
             });
@@ -341,30 +392,32 @@ export class PaymentService {
                 order_number: order.order_number,
                 status: 'confirmed'
             });
-
         } catch (err) {
             logger.error('Garage notification failed', { error: (err as Error).message });
         }
     }
 
     /**
-    * Ensure an escrow transaction exists for the order.
-    * Best-effort: logs errors but does not block payment confirmation.
-    */
+     * Ensure an escrow transaction exists for the order.
+     * Best-effort: logs errors but does not block payment confirmation.
+     */
     private async ensureEscrowForOrder(order: any): Promise<void> {
         try {
             const existing = await this.escrowService.getEscrowByOrder(order.order_id);
-            if (existing) return;
+            if (existing) {
+                return;
+            }
 
             const deliveryFee = parseFloat(order.delivery_fee || 0);
             const totalAmount = parseFloat(order.total_amount || order.payment_amount || 0);
-            const partPrice = order.part_price !== undefined && order.part_price !== null
-                ? parseFloat(order.part_price)
-                : (Number.isFinite(totalAmount) ? totalAmount - deliveryFee : 0);
+            const partPrice =
+                order.part_price !== undefined && order.part_price !== null
+                    ? parseFloat(order.part_price)
+                    : Number.isFinite(totalAmount)
+                      ? totalAmount - deliveryFee
+                      : 0;
             const amount = Number.isFinite(partPrice) ? Math.max(0, partPrice) : 0;
-            const platformFeePercent = order.commission_rate
-                ? parseFloat(order.commission_rate) * 100
-                : 0;
+            const platformFeePercent = order.commission_rate ? parseFloat(order.commission_rate) * 100 : 0;
 
             if (Number.isNaN(amount) || amount <= 0) {
                 logger.warn('Escrow skipped due to invalid amount', { orderId: order.order_id, amount });
@@ -378,7 +431,7 @@ export class PaymentService {
                 amount,
                 platformFeePercent,
                 deliveryFee,
-                inspectionWindowHours: 48,
+                inspectionWindowHours: 48
             });
             logger.info('Escrow created for order', { orderId: order.order_id, amount });
         } catch (err) {
@@ -401,12 +454,15 @@ export class PaymentService {
             await client.query('BEGIN');
 
             // Get order deposit info
-            const orderResult = await client.query(`
+            const orderResult = await client.query(
+                `
                 SELECT o.deposit_amount, o.deposit_status, pi.provider_intent_id, pi.intent_id
                 FROM orders o
                 LEFT JOIN payment_intents pi ON pi.order_id = o.order_id AND pi.intent_type = 'deposit'
                 WHERE o.order_id = $1
-            `, [orderId]);
+            `,
+                [orderId]
+            );
 
             if (orderResult.rows.length === 0) {
                 throw new Error('Order not found');
@@ -429,9 +485,12 @@ export class PaymentService {
 
             // Full retention - no refund needed
             if (refundAmount <= 0) {
-                await client.query(`
+                await client.query(
+                    `
                     UPDATE orders SET deposit_status = 'retained' WHERE order_id = $1
-                `, [orderId]);
+                `,
+                    [orderId]
+                );
 
                 await client.query('COMMIT');
 
@@ -445,24 +504,26 @@ export class PaymentService {
             }
 
             // Process partial or full refund
-            const refundResult = await this.provider.refundPayment(
-                order.provider_intent_id,
-                refundAmount,
-                reason
-            );
+            const refundResult = await this.provider.refundPayment(order.provider_intent_id, refundAmount, reason);
 
             // Store refund record
-            await client.query(`
+            await client.query(
+                `
                 INSERT INTO payment_refunds 
                 (intent_id, order_id, amount, reason, provider_refund_id, status, processed_at)
                 VALUES ($1, $2, $3, $4, $5, $6, NOW())
-            `, [order.intent_id, orderId, refundAmount, reason, refundResult.id, refundResult.status]);
+            `,
+                [order.intent_id, orderId, refundAmount, reason, refundResult.id, refundResult.status]
+            );
 
             // Update order status
             const newDepositStatus = refundAmount < depositAmount ? 'partially_refunded' : 'refunded';
-            await client.query(`
+            await client.query(
+                `
                 UPDATE orders SET deposit_status = $2 WHERE order_id = $1
-            `, [orderId, newDepositStatus]);
+            `,
+                [orderId, newDepositStatus]
+            );
 
             await client.query('COMMIT');
 
@@ -510,27 +571,39 @@ export class PaymentService {
     /**
      * Save a payment method for customer
      */
-    async savePaymentMethod(
-        userId: string,
-        paymentMethodId: string
-    ): Promise<PaymentMethod> {
+    async savePaymentMethod(userId: string, paymentMethodId: string): Promise<PaymentMethod> {
         const stripeCustomerId = await this.getOrCreateStripeCustomer(userId);
         const method = await this.provider.attachPaymentMethod(stripeCustomerId, paymentMethodId);
 
         // Store in database
-        await this.pool.query(`
+        await this.pool.query(
+            `
             INSERT INTO payment_methods 
             (customer_id, provider, provider_method_id, card_last4, card_brand, card_exp_month, card_exp_year, cardholder_name, is_default)
             VALUES ($1, $2, $3, $4, $5, $6, $7, $8, true)
             ON CONFLICT (customer_id, provider_method_id) DO UPDATE
             SET card_last4 = $4, card_brand = $5, card_exp_month = $6, card_exp_year = $7, updated_at = NOW()
-        `, [userId, this.provider.providerName, method.providerId, method.last4, method.brand, method.expMonth, method.expYear, method.cardholderName]);
+        `,
+            [
+                userId,
+                this.provider.providerName,
+                method.providerId,
+                method.last4,
+                method.brand,
+                method.expMonth,
+                method.expYear,
+                method.cardholderName
+            ]
+        );
 
         // Set as default (unset others)
-        await this.pool.query(`
+        await this.pool.query(
+            `
             UPDATE payment_methods SET is_default = false 
             WHERE customer_id = $1 AND provider_method_id != $2
-        `, [userId, method.providerId]);
+        `,
+            [userId, method.providerId]
+        );
 
         return method;
     }
@@ -539,7 +612,8 @@ export class PaymentService {
      * Get customer's saved payment methods
      */
     async getPaymentMethods(userId: string): Promise<PaymentMethod[]> {
-        const result = await this.pool.query(`
+        const result = await this.pool.query(
+            `
             SELECT provider_method_id as id, provider_method_id as "providerId", 
                    card_last4 as last4, card_brand as brand, 
                    card_exp_month as "expMonth", card_exp_year as "expYear",
@@ -547,7 +621,9 @@ export class PaymentService {
             FROM payment_methods 
             WHERE customer_id = $1 AND is_active = true
             ORDER BY is_default DESC, created_at DESC
-        `, [userId]);
+        `,
+            [userId]
+        );
 
         return result.rows;
     }
@@ -558,10 +634,13 @@ export class PaymentService {
     async removePaymentMethod(userId: string, paymentMethodId: string): Promise<boolean> {
         await this.provider.detachPaymentMethod(paymentMethodId);
 
-        await this.pool.query(`
+        await this.pool.query(
+            `
             UPDATE payment_methods SET is_active = false, updated_at = NOW()
             WHERE customer_id = $1 AND provider_method_id = $2
-        `, [userId, paymentMethodId]);
+        `,
+            [userId, paymentMethodId]
+        );
 
         return true;
     }
@@ -574,10 +653,13 @@ export class PaymentService {
         depositStatus: string;
         paymentMethod: string;
     }> {
-        const result = await this.pool.query(`
+        const result = await this.pool.query(
+            `
             SELECT deposit_amount, deposit_status, payment_method
             FROM orders WHERE order_id = $1
-        `, [orderId]);
+        `,
+            [orderId]
+        );
 
         if (result.rows.length === 0) {
             throw new Error('Order not found');

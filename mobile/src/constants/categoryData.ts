@@ -65,7 +65,7 @@ export const PART_CATEGORIES = [
     'Towing & Hitches',
     'Performance Parts',
     'Off-Road & 4x4',
-    'Other Parts',
+    'Other Parts'
 ];
 
 export const PART_SUBCATEGORIES: Record<string, string[]> = {
@@ -87,7 +87,7 @@ export const PART_SUBCATEGORIES: Record<string, string[]> = {
         'Flywheel',
         'Harmonic Balancer',
         'Oil Pump',
-        'Water Pump',
+        'Water Pump'
     ],
     'Transmission & Drivetrain': [
         'Automatic Transmission',
@@ -105,7 +105,7 @@ export const PART_SUBCATEGORIES: Record<string, string[]> = {
         'Propeller Shaft',
         'Universal Joint',
         'Shift Cable',
-        'Shift Knob',
+        'Shift Knob'
     ],
     'Turbo & Supercharger': [
         'Turbocharger Assembly',
@@ -115,7 +115,7 @@ export const PART_SUBCATEGORIES: Record<string, string[]> = {
         'Blow-off Valve',
         'Boost Controller',
         'Turbo Manifold',
-        'Downpipe',
+        'Downpipe'
     ],
     'Fuel System': [
         'Fuel Pump',
@@ -128,7 +128,7 @@ export const PART_SUBCATEGORIES: Record<string, string[]> = {
         'Fuel Cap',
         'Fuel Filler Neck',
         'Fuel Lines',
-        'Gas Pedal',
+        'Gas Pedal'
     ],
     'Exhaust & Emission System': [
         'Catalytic Converter',
@@ -141,7 +141,7 @@ export const PART_SUBCATEGORIES: Record<string, string[]> = {
         'SCR System (Urea)',
         'Exhaust Flange',
         'Exhaust Hanger',
-        'Tail Pipe',
+        'Tail Pipe'
     ],
     'Cooling System': [
         'Radiator',
@@ -152,7 +152,7 @@ export const PART_SUBCATEGORIES: Record<string, string[]> = {
         'Radiator Hose',
         'Overflow Tank',
         'Radiator Cap',
-        'Temperature Sensor',
+        'Temperature Sensor'
     ],
 
     // Chassis & Movement
@@ -174,7 +174,7 @@ export const PART_SUBCATEGORIES: Record<string, string[]> = {
         'Wheel Bearing',
         'Spindle/Knuckle',
         'Air Suspension Compressor',
-        'Steering Coupling',
+        'Steering Coupling'
     ],
     'Brakes & ABS': [
         'ABS Module',
@@ -191,7 +191,7 @@ export const PART_SUBCATEGORIES: Record<string, string[]> = {
         'Parking Brake Cable',
         'Parking Brake Actuator',
         'Brake Proportioning Valve',
-        'Wheel Speed Sensor',
+        'Wheel Speed Sensor'
     ],
     'Wheels & Tires': [
         'Alloy Wheel',
@@ -203,7 +203,7 @@ export const PART_SUBCATEGORIES: Record<string, string[]> = {
         'Wheel Center Cap',
         'Lug Nuts',
         'Wheel Lock Set',
-        'Run-Flat Tire',
+        'Run-Flat Tire'
     ],
     'Axles & Differential': [
         'Front Axle Assembly',
@@ -213,7 +213,7 @@ export const PART_SUBCATEGORIES: Record<string, string[]> = {
         'Axle Shaft',
         'CV Joint',
         'Axle Bearing',
-        'Ring & Pinion Gear',
+        'Ring & Pinion Gear'
     ],
 
     // Body & Structure
@@ -225,7 +225,7 @@ export const PART_SUBCATEGORIES: Record<string, string[]> = {
         'Side Skirt',
         'Rocker Panel',
         'Mud Flap',
-        'Splash Shield',
+        'Splash Shield'
     ],
     'Doors & Fenders': [
         'Front Door (Left/Right)',
@@ -242,7 +242,7 @@ export const PART_SUBCATEGORIES: Record<string, string[]> = {
         'Hood',
         'Trunk Lid',
         'Tailgate',
-        'Liftgate',
+        'Liftgate'
     ],
     'Glass & Windows': [
         'Windshield',
@@ -260,7 +260,7 @@ export const PART_SUBCATEGORIES: Record<string, string[]> = {
         'Wiper Arm',
         'Wiper Blade',
         'Washer Pump',
-        'Washer Reservoir',
+        'Washer Reservoir'
     ],
     'Lights & Lamps': [
         'Headlight Assembly',
@@ -277,7 +277,7 @@ export const PART_SUBCATEGORIES: Record<string, string[]> = {
         'Door Courtesy Light',
         'Trunk Light',
         'Third Brake Light',
-        'Daytime Running Light (DRL)',
+        'Daytime Running Light (DRL)'
     ],
     'Grilles & Trim': [
         'Front Grille',
@@ -288,7 +288,7 @@ export const PART_SUBCATEGORIES: Record<string, string[]> = {
         'Window Molding',
         'Door Molding',
         'Emblem/Badge',
-        'Antenna',
+        'Antenna'
     ],
     'Mirrors & Accessories': [
         'Side Mirror Assembly',
@@ -297,7 +297,7 @@ export const PART_SUBCATEGORIES: Record<string, string[]> = {
         'Rearview Mirror',
         'Blind Spot Mirror',
         'Mirror Cover/Cap',
-        'Tow Mirror',
+        'Tow Mirror'
     ],
 
     // Interior
@@ -314,7 +314,7 @@ export const PART_SUBCATEGORIES: Record<string, string[]> = {
         'Seat Motor',
         'Lumbar Support',
         'Seat Heater',
-        'Seat Cooler',
+        'Seat Cooler'
     ],
     'Dashboard & Instruments': [
         'Dashboard Assembly',
@@ -326,7 +326,7 @@ export const PART_SUBCATEGORIES: Record<string, string[]> = {
         'Steering Wheel',
         'Steering Column Shroud',
         'Glove Box',
-        'Driver Knee Airbag Panel',
+        'Driver Knee Airbag Panel'
     ],
     'Center Console & Storage': [
         'Center Console',
@@ -335,7 +335,7 @@ export const PART_SUBCATEGORIES: Record<string, string[]> = {
         'Storage Compartment',
         'Gear Shifter',
         'Shift Boot',
-        'Parking Brake Handle',
+        'Parking Brake Handle'
     ],
     'Interior Trim & Carpet': [
         'Door Panel',
@@ -348,7 +348,7 @@ export const PART_SUBCATEGORIES: Record<string, string[]> = {
         'Cargo Cover',
         'Sun Visor',
         'Grab Handle',
-        'Coat Hook',
+        'Coat Hook'
     ],
     'Climate Control (HVAC)': [
         'A/C Compressor',
@@ -361,23 +361,12 @@ export const PART_SUBCATEGORIES: Record<string, string[]> = {
         'A/C Evaporator',
         'Expansion Valve',
         'Receiver Drier',
-        'Cabin Air Filter',
+        'Cabin Air Filter'
     ],
 
     // Electrical & Electronics
-    'Battery & Charging': [
-        '12V Battery',
-        'Battery Cable',
-        'Battery Tray',
-        'Battery Terminal',
-        'Battery Hold-Down',
-    ],
-    'Alternator & Starter': [
-        'Alternator',
-        'Starter Motor',
-        'Starter Solenoid',
-        'Voltage Regulator',
-    ],
+    'Battery & Charging': ['12V Battery', 'Battery Cable', 'Battery Tray', 'Battery Terminal', 'Battery Hold-Down'],
+    'Alternator & Starter': ['Alternator', 'Starter Motor', 'Starter Solenoid', 'Voltage Regulator'],
     'Wiring & Fuses': [
         'Wiring Harness (Engine)',
         'Wiring Harness (Body)',
@@ -385,7 +374,7 @@ export const PART_SUBCATEGORIES: Record<string, string[]> = {
         'Relay',
         'Circuit Breaker',
         'Ground Strap',
-        'Connector',
+        'Connector'
     ],
     'Audio & Infotainment': [
         'Head Unit/Radio',
@@ -394,20 +383,20 @@ export const PART_SUBCATEGORIES: Record<string, string[]> = {
         'Subwoofer',
         'Antenna Module',
         'CD/DVD Player',
-        'Touch Screen Display',
+        'Touch Screen Display'
     ],
     'Navigation & Display': [
         'GPS Navigation Module',
         'Navigation Display',
         'Infotainment Screen',
-        'Rear Seat Entertainment',
+        'Rear Seat Entertainment'
     ],
     'Lighting Control': [
         'Headlight Switch',
         'Turn Signal Switch',
         'Dimmer Switch',
         'Hazard Switch',
-        'Lighting Control Module',
+        'Lighting Control Module'
     ],
 
     // Safety Systems
@@ -419,13 +408,13 @@ export const PART_SUBCATEGORIES: Record<string, string[]> = {
         'Knee Airbag',
         'SRS Control Module',
         'Airbag Clockspring',
-        'Airbag Sensor',
+        'Airbag Sensor'
     ],
     'Seatbelts & Restraints': [
         'Seat Belt Retractor',
         'Seat Belt Buckle',
         'Seat Belt Pretensioner',
-        'Child Seat Anchor',
+        'Child Seat Anchor'
     ],
     'Anti-theft & Security': [
         'Immobilizer',
@@ -434,7 +423,7 @@ export const PART_SUBCATEGORIES: Record<string, string[]> = {
         'Trunk Lock',
         'Ignition Lock Cylinder',
         'Key Fob',
-        'Transponder Key',
+        'Transponder Key'
     ],
 
     // Modern Tech & ADAS
@@ -446,33 +435,12 @@ export const PART_SUBCATEGORIES: Record<string, string[]> = {
         'Parking Sensor',
         'Ultrasonic Sensor',
         'Rain Sensor',
-        'Light Sensor',
+        'Light Sensor'
     ],
-    'Radar & Lidar Systems': [
-        'Front Radar',
-        'Rear Radar',
-        'Corner Radar',
-        'Lidar Unit',
-        'Radar Control Module',
-    ],
-    'Parking Assist': [
-        'Park Assist Module',
-        'Parking Sensor',
-        'Park Assist Camera',
-        'Self-Parking System',
-    ],
-    'Adaptive Cruise Control': [
-        'ACC Module',
-        'ACC Radar',
-        'Cruise Control Switch',
-        'Distance Sensor',
-    ],
-    'Lane Keep Assist': [
-        'Lane Departure Module',
-        'Lane Camera',
-        'Steering Assist Motor',
-        'Lane Sensor',
-    ],
+    'Radar & Lidar Systems': ['Front Radar', 'Rear Radar', 'Corner Radar', 'Lidar Unit', 'Radar Control Module'],
+    'Parking Assist': ['Park Assist Module', 'Parking Sensor', 'Park Assist Camera', 'Self-Parking System'],
+    'Adaptive Cruise Control': ['ACC Module', 'ACC Radar', 'Cruise Control Switch', 'Distance Sensor'],
+    'Lane Keep Assist': ['Lane Departure Module', 'Lane Camera', 'Steering Assist Motor', 'Lane Sensor'],
 
     // Electric & Hybrid
     'EV Battery Packs': [
@@ -480,69 +448,25 @@ export const PART_SUBCATEGORIES: Record<string, string[]> = {
         'Battery Cell Module',
         'Battery Management System (BMS)',
         'Battery Coolant Pump',
-        'Battery Heater',
+        'Battery Heater'
     ],
-    'Electric Motors': [
-        'Traction Motor',
-        'Drive Motor',
-        'Generator Motor',
-        'Motor Controller',
-    ],
-    'Inverters & Converters': [
-        'DC-DC Converter',
-        'Inverter Assembly',
-        'On-Board Charger',
-        'Power Control Unit',
-    ],
-    'Charging Components': [
-        'Charge Port',
-        'Charge Cable',
-        'Charging Inlet',
-        'Charge Controller',
-    ],
-    'Hybrid Systems': [
-        'Hybrid Battery Pack',
-        'Hybrid Control Module',
-        'Electric Water Pump',
-        'Hybrid Transmission',
-    ],
+    'Electric Motors': ['Traction Motor', 'Drive Motor', 'Generator Motor', 'Motor Controller'],
+    'Inverters & Converters': ['DC-DC Converter', 'Inverter Assembly', 'On-Board Charger', 'Power Control Unit'],
+    'Charging Components': ['Charge Port', 'Charge Cable', 'Charging Inlet', 'Charge Controller'],
+    'Hybrid Systems': ['Hybrid Battery Pack', 'Hybrid Control Module', 'Electric Water Pump', 'Hybrid Transmission'],
 
     // Accessories & Misc
-    'Roof Racks & Carriers': [
-        'Roof Rack',
-        'Cross Bar',
-        'Cargo Box',
-        'Ski Rack',
-        'Bike Rack',
-    ],
-    'Towing & Hitches': [
-        'Trailer Hitch',
-        'Tow Hook',
-        'Towing Wiring',
-        'Ball Mount',
-    ],
+    'Roof Racks & Carriers': ['Roof Rack', 'Cross Bar', 'Cargo Box', 'Ski Rack', 'Bike Rack'],
+    'Towing & Hitches': ['Trailer Hitch', 'Tow Hook', 'Towing Wiring', 'Ball Mount'],
     'Performance Parts': [
         'Cold Air Intake',
         'Performance Exhaust',
         'Sway Bar Upgrade',
         'Coilover Kit',
-        'Short Shifter',
+        'Short Shifter'
     ],
-    'Off-Road & 4x4': [
-        'Skid Plate',
-        'Rock Slider',
-        'Winch',
-        '4x4 Transfer Case',
-        'Lift Kit',
-        'Off-Road Bumper',
-    ],
-    'Other Parts': [
-        'Gas Cap',
-        'Jack',
-        'Spare Tire Tools',
-        'Floor Jack',
-        'Miscellaneous',
-    ],
+    'Off-Road & 4x4': ['Skid Plate', 'Rock Slider', 'Winch', '4x4 Transfer Case', 'Lift Kit', 'Off-Road Bumper'],
+    'Other Parts': ['Gas Cap', 'Jack', 'Spare Tire Tools', 'Floor Jack', 'Miscellaneous']
 };
 
 // Helper functions

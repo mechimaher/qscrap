@@ -1,6 +1,6 @@
 /**
  * AdminService - Platform Administration Business Logic
- * 
+ *
  * Extracted from admin.controller.ts (1,572 lines) to enable:
  * - Testability
  * - Reusability
@@ -77,7 +77,6 @@ const DEMO_PERIOD_DAYS = 30;
 // ============================================
 
 export class AdminService {
-
     /**
      * Get garages with filters and pagination
      */
@@ -113,7 +112,8 @@ export class AdminService {
         const total = parseInt(countResult.rows[0].count);
 
         // Data
-        const result = await pool.query(`
+        const result = await pool.query(
+            `
             SELECT 
                 g.*,
                 u.phone_number,
@@ -133,7 +133,9 @@ export class AdminService {
             ${whereClause}
             ORDER BY g.created_at DESC
             LIMIT $${paramIndex++} OFFSET $${paramIndex}
-        `, [...queryParams, limit, offset]);
+        `,
+            [...queryParams, limit, offset]
+        );
 
         return {
             garages: result.rows,
@@ -158,7 +160,8 @@ export class AdminService {
             await client.query('BEGIN');
 
             // Get garage with user info for email
-            const garageResult = await client.query(`
+            const garageResult = await client.query(
+                `
                 UPDATE garages SET
                     approval_status = 'approved',
                     approval_date = NOW(),
@@ -167,7 +170,9 @@ export class AdminService {
                     updated_at = NOW()
                 WHERE garage_id = $3
                 RETURNING *
-            `, [admin_id, notes || 'Approved by admin', garage_id]);
+            `,
+                [admin_id, notes || 'Approved by admin', garage_id]
+            );
 
             if (garageResult.rows.length === 0) {
                 throw ApiError.notFound('Garage not found');
@@ -176,16 +181,22 @@ export class AdminService {
             const garage = garageResult.rows[0];
 
             // Get user email for welcome email
-            const userResult = await client.query(`
+            const userResult = await client.query(
+                `
                 SELECT email, full_name FROM users WHERE user_id = $1
-            `, [garage_id]);
+            `,
+                [garage_id]
+            );
             const user = userResult.rows[0];
 
             // Activate user account
-            await client.query(`
+            await client.query(
+                `
                 UPDATE users SET is_active = true, updated_at = NOW()
                 WHERE user_id = $1
-            `, [garage_id]);
+            `,
+                [garage_id]
+            );
 
             // Generate magic link token (48 hours expiry)
             const tokenPayload = {
@@ -193,28 +204,32 @@ export class AdminService {
                 type: 'garage_setup',
                 iat: Math.floor(Date.now() / 1000)
             };
-            const magicToken = jwt.sign(
-                tokenPayload,
-                process.env.JWT_SECRET || 'qscrap-secret-key-2026',
-                { expiresIn: '48h' }
-            );
+            const magicToken = jwt.sign(tokenPayload, process.env.JWT_SECRET || 'qscrap-secret-key-2026', {
+                expiresIn: '48h'
+            });
 
             // Store token hash for validation (prevents reuse)
             const tokenHash = crypto.createHash('sha256').update(magicToken).digest('hex');
-            await client.query(`
+            await client.query(
+                `
                 INSERT INTO password_reset_tokens (user_id, token_hash, expires_at, token_type)
                 VALUES ($1, $2, NOW() + INTERVAL '48 hours', 'garage_setup')
                 ON CONFLICT (user_id) DO UPDATE SET
                     token_hash = $2,
                     expires_at = NOW() + INTERVAL '48 hours',
                     used_at = NULL
-            `, [garage_id, tokenHash]);
+            `,
+                [garage_id, tokenHash]
+            );
 
             // Log action
-            await client.query(`
+            await client.query(
+                `
                 INSERT INTO admin_audit_log (admin_id, action_type, target_type, target_id, new_value)
                 VALUES ($1, 'approve_garage', 'garage', $2, $3)
-            `, [admin_id, garage_id, JSON.stringify({ status: 'approved', notes, emailSent: !!user?.email })]);
+            `,
+                [admin_id, garage_id, JSON.stringify({ status: 'approved', notes, emailSent: !!user?.email })]
+            );
 
             await client.query('COMMIT');
 
@@ -264,30 +279,39 @@ export class AdminService {
         try {
             await client.query('BEGIN');
 
-            const result = await client.query(`
+            const result = await client.query(
+                `
                 UPDATE garages SET
                     approval_status = 'rejected',
                     rejection_reason = $1,
                     updated_at = NOW()
                 WHERE garage_id = $2
                 RETURNING *
-            `, [reason, garage_id]);
+            `,
+                [reason, garage_id]
+            );
 
             if (result.rows.length === 0) {
                 throw ApiError.notFound('Garage not found');
             }
 
             // Deactivate user
-            await client.query(`
+            await client.query(
+                `
                 UPDATE users SET is_active = false, updated_at = NOW()
                 WHERE user_id = $1
-            `, [garage_id]);
+            `,
+                [garage_id]
+            );
 
             // Log action
-            await client.query(`
+            await client.query(
+                `
                 INSERT INTO admin_audit_log (admin_id, action_type, target_type, target_id, new_value)
                 VALUES ($1, 'reject_garage', 'garage', $2, $3)
-            `, [admin_id, garage_id, JSON.stringify({ status: 'rejected', reason })]);
+            `,
+                [admin_id, garage_id, JSON.stringify({ status: 'rejected', reason })]
+            );
 
             await client.query('COMMIT');
             return { garage: result.rows[0] };
@@ -313,16 +337,20 @@ export class AdminService {
             expiryDate.setDate(expiryDate.getDate() + Number(days));
 
             // Cancel active subscriptions
-            await client.query(`
+            await client.query(
+                `
                 UPDATE garage_subscriptions 
                 SET status = 'cancelled', cancelled_at = NOW(), 
                     cancellation_reason = 'Downgraded to demo by admin',
                     updated_at = NOW()
                 WHERE garage_id = $1 AND status IN ('active', 'trial')
-            `, [garage_id]);
+            `,
+                [garage_id]
+            );
 
             // Update garage to demo
-            const result = await client.query(`
+            const result = await client.query(
+                `
                 UPDATE garages SET
                     approval_status = 'demo',
                     demo_expires_at = $1,
@@ -331,23 +359,31 @@ export class AdminService {
                     updated_at = NOW()
                 WHERE garage_id = $4
                 RETURNING *
-            `, [expiryDate, admin_id, notes || `Demo access for ${days} days`, garage_id]);
+            `,
+                [expiryDate, admin_id, notes || `Demo access for ${days} days`, garage_id]
+            );
 
             if (result.rows.length === 0) {
                 throw ApiError.notFound('Garage not found');
             }
 
             // Activate user
-            await client.query(`
+            await client.query(
+                `
                 UPDATE users SET is_active = true, updated_at = NOW()
                 WHERE user_id = $1
-            `, [garage_id]);
+            `,
+                [garage_id]
+            );
 
             // Log action
-            await client.query(`
+            await client.query(
+                `
                 INSERT INTO admin_audit_log (admin_id, action_type, target_type, target_id, new_value)
                 VALUES ($1, 'grant_demo', 'garage', $2, $3)
-            `, [admin_id, garage_id, JSON.stringify({ days, expires_at: expiryDate })]);
+            `,
+                [admin_id, garage_id, JSON.stringify({ days, expires_at: expiryDate })]
+            );
 
             await client.query('COMMIT');
             return { garage: result.rows[0], expires_at: expiryDate };
@@ -375,24 +411,25 @@ export class AdminService {
             await client.query('BEGIN');
 
             // Verify plan exists
-            const planCheck = await client.query(
-                `SELECT * FROM subscription_plans WHERE plan_id = $1`,
-                [plan_id]
-            );
+            const planCheck = await client.query(`SELECT * FROM subscription_plans WHERE plan_id = $1`, [plan_id]);
             if (planCheck.rows.length === 0) {
                 throw ApiError.notFound('Plan not found');
             }
             const plan = planCheck.rows[0];
 
             // Cancel existing subscriptions
-            await client.query(`
+            await client.query(
+                `
                 UPDATE garage_subscriptions 
                 SET status = 'cancelled', updated_at = NOW()
                 WHERE garage_id = $1 AND status IN ('active', 'trial')
-            `, [garage_id]);
+            `,
+                [garage_id]
+            );
 
             // Update garage to approved
-            await client.query(`
+            await client.query(
+                `
                 UPDATE garages SET
                     approval_status = 'approved',
                     demo_expires_at = NULL,
@@ -400,31 +437,42 @@ export class AdminService {
                     approval_date = NOW(),
                     updated_at = NOW()
                 WHERE garage_id = $2
-            `, [admin_id, garage_id]);
+            `,
+                [admin_id, garage_id]
+            );
 
             // Activate user
-            await client.query(`
+            await client.query(
+                `
                 UPDATE users SET is_active = true, is_suspended = false, updated_at = NOW()
                 WHERE user_id = $1
-            `, [garage_id]);
+            `,
+                [garage_id]
+            );
 
             // Create subscription
             const startDate = new Date();
             const endDate = new Date();
             endDate.setMonth(endDate.getMonth() + Number(months));
 
-            const subResult = await client.query(`
+            const subResult = await client.query(
+                `
                 INSERT INTO garage_subscriptions 
                 (garage_id, plan_id, status, billing_cycle_start, billing_cycle_end, is_admin_granted, admin_notes)
                 VALUES ($1, $2, 'active', $3, $4, true, $5)
                 RETURNING *
-            `, [garage_id, plan_id, startDate, endDate, notes || 'Granted by admin']);
+            `,
+                [garage_id, plan_id, startDate, endDate, notes || 'Granted by admin']
+            );
 
             // Log action
-            await client.query(`
+            await client.query(
+                `
                 INSERT INTO admin_audit_log (admin_id, action_type, target_type, target_id, new_value)
                 VALUES ($1, 'assign_plan', 'garage', $2, $3)
-            `, [admin_id, garage_id, JSON.stringify({ plan_id, plan_name: plan.plan_name, months })]);
+            `,
+                [admin_id, garage_id, JSON.stringify({ plan_id, plan_name: plan.plan_name, months })]
+            );
 
             await client.query('COMMIT');
             return { subscription: subResult.rows[0] };
@@ -484,20 +532,20 @@ export class AdminService {
             queryParams.push(target_type);
         }
 
-        const countResult = await pool.query(
-            `SELECT COUNT(*) FROM admin_audit_log ${whereClause}`,
-            queryParams
-        );
+        const countResult = await pool.query(`SELECT COUNT(*) FROM admin_audit_log ${whereClause}`, queryParams);
         const total = parseInt(countResult.rows[0].count);
 
-        const result = await pool.query(`
+        const result = await pool.query(
+            `
             SELECT al.*, u.full_name as admin_name, u.email as admin_email
             FROM admin_audit_log al
             LEFT JOIN users u ON al.admin_id = u.user_id
             ${whereClause}
             ORDER BY al.created_at DESC
             LIMIT $${paramIndex++} OFFSET $${paramIndex}
-        `, [...queryParams, limit, offset]);
+        `,
+            [...queryParams, limit, offset]
+        );
 
         return {
             logs: result.rows,

@@ -8,8 +8,8 @@ import logger from '../utils/logger';
 export interface FeatureFlag {
     name: string;
     enabled: boolean;
-    rolloutPercentage: number;  // 0-100
-    enabledUserIds?: string[];  // Explicit allowlist
+    rolloutPercentage: number; // 0-100
+    enabledUserIds?: string[]; // Explicit allowlist
     disabledUserIds?: string[]; // Explicit blocklist
     createdAt: Date;
     updatedAt: Date;
@@ -82,7 +82,7 @@ export function isFeatureEnabled(flagName: string, userId?: string): boolean {
     // Percentage-based rollout using userId hash
     if (flag.rolloutPercentage < 100 && userId) {
         const hash = hashUserId(userId);
-        return (hash % 100) < flag.rolloutPercentage;
+        return hash % 100 < flag.rolloutPercentage;
     }
 
     return flag.rolloutPercentage === 100;
@@ -100,7 +100,9 @@ export function getFlag(flagName: string): FeatureFlag | undefined {
  */
 export function updateFlag(flagName: string, updates: Partial<FeatureFlag>): boolean {
     const flag = flags.get(flagName);
-    if (!flag) {return false;}
+    if (!flag) {
+        return false;
+    }
 
     Object.assign(flag, updates, { updatedAt: new Date() });
     flags.set(flagName, flag);
@@ -113,7 +115,9 @@ export function updateFlag(flagName: string, updates: Partial<FeatureFlag>): boo
  * Set rollout percentage for gradual rollout
  */
 export function setRolloutPercentage(flagName: string, percentage: number): boolean {
-    if (percentage < 0 || percentage > 100) {return false;}
+    if (percentage < 0 || percentage > 100) {
+        return false;
+    }
     return updateFlag(flagName, { rolloutPercentage: percentage });
 }
 
@@ -131,7 +135,7 @@ function hashUserId(userId: string): number {
     let hash = 0;
     for (let i = 0; i < userId.length; i++) {
         const char = userId.charCodeAt(i);
-        hash = ((hash << 5) - hash) + char;
+        hash = (hash << 5) - hash + char;
         hash = hash & hash; // Convert to 32bit integer
     }
     return Math.abs(hash);

@@ -10,7 +10,6 @@ import v1Router from './routes/v1.routes';
 // Swagger Documentation
 import setupSwagger from './config/swagger';
 
-
 // Middleware imports
 import { requestContext } from './middleware/requestContext.middleware';
 import { errorHandler, notFoundHandler } from './middleware/errorHandler.middleware';
@@ -44,21 +43,16 @@ app.use(requestContext);
 // ==========================================
 const allowedOrigins = process.env.CORS_ORIGINS
     ? process.env.CORS_ORIGINS.split(',')
-    : [
-        'http://localhost:3000',
-        'http://127.0.0.1:3000',
-        'https://qscrap.qa',
-        'https://www.qscrap.qa'
-    ];
+    : ['http://localhost:3000', 'http://127.0.0.1:3000', 'https://qscrap.qa', 'https://www.qscrap.qa'];
 
-app.use(cors({
-    origin: process.env.NODE_ENV === 'production'
-        ? allowedOrigins
-        : true,
-    credentials: true,
-    methods: ['GET', 'POST', 'PUT', 'PATCH', 'DELETE', 'OPTIONS'],
-    allowedHeaders: ['Content-Type', 'Authorization']
-}));
+app.use(
+    cors({
+        origin: process.env.NODE_ENV === 'production' ? allowedOrigins : true,
+        credentials: true,
+        methods: ['GET', 'POST', 'PUT', 'PATCH', 'DELETE', 'OPTIONS'],
+        allowedHeaders: ['Content-Type', 'Authorization']
+    })
+);
 
 // ==========================================
 // STRIPE WEBHOOK (Must be BEFORE express.json)
@@ -133,7 +127,6 @@ app.use(cacheControl);
 app.use('/uploads', express.static('uploads'));
 app.use(express.static(path.join(__dirname, '../public')));
 
-
 // ==========================================
 // API ROUTES (Versioned)
 // ==========================================
@@ -149,7 +142,6 @@ app.use('/api', v1Router);
 // API DOCUMENTATION (Swagger UI)
 // ==========================================
 setupSwagger(app);
-
 
 // ==========================================
 // HEALTH CHECK (Enhanced for Phase 1/2)

@@ -11,7 +11,7 @@ import {
     TextInput,
     FlatList,
     Keyboard,
-    Animated,
+    Animated
 } from 'react-native';
 import MapView, { Marker, PROVIDER_GOOGLE, Region } from 'react-native-maps';
 import { LinearGradient } from 'expo-linear-gradient';
@@ -31,9 +31,9 @@ interface MapLocationPickerProps {
 
 const DOHA_COORDINATES: Region = {
     latitude: 25.2854,
-    longitude: 51.5310,
+    longitude: 51.531,
     latitudeDelta: 0.0922,
-    longitudeDelta: 0.0421,
+    longitudeDelta: 0.0421
 };
 
 // Premium Qatar Map Style - Clean, Elegant, VVIP
@@ -49,7 +49,7 @@ const QATAR_PREMIUM_MAP_STYLE = [
     { featureType: 'road.local', elementType: 'geometry.fill', stylers: [{ color: '#ffffff' }] },
     { featureType: 'landscape', elementType: 'geometry', stylers: [{ color: '#f5f5f5' }] },
     // Subtle maroon accents for QScrap branding
-    { featureType: 'poi.park', elementType: 'geometry', stylers: [{ color: '#e5e5e5' }] },
+    { featureType: 'poi.park', elementType: 'geometry', stylers: [{ color: '#e5e5e5' }] }
 ];
 
 interface PlacePrediction {
@@ -64,7 +64,7 @@ interface PlacePrediction {
 export const MapLocationPicker: React.FC<MapLocationPickerProps> = ({
     onLocationSelect,
     onCancel,
-    initialLocation,
+    initialLocation
 }) => {
     const { colors } = useTheme();
     const { t, language } = useTranslation();
@@ -73,9 +73,7 @@ export const MapLocationPicker: React.FC<MapLocationPickerProps> = ({
     const slideAnim = useRef(new Animated.Value(0)).current;
 
     const [selectedLocation, setSelectedLocation] = useState<Region>(
-        initialLocation
-            ? { ...initialLocation, latitudeDelta: 0.01, longitudeDelta: 0.01 }
-            : DOHA_COORDINATES
+        initialLocation ? { ...initialLocation, latitudeDelta: 0.01, longitudeDelta: 0.01 } : DOHA_COORDINATES
     );
     const [address, setAddress] = useState(t('home.mapPicker.dragPin'));
     const [isLoading, setIsLoading] = useState(false);
@@ -92,7 +90,7 @@ export const MapLocationPicker: React.FC<MapLocationPickerProps> = ({
         Animated.timing(slideAnim, {
             toValue: showPredictions ? 1 : 0,
             duration: 200,
-            useNativeDriver: true,
+            useNativeDriver: true
         }).start();
     }, [showPredictions]);
 
@@ -139,7 +137,7 @@ export const MapLocationPicker: React.FC<MapLocationPickerProps> = ({
                     latitude: lat,
                     longitude: lng,
                     latitudeDelta: 0.005,
-                    longitudeDelta: 0.005,
+                    longitudeDelta: 0.005
                 };
 
                 setSelectedLocation(newRegion);
@@ -229,14 +227,14 @@ export const MapLocationPicker: React.FC<MapLocationPickerProps> = ({
 
             setIsLoading(true);
             const location = await Location.getCurrentPositionAsync({
-                accuracy: Location.Accuracy.Balanced,
+                accuracy: Location.Accuracy.Balanced
             });
 
             const newRegion: Region = {
                 latitude: location.coords.latitude,
                 longitude: location.coords.longitude,
                 latitudeDelta: 0.005,
-                longitudeDelta: 0.005,
+                longitudeDelta: 0.005
             };
 
             setSelectedLocation(newRegion);
@@ -256,7 +254,7 @@ export const MapLocationPicker: React.FC<MapLocationPickerProps> = ({
         onLocationSelect({
             latitude: selectedLocation.latitude,
             longitude: selectedLocation.longitude,
-            address,
+            address
         });
     };
 
@@ -297,7 +295,7 @@ export const MapLocationPicker: React.FC<MapLocationPickerProps> = ({
                 <Marker
                     coordinate={{
                         latitude: selectedLocation.latitude,
-                        longitude: selectedLocation.longitude,
+                        longitude: selectedLocation.longitude
                     }}
                     draggable
                     pinColor={Colors.primary}
@@ -320,7 +318,9 @@ export const MapLocationPicker: React.FC<MapLocationPickerProps> = ({
 
             {/* Search Bar - Google Places Autocomplete */}
             <View style={[styles.searchContainer, { backgroundColor: colors.background }]}>
-                <View style={[styles.searchInputWrapper, { backgroundColor: colors.surface, borderColor: colors.border }]}>
+                <View
+                    style={[styles.searchInputWrapper, { backgroundColor: colors.surface, borderColor: colors.border }]}
+                >
                     <Ionicons name="search" size={18} color="#9CA3AF" />
                     <TextInput
                         ref={searchInputRef}
@@ -357,7 +357,9 @@ export const MapLocationPicker: React.FC<MapLocationPickerProps> = ({
                             {
                                 backgroundColor: colors.background,
                                 opacity: slideAnim,
-                                transform: [{ translateY: slideAnim.interpolate({ inputRange: [0, 1], outputRange: [-10, 0] }) }]
+                                transform: [
+                                    { translateY: slideAnim.interpolate({ inputRange: [0, 1], outputRange: [-10, 0] }) }
+                                ]
                             }
                         ]}
                     >
@@ -392,15 +394,8 @@ export const MapLocationPicker: React.FC<MapLocationPickerProps> = ({
             </View>
 
             {/* Current Location Button */}
-            <TouchableOpacity
-                style={styles.currentLocationBtn}
-                onPress={handleCurrentLocation}
-                activeOpacity={0.8}
-            >
-                <LinearGradient
-                    colors={['#22C55E', '#16A34A']}
-                    style={styles.currentLocationGradient}
-                >
+            <TouchableOpacity style={styles.currentLocationBtn} onPress={handleCurrentLocation} activeOpacity={0.8}>
+                <LinearGradient colors={['#22C55E', '#16A34A']} style={styles.currentLocationGradient}>
                     <Ionicons name="locate" size={28} color="#fff" />
                 </LinearGradient>
             </TouchableOpacity>
@@ -410,7 +405,7 @@ export const MapLocationPicker: React.FC<MapLocationPickerProps> = ({
                 style={styles.mapTypeBtn}
                 onPress={() => {
                     Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
-                    setMapType(prev => prev === 'standard' ? 'satellite' : 'standard');
+                    setMapType((prev) => (prev === 'standard' ? 'satellite' : 'standard'));
                 }}
                 activeOpacity={0.8}
             >
@@ -432,15 +427,8 @@ export const MapLocationPicker: React.FC<MapLocationPickerProps> = ({
                     <Text style={[styles.cancelText, { color: colors.text }]}>{t('home.mapPicker.cancel')}</Text>
                 </TouchableOpacity>
 
-                <TouchableOpacity
-                    style={styles.confirmBtn}
-                    onPress={handleConfirm}
-                    activeOpacity={0.9}
-                >
-                    <LinearGradient
-                        colors={[Colors.primary, '#B31D4A']}
-                        style={styles.confirmGradient}
-                    >
+                <TouchableOpacity style={styles.confirmBtn} onPress={handleConfirm} activeOpacity={0.9}>
+                    <LinearGradient colors={[Colors.primary, '#B31D4A']} style={styles.confirmGradient}>
                         <Text style={styles.confirmText}>{t('home.mapPicker.confirmLocation')}</Text>
                     </LinearGradient>
                 </TouchableOpacity>
@@ -451,10 +439,10 @@ export const MapLocationPicker: React.FC<MapLocationPickerProps> = ({
 
 const styles = StyleSheet.create({
     container: {
-        flex: 1,
+        flex: 1
     },
     map: {
-        flex: 1,
+        flex: 1
     },
     // Search Bar
     searchContainer: {
@@ -462,7 +450,7 @@ const styles = StyleSheet.create({
         top: Platform.OS === 'ios' ? 60 : 40,
         left: Spacing.lg,
         right: Spacing.lg,
-        zIndex: 10,
+        zIndex: 10
     },
     searchInputWrapper: {
         flexDirection: 'row',
@@ -476,20 +464,20 @@ const styles = StyleSheet.create({
         shadowOpacity: 0.15,
         shadowRadius: 12,
         elevation: 8,
-        gap: Spacing.sm,
+        gap: Spacing.sm
     },
     searchIcon: {
-        fontSize: 18,
+        fontSize: 18
     },
     searchInput: {
         flex: 1,
         fontSize: FontSizes.md,
-        fontWeight: '500',
+        fontWeight: '500'
     },
     clearIcon: {
         fontSize: 16,
         color: '#9CA3AF',
-        padding: 4,
+        padding: 4
     },
     // Predictions
     predictionsContainer: {
@@ -500,25 +488,25 @@ const styles = StyleSheet.create({
         shadowOpacity: 0.1,
         shadowRadius: 8,
         elevation: 6,
-        overflow: 'hidden',
+        overflow: 'hidden'
     },
     predictionItem: {
         flexDirection: 'row',
         alignItems: 'center',
         padding: Spacing.md,
         borderBottomWidth: 1,
-        gap: Spacing.sm,
+        gap: Spacing.sm
     },
     predictionIcon: {
-        fontSize: 18,
+        fontSize: 18
     },
     predictionMain: {
         fontSize: FontSizes.md,
-        fontWeight: '600',
+        fontWeight: '600'
     },
     predictionSecondary: {
         fontSize: FontSizes.sm,
-        marginTop: 2,
+        marginTop: 2
     },
     // Address Card
     addressCard: {
@@ -532,24 +520,24 @@ const styles = StyleSheet.create({
         shadowOffset: { width: 0, height: 4 },
         shadowOpacity: 0.15,
         shadowRadius: 12,
-        elevation: 8,
+        elevation: 8
     },
     addressHeader: {
         flexDirection: 'row',
         alignItems: 'center',
-        gap: Spacing.sm,
+        gap: Spacing.sm
     },
     addressIcon: {
-        fontSize: 24,
+        fontSize: 24
     },
     addressLabel: {
         fontSize: FontSizes.xs,
-        marginBottom: 4,
+        marginBottom: 4
     },
     addressText: {
         fontSize: FontSizes.md,
         fontWeight: '700',
-        lineHeight: 20,
+        lineHeight: 20
     },
     // Current Location Button
     currentLocationBtn: {
@@ -562,16 +550,16 @@ const styles = StyleSheet.create({
         shadowOffset: { width: 0, height: 2 },
         shadowOpacity: 0.2,
         shadowRadius: 8,
-        elevation: 6,
+        elevation: 6
     },
     currentLocationGradient: {
         width: 56,
         height: 56,
         justifyContent: 'center',
-        alignItems: 'center',
+        alignItems: 'center'
     },
     currentLocationIcon: {
-        fontSize: 28,
+        fontSize: 28
     },
     // Map Type Toggle
     mapTypeBtn: {
@@ -589,15 +577,15 @@ const styles = StyleSheet.create({
         shadowOpacity: 0.25,
         shadowRadius: 6,
         elevation: 6,
-        gap: 6,
+        gap: 6
     },
     mapTypeIcon: {
-        fontSize: 18,
+        fontSize: 18
     },
     mapTypeLabel: {
         fontSize: FontSizes.sm,
         fontWeight: '600',
-        color: '#FFFFFF',
+        color: '#FFFFFF'
     },
     // Actions
     actionsContainer: {
@@ -613,7 +601,7 @@ const styles = StyleSheet.create({
         shadowOffset: { width: 0, height: -2 },
         shadowOpacity: 0.1,
         shadowRadius: 8,
-        elevation: 4,
+        elevation: 4
     },
     cancelBtn: {
         flex: 1,
@@ -621,27 +609,27 @@ const styles = StyleSheet.create({
         borderRadius: BorderRadius.xl,
         borderWidth: 2,
         alignItems: 'center',
-        justifyContent: 'center',
+        justifyContent: 'center'
     },
     cancelText: {
         fontSize: FontSizes.md,
-        fontWeight: '700',
+        fontWeight: '700'
     },
     confirmBtn: {
         flex: 2,
         borderRadius: BorderRadius.xl,
-        overflow: 'hidden',
+        overflow: 'hidden'
     },
     confirmGradient: {
         paddingVertical: Spacing.md,
         alignItems: 'center',
-        justifyContent: 'center',
+        justifyContent: 'center'
     },
     confirmText: {
         fontSize: FontSizes.md,
         fontWeight: '800',
-        color: '#fff',
-    },
+        color: '#fff'
+    }
 });
 
 export default MapLocationPicker;

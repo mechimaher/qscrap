@@ -9,7 +9,7 @@ import {
     TouchableOpacity,
     RefreshControl,
     ActivityIndicator,
-    Alert,
+    Alert
 } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { useNavigation } from '@react-navigation/native';
@@ -65,12 +65,8 @@ export default function NotificationsScreen() {
         if (!notification.is_read) {
             try {
                 await api.markNotificationRead(notification.notification_id);
-                setNotifications(prev =>
-                    prev.map(n =>
-                        n.notification_id === notification.notification_id
-                            ? { ...n, is_read: true }
-                            : n
-                    )
+                setNotifications((prev) =>
+                    prev.map((n) => (n.notification_id === notification.notification_id ? { ...n, is_read: true } : n))
                 );
             } catch (error) {
                 log('Failed to mark notification as read:', error);
@@ -89,7 +85,7 @@ export default function NotificationsScreen() {
         Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Medium);
         try {
             await api.markAllNotificationsRead();
-            setNotifications(prev => prev.map(n => ({ ...n, is_read: true })));
+            setNotifications((prev) => prev.map((n) => ({ ...n, is_read: true })));
             // Refresh badge counts to update Profile tab badge
             refreshBadges();
         } catch (error) {
@@ -99,37 +95,38 @@ export default function NotificationsScreen() {
 
     const handleClearAll = () => {
         Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Medium);
-        Alert.alert(
-            t('common.clear'),
-            t('alerts.confirmAction'),
-            [
-                { text: t('common.cancel'), style: 'cancel' },
-                {
-                    text: t('common.clear'),
-                    style: 'destructive',
-                    onPress: async () => {
-                        try {
-                            await api.clearAllNotifications();
-                            setNotifications([]);
-                            // Refresh badge counts to update Profile tab badge
-                            refreshBadges();
-                            Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success);
-                        } catch (error) {
-                            log('Failed to clear notifications:', error);
-                        }
+        Alert.alert(t('common.clear'), t('alerts.confirmAction'), [
+            { text: t('common.cancel'), style: 'cancel' },
+            {
+                text: t('common.clear'),
+                style: 'destructive',
+                onPress: async () => {
+                    try {
+                        await api.clearAllNotifications();
+                        setNotifications([]);
+                        // Refresh badge counts to update Profile tab badge
+                        refreshBadges();
+                        Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success);
+                    } catch (error) {
+                        log('Failed to clear notifications:', error);
                     }
                 }
-            ]
-        );
+            }
+        ]);
     };
 
     const getNotificationIcon = (type: string): keyof typeof Ionicons.glyphMap => {
         switch (type) {
-            case 'bid': return 'pricetag-outline';
-            case 'order': return 'cube-outline';
-            case 'delivery': return 'car-outline';
-            case 'counter_offer': return 'swap-horizontal-outline';
-            default: return 'notifications-outline';
+            case 'bid':
+                return 'pricetag-outline';
+            case 'order':
+                return 'cube-outline';
+            case 'delivery':
+                return 'car-outline';
+            case 'counter_offer':
+                return 'swap-horizontal-outline';
+            default:
+                return 'notifications-outline';
         }
     };
 
@@ -157,36 +154,86 @@ export default function NotificationsScreen() {
             onPress={() => handleNotificationPress(item)}
             activeOpacity={0.7}
         >
-            <View style={[styles.iconContainer, !item.is_read && styles.unreadIcon, isRTL && { marginRight: 0, marginLeft: Spacing.md }]}>
-                <Ionicons name={getNotificationIcon(item.type)} size={22} color={!item.is_read ? Colors.primary : '#737373'} />
+            <View
+                style={[
+                    styles.iconContainer,
+                    !item.is_read && styles.unreadIcon,
+                    isRTL && { marginRight: 0, marginLeft: Spacing.md }
+                ]}
+            >
+                <Ionicons
+                    name={getNotificationIcon(item.type)}
+                    size={22}
+                    color={!item.is_read ? Colors.primary : '#737373'}
+                />
             </View>
             <View style={styles.content}>
-                <Text style={[styles.title, { color: colors.text, textAlign: rtlTextAlign(isRTL) }, !item.is_read && styles.unreadTitle]}>{item.title}</Text>
-                <Text style={[styles.message, { color: colors.textSecondary, textAlign: rtlTextAlign(isRTL) }]} numberOfLines={2}>{item.message || item.body}</Text>
-                <Text style={[styles.time, { color: colors.textMuted, textAlign: rtlTextAlign(isRTL) }]}>{formatTime(item.created_at)}</Text>
+                <Text
+                    style={[
+                        styles.title,
+                        { color: colors.text, textAlign: rtlTextAlign(isRTL) },
+                        !item.is_read && styles.unreadTitle
+                    ]}
+                >
+                    {item.title}
+                </Text>
+                <Text
+                    style={[styles.message, { color: colors.textSecondary, textAlign: rtlTextAlign(isRTL) }]}
+                    numberOfLines={2}
+                >
+                    {item.message || item.body}
+                </Text>
+                <Text style={[styles.time, { color: colors.textMuted, textAlign: rtlTextAlign(isRTL) }]}>
+                    {formatTime(item.created_at)}
+                </Text>
             </View>
             {!item.is_read && <View style={styles.unreadDot} />}
         </TouchableOpacity>
     );
 
-    const unreadCount = notifications.filter(n => !n.is_read).length;
+    const unreadCount = notifications.filter((n) => !n.is_read).length;
 
     return (
         <SafeAreaView style={[styles.container, { backgroundColor: colors.background }]} edges={['top']}>
             {/* Header */}
-            <View style={[styles.header, { backgroundColor: colors.surface, borderBottomColor: colors.border, flexDirection: rtlFlexDirection(isRTL) }]}>
-                <TouchableOpacity onPress={() => navigation.goBack()} style={[styles.backButton, { backgroundColor: colors.background }]} accessibilityRole="button" accessibilityLabel={t('common.back')}>
-                    <Ionicons name="arrow-back" size={20} color={Colors.primary} /> <Text style={styles.backText}>{t('common.back')}</Text>
+            <View
+                style={[
+                    styles.header,
+                    {
+                        backgroundColor: colors.surface,
+                        borderBottomColor: colors.border,
+                        flexDirection: rtlFlexDirection(isRTL)
+                    }
+                ]}
+            >
+                <TouchableOpacity
+                    onPress={() => navigation.goBack()}
+                    style={[styles.backButton, { backgroundColor: colors.background }]}
+                    accessibilityRole="button"
+                    accessibilityLabel={t('common.back')}
+                >
+                    <Ionicons name="arrow-back" size={20} color={Colors.primary} />{' '}
+                    <Text style={styles.backText}>{t('common.back')}</Text>
                 </TouchableOpacity>
                 <Text style={[styles.headerTitle, { color: colors.text }]}>{t('notifications.title')}</Text>
                 <View style={[styles.headerActions, { flexDirection: rtlFlexDirection(isRTL) }]}>
                     {unreadCount > 0 && (
-                        <TouchableOpacity onPress={handleMarkAllRead} style={styles.markAllButton} accessibilityRole="button" accessibilityLabel={t('notifications.markAllRead')}>
+                        <TouchableOpacity
+                            onPress={handleMarkAllRead}
+                            style={styles.markAllButton}
+                            accessibilityRole="button"
+                            accessibilityLabel={t('notifications.markAllRead')}
+                        >
                             <Text style={styles.markAllText}>{t('notifications.markAllRead')}</Text>
                         </TouchableOpacity>
                     )}
                     {notifications.length > 0 && (
-                        <TouchableOpacity onPress={handleClearAll} style={styles.clearAllButton} accessibilityRole="button" accessibilityLabel={t('common.clear')}>
+                        <TouchableOpacity
+                            onPress={handleClearAll}
+                            style={styles.clearAllButton}
+                            accessibilityRole="button"
+                            accessibilityLabel={t('common.clear')}
+                        >
                             <Text style={styles.clearAllText}>{t('common.clear')}</Text>
                         </TouchableOpacity>
                     )}
@@ -197,9 +244,18 @@ export default function NotificationsScreen() {
                 <LoadingList count={5} />
             ) : notifications.length === 0 ? (
                 <View style={styles.emptyContainer}>
-                    <Ionicons name="notifications-outline" size={64} color="#ccc" style={{ marginBottom: Spacing.lg }} />
-                    <Text style={[styles.emptyTitle, { color: colors.text }]}>{t('notifications.noNotifications')}</Text>
-                    <Text style={[styles.emptySubtitle, { color: colors.textSecondary }]}>{t('notifications.allCaughtUp')}</Text>
+                    <Ionicons
+                        name="notifications-outline"
+                        size={64}
+                        color="#ccc"
+                        style={{ marginBottom: Spacing.lg }}
+                    />
+                    <Text style={[styles.emptyTitle, { color: colors.text }]}>
+                        {t('notifications.noNotifications')}
+                    </Text>
+                    <Text style={[styles.emptySubtitle, { color: colors.textSecondary }]}>
+                        {t('notifications.allCaughtUp')}
+                    </Text>
                 </View>
             ) : (
                 <FlatList
@@ -209,11 +265,7 @@ export default function NotificationsScreen() {
                     contentContainerStyle={styles.list}
                     showsVerticalScrollIndicator={false}
                     refreshControl={
-                        <RefreshControl
-                            refreshing={isRefreshing}
-                            onRefresh={onRefresh}
-                            tintColor={Colors.primary}
-                        />
+                        <RefreshControl refreshing={isRefreshing} onRefresh={onRefresh} tintColor={Colors.primary} />
                     }
                 />
             )}
@@ -230,12 +282,12 @@ const styles = StyleSheet.create({
         padding: Spacing.lg,
         backgroundColor: '#fff',
         borderBottomWidth: 1,
-        borderBottomColor: '#F0F0F0',
+        borderBottomColor: '#F0F0F0'
     },
     backButton: {
         padding: Spacing.sm,
         backgroundColor: '#F5F5F5',
-        borderRadius: BorderRadius.md,
+        borderRadius: BorderRadius.md
     },
     backText: { color: Colors.primary, fontSize: FontSizes.md, fontWeight: '600' },
     headerTitle: { fontSize: FontSizes.xl, fontWeight: '800', color: '#1a1a1a' },
@@ -243,17 +295,17 @@ const styles = StyleSheet.create({
         padding: Spacing.sm,
         backgroundColor: Colors.primary + '15',
         borderRadius: BorderRadius.md,
-        marginRight: Spacing.xs,
+        marginRight: Spacing.xs
     },
     markAllText: { color: Colors.primary, fontSize: FontSizes.sm, fontWeight: '600' },
     headerActions: {
         flexDirection: 'row',
-        alignItems: 'center',
+        alignItems: 'center'
     },
     clearAllButton: {
         padding: Spacing.sm,
         backgroundColor: '#FEE2E2',
-        borderRadius: BorderRadius.md,
+        borderRadius: BorderRadius.md
     },
     clearAllText: { color: '#DC2626', fontSize: FontSizes.sm, fontWeight: '600' },
     list: { padding: Spacing.lg, paddingTop: Spacing.md },
@@ -265,13 +317,13 @@ const styles = StyleSheet.create({
         marginBottom: Spacing.md,
         borderWidth: 1,
         borderColor: '#E8E8E8',
-        ...Shadows.sm,
+        ...Shadows.sm
     },
     unreadCard: {
         backgroundColor: '#fff',
         borderLeftWidth: 3,
         borderLeftColor: Colors.primary,
-        borderColor: Colors.primary + '30',
+        borderColor: Colors.primary + '30'
     },
     iconContainer: {
         width: 48,
@@ -280,10 +332,10 @@ const styles = StyleSheet.create({
         backgroundColor: '#F5F5F5',
         justifyContent: 'center',
         alignItems: 'center',
-        marginRight: Spacing.md,
+        marginRight: Spacing.md
     },
     unreadIcon: {
-        backgroundColor: Colors.primary + '15',
+        backgroundColor: Colors.primary + '15'
     },
     icon: { fontSize: 24 },
     content: { flex: 1 },
@@ -291,40 +343,40 @@ const styles = StyleSheet.create({
         fontSize: FontSizes.md,
         fontWeight: '600',
         color: '#1a1a1a',
-        marginBottom: 4,
+        marginBottom: 4
     },
     unreadTitle: { fontWeight: '700' },
     message: {
         fontSize: FontSizes.sm,
         color: '#525252',
-        marginBottom: 4,
+        marginBottom: 4
     },
     time: {
         fontSize: FontSizes.xs,
-        color: '#737373',
+        color: '#737373'
     },
     unreadDot: {
         width: 10,
         height: 10,
         borderRadius: BorderRadius.sm,
         backgroundColor: Colors.primary,
-        alignSelf: 'center',
+        alignSelf: 'center'
     },
     emptyContainer: {
         flex: 1,
         justifyContent: 'center',
         alignItems: 'center',
-        padding: Spacing.xl,
+        padding: Spacing.xl
     },
     emptyIcon: { fontSize: 64, marginBottom: Spacing.lg, opacity: 0.5 },
     emptyTitle: {
         fontSize: FontSizes.xl,
         fontWeight: '700',
         color: '#1a1a1a',
-        marginBottom: Spacing.sm,
+        marginBottom: Spacing.sm
     },
     emptySubtitle: {
         fontSize: FontSizes.md,
-        color: '#525252',
-    },
+        color: '#525252'
+    }
 });

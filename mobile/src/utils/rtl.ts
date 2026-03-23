@@ -9,15 +9,13 @@ import { ViewStyle, TextStyle, FlexStyle } from 'react-native';
  * Get the flex direction for row layouts
  * Flips from 'row' to 'row-reverse' for RTL languages
  */
-export const rtlFlexDirection = (isRTL: boolean): FlexStyle['flexDirection'] =>
-    isRTL ? 'row-reverse' : 'row';
+export const rtlFlexDirection = (isRTL: boolean): FlexStyle['flexDirection'] => (isRTL ? 'row-reverse' : 'row');
 
 /**
  * Get the text alignment
  * Flips from 'left' to 'right' for RTL languages
  */
-export const rtlTextAlign = (isRTL: boolean): TextStyle['textAlign'] =>
-    isRTL ? 'right' : 'left';
+export const rtlTextAlign = (isRTL: boolean): TextStyle['textAlign'] => (isRTL ? 'right' : 'left');
 
 /**
  * Get combined text style with alignment AND writing direction
@@ -25,14 +23,13 @@ export const rtlTextAlign = (isRTL: boolean): TextStyle['textAlign'] =>
  */
 export const rtlTextStyle = (isRTL: boolean): Pick<TextStyle, 'textAlign' | 'writingDirection'> => ({
     textAlign: isRTL ? 'right' : 'left',
-    writingDirection: isRTL ? 'rtl' : 'ltr',
+    writingDirection: isRTL ? 'rtl' : 'ltr'
 });
 
 /**
  * Get the opposite text alignment (for end-aligned text)
  */
-export const rtlTextAlignEnd = (isRTL: boolean): TextStyle['textAlign'] =>
-    isRTL ? 'left' : 'right';
+export const rtlTextAlignEnd = (isRTL: boolean): TextStyle['textAlign'] => (isRTL ? 'left' : 'right');
 
 /**
  * Get RTL-aware horizontal margin
@@ -43,9 +40,7 @@ export const rtlMarginHorizontal = (
     start: number,
     end: number = 0
 ): Pick<ViewStyle, 'marginLeft' | 'marginRight'> =>
-    isRTL
-        ? { marginLeft: end, marginRight: start }
-        : { marginLeft: start, marginRight: end };
+    isRTL ? { marginLeft: end, marginRight: start } : { marginLeft: start, marginRight: end };
 
 /**
  * Get RTL-aware horizontal padding
@@ -56,21 +51,14 @@ export const rtlPaddingHorizontal = (
     start: number,
     end: number = 0
 ): Pick<ViewStyle, 'paddingLeft' | 'paddingRight'> =>
-    isRTL
-        ? { paddingLeft: end, paddingRight: start }
-        : { paddingLeft: start, paddingRight: end };
+    isRTL ? { paddingLeft: end, paddingRight: start } : { paddingLeft: start, paddingRight: end };
 
 /**
  * Get RTL-aware absolute positioning
  * Swaps left and right for RTL
  */
-export const rtlPosition = (
-    isRTL: boolean,
-    start: number
-): Pick<ViewStyle, 'left' | 'right'> =>
-    isRTL
-        ? { right: start, left: undefined }
-        : { left: start, right: undefined };
+export const rtlPosition = (isRTL: boolean, start: number): Pick<ViewStyle, 'left' | 'right'> =>
+    isRTL ? { right: start, left: undefined } : { left: start, right: undefined };
 
 /**
  * Get RTL-aware icon/chevron character
@@ -96,10 +84,7 @@ export const rtlArrow = (isRTL: boolean, type: 'forward' | 'back' = 'forward'): 
 /**
  * Get justify content for align items at start/end
  */
-export const rtlJustifyContent = (
-    isRTL: boolean,
-    position: 'start' | 'end'
-): FlexStyle['justifyContent'] => {
+export const rtlJustifyContent = (isRTL: boolean, position: 'start' | 'end'): FlexStyle['justifyContent'] => {
     if (position === 'start') {
         return isRTL ? 'flex-end' : 'flex-start';
     }
@@ -109,10 +94,7 @@ export const rtlJustifyContent = (
 /**
  * Get align self for start/end alignment
  */
-export const rtlAlignSelf = (
-    isRTL: boolean,
-    position: 'start' | 'end'
-): FlexStyle['alignSelf'] => {
+export const rtlAlignSelf = (isRTL: boolean, position: 'start' | 'end'): FlexStyle['alignSelf'] => {
     if (position === 'start') {
         return isRTL ? 'flex-end' : 'flex-start';
     }
@@ -194,5 +176,5 @@ export const RTL = {
 
     // Use in textAlign
     start: (isRTL: boolean) => (isRTL ? 'right' : 'left') as TextStyle['textAlign'],
-    end: (isRTL: boolean) => (isRTL ? 'left' : 'right') as TextStyle['textAlign'],
+    end: (isRTL: boolean) => (isRTL ? 'left' : 'right') as TextStyle['textAlign']
 };

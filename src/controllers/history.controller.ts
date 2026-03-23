@@ -12,7 +12,8 @@ export const getVehicleHistory = async (req: Request, res: Response) => {
         // In reality, we might want to charge for this or check permissions
         // For now, public or authenticated user can see it
 
-        const result = await readPool.query(`
+        const result = await readPool.query(
+            `
             SELECT 
                 event_type, event_date, description, mileage_km, is_verified_by_motar,
                 g.garage_name
@@ -20,7 +21,9 @@ export const getVehicleHistory = async (req: Request, res: Response) => {
             LEFT JOIN garages g ON vhe.garage_id = g.garage_id
             WHERE vhe.vin_number = $1
             ORDER BY event_date DESC
-        `, [vin]);
+        `,
+            [vin]
+        );
 
         // Calculate "Blue Check" Score or status
         const isVerified = result.rows.length > 0;
@@ -31,7 +34,6 @@ export const getVehicleHistory = async (req: Request, res: Response) => {
             history: result.rows,
             motar_blue_check: isVerified
         });
-
     } catch (error) {
         logger.error('Error fetching vehicle history', { error });
         res.status(500).json({ error: 'Internal server error' });

@@ -234,14 +234,7 @@ export const createDriver = async (req: AuthRequest, res: Response) => {
             `INSERT INTO drivers (full_name, phone, email, vehicle_type, vehicle_plate, vehicle_model, status, is_active)
              VALUES ($1, $2, $3, $4, $5, $6, 'available', true)
              RETURNING *`,
-            [
-                fullName,
-                phone,
-                email ?? null,
-                vehicleType ?? null,
-                vehiclePlate ?? null,
-                vehicleModel ?? null
-            ]
+            [fullName, phone, email ?? null, vehicleType ?? null, vehiclePlate ?? null, vehicleModel ?? null]
         );
 
         const driver = result.rows[0];
@@ -463,10 +456,10 @@ export const reassignDriver = async (req: AuthRequest, res: Response) => {
         }
 
         // Update old driver to available
-        await client.query(
-            'UPDATE drivers SET status = $1 WHERE driver_id = $2',
-            ['available', oldAssignment.driver_id]
-        );
+        await client.query('UPDATE drivers SET status = $1 WHERE driver_id = $2', [
+            'available',
+            oldAssignment.driver_id
+        ]);
 
         // Update assignment
         await client.query(
@@ -477,16 +470,13 @@ export const reassignDriver = async (req: AuthRequest, res: Response) => {
         );
 
         // Update new driver to busy
-        await client.query(
-            'UPDATE drivers SET status = $1 WHERE driver_id = $2',
-            ['busy', newDriverId]
-        );
+        await client.query('UPDATE drivers SET status = $1 WHERE driver_id = $2', ['busy', newDriverId]);
 
         // Update order
-        await client.query(
-            'UPDATE orders SET driver_id = $1 WHERE order_id = $2',
-            [newDriver.user_id, oldAssignment.order_id]
-        );
+        await client.query('UPDATE orders SET driver_id = $1 WHERE order_id = $2', [
+            newDriver.user_id,
+            oldAssignment.order_id
+        ]);
 
         await client.query('COMMIT');
 
@@ -540,16 +530,16 @@ export const updateDeliveryStatus = async (req: AuthRequest, res: Response) => {
 
         // Update order status if delivered
         if (status === 'delivered') {
-            await client.query(
-                'UPDATE orders SET order_status = $1 WHERE order_id = $2',
-                ['delivered', assignment.order_id]
-            );
+            await client.query('UPDATE orders SET order_status = $1 WHERE order_id = $2', [
+                'delivered',
+                assignment.order_id
+            ]);
 
             // Update driver to available
-            await client.query(
-                'UPDATE drivers SET status = $1 WHERE driver_id = $2',
-                ['available', assignment.driver_id]
-            );
+            await client.query('UPDATE drivers SET status = $1 WHERE driver_id = $2', [
+                'available',
+                assignment.driver_id
+            ]);
         }
 
         await client.query('COMMIT');
@@ -591,14 +581,7 @@ export const updateDriverLocation = async (req: AuthRequest, res: Response) => {
             return res.status(400).json({ error: 'Latitude and longitude are required' });
         }
 
-        await trackingService.updateDriverLocation(
-            driverId,
-            latitude,
-            longitude,
-            accuracy,
-            heading,
-            speed
-        );
+        await trackingService.updateDriverLocation(driverId, latitude, longitude, accuracy, heading, speed);
 
         res.json({
             success: true,
@@ -678,11 +661,7 @@ export const calculateDeliveryFee = async (req: AuthRequest, res: Response) => {
             const { DeliveryFeeService } = await import('../services/delivery/delivery-fee.service');
             const feeService = new DeliveryFeeService(pool);
 
-            const result = await feeService.calculateFee(
-                latitude,
-                longitude,
-                orderTotal
-            );
+            const result = await feeService.calculateFee(latitude, longitude, orderTotal);
 
             return res.json({
                 success: true,
@@ -755,12 +734,7 @@ export const updateZoneFee = async (req: AuthRequest, res: Response) => {
             return res.status(400).json({ error: 'Valid delivery fee is required' });
         }
 
-        const zone = await geoService.updateZoneFee(
-            zoneId,
-            deliveryFee,
-            adminId,
-            reason
-        );
+        const zone = await geoService.updateZoneFee(zoneId, deliveryFee, adminId, reason);
 
         res.json({
             message: 'Zone fee updated successfully',
@@ -776,7 +750,10 @@ export const updateZoneFee = async (req: AuthRequest, res: Response) => {
 // EXPORTED HELPER (for order.controller.ts)
 // ============================================
 
-export async function getDeliveryFeeForLocation(lat: number, lng: number): Promise<{
+export async function getDeliveryFeeForLocation(
+    lat: number,
+    lng: number
+): Promise<{
     fee: number;
     zone_id: number | null;
     zone_name: string;

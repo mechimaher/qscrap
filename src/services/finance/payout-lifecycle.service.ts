@@ -15,10 +15,7 @@ import {
     PayoutResult,
     BulkConfirmResult
 } from './types';
-import {
-    UnauthorizedPayoutAccessError,
-    InvalidPasswordError
-} from './errors';
+import { UnauthorizedPayoutAccessError, InvalidPasswordError } from './errors';
 import { PayoutHelpers } from './payout-helpers';
 
 export class PayoutLifecycleService {
@@ -42,30 +39,36 @@ export class PayoutLifecycleService {
 
             // CRITICAL: Check for active disputes on this order
             if (payout.order_id) {
-                const disputeCheck = await client.query(`
+                const disputeCheck = await client.query(
+                    `
                     SELECT dispute_id, status, reason 
                     FROM disputes 
                     WHERE order_id = $1 
                     AND status IN ('pending', 'under_review', 'contested')
-                `, [payout.order_id]);
+                `,
+                    [payout.order_id]
+                );
 
                 if (disputeCheck.rows.length > 0) {
                     const dispute = disputeCheck.rows[0];
                     throw new Error(
                         `Cannot send payout: Order has active dispute (${dispute.status}). ` +
-                        `Dispute reason: ${dispute.reason}. Resolve dispute first.`
+                            `Dispute reason: ${dispute.reason}. Resolve dispute first.`
                     );
                 }
 
                 // CRITICAL: 7-day warranty window check (Qatar B2B business rule)
                 // Customer has 7 days from delivery to report issues/request refund
-                const warrantyCheck = await client.query(`
+                const warrantyCheck = await client.query(
+                    `
                     SELECT o.order_number, o.actual_delivery_at, o.completed_at,
                            EXTRACT(DAY FROM NOW() - COALESCE(o.actual_delivery_at, o.completed_at)) as days_since_delivery,
                            GREATEST(0, 7 - EXTRACT(DAY FROM NOW() - COALESCE(o.actual_delivery_at, o.completed_at)))::int as days_remaining
                     FROM orders o
                     WHERE o.order_id = $1
-                `, [payout.order_id]);
+                `,
+                    [payout.order_id]
+                );
 
                 if (warrantyCheck.rows.length > 0) {
                     const order = warrantyCheck.rows[0];
@@ -74,8 +77,8 @@ export class PayoutLifecycleService {
                     if (daysRemaining > 0) {
                         throw new Error(
                             `Cannot send payout: Order #${order.order_number} is still within the 7-day warranty window. ` +
-                            `${daysRemaining} day${daysRemaining > 1 ? 's' : ''} remaining until payout eligible. ` +
-                            `Customer may still request refund or report issues.`
+                                `${daysRemaining} day${daysRemaining > 1 ? 's' : ''} remaining until payout eligible. ` +
+                                `Customer may still request refund or report issues.`
                         );
                     }
                 }
@@ -100,11 +103,7 @@ export class PayoutLifecycleService {
     /**
      * Confirm payment receipt (Garage)
      */
-    async confirmPayment(
-        payoutId: string,
-        garageId: string,
-        details: ConfirmPaymentDto
-    ): Promise<PayoutResult> {
+    async confirmPayment(payoutId: string, garageId: string, details: ConfirmPaymentDto): Promise<PayoutResult> {
         const client = await this.pool.connect();
         try {
             await client.query('BEGIN');
@@ -136,11 +135,7 @@ export class PayoutLifecycleService {
     /**
      * Dispute payment (Garage)
      */
-    async disputePayment(
-        payoutId: string,
-        garageId: string,
-        dispute: DisputeDto
-    ): Promise<PayoutResult> {
+    async disputePayment(payoutId: string, garageId: string, dispute: DisputeDto): Promise<PayoutResult> {
         const client = await this.pool.connect();
         try {
             await client.query('BEGIN');
@@ -172,10 +167,7 @@ export class PayoutLifecycleService {
     /**
      * Resolve payment dispute (Operations)
      */
-    async resolveDispute(
-        payoutId: string,
-        resolution: ResolveDisputeDto
-    ): Promise<PayoutResult> {
+    async resolveDispute(payoutId: string, resolution: ResolveDisputeDto): Promise<PayoutResult> {
         const client = await this.pool.connect();
         try {
             await client.query('BEGIN');
@@ -186,24 +178,33 @@ export class PayoutLifecycleService {
             let updated: Payout;
 
             if (resolution.resolution === 'corrected' || resolution.resolution === 'resent') {
-                updated = await this.helpers.markAsSent(payout, {
-                    payout_method: resolution.new_payout_method || payout.payout_method!,
-                    payout_reference: resolution.new_payout_reference,
-                    notes: resolution.resolution_notes
-                }, client);
+                updated = await this.helpers.markAsSent(
+                    payout,
+                    {
+                        payout_method: resolution.new_payout_method || payout.payout_method!,
+                        payout_reference: resolution.new_payout_reference,
+                        notes: resolution.resolution_notes
+                    },
+                    client
+                );
 
                 if (resolution.new_amount) {
-                    await client.query(
-                        `UPDATE garage_payouts SET net_amount = $1 WHERE payout_id = $2`,
-                        [resolution.new_amount, payoutId]
-                    );
+                    await client.query(`UPDATE garage_payouts SET net_amount = $1 WHERE payout_id = $2`, [
+                        resolution.new_amount,
+                        payoutId
+                    ]);
                     updated.net_amount = resolution.new_amount;
                 }
             } else if (resolution.resolution === 'confirmed') {
                 // Garage actually received the payment - mark as confirmed
-                updated = await this.helpers.markAsConfirmed(payout, {
-                    confirmation_notes: resolution.resolution_notes || 'Dispute resolved - payment confirmed received'
-                }, client);
+                updated = await this.helpers.markAsConfirmed(
+                    payout,
+                    {
+                        confirmation_notes:
+                            resolution.resolution_notes || 'Dispute resolved - payment confirmed received'
+                    },
+                    client
+                );
             } else {
                 // Cancelled - garage not receiving this payout
                 updated = await this.helpers.markAsCancelled(payout, resolution.resolution_notes, client);
@@ -269,7 +270,6 @@ export class PayoutLifecycleService {
      * Bulk confirm all awaiting payouts (Garage)
      */
     async confirmAllPayouts(garageId: string): Promise<BulkConfirmResult> {
-
         const client = await this.pool.connect();
         try {
             await client.query('BEGIN ISOLATION LEVEL SERIALIZABLE');

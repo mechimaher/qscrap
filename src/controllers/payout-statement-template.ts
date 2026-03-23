@@ -9,9 +9,13 @@ import { COMPANY_INFO } from '../services/documents/bilingual-labels';
 
 // Format helpers
 function formatDate(dateStr: string | Date | null | undefined): string {
-    if (!dateStr) {return 'N/A';}
+    if (!dateStr) {
+        return 'N/A';
+    }
     const d = new Date(dateStr);
-    if (isNaN(d.getTime()) || d.getFullYear() < 2000) {return 'N/A';}
+    if (isNaN(d.getTime()) || d.getFullYear() < 2000) {
+        return 'N/A';
+    }
     return d.toLocaleDateString('en-GB', { day: '2-digit', month: 'short', year: 'numeric' });
 }
 
@@ -30,7 +34,9 @@ export function generatePayoutStatementHTML(
     const { statement_number, period, garage, summary, orders, generated_at } = data;
 
     // Order rows HTML
-    const orderRowsHTML = orders.map((order, idx) => `
+    const orderRowsHTML = orders
+        .map(
+            (order, idx) => `
         <tr>
             <td style="text-align:center;padding:6px 4px;">${idx + 1}</td>
             <td style="padding:6px 4px;">${formatDate(order.delivered_at)}</td>
@@ -40,7 +46,9 @@ export function generatePayoutStatementHTML(
             <td style="text-align:right;padding:6px 4px;">${formatMoney(order.platform_fee)}</td>
             <td style="text-align:right;padding:6px 4px;font-weight:600;">${formatMoney(order.net_amount)}</td>
         </tr>
-    `).join('');
+    `
+        )
+        .join('');
 
     return `<!DOCTYPE html>
 <html dir="ltr" lang="en">

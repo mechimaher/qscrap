@@ -1,11 +1,5 @@
 import React from 'react';
-import {
-    View,
-    Text,
-    TouchableOpacity,
-    StyleSheet,
-    ViewStyle,
-} from 'react-native';
+import { View, Text, TouchableOpacity, StyleSheet, ViewStyle } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
 import { useTheme } from '../contexts';
 import { Spacing, BorderRadius, FontSize, Shadows } from '../constants';
@@ -42,71 +36,58 @@ export const Card: React.FC<CardProps> & {
     Header: React.FC<CardHeaderProps>;
     Content: React.FC<CardSectionProps>;
     Footer: React.FC<CardSectionProps>;
-} = ({
-    children,
-    variant = 'default',
-    onPress,
-    style,
-    disabled = false,
-    accessibilityLabel,
-}) => {
-        const { colors } = useTheme();
+} = ({ children, variant = 'default', onPress, style, disabled = false, accessibilityLabel }) => {
+    const { colors } = useTheme();
 
-        const getCardStyle = (): ViewStyle => {
-            const baseStyle: ViewStyle = {
-                backgroundColor: colors.surface,
-                borderRadius: BorderRadius.lg,
-                overflow: 'hidden',
-            };
-
-            switch (variant) {
-                case 'outlined':
-                    return {
-                        ...baseStyle,
-                        borderWidth: 1,
-                        borderColor: colors.border,
-                    };
-                case 'elevated':
-                    return {
-                        ...baseStyle,
-                        ...Shadows.lg,
-                    };
-                default:
-                    return {
-                        ...baseStyle,
-                        ...Shadows.sm,
-                    };
-            }
+    const getCardStyle = (): ViewStyle => {
+        const baseStyle: ViewStyle = {
+            backgroundColor: colors.surface,
+            borderRadius: BorderRadius.lg,
+            overflow: 'hidden'
         };
 
-        const content = <View style={[getCardStyle(), style]}>{children}</View>;
-
-        if (onPress) {
-            return (
-                <TouchableOpacity
-                    onPress={onPress}
-                    disabled={disabled}
-                    activeOpacity={0.7}
-                    accessibilityRole="button"
-                    accessibilityLabel={accessibilityLabel}
-                    accessibilityState={{ disabled }}
-                >
-                    {content}
-                </TouchableOpacity>
-            );
+        switch (variant) {
+            case 'outlined':
+                return {
+                    ...baseStyle,
+                    borderWidth: 1,
+                    borderColor: colors.border
+                };
+            case 'elevated':
+                return {
+                    ...baseStyle,
+                    ...Shadows.lg
+                };
+            default:
+                return {
+                    ...baseStyle,
+                    ...Shadows.sm
+                };
         }
-
-        return content;
     };
 
+    const content = <View style={[getCardStyle(), style]}>{children}</View>;
+
+    if (onPress) {
+        return (
+            <TouchableOpacity
+                onPress={onPress}
+                disabled={disabled}
+                activeOpacity={0.7}
+                accessibilityRole="button"
+                accessibilityLabel={accessibilityLabel}
+                accessibilityState={{ disabled }}
+            >
+                {content}
+            </TouchableOpacity>
+        );
+    }
+
+    return content;
+};
+
 // Card Header Component
-const CardHeader: React.FC<CardHeaderProps> = ({
-    title,
-    subtitle,
-    icon,
-    iconColor,
-    rightElement,
-}) => {
+const CardHeader: React.FC<CardHeaderProps> = ({ title, subtitle, icon, iconColor, rightElement }) => {
     const { colors } = useTheme();
 
     return (
@@ -142,11 +123,7 @@ const CardContent: React.FC<CardSectionProps> = ({ children, style }) => {
 const CardFooter: React.FC<CardSectionProps> = ({ children, style }) => {
     const { colors } = useTheme();
 
-    return (
-        <View style={[styles.footer, { borderTopColor: colors.border }, style]}>
-            {children}
-        </View>
-    );
+    return <View style={[styles.footer, { borderTopColor: colors.border }, style]}>{children}</View>;
 };
 
 // Attach sub-components
@@ -159,12 +136,12 @@ const styles = StyleSheet.create({
         flexDirection: 'row',
         alignItems: 'center',
         justifyContent: 'space-between',
-        padding: Spacing.lg,
+        padding: Spacing.lg
     },
     headerLeft: {
         flexDirection: 'row',
         alignItems: 'center',
-        flex: 1,
+        flex: 1
     },
     iconContainer: {
         width: 40,
@@ -172,33 +149,33 @@ const styles = StyleSheet.create({
         borderRadius: 20,
         alignItems: 'center',
         justifyContent: 'center',
-        marginRight: Spacing.md,
+        marginRight: Spacing.md
     },
     headerText: {
-        flex: 1,
+        flex: 1
     },
     headerRight: {
-        marginLeft: Spacing.md,
+        marginLeft: Spacing.md
     },
     title: {
         fontSize: FontSize.lg,
-        fontWeight: '600',
+        fontWeight: '600'
     },
     subtitle: {
         fontSize: FontSize.sm,
-        marginTop: 2,
+        marginTop: 2
     },
     content: {
         paddingHorizontal: Spacing.lg,
-        paddingBottom: Spacing.lg,
+        paddingBottom: Spacing.lg
     },
     footer: {
         flexDirection: 'row',
         alignItems: 'center',
         justifyContent: 'space-between',
         padding: Spacing.lg,
-        borderTopWidth: 1,
-    },
+        borderTopWidth: 1
+    }
 });
 
 export default Card;

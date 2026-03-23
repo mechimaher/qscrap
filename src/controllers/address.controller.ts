@@ -46,15 +46,21 @@ const toOptionalBoolean = (value: boolean | string | undefined): boolean | undef
     }
     if (typeof value === 'string') {
         const normalized = value.trim().toLowerCase();
-        if (normalized === 'true') {return true;}
-        if (normalized === 'false') {return false;}
+        if (normalized === 'true') {
+            return true;
+        }
+        if (normalized === 'false') {
+            return false;
+        }
     }
     return undefined;
 };
 
 export const getAddresses = async (req: AuthRequest, res: Response) => {
     const userId = getUserId(req);
-    if (!userId) {return res.status(401).json({ error: 'Unauthorized' });}
+    if (!userId) {
+        return res.status(401).json({ error: 'Unauthorized' });
+    }
 
     try {
         const addresses = await addressService.getAddresses(userId);
@@ -67,19 +73,23 @@ export const getAddresses = async (req: AuthRequest, res: Response) => {
 
 export const addAddress = async (req: AddressBodyRequest, res: Response) => {
     const userId = getUserId(req);
-    if (!userId) {return res.status(401).json({ error: 'Unauthorized' });}
+    if (!userId) {
+        return res.status(401).json({ error: 'Unauthorized' });
+    }
 
     const { label, address_text, latitude, longitude, is_default } = req.body;
-    if (!label || !address_text) {return res.status(400).json({ error: 'Label and address text are required' });}
+    if (!label || !address_text) {
+        return res.status(400).json({ error: 'Label and address text are required' });
+    }
 
     try {
-        const address = await addressService.addAddress(userId, {
+        const address = (await addressService.addAddress(userId, {
             label,
             address_text,
             latitude: toOptionalNumber(latitude),
             longitude: toOptionalNumber(longitude),
             is_default: toOptionalBoolean(is_default)
-        }) as unknown as AddressRecord;
+        })) as unknown as AddressRecord;
         res.status(201).json({ address });
     } catch (err) {
         logger.error('Add address error', { error: (err as Error).message });
@@ -89,20 +99,26 @@ export const addAddress = async (req: AddressBodyRequest, res: Response) => {
 
 export const updateAddress = async (req: AddressUpdateRequest, res: Response) => {
     const userId = getUserId(req);
-    if (!userId) {return res.status(401).json({ error: 'Unauthorized' });}
+    if (!userId) {
+        return res.status(401).json({ error: 'Unauthorized' });
+    }
 
     const { label, address_text, latitude, longitude, is_default } = req.body;
-    if (!label || !address_text) {return res.status(400).json({ error: 'Label and address text are required' });}
+    if (!label || !address_text) {
+        return res.status(400).json({ error: 'Label and address text are required' });
+    }
 
     try {
-        const address = await addressService.updateAddress(userId, req.params.address_id, {
+        const address = (await addressService.updateAddress(userId, req.params.address_id, {
             label,
             address_text,
             latitude: toOptionalNumber(latitude),
             longitude: toOptionalNumber(longitude),
             is_default: toOptionalBoolean(is_default)
-        }) as unknown as AddressRecord | null;
-        if (!address) {return res.status(404).json({ error: 'Address not found' });}
+        })) as unknown as AddressRecord | null;
+        if (!address) {
+            return res.status(404).json({ error: 'Address not found' });
+        }
         res.json({ address });
     } catch (err) {
         logger.error('Update address error', { error: (err as Error).message });
@@ -112,11 +128,15 @@ export const updateAddress = async (req: AddressUpdateRequest, res: Response) =>
 
 export const deleteAddress = async (req: AddressParamRequest, res: Response) => {
     const userId = getUserId(req);
-    if (!userId) {return res.status(401).json({ error: 'Unauthorized' });}
+    if (!userId) {
+        return res.status(401).json({ error: 'Unauthorized' });
+    }
 
     try {
         const deleted = await addressService.deleteAddress(userId, req.params.address_id);
-        if (!deleted) {return res.status(404).json({ error: 'Address not found' });}
+        if (!deleted) {
+            return res.status(404).json({ error: 'Address not found' });
+        }
         res.json({ message: 'Address deleted' });
     } catch (err) {
         logger.error('Delete address error', { error: (err as Error).message });
@@ -126,11 +146,15 @@ export const deleteAddress = async (req: AddressParamRequest, res: Response) => 
 
 export const setDefaultAddress = async (req: AddressParamRequest, res: Response) => {
     const userId = getUserId(req);
-    if (!userId) {return res.status(401).json({ error: 'Unauthorized' });}
+    if (!userId) {
+        return res.status(401).json({ error: 'Unauthorized' });
+    }
 
     try {
         const success = await addressService.setDefaultAddress(userId, req.params.address_id);
-        if (!success) {return res.status(404).json({ error: 'Address not found' });}
+        if (!success) {
+            return res.status(404).json({ error: 'Address not found' });
+        }
         res.json({ success: true });
     } catch (err) {
         logger.error('Set default error', { error: (err as Error).message });

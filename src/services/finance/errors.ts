@@ -8,7 +8,10 @@
 // ============================================
 
 export class FinanceError extends Error {
-    constructor(message: string, public code: string) {
+    constructor(
+        message: string,
+        public code: string
+    ) {
         super(message);
         this.name = 'FinanceError';
         Object.setPrototypeOf(this, FinanceError.prototype);
@@ -44,10 +47,7 @@ export class InvalidPayoutStatusError extends FinanceError {
 
 export class PayoutAlreadyProcessedError extends FinanceError {
     constructor(payoutId: string, status: string) {
-        super(
-            `Payout ${payoutId} already processed with status: ${status}`,
-            'PAYOUT_ALREADY_PROCESSED'
-        );
+        super(`Payout ${payoutId} already processed with status: ${status}`, 'PAYOUT_ALREADY_PROCESSED');
         this.name = 'PayoutAlreadyProcessedError';
         Object.setPrototypeOf(this, PayoutAlreadyProcessedError.prototype);
     }
@@ -55,10 +55,7 @@ export class PayoutAlreadyProcessedError extends FinanceError {
 
 export class UnauthorizedPayoutAccessError extends FinanceError {
     constructor(userId: string, payoutId: string) {
-        super(
-            `User ${userId} is not authorized to access payout ${payoutId}`,
-            'UNAUTHORIZED_PAYOUT_ACCESS'
-        );
+        super(`User ${userId} is not authorized to access payout ${payoutId}`, 'UNAUTHORIZED_PAYOUT_ACCESS');
         this.name = 'UnauthorizedPayoutAccessError';
         Object.setPrototypeOf(this, UnauthorizedPayoutAccessError.prototype);
     }
@@ -107,10 +104,7 @@ export class OrderNotFoundError extends FinanceError {
 
 export class InvalidRefundAmountError extends FinanceError {
     constructor(requestedAmount: number, maxAmount: number) {
-        super(
-            `Refund amount ${requestedAmount} exceeds order total ${maxAmount}`,
-            'INVALID_REFUND_AMOUNT'
-        );
+        super(`Refund amount ${requestedAmount} exceeds order total ${maxAmount}`, 'INVALID_REFUND_AMOUNT');
         this.name = 'InvalidRefundAmountError';
         Object.setPrototypeOf(this, InvalidRefundAmountError.prototype);
     }
@@ -118,10 +112,7 @@ export class InvalidRefundAmountError extends FinanceError {
 
 export class RefundAlreadyProcessedError extends FinanceError {
     constructor(orderId: string) {
-        super(
-            `Refund already processed for order ${orderId}`,
-            'REFUND_ALREADY_PROCESSED'
-        );
+        super(`Refund already processed for order ${orderId}`, 'REFUND_ALREADY_PROCESSED');
         this.name = 'RefundAlreadyProcessedError';
         Object.setPrototypeOf(this, RefundAlreadyProcessedError.prototype);
     }
@@ -133,10 +124,7 @@ export class RefundAlreadyProcessedError extends FinanceError {
 
 export class InvalidPeriodError extends FinanceError {
     constructor(period: string, validPeriods: string[]) {
-        super(
-            `Invalid period: ${period}. Valid periods: ${validPeriods.join(', ')}`,
-            'INVALID_PERIOD'
-        );
+        super(`Invalid period: ${period}. Valid periods: ${validPeriods.join(', ')}`, 'INVALID_PERIOD');
         this.name = 'InvalidPeriodError';
         Object.setPrototypeOf(this, InvalidPeriodError.prototype);
     }

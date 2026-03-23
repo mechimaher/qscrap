@@ -59,7 +59,7 @@ export function useRequestForm({ prefillData, initialDeliveryLocation, t, toast 
             setDeliveryLocation({
                 lat: initialDeliveryLocation.lat,
                 lng: initialDeliveryLocation.lng,
-                address: initialDeliveryLocation.address,
+                address: initialDeliveryLocation.address
             });
         }
     }, [initialDeliveryLocation]);
@@ -68,10 +68,11 @@ export function useRequestForm({ prefillData, initialDeliveryLocation, t, toast 
         if (vehicles.length === 0) return;
 
         if (prefillData?.carMake) {
-            const matchingVehicle = vehicles.find((v: any) =>
-                v.car_make.toLowerCase() === prefillData.carMake?.toLowerCase() &&
-                v.car_model.toLowerCase() === prefillData.carModel?.toLowerCase() &&
-                v.car_year === prefillData.carYear
+            const matchingVehicle = vehicles.find(
+                (v: any) =>
+                    v.car_make.toLowerCase() === prefillData.carMake?.toLowerCase() &&
+                    v.car_model.toLowerCase() === prefillData.carModel?.toLowerCase() &&
+                    v.car_year === prefillData.carYear
             );
             if (matchingVehicle) {
                 setSelectedVehicle(matchingVehicle);
@@ -109,6 +110,6 @@ export function useRequestForm({ prefillData, initialDeliveryLocation, t, toast 
         setQuantity,
         side,
         setSide,
-        deliveryLocation,
+        deliveryLocation
     };
 }

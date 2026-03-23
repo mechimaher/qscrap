@@ -19,7 +19,8 @@ export const getCustomerActivity = async (req: Request, res: Response): Promise<
         const pool = (await import('../config/db')).default;
 
         // Parts Marketplace orders only (Quick Services purged Jan 19, 2026)
-        const result = await pool.query(`
+        const result = await pool.query(
+            `
             SELECT 
                 order_id::text as id,
                 'spare_part' as type,
@@ -36,13 +37,12 @@ export const getCustomerActivity = async (req: Request, res: Response): Promise<
             WHERE customer_id = $1
             ORDER BY created_at DESC
             LIMIT $2 OFFSET $3
-        `, [userId, limit, offset]);
+        `,
+            [userId, limit, offset]
+        );
 
         // Get total count for pagination
-        const countResult = await pool.query(
-            `SELECT COUNT(*) as total FROM orders WHERE customer_id = $1`,
-            [userId]
-        );
+        const countResult = await pool.query(`SELECT COUNT(*) as total FROM orders WHERE customer_id = $1`, [userId]);
 
         res.json({
             success: true,

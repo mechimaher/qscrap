@@ -8,7 +8,9 @@ const escrowService = new EscrowService(pool);
 const getUserContext = (req: any): { userId: string; userType: string } | null => {
     const userId = (req as any).user?.userId || (req as any).user?.id;
     const userType = (req as any).user?.role || (req as any).user?.userType;
-    if (!userId || !userType) return null;
+    if (!userId || !userType) {
+        return null;
+    }
     return { userId, userType };
 };
 
@@ -33,7 +35,7 @@ export const getEscrowForOrder = async (req: Request, res: Response) => {
         inspection_expires_at: escrow.inspection_expires_at,
         inspection_window_hours: escrow.inspection_window_hours,
         dispute_raised_at: escrow.dispute_raised_at,
-        dispute_reason: escrow.dispute_reason,
+        dispute_reason: escrow.dispute_reason
     });
 };
 
@@ -52,6 +54,6 @@ export const raiseEscrowDisputeHandler = async (req: Request, res: Response) => 
         escrow_id: escrow.escrow_id,
         status: escrow.status,
         dispute_reason: escrow.dispute_reason,
-        dispute_raised_at: escrow.dispute_raised_at,
+        dispute_raised_at: escrow.dispute_raised_at
     });
 };

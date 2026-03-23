@@ -111,18 +111,51 @@ const parseOptionalNumber = (value: number | string | undefined): number | undef
 };
 
 export const register = catchAsync(async (req: RegisterRequest, res: Response) => {
-    const { phone_number, password, user_type, full_name, email, garage_name, address, supplier_type, specialized_brands, all_brands, location_lat, location_lng, preferred_plan_code, cr_number, trade_license_number } = req.body;
+    const {
+        phone_number,
+        password,
+        user_type,
+        full_name,
+        email,
+        garage_name,
+        address,
+        supplier_type,
+        specialized_brands,
+        all_brands,
+        location_lat,
+        location_lng,
+        preferred_plan_code,
+        cr_number,
+        trade_license_number
+    } = req.body;
 
-    if (!phone_number || !password || !user_type) {return res.status(400).json({ error: 'Missing required fields: phone_number, password, user_type' });}
-    if (!isValidPhoneNumber(phone_number)) {return res.status(400).json({ error: 'Invalid phone number format', hint: 'Use Qatar format: +974XXXXXXXX or 8-digit local number' });}
-    if (password.length < 4) {return res.status(400).json({ error: 'Password must be at least 4 characters' });}
-    if (user_type !== 'customer' && user_type !== 'garage') {return res.status(400).json({ error: 'Invalid user_type. Must be "customer" or "garage"' });}
+    if (!phone_number || !password || !user_type) {
+        return res.status(400).json({ error: 'Missing required fields: phone_number, password, user_type' });
+    }
+    if (!isValidPhoneNumber(phone_number)) {
+        return res
+            .status(400)
+            .json({
+                error: 'Invalid phone number format',
+                hint: 'Use Qatar format: +974XXXXXXXX or 8-digit local number'
+            });
+    }
+    if (password.length < 4) {
+        return res.status(400).json({ error: 'Password must be at least 4 characters' });
+    }
+    if (user_type !== 'customer' && user_type !== 'garage') {
+        return res.status(400).json({ error: 'Invalid user_type. Must be "customer" or "garage"' });
+    }
     const normalizedUserType: RegisterData['user_type'] = user_type;
 
     const exists = await authService.checkUserExists(phone_number);
-    if (exists) {return res.status(400).json({ error: 'User with this phone number already exists' });}
+    if (exists) {
+        return res.status(400).json({ error: 'User with this phone number already exists' });
+    }
 
-    if (normalizedUserType === 'garage' && !garage_name) {return res.status(400).json({ error: 'Garage name is required for garage registration' });}
+    if (normalizedUserType === 'garage' && !garage_name) {
+        return res.status(400).json({ error: 'Garage name is required for garage registration' });
+    }
 
     let validLat: number | undefined;
     let validLng: number | undefined;
@@ -132,7 +165,9 @@ export const register = catchAsync(async (req: RegisterRequest, res: Response) =
         if (lat >= -90 && lat <= 90 && lng >= -180 && lng <= 180) {
             validLat = lat;
             validLng = lng;
-            if (lat < 24.4 || lat > 26.2 || lng < 50.7 || lng > 51.7) {logger.warn('Garage location outside Qatar bounds', { lat, lng });}
+            if (lat < 24.4 || lat > 26.2 || lng < 50.7 || lng > 51.7) {
+                logger.warn('Garage location outside Qatar bounds', { lat, lng });
+            }
         }
     }
 
@@ -154,30 +189,55 @@ export const register = catchAsync(async (req: RegisterRequest, res: Response) =
         trade_license_number
     });
 
-    res.status(201).json({ token: result.token, refreshToken: result.refreshToken, userId: result.userId, userType: normalizedUserType });
+    res.status(201).json({
+        token: result.token,
+        refreshToken: result.refreshToken,
+        userId: result.userId,
+        userType: normalizedUserType
+    });
 });
 
 export const login = catchAsync(async (req: LoginRequest, res: Response) => {
     const { phone_number, password } = req.body;
-    if (!phone_number || !password) {return res.status(400).json({ error: 'Phone number and password are required' });}
+    if (!phone_number || !password) {
+        return res.status(400).json({ error: 'Phone number and password are required' });
+    }
 
     try {
         const result = await authService.login(phone_number, password);
         res.json(result);
     } catch (err) {
         const message = getErrorMessage(err);
-        if (message === 'Invalid credentials') {return res.status(401).json({ error: message });}
-        if (message === 'Account deactivated') {return res.status(403).json({ error: message, message: 'Your account has been deactivated. Please contact support.' });}
-        if (message.startsWith('Account suspended') || message === 'Account suspended') {return res.status(403).json({ error: 'Account suspended', message });}
-        if (message === 'pending_approval') {return res.status(403).json({ error: 'pending_approval', message: 'Your account is pending approval.', status: 'pending' });}
-        if (message.startsWith('application_rejected:')) {return res.status(403).json({ error: 'application_rejected', message: message.split(':')[1], status: 'rejected' });}
+        if (message === 'Invalid credentials') {
+            return res.status(401).json({ error: message });
+        }
+        if (message === 'Account deactivated') {
+            return res
+                .status(403)
+                .json({ error: message, message: 'Your account has been deactivated. Please contact support.' });
+        }
+        if (message.startsWith('Account suspended') || message === 'Account suspended') {
+            return res.status(403).json({ error: 'Account suspended', message });
+        }
+        if (message === 'pending_approval') {
+            return res
+                .status(403)
+                .json({ error: 'pending_approval', message: 'Your account is pending approval.', status: 'pending' });
+        }
+        if (message.startsWith('application_rejected:')) {
+            return res
+                .status(403)
+                .json({ error: 'application_rejected', message: message.split(':')[1], status: 'rejected' });
+        }
         throw err;
     }
 });
 
 export const refreshToken = catchAsync(async (req: RefreshTokenRequest, res: Response) => {
     const { refreshToken: refreshTokenRaw } = req.body;
-    if (!refreshTokenRaw) {return res.status(400).json({ error: 'refreshToken is required' });}
+    if (!refreshTokenRaw) {
+        return res.status(400).json({ error: 'refreshToken is required' });
+    }
 
     try {
         const result = await authService.refreshAccessToken(refreshTokenRaw);
@@ -203,13 +263,17 @@ export const logout = catchAsync(async (req: AuthRefreshTokenRequest, res: Respo
 });
 
 export const deleteAccount = catchAsync(async (req: AuthRequest, res: Response) => {
-    if (!req.user?.userId) {return res.status(401).json({ error: 'Unauthorized' });}
+    if (!req.user?.userId) {
+        return res.status(401).json({ error: 'Unauthorized' });
+    }
     logger.info('Deleting user account', { userId: req.user.userId });
     try {
         await authService.deleteAccount(req.user.userId);
         res.json({ message: 'Account deleted successfully' });
     } catch (err) {
-        if (getErrorMessage(err) === 'User not found') {return res.status(404).json({ error: 'User not found' });}
+        if (getErrorMessage(err) === 'User not found') {
+            return res.status(404).json({ error: 'User not found' });
+        }
         throw err;
     }
 });
@@ -219,7 +283,9 @@ export const deleteAccount = catchAsync(async (req: AuthRequest, res: Response) 
  * Returns blockers if there are pending business items (orders, tickets, disputes)
  */
 export const checkDeletionEligibility = catchAsync(async (req: AuthRequest, res: Response) => {
-    if (!req.user?.userId) {return res.status(401).json({ error: 'Unauthorized' });}
+    if (!req.user?.userId) {
+        return res.status(401).json({ error: 'Unauthorized' });
+    }
 
     const result = await accountDeletionService.checkDeletionEligibility(req.user.userId);
     res.json(result);
@@ -263,10 +329,7 @@ export const registerWithEmail = catchAsync(async (req: RegisterWithEmailRequest
     }
 
     // Check if email already in use
-    const emailCheck = await pool.query(
-        'SELECT user_id FROM users WHERE LOWER(email) = LOWER($1)',
-        [email]
-    );
+    const emailCheck = await pool.query('SELECT user_id FROM users WHERE LOWER(email) = LOWER($1)', [email]);
     if (emailCheck.rows.length > 0) {
         return res.status(400).json({ error: 'Email address already in use' });
     }
@@ -403,7 +466,9 @@ export const resendOTP = catchAsync(async (req: ResendOtpRequest, res: Response)
  */
 export const changePassword = catchAsync(async (req: AuthChangePasswordRequest, res: Response) => {
     const userId = getAuthenticatedUserId(req);
-    if (!userId) {return res.status(401).json({ error: 'Authentication required' });}
+    if (!userId) {
+        return res.status(401).json({ error: 'Authentication required' });
+    }
 
     const { current_password, new_password } = req.body;
     if (!current_password || !new_password) {
@@ -434,10 +499,7 @@ export const changePassword = catchAsync(async (req: AuthChangePasswordRequest, 
 
     // Hash and update
     const newHash = await bcrypt.hash(new_password, BCRYPT_ROUNDS);
-    await pool.query(
-        'UPDATE users SET password_hash = $1, updated_at = NOW() WHERE user_id = $2',
-        [newHash, userId]
-    );
+    await pool.query('UPDATE users SET password_hash = $1, updated_at = NOW() WHERE user_id = $2', [newHash, userId]);
 
     logger.info('[Auth] Password changed', { userId });
     res.json({ success: true, message: 'Password changed successfully' });
@@ -447,106 +509,114 @@ export const changePassword = catchAsync(async (req: AuthChangePasswordRequest, 
  * Step 1: Request password reset - sends OTP to email
  * Enterprise Security: Neutral response to prevent email enumeration
  */
-export const requestPasswordReset = catchAsync(async (req: Request<ParamsDictionary, unknown, RequestPasswordResetBody>, res: Response) => {
-    const { email } = req.body;
+export const requestPasswordReset = catchAsync(
+    async (req: Request<ParamsDictionary, unknown, RequestPasswordResetBody>, res: Response) => {
+        const { email } = req.body;
 
-    if (!email) {
-        return res.status(400).json({ error: 'Email is required' });
+        if (!email) {
+            return res.status(400).json({ error: 'Email is required' });
+        }
+
+        const result = await passwordResetService.requestReset({
+            email,
+            ip_address: req.ip,
+            user_agent: req.headers['user-agent']
+        });
+
+        // Always return 200 with neutral message (security)
+        res.json(result);
     }
-
-    const result = await passwordResetService.requestReset({
-        email,
-        ip_address: req.ip,
-        user_agent: req.headers['user-agent']
-    });
-
-    // Always return 200 with neutral message (security)
-    res.json(result);
-});
+);
 
 /**
  * Step 2: Verify OTP for password reset
  * Returns reset token if OTP is valid
  */
-export const verifyPasswordResetOTP = catchAsync(async (req: Request<ParamsDictionary, unknown, VerifyPasswordResetOTPBody>, res: Response) => {
-    const { email, otp } = req.body;
+export const verifyPasswordResetOTP = catchAsync(
+    async (req: Request<ParamsDictionary, unknown, VerifyPasswordResetOTPBody>, res: Response) => {
+        const { email, otp } = req.body;
 
-    if (!email || !otp) {
-        return res.status(400).json({ error: 'Email and OTP are required' });
-    }
+        if (!email || !otp) {
+            return res.status(400).json({ error: 'Email and OTP are required' });
+        }
 
-    try {
-        const result = await passwordResetService.verifyOTP({ email, otp });
-        res.json(result);
-    } catch (error: any) {
-        logger.warn('Password reset OTP verification failed', { email, error: error.message });
-        res.status(400).json({ 
-            success: false, 
-            error: error.message || 'Invalid or expired OTP' 
-        });
+        try {
+            const result = await passwordResetService.verifyOTP({ email, otp });
+            res.json(result);
+        } catch (error: any) {
+            logger.warn('Password reset OTP verification failed', { email, error: error.message });
+            res.status(400).json({
+                success: false,
+                error: error.message || 'Invalid or expired OTP'
+            });
+        }
     }
-});
+);
 
 /**
  * Step 3: Complete password reset with new password
  * Invalidates all sessions and sends confirmation email
  */
-export const resetPassword = catchAsync(async (req: Request<ParamsDictionary, unknown, ResetPasswordBody>, res: Response) => {
-    const { email, otp, newPassword } = req.body;
+export const resetPassword = catchAsync(
+    async (req: Request<ParamsDictionary, unknown, ResetPasswordBody>, res: Response) => {
+        const { email, otp, newPassword } = req.body;
 
-    if (!email || !otp || !newPassword) {
-        return res.status(400).json({ error: 'Email, OTP, and new password are required' });
-    }
+        if (!email || !otp || !newPassword) {
+            return res.status(400).json({ error: 'Email, OTP, and new password are required' });
+        }
 
-    if (newPassword.length < 12) {
-        return res.status(400).json({ error: 'Password must be at least 12 characters' });
-    }
+        if (newPassword.length < 12) {
+            return res.status(400).json({ error: 'Password must be at least 12 characters' });
+        }
 
-    // Enterprise password requirements
-    if (!/[A-Z]/.test(newPassword)) {
-        return res.status(400).json({ error: 'Password must contain at least one uppercase letter' });
-    }
-    if (!/[a-z]/.test(newPassword)) {
-        return res.status(400).json({ error: 'Password must contain at least one lowercase letter' });
-    }
-    if (!/[0-9]/.test(newPassword)) {
-        return res.status(400).json({ error: 'Password must contain at least one number' });
-    }
-    if (!/[!@#$%^&*(),.?":{}|<>]/.test(newPassword)) {
-        return res.status(400).json({ error: 'Password must contain at least one special character' });
-    }
+        // Enterprise password requirements
+        if (!/[A-Z]/.test(newPassword)) {
+            return res.status(400).json({ error: 'Password must contain at least one uppercase letter' });
+        }
+        if (!/[a-z]/.test(newPassword)) {
+            return res.status(400).json({ error: 'Password must contain at least one lowercase letter' });
+        }
+        if (!/[0-9]/.test(newPassword)) {
+            return res.status(400).json({ error: 'Password must contain at least one number' });
+        }
+        if (!/[!@#$%^&*(),.?":{}|<>]/.test(newPassword)) {
+            return res.status(400).json({ error: 'Password must contain at least one special character' });
+        }
 
-    try {
-        const result = await passwordResetService.completeReset({ email, otp, newPassword });
-        res.json(result);
-    } catch (error: any) {
-        logger.error('Password reset failed', { email, error: error.message });
-        res.status(400).json({ 
-            success: false, 
-            error: error.message || 'Failed to reset password' 
-        });
+        try {
+            const result = await passwordResetService.completeReset({ email, otp, newPassword });
+            res.json(result);
+        } catch (error: any) {
+            logger.error('Password reset failed', { email, error: error.message });
+            res.status(400).json({
+                success: false,
+                error: error.message || 'Failed to reset password'
+            });
+        }
     }
-});
+);
 
 /**
  * Resend OTP for password reset
  * Rate limited to prevent abuse
  */
-export const resendPasswordResetOTP = catchAsync(async (req: Request<ParamsDictionary, unknown, ResendPasswordResetOTPBody>, res: Response) => {
-    const { email } = req.body;
+export const resendPasswordResetOTP = catchAsync(
+    async (req: Request<ParamsDictionary, unknown, ResendPasswordResetOTPBody>, res: Response) => {
+        const { email } = req.body;
 
-    if (!email) {
-        return res.status(400).json({ error: 'Email is required' });
-    }
+        if (!email) {
+            return res.status(400).json({ error: 'Email is required' });
+        }
 
-    try {
-        const result = await passwordResetService.resendOTP(email);
-        res.json(result);
-    } catch (error: any) {
-        logger.error('Password reset OTP resend failed', { email, error: error.message });
-        res.status(400).json({ 
-            success: false, 
-            error: error.message || 'Failed to resend OTP' 
-        });
+        try {
+            const result = await passwordResetService.resendOTP(email);
+            res.json(result);
+        } catch (error: any) {
+            logger.error('Password reset OTP resend failed', { email, error: error.message });
+            res.status(400).json({
+                success: false,
+                error: error.message || 'Failed to resend OTP'
+            });
+        }
     }
-});
+);

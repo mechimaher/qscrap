@@ -19,15 +19,15 @@ import logger from '../../utils/logger';
 // TEST CARD NUMBERS (Industry standard test cards)
 // ============================================================================
 export const TEST_CARDS = {
-    SUCCESS: '4242424242424242',           // Visa - Success
-    DECLINED: '4000000000000002',          // Visa - Generic decline
-    INSUFFICIENT_FUNDS: '4000000000000341',// Visa - Insufficient funds
-    CARD_EXPIRED: '4000000000000069',      // Visa - Expired card
-    CARD_INVALID: '4000000000000127',      // Visa - Invalid CVC
-    REQUIRES_3DS: '4000002500003155',      // Visa - 3D Secure required
-    MASTERCARD_SUCCESS: '5555555555554444',// Mastercard - Success
-    AMEX_SUCCESS: '378282246310005',       // Amex - Success
-    DISCOVER_SUCCESS: '6011111111111117',  // Discover - Success
+    SUCCESS: '4242424242424242', // Visa - Success
+    DECLINED: '4000000000000002', // Visa - Generic decline
+    INSUFFICIENT_FUNDS: '4000000000000341', // Visa - Insufficient funds
+    CARD_EXPIRED: '4000000000000069', // Visa - Expired card
+    CARD_INVALID: '4000000000000127', // Visa - Invalid CVC
+    REQUIRES_3DS: '4000002500003155', // Visa - 3D Secure required
+    MASTERCARD_SUCCESS: '5555555555554444', // Mastercard - Success
+    AMEX_SUCCESS: '378282246310005', // Amex - Success
+    DISCOVER_SUCCESS: '6011111111111117' // Discover - Success
 } as const;
 
 // ============================================================================
@@ -35,7 +35,6 @@ export const TEST_CARDS = {
 // ============================================================================
 
 export class MockPaymentProvider implements PaymentProvider {
-
     /**
      * Process a payment with realistic simulation
      */
@@ -46,10 +45,7 @@ export class MockPaymentProvider implements PaymentProvider {
             // 1. Validate card details
             const validation = this.validateCardDetails(data.paymentMethod);
             if (!validation.isValid) {
-                return this.createFailureResponse(
-                    'invalid_card',
-                    validation.errors[0] || 'Card validation failed'
-                );
+                return this.createFailureResponse('invalid_card', validation.errors[0] || 'Card validation failed');
             }
 
             // 2. Simulate realistic network delay (300-800ms)
@@ -65,13 +61,9 @@ export class MockPaymentProvider implements PaymentProvider {
             logger.info('MockPayment processed', { processingTime: `${processingTime}ms`, status: response.status });
 
             return response;
-
         } catch (error: any) {
             logger.error('MockPayment processing error', { error });
-            return this.createFailureResponse(
-                'processing_error',
-                error.message || 'Payment processing failed'
-            );
+            return this.createFailureResponse('processing_error', error.message || 'Payment processing failed');
         }
     }
 
@@ -187,7 +179,9 @@ export class MockPaymentProvider implements PaymentProvider {
     private validateLuhn(cardNumber: string): boolean {
         const digits = cardNumber.replace(/\D/g, '').split('').map(Number);
 
-        if (digits.length === 0) {return false;}
+        if (digits.length === 0) {
+            return false;
+        }
 
         let sum = 0;
         let isEven = false;
@@ -215,10 +209,18 @@ export class MockPaymentProvider implements PaymentProvider {
     private detectCardBrand(cardNumber: string): CardBrand {
         const cleaned = cardNumber.replace(/\s/g, '');
 
-        if (/^4/.test(cleaned)) {return 'visa';}
-        if (/^5[1-5]/.test(cleaned)) {return 'mastercard';}
-        if (/^3[47]/.test(cleaned)) {return 'amex';}
-        if (/^6(?:011|5)/.test(cleaned)) {return 'discover';}
+        if (/^4/.test(cleaned)) {
+            return 'visa';
+        }
+        if (/^5[1-5]/.test(cleaned)) {
+            return 'mastercard';
+        }
+        if (/^3[47]/.test(cleaned)) {
+            return 'amex';
+        }
+        if (/^6(?:011|5)/.test(cleaned)) {
+            return 'discover';
+        }
 
         return 'unknown';
     }
@@ -230,15 +232,29 @@ export class MockPaymentProvider implements PaymentProvider {
         const cleaned = cardNumber.replace(/\s/g, '');
 
         // Match against test card numbers
-        if (cleaned === TEST_CARDS.SUCCESS || cleaned === TEST_CARDS.MASTERCARD_SUCCESS ||
-            cleaned === TEST_CARDS.AMEX_SUCCESS || cleaned === TEST_CARDS.DISCOVER_SUCCESS) {
+        if (
+            cleaned === TEST_CARDS.SUCCESS ||
+            cleaned === TEST_CARDS.MASTERCARD_SUCCESS ||
+            cleaned === TEST_CARDS.AMEX_SUCCESS ||
+            cleaned === TEST_CARDS.DISCOVER_SUCCESS
+        ) {
             return 'success';
         }
-        if (cleaned === TEST_CARDS.DECLINED) {return 'declined';}
-        if (cleaned === TEST_CARDS.INSUFFICIENT_FUNDS) {return 'insufficient_funds';}
-        if (cleaned === TEST_CARDS.CARD_EXPIRED) {return 'card_expired';}
-        if (cleaned === TEST_CARDS.CARD_INVALID) {return 'invalid_cvc';}
-        if (cleaned === TEST_CARDS.REQUIRES_3DS) {return '3d_secure';}
+        if (cleaned === TEST_CARDS.DECLINED) {
+            return 'declined';
+        }
+        if (cleaned === TEST_CARDS.INSUFFICIENT_FUNDS) {
+            return 'insufficient_funds';
+        }
+        if (cleaned === TEST_CARDS.CARD_EXPIRED) {
+            return 'card_expired';
+        }
+        if (cleaned === TEST_CARDS.CARD_INVALID) {
+            return 'invalid_cvc';
+        }
+        if (cleaned === TEST_CARDS.REQUIRES_3DS) {
+            return '3d_secure';
+        }
 
         // Default to success for any valid card
         return 'success';
@@ -319,6 +335,6 @@ export class MockPaymentProvider implements PaymentProvider {
      */
     private async simulateProcessingDelay(minMs: number = 300, maxMs: number = 800): Promise<void> {
         const delay = Math.floor(Math.random() * (maxMs - minMs)) + minMs;
-        await new Promise(resolve => setTimeout(resolve, delay));
+        await new Promise((resolve) => setTimeout(resolve, delay));
     }
 }

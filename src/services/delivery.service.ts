@@ -1,6 +1,6 @@
 /**
  * DeliveryService - Delivery & Driver Management Business Logic
- * 
+ *
  * Extracted from delivery.controller.ts (1,579 lines) to enable:
  * - Testability
  * - Reusability
@@ -67,7 +67,6 @@ export interface AssignDeliveryParams {
 // ============================================
 
 export class DeliveryService {
-
     /**
      * Get all active drivers with pagination
      */
@@ -130,12 +129,15 @@ export class DeliveryService {
         garage: { garage_id: string; garage_name: string; location_lat: number; location_lng: number };
     }> {
         // 1. Get the order's garage location
-        const orderResult = await pool.query(`
+        const orderResult = await pool.query(
+            `
             SELECT o.order_id, o.garage_id, g.garage_name, g.location_lat, g.location_lng
             FROM orders o
             JOIN garages g ON o.garage_id = g.garage_id
             WHERE o.order_id = $1
-        `, [order_id]);
+        `,
+            [order_id]
+        );
 
         if (orderResult.rows.length === 0) {
             throw ApiError.notFound('Order not found');
@@ -147,7 +149,8 @@ export class DeliveryService {
 
         // 2. Get all active drivers with their GPS positions from drivers table
         // Using Haversine formula in SQL for efficiency
-        const driversResult = await pool.query(`
+        const driversResult = await pool.query(
+            `
             SELECT 
                 d.driver_id, d.user_id, d.full_name, d.phone, d.email, d.vehicle_type, 
                 d.vehicle_plate, d.vehicle_model, d.status, d.total_deliveries, 
@@ -173,10 +176,12 @@ export class DeliveryService {
                 CASE WHEN d.status = 'available' THEN 0 ELSE 1 END,
                 distance_km NULLS LAST,
                 d.rating_average DESC
-        `, [garageLat, garageLng]);
+        `,
+            [garageLat, garageLng]
+        );
 
         // 3. Format response with rounded distances
-        const drivers = driversResult.rows.map(d => ({
+        const drivers = driversResult.rows.map((d) => ({
             driver_id: d.driver_id,
             user_id: d.user_id,
             full_name: d.full_name,
@@ -208,16 +213,14 @@ export class DeliveryService {
      * Get single driver with recent assignments
      */
     static async getDriverDetails(driver_id: string): Promise<{ driver: Driver; recent_assignments: Assignment[] }> {
-        const driverResult = await pool.query(
-            'SELECT * FROM drivers WHERE driver_id = $1',
-            [driver_id]
-        );
+        const driverResult = await pool.query('SELECT * FROM drivers WHERE driver_id = $1', [driver_id]);
 
         if (driverResult.rows.length === 0) {
             throw ApiError.notFound('Driver not found');
         }
 
-        const assignmentsResult = await pool.query(`
+        const assignmentsResult = await pool.query(
+            `
             SELECT da.*, o.order_number, pr.part_description, g.garage_name
             FROM delivery_assignments da
             JOIN orders o ON da.order_id = o.order_id
@@ -226,7 +229,9 @@ export class DeliveryService {
             WHERE da.driver_id = $1
             ORDER BY da.created_at DESC
             LIMIT 10
-        `, [driver_id]);
+        `,
+            [driver_id]
+        );
 
         return {
             driver: driverResult.rows[0],
@@ -251,7 +256,8 @@ export class DeliveryService {
             await client.query('BEGIN');
 
             // Get order details
-            const orderResult = await client.query(`
+            const orderResult = await client.query(
+                `
                 SELECT o.order_id, o.order_number, o.order_status, o.customer_id, o.garage_id,
                        o.delivery_address,
                        pr.part_description, pr.delivery_lat, pr.delivery_lng,
@@ -263,7 +269,9 @@ export class DeliveryService {
                 JOIN garages g ON o.garage_id = g.garage_id
                 JOIN users u ON o.customer_id = u.user_id
                 WHERE o.order_id = $1
-            `, [order_id]);
+            `,
+                [order_id]
+            );
 
             if (orderResult.rows.length === 0) {
                 throw ApiError.notFound('Order not found');
@@ -304,36 +312,53 @@ export class DeliveryService {
             }
 
             // Create assignment
-            const assignResult = await client.query(`
+            const assignResult = await client.query(
+                `
                 INSERT INTO delivery_assignments 
                     (order_id, driver_id, pickup_address, pickup_lat, pickup_lng, 
                      delivery_address, delivery_lat, delivery_lng,
                      status, assignment_type, created_by_user_id)
                 VALUES ($1, $2, $3, $4, $5, $6, $7, $8, 'assigned', 'collection', $9)
                 RETURNING *
-            `, [order_id, driver_id, order.garage_address,
-                order.garage_lat, order.garage_lng,
-                order.delivery_address, order.delivery_lat, order.delivery_lng,
-                assigned_by_user_id]);
+            `,
+                [
+                    order_id,
+                    driver_id,
+                    order.garage_address,
+                    order.garage_lat,
+                    order.garage_lng,
+                    order.delivery_address,
+                    order.delivery_lat,
+                    order.delivery_lng,
+                    assigned_by_user_id
+                ]
+            );
 
             // Update driver status
-            await client.query(
-                'UPDATE drivers SET status = $1, updated_at = NOW() WHERE driver_id = $2',
-                ['busy', driver_id]
-            );
+            await client.query('UPDATE drivers SET status = $1, updated_at = NOW() WHERE driver_id = $2', [
+                'busy',
+                driver_id
+            ]);
 
             // Update order with driver reference
-            await client.query(
-                'UPDATE orders SET driver_id = $1, updated_at = NOW() WHERE order_id = $2',
-                [driver.user_id, order_id]
-            );
+            await client.query('UPDATE orders SET driver_id = $1, updated_at = NOW() WHERE order_id = $2', [
+                driver.user_id,
+                order_id
+            ]);
 
             // Log the assignment
-            await client.query(`
+            await client.query(
+                `
                 INSERT INTO order_status_history (order_id, old_status, new_status, changed_by, changed_by_type, reason)
                 VALUES ($1, $2, $2, $3, 'operations', $4)
-            `, [order_id, 'ready_for_pickup', assigned_by_user_id,
-                notes || `Collection driver assigned: ${driver.full_name}`]);
+            `,
+                [
+                    order_id,
+                    'ready_for_pickup',
+                    assigned_by_user_id,
+                    notes || `Collection driver assigned: ${driver.full_name}`
+                ]
+            );
 
             await client.query('COMMIT');
 
@@ -376,7 +401,8 @@ export class DeliveryService {
             await client.query('BEGIN');
 
             // Get order details
-            const orderResult = await client.query(`
+            const orderResult = await client.query(
+                `
                 SELECT o.order_id, o.order_number, o.order_status, o.customer_id, o.garage_id,
                        pr.part_description, g.garage_name, g.address as pickup_address,
                        g.location_lat as garage_lat, g.location_lng as garage_lng,
@@ -387,7 +413,9 @@ export class DeliveryService {
                 JOIN garages g ON o.garage_id = g.garage_id
                 JOIN users u ON o.customer_id = u.user_id
                 WHERE o.order_id = $1
-            `, [order_id]);
+            `,
+                [order_id]
+            );
 
             if (orderResult.rows.length === 0) {
                 throw ApiError.notFound('Order not found');
@@ -416,7 +444,8 @@ export class DeliveryService {
             }
 
             // Create/update assignment
-            const assignResult = await client.query(`
+            const assignResult = await client.query(
+                `
                 INSERT INTO delivery_assignments (
                     order_id, driver_id, 
                     pickup_address, pickup_lat, pickup_lng,
@@ -433,18 +462,26 @@ export class DeliveryService {
                     assignment_type = 'delivery', status = 'assigned',
                     updated_at = NOW()
                 RETURNING *
-            `, [
-                order_id, driver_id,
-                order.pickup_address, order.garage_lat, order.garage_lng,
-                order.delivery_address, order.delivery_lat, order.delivery_lng,
-                estimated_pickup || null, estimated_delivery || null
-            ]);
+            `,
+                [
+                    order_id,
+                    driver_id,
+                    order.pickup_address,
+                    order.garage_lat,
+                    order.garage_lng,
+                    order.delivery_address,
+                    order.delivery_lat,
+                    order.delivery_lng,
+                    estimated_pickup || null,
+                    estimated_delivery || null
+                ]
+            );
 
             // Update driver status
-            await client.query(
-                'UPDATE drivers SET status = $1, updated_at = NOW() WHERE driver_id = $2',
-                ['busy', driver_id]
-            );
+            await client.query('UPDATE drivers SET status = $1, updated_at = NOW() WHERE driver_id = $2', [
+                'busy',
+                driver_id
+            ]);
 
             // Update order status to in_transit
             await client.query(
@@ -453,11 +490,19 @@ export class DeliveryService {
             );
 
             // Log status change
-            await client.query(`
+            await client.query(
+                `
                 INSERT INTO order_status_history (order_id, old_status, new_status, changed_by, changed_by_type, reason)
                 VALUES ($1, $2, $3, $4, 'operations', $5)
-            `, [order_id, 'collected', 'in_transit', assigned_by_user_id,
-                `Delivery driver assigned: ${driver.full_name}`]);
+            `,
+                [
+                    order_id,
+                    'collected',
+                    'in_transit',
+                    assigned_by_user_id,
+                    `Delivery driver assigned: ${driver.full_name}`
+                ]
+            );
 
             await client.query('COMMIT');
 
@@ -558,7 +603,7 @@ export class DeliveryService {
                 delivery_lng: order.delivery_lng,
                 garage_name: order.garage_name,
                 customer_name: order.customer_name,
-                part_description: order.part_description,
+                part_description: order.part_description
             });
 
             // CRITICAL: Send Expo push notification for phone-locked/app-killed scenarios
@@ -631,7 +676,7 @@ export class DeliveryService {
                 delivery_lng: order.delivery_lng,
                 garage_name: order.garage_name,
                 customer_name: order.customer_name,
-                part_description: order.part_description,
+                part_description: order.part_description
             });
 
             // CRITICAL: Send Expo push notification for phone-locked/app-killed scenarios

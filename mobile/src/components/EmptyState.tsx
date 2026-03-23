@@ -1,10 +1,5 @@
 import React from 'react';
-import {
-    View,
-    Text,
-    StyleSheet,
-    ViewStyle,
-} from 'react-native';
+import { View, Text, StyleSheet, ViewStyle } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
 import { useTheme } from '../contexts';
 import { Spacing, FontSize } from '../constants';
@@ -33,7 +28,7 @@ export const EmptyState: React.FC<EmptyStateProps> = ({
     message,
     actionLabel,
     onAction,
-    style,
+    style
 }) => {
     const { colors } = useTheme();
 
@@ -73,9 +68,7 @@ export const EmptyState: React.FC<EmptyStateProps> = ({
             <Text style={[styles.title, { color: colors.text }]}>{title}</Text>
 
             {/* Message */}
-            {message && (
-                <Text style={[styles.message, { color: colors.textSecondary }]}>{message}</Text>
-            )}
+            {message && <Text style={[styles.message, { color: colors.textSecondary }]}>{message}</Text>}
 
             {/* Action Button */}
             {actionLabel && onAction && (
@@ -94,7 +87,7 @@ const styles = StyleSheet.create({
     container: {
         alignItems: 'center',
         justifyContent: 'center',
-        padding: Spacing.xxxl,
+        padding: Spacing.xxxl
     },
     iconContainer: {
         width: 100,
@@ -102,24 +95,24 @@ const styles = StyleSheet.create({
         borderRadius: 50,
         alignItems: 'center',
         justifyContent: 'center',
-        marginBottom: Spacing.xl,
+        marginBottom: Spacing.xl
     },
     title: {
         fontSize: FontSize.xl,
         fontWeight: '700',
         textAlign: 'center',
-        marginBottom: Spacing.sm,
+        marginBottom: Spacing.sm
     },
     message: {
         fontSize: FontSize.md,
         textAlign: 'center',
         lineHeight: 22,
-        maxWidth: 280,
+        maxWidth: 280
     },
     actionButton: {
         marginTop: Spacing.xl,
-        minWidth: 160,
-    },
+        minWidth: 160
+    }
 });
 
 export default EmptyState;

@@ -31,8 +31,10 @@ export const authenticate = (req: AuthRequest, res: Response, next: NextFunction
 
         // Validate required claims exist and are strings
         if (
-            !payload.userId || typeof payload.userId !== 'string' ||
-            !payload.userType || typeof payload.userType !== 'string'
+            !payload.userId ||
+            typeof payload.userId !== 'string' ||
+            !payload.userType ||
+            typeof payload.userType !== 'string'
         ) {
             return res.status(401).json({
                 error: 'invalid_token_claims',
@@ -51,7 +53,12 @@ export const authenticate = (req: AuthRequest, res: Response, next: NextFunction
         next();
     } catch (err: any) {
         if (err.name === 'TokenExpiredError') {
-            return res.status(401).json({ error: 'token_expired', message: 'Access token has expired. Use /auth/refresh to get a new one.' });
+            return res
+                .status(401)
+                .json({
+                    error: 'token_expired',
+                    message: 'Access token has expired. Use /auth/refresh to get a new one.'
+                });
         }
         res.status(401).json({ error: 'invalid_token', message: 'Invalid or malformed token' });
     }
@@ -66,7 +73,13 @@ export const requireRole = (role: string) => {
     };
 };
 export const authorizeOperations = (req: AuthRequest, res: Response, next: NextFunction) => {
-    if (!req.user || (req.user.userType !== 'operations' && req.user.userType !== 'admin' && req.user.userType !== 'staff' && req.user.userType !== 'finance')) {
+    if (
+        !req.user ||
+        (req.user.userType !== 'operations' &&
+            req.user.userType !== 'admin' &&
+            req.user.userType !== 'staff' &&
+            req.user.userType !== 'finance')
+    ) {
         return res.status(403).json({ error: 'Operations access required' });
     }
     next();

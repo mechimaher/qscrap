@@ -138,11 +138,7 @@ export type OrderStatus = keyof typeof ORDER_STATUS_LABELS;
 /**
  * Get human-readable label for a status
  */
-export function getStatusLabel(
-    type: 'request' | 'order',
-    status: string,
-    lang: 'en' | 'ar' = 'en'
-): string {
+export function getStatusLabel(type: 'request' | 'order', status: string, lang: 'en' | 'ar' = 'en'): string {
     const labels = type === 'request' ? REQUEST_STATUS_LABELS : ORDER_STATUS_LABELS;
     const entry = (labels as Record<string, { en: string; ar: string }>)[status];
     return entry?.[lang] || status;

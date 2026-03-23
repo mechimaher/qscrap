@@ -1,6 +1,6 @@
 /**
  * useLoyalty - Centralized loyalty data hook
- * 
+ *
  * Eliminates duplicate loyalty API calls across HomeScreen, PaymentScreen, etc.
  * Caches data in memory so re-renders don't trigger new fetches.
  * Provides refresh capability for manual updates.
@@ -15,7 +15,7 @@ const TIER_DISCOUNTS: Record<string, number> = {
     bronze: 0,
     silver: 5,
     gold: 10,
-    platinum: 15,
+    platinum: 15
 };
 
 export interface LoyaltyData {
@@ -32,7 +32,7 @@ let cacheTimestamp = 0;
 const CACHE_TTL = 60_000; // 1 minute
 
 const isCacheValid = (): boolean => {
-    return cachedData !== null && (Date.now() - cacheTimestamp) < CACHE_TTL;
+    return cachedData !== null && Date.now() - cacheTimestamp < CACHE_TTL;
 };
 
 export const useLoyalty = () => {
@@ -43,7 +43,9 @@ export const useLoyalty = () => {
 
     useEffect(() => {
         isMounted.current = true;
-        return () => { isMounted.current = false; };
+        return () => {
+            isMounted.current = false;
+        };
     }, []);
 
     const fetchLoyalty = useCallback(async (force = false) => {
@@ -65,7 +67,7 @@ export const useLoyalty = () => {
                 tier: response.tier,
                 lifetime_points: response.lifetime_points,
                 points_to_next_tier: response.points_to_next_tier,
-                discountPercentage: TIER_DISCOUNTS[tierKey] || 0,
+                discountPercentage: TIER_DISCOUNTS[tierKey] || 0
             };
 
             // Update module-level cache
@@ -85,7 +87,7 @@ export const useLoyalty = () => {
                 tier: 'bronze',
                 lifetime_points: 0,
                 points_to_next_tier: 100,
-                discountPercentage: 0,
+                discountPercentage: 0
             };
 
             if (isMounted.current) {
@@ -116,7 +118,7 @@ export const useLoyalty = () => {
         invalidate: () => {
             cachedData = null;
             cacheTimestamp = 0;
-        },
+        }
     };
 };
 

@@ -50,10 +50,14 @@ const HeroWelcome = ({
 
     const getTierIcon = (tier: string): keyof typeof Ionicons.glyphMap => {
         switch (tier?.toLowerCase()) {
-            case 'platinum': return 'diamond-outline';
-            case 'gold': return 'trophy-outline';
-            case 'silver': return 'medal-outline';
-            default: return 'ribbon-outline';
+            case 'platinum':
+                return 'diamond-outline';
+            case 'gold':
+                return 'trophy-outline';
+            case 'silver':
+                return 'medal-outline';
+            default:
+                return 'ribbon-outline';
         }
     };
 
@@ -62,26 +66,23 @@ const HeroWelcome = ({
             Animated.timing(fadeAnim, {
                 toValue: 1,
                 duration: 300,
-                useNativeDriver: true,
+                useNativeDriver: true
             }),
             Animated.timing(slideAnim, {
                 toValue: 0,
                 duration: 300,
-                useNativeDriver: true,
-            }),
+                useNativeDriver: true
+            })
         ]).start();
     }, []);
 
     const badgeScale = pulseAnim.interpolate({
         inputRange: [0, 1],
-        outputRange: [1, 1.2],
+        outputRange: [1, 1.2]
     });
 
     return (
-        <Animated.View style={[
-            styles.heroSection,
-            { opacity: fadeAnim, transform: [{ translateY: slideAnim }] }
-        ]}>
+        <Animated.View style={[styles.heroSection, { opacity: fadeAnim, transform: [{ translateY: slideAnim }] }]}>
             <LinearGradient
                 colors={ThemeColors.gradients.primary}
                 start={{ x: 0, y: 0 }}
@@ -90,7 +91,14 @@ const HeroWelcome = ({
             >
                 <View style={[styles.heroContent, { flexDirection: rtlFlexDirection(isRTL) }]}>
                     <View style={[styles.heroLeft, { flexDirection: rtlFlexDirection(isRTL) }]}>
-                        <View style={[styles.logoContainer, isRTL ? { marginLeft: Spacing.sm, marginRight: 0 } : { marginRight: Spacing.sm, marginLeft: 0 }]}>
+                        <View
+                            style={[
+                                styles.logoContainer,
+                                isRTL
+                                    ? { marginLeft: Spacing.sm, marginRight: 0 }
+                                    : { marginRight: Spacing.sm, marginLeft: 0 }
+                            ]}
+                        >
                             <Image
                                 source={require('../../../assets/logo.png')}
                                 style={styles.logo}
@@ -99,7 +107,12 @@ const HeroWelcome = ({
                         </View>
                         <View style={styles.heroTextContainer}>
                             <View style={[{ flexDirection: rtlFlexDirection(isRTL), alignItems: 'center' }]}>
-                                <Ionicons name={getTimeIcon()} size={14} color="rgba(255,255,255,0.85)" style={{ marginRight: isRTL ? 0 : 4, marginLeft: isRTL ? 4 : 0 }} />
+                                <Ionicons
+                                    name={getTimeIcon()}
+                                    size={14}
+                                    color="rgba(255,255,255,0.85)"
+                                    style={{ marginRight: isRTL ? 0 : 4, marginLeft: isRTL ? 4 : 0 }}
+                                />
                                 <Text style={[styles.heroGreeting, { textAlign: rtlTextAlign(isRTL) }]}>
                                     {greeting}
                                 </Text>
@@ -118,10 +131,16 @@ const HeroWelcome = ({
                     >
                         <Ionicons name="notifications-outline" size={18} color="#fff" />
                         {unreadCount > 0 && (
-                            <Animated.View style={[
-                                styles.notificationBadge,
-                                { transform: [{ scale: badgeScale }], backgroundColor: colors.secondary, borderColor: colors.primary }
-                            ]}>
+                            <Animated.View
+                                style={[
+                                    styles.notificationBadge,
+                                    {
+                                        transform: [{ scale: badgeScale }],
+                                        backgroundColor: colors.secondary,
+                                        borderColor: colors.primary
+                                    }
+                                ]}
+                            >
                                 {unreadCount > 9 ? (
                                     <Text style={styles.notificationCount}>9+</Text>
                                 ) : (
@@ -141,11 +160,26 @@ const HeroWelcome = ({
                         accessibilityHint={t('accessibility.viewRewards') || 'View your rewards'}
                         accessibilityRole="button"
                     >
-                        <Animated.View style={[styles.heroLoyaltyBadge, { opacity: loyaltyGlow, alignSelf: isRTL ? 'flex-end' : 'flex-start', marginLeft: isRTL ? 0 : Spacing.lg, marginRight: isRTL ? Spacing.lg : 0, flexDirection: rtlFlexDirection(isRTL) }]}>
+                        <Animated.View
+                            style={[
+                                styles.heroLoyaltyBadge,
+                                {
+                                    opacity: loyaltyGlow,
+                                    alignSelf: isRTL ? 'flex-end' : 'flex-start',
+                                    marginLeft: isRTL ? 0 : Spacing.lg,
+                                    marginRight: isRTL ? Spacing.lg : 0,
+                                    flexDirection: rtlFlexDirection(isRTL)
+                                }
+                            ]}
+                        >
                             <Ionicons name={getTierIcon(loyalty.tier)} size={14} color="#fff" />
-                            <Text style={styles.heroLoyaltyTier}>{t('loyalty.tierLabel', { tier: t(`loyalty.${loyalty.tier.toLowerCase()}`) })}</Text>
+                            <Text style={styles.heroLoyaltyTier}>
+                                {t('loyalty.tierLabel', { tier: t(`loyalty.${loyalty.tier.toLowerCase()}`) })}
+                            </Text>
                             <View style={styles.heroLoyaltyDot} />
-                            <Text style={styles.heroLoyaltyPoints}>{loyalty.points.toLocaleString()} {t('home.pts')}</Text>
+                            <Text style={styles.heroLoyaltyPoints}>
+                                {loyalty.points.toLocaleString()} {t('home.pts')}
+                            </Text>
                         </Animated.View>
                     </TouchableOpacity>
                 )}
@@ -192,12 +226,12 @@ const styles = StyleSheet.create({
         paddingTop: Spacing.sm,
         paddingBottom: Spacing.md,
         borderBottomLeftRadius: BorderRadius.lg,
-        borderBottomRightRadius: BorderRadius.lg,
+        borderBottomRightRadius: BorderRadius.lg
     },
     heroContent: {
         flexDirection: 'row',
         justifyContent: 'space-between',
-        alignItems: 'center',
+        alignItems: 'center'
     },
     heroLeft: { flexDirection: 'row', alignItems: 'center', flex: 1 },
     logoContainer: {
@@ -207,20 +241,20 @@ const styles = StyleSheet.create({
         overflow: 'hidden',
         marginRight: Spacing.sm,
         borderWidth: 1.5,
-        borderColor: 'rgba(255,255,255,0.3)',
+        borderColor: 'rgba(255,255,255,0.3)'
     },
     logo: { width: 40, height: 40 },
     heroTextContainer: { flex: 1 },
     heroGreeting: {
         fontSize: FontSizes.xs,
         color: 'rgba(255,255,255,0.85)',
-        marginBottom: 2,
+        marginBottom: 2
     },
     heroName: {
         fontSize: FontSizes.lg,
         fontWeight: '700',
         color: '#fff',
-        letterSpacing: -0.3,
+        letterSpacing: -0.3
     },
     notificationBtn: {
         width: 38,
@@ -228,7 +262,7 @@ const styles = StyleSheet.create({
         borderRadius: 19,
         backgroundColor: 'rgba(255,255,255,0.15)',
         justifyContent: 'center',
-        alignItems: 'center',
+        alignItems: 'center'
     },
     notificationIcon: { fontSize: 18 },
     notificationBadge: {
@@ -241,24 +275,24 @@ const styles = StyleSheet.create({
         borderWidth: 2,
         justifyContent: 'center',
         alignItems: 'center',
-        paddingHorizontal: 4,
+        paddingHorizontal: 4
     },
     notificationCount: {
         fontSize: 10,
         fontWeight: '700',
-        color: '#FFFFFF',
+        color: '#FFFFFF'
     },
     goldAccent: {
         height: 2,
         marginHorizontal: Spacing.md,
-        borderRadius: 1,
+        borderRadius: 1
     },
     goldDivider: {
         height: 1,
         marginHorizontal: Spacing.lg,
         marginVertical: Spacing.md,
         opacity: 0.3,
-        borderRadius: 0.5,
+        borderRadius: 0.5
     },
     heroLoyaltyBadge: {
         flexDirection: 'row',
@@ -270,33 +304,33 @@ const styles = StyleSheet.create({
         paddingHorizontal: Spacing.sm,
         paddingVertical: 4,
         borderRadius: BorderRadius.full,
-        gap: 6,
+        gap: 6
     },
     heroLoyaltyEmoji: { fontSize: 14 },
     heroLoyaltyTier: {
         fontSize: 11,
         fontWeight: '700',
-        color: '#FFFFFF',
+        color: '#FFFFFF'
     },
     heroLoyaltyDot: {
         width: 3,
         height: 3,
         borderRadius: 1.5,
-        backgroundColor: 'rgba(255,255,255,0.5)',
+        backgroundColor: 'rgba(255,255,255,0.5)'
     },
     heroLoyaltyPoints: {
         fontSize: 11,
         fontWeight: '600',
-        color: 'rgba(255,255,255,0.9)',
+        color: 'rgba(255,255,255,0.9)'
     },
     locationSection: {
         paddingHorizontal: Spacing.lg,
-        paddingVertical: Spacing.sm,
+        paddingVertical: Spacing.sm
     },
     locationContent: {
         flexDirection: 'row',
         alignItems: 'center',
-        gap: Spacing.sm,
+        gap: Spacing.sm
     },
     locationIconContainer: {
         width: 36,
@@ -304,30 +338,30 @@ const styles = StyleSheet.create({
         borderRadius: 18,
         backgroundColor: 'rgba(201, 162, 39, 0.2)',
         justifyContent: 'center',
-        alignItems: 'center',
+        alignItems: 'center'
     },
     locationIcon: { fontSize: 18 },
     locationLabel: {
         fontSize: FontSizes.xs,
         color: 'rgba(255,255,255,0.7)',
-        marginBottom: 2,
+        marginBottom: 2
     },
     locationText: {
         fontSize: FontSizes.md,
         fontWeight: '700',
         color: '#FFFFFF',
-        letterSpacing: -0.2,
+        letterSpacing: -0.2
     },
     changeButton: {
         paddingHorizontal: Spacing.md,
         paddingVertical: 6,
-        borderRadius: BorderRadius.full,
+        borderRadius: BorderRadius.full
     },
     changeButtonText: {
         fontSize: FontSizes.xs,
         fontWeight: '700',
-        color: '#8D1B3D',
-    },
+        color: '#8D1B3D'
+    }
 });
 
 export default HeroWelcome;

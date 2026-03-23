@@ -1,19 +1,15 @@
 /**
  * Push Notification Routes
- * 
+ *
  * Endpoints for registering and unregistering push tokens.
  * Used by mobile apps to enable push notifications.
- * 
+ *
  * @module routes/push.routes
  */
 
 import { Router, RequestHandler } from 'express';
 import { authenticate } from '../middleware/auth.middleware';
-import {
-    registerPushToken,
-    unregisterPushToken,
-    sendTestPushNotification
-} from '../controllers/push.controller';
+import { registerPushToken, unregisterPushToken, sendTestPushNotification } from '../controllers/push.controller';
 
 const router = Router();
 
@@ -44,4 +40,3 @@ if (process.env.NODE_ENV !== 'production') {
 }
 
 export default router;
-

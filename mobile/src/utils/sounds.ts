@@ -1,7 +1,7 @@
 import { log, warn, error as logError } from './logger';
 /**
  * QScrap Notification Sounds Utility
- * 
+ *
  * Premium sound feedback for notifications and interactions.
  * Uses expo-haptics for haptic feedback and React Native Vibration.
  */
@@ -42,7 +42,6 @@ export const playNotificationSound = async (
         // To add sounds later:
         // const { sound } = await Audio.Sound.createAsync(require('../assets/sounds/notification.mp3'));
         // await sound.playAsync();
-
     } catch (error) {
         log('Notification sound error:', error);
     }
@@ -142,5 +141,5 @@ export default {
     playErrorSound,
     playDriverArrivedSound,
     playNewBidSound,
-    cleanupSounds,
+    cleanupSounds
 };

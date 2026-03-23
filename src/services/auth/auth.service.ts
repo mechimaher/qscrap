@@ -48,7 +48,7 @@ export interface LoginResult {
 }
 
 export class AuthService {
-    constructor(private pool: Pool) { }
+    constructor(private pool: Pool) {}
 
     async checkUserExists(phoneNumber: string): Promise<boolean> {
         const result = await this.pool.query('SELECT user_id FROM users WHERE phone_number = $1', [phoneNumber]);
@@ -73,7 +73,19 @@ export class AuthService {
                 await client.query(
                     `INSERT INTO garages (garage_id, garage_name, address, location_lat, location_lng, approval_status, supplier_type, specialized_brands, all_brands, cr_number, trade_license_number, current_plan_code, preferred_plan_code) 
                      VALUES ($1, $2, $3, $4, $5, 'pending', $6, $7, $8, $9, $10, NULL, $11)`,
-                    [userId, data.garage_name, data.address, data.location_lat || null, data.location_lng || null, data.supplier_type || 'used', data.specialized_brands || [], data.all_brands !== false, data.cr_number || null, data.trade_license_number || null, data.preferred_plan_code || null]
+                    [
+                        userId,
+                        data.garage_name,
+                        data.address,
+                        data.location_lat || null,
+                        data.location_lng || null,
+                        data.supplier_type || 'used',
+                        data.specialized_brands || [],
+                        data.all_brands !== false,
+                        data.cr_number || null,
+                        data.trade_license_number || null,
+                        data.preferred_plan_code || null
+                    ]
                 );
             }
 
@@ -89,7 +101,9 @@ export class AuthService {
                 });
             }
 
-            const token = jwt.sign({ userId, userType: data.user_type }, getJwtSecret(), { expiresIn: TOKEN_EXPIRY_SECONDS });
+            const token = jwt.sign({ userId, userType: data.user_type }, getJwtSecret(), {
+                expiresIn: TOKEN_EXPIRY_SECONDS
+            });
 
             // Generate refresh token
             const refresh = generateRefreshToken();
@@ -110,30 +124,67 @@ export class AuthService {
 
     async login(phoneNumber: string, password: string): Promise<LoginResult> {
         const result = await this.pool.query('SELECT * FROM users WHERE phone_number = $1', [phoneNumber]);
-        if (result.rows.length === 0) {throw new Error('Invalid credentials');}
+        if (result.rows.length === 0) {
+            throw new Error('Invalid credentials');
+        }
         const user = result.rows[0];
 
         const match = await bcrypt.compare(password, user.password_hash);
-        if (!match) {throw new Error('Invalid credentials');}
-        if (user.is_active === false) {throw new Error('Account deactivated');}
-        if (user.is_suspended) {throw new Error(user.suspension_reason || 'Account suspended');}
+        if (!match) {
+            throw new Error('Invalid credentials');
+        }
+        if (user.is_active === false) {
+            throw new Error('Account deactivated');
+        }
+        if (user.is_suspended) {
+            throw new Error(user.suspension_reason || 'Account suspended');
+        }
 
         if (user.user_type === 'garage') {
-            const garageResult = await this.pool.query(`SELECT approval_status, demo_expires_at, rejection_reason FROM garages WHERE garage_id = $1`, [user.user_id]);
+            const garageResult = await this.pool.query(
+                `SELECT approval_status, demo_expires_at, rejection_reason FROM garages WHERE garage_id = $1`,
+                [user.user_id]
+            );
             if (garageResult.rows.length > 0) {
                 const garage = garageResult.rows[0];
-                if (garage.approval_status === 'pending') {throw new Error('pending_approval');}
-                if (garage.approval_status === 'rejected') {throw new Error(`application_rejected:${garage.rejection_reason || 'Application rejected'}`);}
-                if (garage.approval_status === 'demo' && garage.demo_expires_at && new Date(garage.demo_expires_at) < new Date()) {
-                    await this.pool.query(`UPDATE garages SET approval_status = 'expired' WHERE garage_id = $1`, [user.user_id]);
+                if (garage.approval_status === 'pending') {
+                    throw new Error('pending_approval');
+                }
+                if (garage.approval_status === 'rejected') {
+                    throw new Error(`application_rejected:${garage.rejection_reason || 'Application rejected'}`);
+                }
+                if (
+                    garage.approval_status === 'demo' &&
+                    garage.demo_expires_at &&
+                    new Date(garage.demo_expires_at) < new Date()
+                ) {
+                    await this.pool.query(`UPDATE garages SET approval_status = 'expired' WHERE garage_id = $1`, [
+                        user.user_id
+                    ]);
                     await this.pool.query('UPDATE users SET last_login_at = NOW() WHERE user_id = $1', [user.user_id]);
-                    const token = jwt.sign({ userId: user.user_id, userType: user.user_type }, getJwtSecret(), { expiresIn: TOKEN_EXPIRY_SECONDS });
-                    return { token, userId: user.user_id, userType: user.user_type, status: 'expired', message: 'Demo expired. Please upgrade.' };
+                    const token = jwt.sign({ userId: user.user_id, userType: user.user_type }, getJwtSecret(), {
+                        expiresIn: TOKEN_EXPIRY_SECONDS
+                    });
+                    return {
+                        token,
+                        userId: user.user_id,
+                        userType: user.user_type,
+                        status: 'expired',
+                        message: 'Demo expired. Please upgrade.'
+                    };
                 }
                 if (garage.approval_status === 'expired') {
                     await this.pool.query('UPDATE users SET last_login_at = NOW() WHERE user_id = $1', [user.user_id]);
-                    const token = jwt.sign({ userId: user.user_id, userType: user.user_type }, getJwtSecret(), { expiresIn: TOKEN_EXPIRY_SECONDS });
-                    return { token, userId: user.user_id, userType: user.user_type, status: 'expired', message: 'Subscription expired. Please upgrade.' };
+                    const token = jwt.sign({ userId: user.user_id, userType: user.user_type }, getJwtSecret(), {
+                        expiresIn: TOKEN_EXPIRY_SECONDS
+                    });
+                    return {
+                        token,
+                        userId: user.user_id,
+                        userType: user.user_type,
+                        status: 'expired',
+                        message: 'Subscription expired. Please upgrade.'
+                    };
                 }
             }
         }
@@ -151,11 +202,15 @@ export class AuthService {
         }
 
         await this.pool.query('UPDATE users SET last_login_at = NOW() WHERE user_id = $1', [user.user_id]);
-        const token = jwt.sign({
-            userId: user.user_id,
-            userType: user.user_type,
-            staffRole
-        }, getJwtSecret(), { expiresIn: TOKEN_EXPIRY_SECONDS });
+        const token = jwt.sign(
+            {
+                userId: user.user_id,
+                userType: user.user_type,
+                staffRole
+            },
+            getJwtSecret(),
+            { expiresIn: TOKEN_EXPIRY_SECONDS }
+        );
 
         // Generate refresh token
         const refresh = generateRefreshToken();
@@ -165,7 +220,15 @@ export class AuthService {
             [user.user_id, refresh.hash, null, REFRESH_TOKEN_EXPIRY_MS]
         );
 
-        return { token, refreshToken: refresh.token, userId: user.user_id, userType: user.user_type, fullName: user.full_name, phoneNumber: user.phone_number, staffRole };
+        return {
+            token,
+            refreshToken: refresh.token,
+            userId: user.user_id,
+            userType: user.user_type,
+            fullName: user.full_name,
+            phoneNumber: user.phone_number,
+            staffRole
+        };
     }
 
     async deleteAccount(userId: string): Promise<void> {
@@ -174,8 +237,13 @@ export class AuthService {
             await client.query('BEGIN');
 
             // Check user exists
-            const userResult = await client.query('SELECT user_type, email, phone_number FROM users WHERE user_id = $1', [userId]);
-            if (userResult.rows.length === 0) {throw new Error('User not found');}
+            const userResult = await client.query(
+                'SELECT user_type, email, phone_number FROM users WHERE user_id = $1',
+                [userId]
+            );
+            if (userResult.rows.length === 0) {
+                throw new Error('User not found');
+            }
 
             const userType = userResult.rows[0].user_type;
             const shortId = userId.slice(-8); // Last 8 chars of UUID for uniqueness
@@ -319,11 +387,15 @@ export class AuthService {
             await client.query('COMMIT');
 
             // Issue new access token
-            const token = jwt.sign({
-                userId: row.user_id,
-                userType: row.user_type,
-                staffRole: row.staff_role || undefined
-            }, getJwtSecret(), { expiresIn: TOKEN_EXPIRY_SECONDS });
+            const token = jwt.sign(
+                {
+                    userId: row.user_id,
+                    userType: row.user_type,
+                    staffRole: row.staff_role || undefined
+                },
+                getJwtSecret(),
+                { expiresIn: TOKEN_EXPIRY_SECONDS }
+            );
 
             return { token, refreshToken: newRefresh.token };
         } catch (err) {

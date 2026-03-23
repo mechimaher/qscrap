@@ -1,21 +1,17 @@
 /**
  * Fraud Detection Service
  * Handles customer abuse limits and garage accountability
- * 
+ *
  * Source: Cancellation-Refund-BRAIN.md v3.0 (Section: Fraud Prevention)
  */
 
 import { Pool } from 'pg';
 import { CustomerAbuseStatus, GarageAccountability } from './types';
-import {
-    CUSTOMER_LIMITS,
-    GARAGE_THRESHOLDS,
-    FRAUD_FLAG_LEVELS
-} from './cancellation.constants';
+import { CUSTOMER_LIMITS, GARAGE_THRESHOLDS, FRAUD_FLAG_LEVELS } from './cancellation.constants';
 import logger from '../../utils/logger';
 
 export class FraudDetectionService {
-    constructor(private pool: Pool) { }
+    constructor(private pool: Pool) {}
 
     /**
      * Get current month in YYYY-MM format
@@ -52,7 +48,10 @@ export class FraudDetectionService {
             can_return: record.returns_count < CUSTOMER_LIMITS.MAX_RETURNS_PER_MONTH,
             can_claim_defective: record.defective_claims_count < CUSTOMER_LIMITS.MAX_DEFECTIVE_CLAIMS_PER_MONTH,
             remaining_returns: Math.max(0, CUSTOMER_LIMITS.MAX_RETURNS_PER_MONTH - record.returns_count),
-            remaining_claims: Math.max(0, CUSTOMER_LIMITS.MAX_DEFECTIVE_CLAIMS_PER_MONTH - record.defective_claims_count),
+            remaining_claims: Math.max(
+                0,
+                CUSTOMER_LIMITS.MAX_DEFECTIVE_CLAIMS_PER_MONTH - record.defective_claims_count
+            )
         };
     }
 
@@ -80,7 +79,11 @@ export class FraudDetectionService {
         const allowed = newCount <= CUSTOMER_LIMITS.MAX_RETURNS_PER_MONTH;
 
         if (!allowed) {
-            logger.info('Customer exceeded return limit', { customerId, count: newCount, limit: CUSTOMER_LIMITS.MAX_RETURNS_PER_MONTH });
+            logger.info('Customer exceeded return limit', {
+                customerId,
+                count: newCount,
+                limit: CUSTOMER_LIMITS.MAX_RETURNS_PER_MONTH
+            });
         }
 
         return { allowed, newCount };
@@ -253,7 +256,7 @@ export class FraudDetectionService {
             cancellations_this_month: cancellationsThisMonth,
             pending_penalties: pendingPenalties,
             total_penalties_amount: totalPenaltiesAmount,
-            status,
+            status
         };
     }
 

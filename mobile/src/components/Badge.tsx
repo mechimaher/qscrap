@@ -17,13 +17,7 @@ interface BadgeProps {
 /**
  * Status badge component for displaying labels, tags, and status indicators.
  */
-export const Badge: React.FC<BadgeProps> = ({
-    label,
-    variant = 'primary',
-    size = 'medium',
-    icon,
-    style,
-}) => {
+export const Badge: React.FC<BadgeProps> = ({ label, variant = 'primary', size = 'medium', icon, style }) => {
     const { colors } = useTheme();
 
     const getColors = () => {
@@ -53,19 +47,19 @@ export const Badge: React.FC<BadgeProps> = ({
                 return {
                     paddingHorizontal: Spacing.sm,
                     paddingVertical: 2,
-                    fontSize: FontSize.xs,
+                    fontSize: FontSize.xs
                 };
             case 'large':
                 return {
                     paddingHorizontal: Spacing.lg,
                     paddingVertical: Spacing.sm,
-                    fontSize: FontSize.md,
+                    fontSize: FontSize.md
                 };
             default:
                 return {
                     paddingHorizontal: Spacing.md,
                     paddingVertical: Spacing.xs,
-                    fontSize: FontSize.sm,
+                    fontSize: FontSize.sm
                 };
         }
     };
@@ -80,20 +74,13 @@ export const Badge: React.FC<BadgeProps> = ({
                 {
                     backgroundColor: badgeColors.bg,
                     paddingHorizontal: sizeStyles.paddingHorizontal,
-                    paddingVertical: sizeStyles.paddingVertical,
+                    paddingVertical: sizeStyles.paddingVertical
                 },
-                style,
+                style
             ]}
         >
             {icon && <View style={styles.iconContainer}>{icon}</View>}
-            <Text
-                style={[
-                    styles.text,
-                    { color: badgeColors.text, fontSize: sizeStyles.fontSize },
-                ]}
-            >
-                {label}
-            </Text>
+            <Text style={[styles.text, { color: badgeColors.text, fontSize: sizeStyles.fontSize }]}>{label}</Text>
         </View>
     );
 };
@@ -103,14 +90,14 @@ const styles = StyleSheet.create({
         flexDirection: 'row',
         alignItems: 'center',
         borderRadius: BorderRadius.full,
-        alignSelf: 'flex-start',
+        alignSelf: 'flex-start'
     },
     iconContainer: {
-        marginRight: Spacing.xs,
+        marginRight: Spacing.xs
     },
     text: {
-        fontWeight: '600',
-    },
+        fontWeight: '600'
+    }
 });
 
 export default Badge;

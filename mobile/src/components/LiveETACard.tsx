@@ -1,11 +1,5 @@
 import React, { useEffect, useRef, useState } from 'react';
-import {
-    View,
-    Text,
-    StyleSheet,
-    Animated,
-    Easing,
-} from 'react-native';
+import { View, Text, StyleSheet, Animated, Easing } from 'react-native';
 import { LinearGradient } from 'expo-linear-gradient';
 import { useTranslation } from '../contexts/LanguageContext';
 import { Colors, Spacing, BorderRadius, FontSizes, Shadows } from '../constants/theme';
@@ -22,12 +16,7 @@ interface LiveETACardProps {
  * Premium Live ETA Card with animated countdown
  * Inspired by Uber/Keeta tracking experience
  */
-export const LiveETACard: React.FC<LiveETACardProps> = ({
-    etaMinutes,
-    distance,
-    driverStatus,
-    driverName,
-}) => {
+export const LiveETACard: React.FC<LiveETACardProps> = ({ etaMinutes, distance, driverStatus, driverName }) => {
     const { t } = useTranslation();
     const [countdown, setCountdown] = useState<number>(0);
     const [displayMinutes, setDisplayMinutes] = useState<number>(0);
@@ -51,7 +40,7 @@ export const LiveETACard: React.FC<LiveETACardProps> = ({
         if (countdown <= 0) return;
 
         const timer = setInterval(() => {
-            setCountdown(prev => {
+            setCountdown((prev) => {
                 const newVal = Math.max(0, prev - 1);
                 setDisplayMinutes(Math.floor(newVal / 60));
                 setDisplaySeconds(newVal % 60);
@@ -70,14 +59,14 @@ export const LiveETACard: React.FC<LiveETACardProps> = ({
                     toValue: 1.15,
                     duration: 800,
                     easing: Easing.inOut(Easing.ease),
-                    useNativeDriver: true,
+                    useNativeDriver: true
                 }),
                 Animated.timing(pulseAnim, {
                     toValue: 1,
                     duration: 800,
                     easing: Easing.inOut(Easing.ease),
-                    useNativeDriver: true,
-                }),
+                    useNativeDriver: true
+                })
             ])
         );
         pulse.start();
@@ -87,17 +76,17 @@ export const LiveETACard: React.FC<LiveETACardProps> = ({
     // Progress bar animation
     useEffect(() => {
         const progressValues: Record<string, number> = {
-            'picking_up': 0.25,
-            'in_transit': 0.6,
-            'arriving': 0.9,
-            'delivered': 1,
+            picking_up: 0.25,
+            in_transit: 0.6,
+            arriving: 0.9,
+            delivered: 1
         };
 
         Animated.timing(progressAnim, {
             toValue: progressValues[driverStatus] || 0,
             duration: 500,
             easing: Easing.out(Easing.cubic),
-            useNativeDriver: false,
+            useNativeDriver: false
         }).start();
     }, [driverStatus]);
 
@@ -109,13 +98,13 @@ export const LiveETACard: React.FC<LiveETACardProps> = ({
                     toValue: 1,
                     duration: 2000,
                     easing: Easing.inOut(Easing.ease),
-                    useNativeDriver: true,
+                    useNativeDriver: true
                 }),
                 Animated.timing(carAnim, {
                     toValue: 0,
                     duration: 0,
-                    useNativeDriver: true,
-                }),
+                    useNativeDriver: true
+                })
             ])
         );
 
@@ -165,19 +154,21 @@ export const LiveETACard: React.FC<LiveETACardProps> = ({
 
     const progressWidth = progressAnim.interpolate({
         inputRange: [0, 1],
-        outputRange: ['0%', '100%'],
+        outputRange: ['0%', '100%']
     });
 
     const carTranslateX = carAnim.interpolate({
         inputRange: [0, 1],
-        outputRange: [0, 5],
+        outputRange: [0, 5]
     });
 
     return (
         <LinearGradient
-            colors={driverStatus === 'arriving'
-                ? ['#10B981', '#059669'] // Green when arriving
-                : Colors.gradients.primaryDark}
+            colors={
+                driverStatus === 'arriving'
+                    ? ['#10B981', '#059669'] // Green when arriving
+                    : Colors.gradients.primaryDark
+            }
             style={styles.container}
             start={{ x: 0, y: 0 }}
             end={{ x: 1, y: 1 }}
@@ -190,14 +181,10 @@ export const LiveETACard: React.FC<LiveETACardProps> = ({
                     <View style={styles.countdownRow}>
                         {countdown > 0 ? (
                             <>
-                                <Text style={styles.countdownText}>
-                                    {displayMinutes}
-                                </Text>
+                                <Text style={styles.countdownText}>{displayMinutes}</Text>
                                 <Text style={styles.countdownUnit}>{t('tracking.etaMin')}</Text>
                                 <Text style={styles.countdownSeparator}>:</Text>
-                                <Text style={styles.countdownText}>
-                                    {displaySeconds.toString().padStart(2, '0')}
-                                </Text>
+                                <Text style={styles.countdownText}>{displaySeconds.toString().padStart(2, '0')}</Text>
                                 <Text style={styles.countdownUnit}>{t('tracking.etaSec')}</Text>
                             </>
                         ) : etaMinutes === null ? (
@@ -209,7 +196,12 @@ export const LiveETACard: React.FC<LiveETACardProps> = ({
 
                     {distance && (
                         <View style={styles.distanceRow}>
-                            <Ionicons name="location" size={12} color="rgba(255,255,255,0.8)" style={{ marginRight: 4 }} />
+                            <Ionicons
+                                name="location"
+                                size={12}
+                                color="rgba(255,255,255,0.8)"
+                                style={{ marginRight: 4 }}
+                            />
                             <Text style={styles.distanceText}>{t('tracking.etaDistanceAway', { distance })}</Text>
                         </View>
                     )}
@@ -220,10 +212,7 @@ export const LiveETACard: React.FC<LiveETACardProps> = ({
                     style={[
                         styles.iconContainer,
                         {
-                            transform: [
-                                { scale: pulseAnim },
-                                { translateX: carTranslateX }
-                            ]
+                            transform: [{ scale: pulseAnim }, { translateX: carTranslateX }]
                         }
                     ]}
                 >
@@ -234,12 +223,7 @@ export const LiveETACard: React.FC<LiveETACardProps> = ({
             {/* Progress Bar */}
             <View style={styles.progressContainer}>
                 <View style={styles.progressTrack}>
-                    <Animated.View
-                        style={[
-                            styles.progressBar,
-                            { width: progressWidth }
-                        ]}
-                    />
+                    <Animated.View style={[styles.progressBar, { width: progressWidth }]} />
                 </View>
                 <View style={styles.progressLabels}>
                     <Text style={styles.progressLabel}>{t('tracking.etaPickedUp')}</Text>
@@ -251,9 +235,7 @@ export const LiveETACard: React.FC<LiveETACardProps> = ({
             {/* Driver Name if available */}
             {driverName && (
                 <View style={styles.driverRow}>
-                    <Text style={styles.driverNameText}>
-                        {t('tracking.etaDriverOnWay', { name: driverName })}
-                    </Text>
+                    <Text style={styles.driverNameText}>{t('tracking.etaDriverOnWay', { name: driverName })}</Text>
                 </View>
             )}
         </LinearGradient>
@@ -264,65 +246,65 @@ const styles = StyleSheet.create({
     container: {
         borderRadius: BorderRadius.xl,
         padding: Spacing.lg,
-        ...Shadows.lg,
+        ...Shadows.lg
     },
     mainContent: {
         flexDirection: 'row',
         justifyContent: 'space-between',
-        alignItems: 'center',
+        alignItems: 'center'
     },
     etaSection: {
-        flex: 1,
+        flex: 1
     },
     statusText: {
         fontSize: 14,
         color: 'rgba(255,255,255,0.9)',
         marginBottom: Spacing.xs,
-        fontWeight: '500',
+        fontWeight: '500'
     },
     countdownRow: {
         flexDirection: 'row',
-        alignItems: 'baseline',
+        alignItems: 'baseline'
     },
     countdownText: {
         fontSize: 42,
         fontWeight: '700',
         color: '#ffffff',
-        fontVariant: ['tabular-nums'],
+        fontVariant: ['tabular-nums']
     },
     countdownUnit: {
         fontSize: 16,
         color: 'rgba(255,255,255,0.7)',
         marginLeft: 4,
-        marginRight: 8,
+        marginRight: 8
     },
     countdownSeparator: {
         fontSize: 32,
         fontWeight: '300',
-        color: 'rgba(255,255,255,0.5)',
+        color: 'rgba(255,255,255,0.5)'
     },
     calculatingText: {
         fontSize: 24,
         color: 'rgba(255,255,255,0.7)',
-        fontStyle: 'italic',
+        fontStyle: 'italic'
     },
     arrivedText: {
         fontSize: 28,
         fontWeight: '700',
-        color: '#ffffff',
+        color: '#ffffff'
     },
     distanceRow: {
         flexDirection: 'row',
         alignItems: 'center',
-        marginTop: Spacing.sm,
+        marginTop: Spacing.sm
     },
     distanceIcon: {
         fontSize: 12,
-        marginRight: 4,
+        marginRight: 4
     },
     distanceText: {
         fontSize: 13,
-        color: 'rgba(255,255,255,0.8)',
+        color: 'rgba(255,255,255,0.8)'
     },
     iconContainer: {
         width: 70,
@@ -330,45 +312,45 @@ const styles = StyleSheet.create({
         borderRadius: 35,
         backgroundColor: 'rgba(255,255,255,0.15)',
         justifyContent: 'center',
-        alignItems: 'center',
+        alignItems: 'center'
     },
     statusIcon: {
-        fontSize: 36,
+        fontSize: 36
     },
     progressContainer: {
-        marginTop: Spacing.lg,
+        marginTop: Spacing.lg
     },
     progressTrack: {
         height: 4,
         backgroundColor: 'rgba(255,255,255,0.2)',
         borderRadius: 2,
-        overflow: 'hidden',
+        overflow: 'hidden'
     },
     progressBar: {
         height: '100%',
         backgroundColor: '#ffffff',
-        borderRadius: 2,
+        borderRadius: 2
     },
     progressLabels: {
         flexDirection: 'row',
         justifyContent: 'space-between',
-        marginTop: Spacing.xs,
+        marginTop: Spacing.xs
     },
     progressLabel: {
         fontSize: 10,
-        color: 'rgba(255,255,255,0.6)',
+        color: 'rgba(255,255,255,0.6)'
     },
     driverRow: {
         marginTop: Spacing.md,
         paddingTop: Spacing.md,
         borderTopWidth: 1,
-        borderTopColor: 'rgba(255,255,255,0.15)',
+        borderTopColor: 'rgba(255,255,255,0.15)'
     },
     driverNameText: {
         fontSize: 13,
         color: 'rgba(255,255,255,0.9)',
-        textAlign: 'center',
-    },
+        textAlign: 'center'
+    }
 });
 
 export default LiveETACard;

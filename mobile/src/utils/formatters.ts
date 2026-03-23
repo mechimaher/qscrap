@@ -4,7 +4,7 @@
  */
 import { t, getCurrentLanguage } from './i18nHelper';
 
-const getLocale = () => getCurrentLanguage() === 'ar' ? 'ar-QA' : 'en-US';
+const getLocale = () => (getCurrentLanguage() === 'ar' ? 'ar-QA' : 'en-US');
 /**
  * Format a date to a human-readable string
  */
@@ -31,7 +31,7 @@ export const formatDateTime = (
         month: 'short',
         day: 'numeric',
         hour: '2-digit',
-        minute: '2-digit',
+        minute: '2-digit'
     }
 ): string => {
     const d = new Date(date);
@@ -46,7 +46,7 @@ export const formatTime = (
     date: Date | string | number,
     options: Intl.DateTimeFormatOptions = {
         hour: '2-digit',
-        minute: '2-digit',
+        minute: '2-digit'
     }
 ): string => {
     const d = new Date(date);
@@ -78,35 +78,23 @@ export const formatRelativeTime = (date: Date | string | number): string => {
         return t('time.justNow');
     } else if (abs(diffMin) < 60) {
         const mins = abs(diffMin);
-        return isFuture
-            ? t('time.inMinutes', { count: mins })
-            : t('time.minutesAgo', { count: mins });
+        return isFuture ? t('time.inMinutes', { count: mins }) : t('time.minutesAgo', { count: mins });
     } else if (abs(diffHour) < 24) {
         const hours = abs(diffHour);
-        return isFuture
-            ? t('time.inHours', { count: hours })
-            : t('time.hoursAgo', { count: hours });
+        return isFuture ? t('time.inHours', { count: hours }) : t('time.hoursAgo', { count: hours });
     } else if (abs(diffDay) < 7) {
         const days = abs(diffDay);
         if (days === 1) return isFuture ? t('time.tomorrow') : t('time.yesterday');
-        return isFuture
-            ? t('time.inDays', { count: days })
-            : t('time.daysAgo', { count: days });
+        return isFuture ? t('time.inDays', { count: days }) : t('time.daysAgo', { count: days });
     } else if (abs(diffWeek) < 4) {
         const weeks = abs(diffWeek);
-        return isFuture
-            ? t('time.inWeeks', { count: weeks })
-            : t('time.weeksAgo', { count: weeks });
+        return isFuture ? t('time.inWeeks', { count: weeks }) : t('time.weeksAgo', { count: weeks });
     } else if (abs(diffMonth) < 12) {
         const months = abs(diffMonth);
-        return isFuture
-            ? t('time.inMonths', { count: months })
-            : t('time.monthsAgo', { count: months });
+        return isFuture ? t('time.inMonths', { count: months }) : t('time.monthsAgo', { count: months });
     } else {
         const years = abs(diffYear);
-        return isFuture
-            ? t('time.inYears', { count: years })
-            : t('time.yearsAgo', { count: years });
+        return isFuture ? t('time.inYears', { count: years }) : t('time.yearsAgo', { count: years });
     }
 };
 
@@ -123,7 +111,7 @@ export const formatCurrency = (
 
     const formatted = num.toLocaleString(getLocale(), {
         minimumFractionDigits: 2,
-        maximumFractionDigits: 2,
+        maximumFractionDigits: 2
     });
 
     return showSymbol ? `${formatted} ${currency}` : formatted;
@@ -160,7 +148,7 @@ export const formatNumber = (num: number | string, decimals: number = 0): string
 
     return n.toLocaleString(getLocale(), {
         minimumFractionDigits: decimals,
-        maximumFractionDigits: decimals,
+        maximumFractionDigits: decimals
     });
 };
 
@@ -235,6 +223,6 @@ export const formatStatus = (status: string): string => {
     if (!status) return '';
     return status
         .split('_')
-        .map(word => capitalize(word))
+        .map((word) => capitalize(word))
         .join(' ');
 };

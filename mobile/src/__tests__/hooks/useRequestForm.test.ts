@@ -3,8 +3,8 @@ import { useRequestForm } from '../../hooks/useRequestForm';
 
 jest.mock('../../constants/categoryData', () => ({
     PART_SUBCATEGORIES: {
-        'Engine': ['Pistons', 'Valves'],
-        'Transmission': ['Gears', 'Clutch'],
+        Engine: ['Pistons', 'Valves'],
+        Transmission: ['Gears', 'Clutch']
     }
 }));
 
@@ -40,12 +40,10 @@ describe('useRequestForm', () => {
         const prefillData = {
             partDescription: 'Brake pads',
             partCategory: 'Engine', // Testing with Engine to trigger subcategories
-            partSubCategory: 'Valves',
+            partSubCategory: 'Valves'
         };
 
-        const { result } = renderHook(() =>
-            useRequestForm({ prefillData, t: mockT, toast: mockToast })
-        );
+        const { result } = renderHook(() => useRequestForm({ prefillData, t: mockT, toast: mockToast }));
 
         expect(result.current.partDescription).toBe('Brake pads');
         expect(result.current.partCategory).toBe('Engine');
@@ -70,9 +68,7 @@ describe('useRequestForm', () => {
     it('should initialize delivery location', () => {
         const initialDeliveryLocation = { lat: 25.2, lng: 51.5, address: 'Doha' };
 
-        const { result } = renderHook(() =>
-            useRequestForm({ initialDeliveryLocation, t: mockT, toast: mockToast })
-        );
+        const { result } = renderHook(() => useRequestForm({ initialDeliveryLocation, t: mockT, toast: mockToast }));
 
         expect(result.current.deliveryLocation).toEqual(initialDeliveryLocation);
     });
@@ -82,7 +78,7 @@ describe('useRequestForm', () => {
 
         const vehicles = [
             { id: 1, car_make: 'Toyota', car_model: 'Camry', car_year: 2020 },
-            { id: 2, car_make: 'Honda', car_model: 'Civic', car_year: 2021 },
+            { id: 2, car_make: 'Honda', car_model: 'Civic', car_year: 2021 }
         ];
 
         act(() => {
@@ -96,16 +92,14 @@ describe('useRequestForm', () => {
         const prefillData = {
             carMake: 'Honda',
             carModel: 'civic', // test case-insensitivity
-            carYear: 2021,
+            carYear: 2021
         };
 
-        const { result } = renderHook(() =>
-            useRequestForm({ prefillData, t: mockT, toast: mockToast })
-        );
+        const { result } = renderHook(() => useRequestForm({ prefillData, t: mockT, toast: mockToast }));
 
         const vehicles = [
             { id: 1, car_make: 'Toyota', car_model: 'Camry', car_year: 2020 },
-            { id: 2, car_make: 'Honda', car_model: 'Civic', car_year: 2021 },
+            { id: 2, car_make: 'Honda', car_model: 'Civic', car_year: 2021 }
         ];
 
         act(() => {

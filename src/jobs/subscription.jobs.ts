@@ -41,7 +41,7 @@ export async function checkSubscriptions(pool: Pool): Promise<{ expired: number;
         if (warningCount > 0) {
             logger.info('Subscriptions expiring soon', { count: warningCount, daysUntilExpiry: 3 });
 
-            warningResult.rows.forEach(row => {
+            warningResult.rows.forEach((row) => {
                 emitToGarage(row.garage_id, 'subscription_warning', {
                     message: `Your ${row.plan_name} subscription expires on ${new Date(row.billing_cycle_end).toLocaleDateString()}. Please renew to continue bidding.`,
                     expires_at: row.billing_cycle_end

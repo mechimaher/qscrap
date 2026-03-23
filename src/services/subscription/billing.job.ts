@@ -51,7 +51,10 @@ export class SubscriptionBillingJob {
             try {
                 await this.processSubscriptionRenewal(sub);
             } catch (err) {
-                logger.error('Error processing subscription', { garage: sub.garage_name, error: (err as Error).message });
+                logger.error('Error processing subscription', {
+                    garage: sub.garage_name,
+                    error: (err as Error).message
+                });
             }
         }
 
@@ -115,11 +118,14 @@ export class SubscriptionBillingJob {
                 });
 
                 // Reset retry count
-                await this.pool.query(`
+                await this.pool.query(
+                    `
                     UPDATE garage_subscriptions 
                     SET last_billing_attempt = NOW(), billing_retry_count = 0 
                     WHERE subscription_id = $1
-                `, [sub.subscription_id]);
+                `,
+                    [sub.subscription_id]
+                );
             } else {
                 throw new Error(`Payment status: ${paymentIntent.status}`);
             }
@@ -127,12 +133,15 @@ export class SubscriptionBillingJob {
             logger.error('Payment failed', { garage: sub.garage_name, error: err.message });
 
             // Increment retry count
-            await this.pool.query(`
+            await this.pool.query(
+                `
                 UPDATE garage_subscriptions 
                 SET last_billing_attempt = NOW(), 
                     billing_retry_count = billing_retry_count + 1 
                 WHERE subscription_id = $1
-            `, [sub.subscription_id]);
+            `,
+                [sub.subscription_id]
+            );
 
             // Send payment failed notification
             await this.sendPaymentReminder(sub, 'payment_failed');
@@ -143,7 +152,8 @@ export class SubscriptionBillingJob {
      * Extend subscription by 1 month
      */
     private async extendSubscription(subscriptionId: string, garageName: string) {
-        await this.pool.query(`
+        await this.pool.query(
+            `
             UPDATE garage_subscriptions 
             SET billing_cycle_start = billing_cycle_end,
                 billing_cycle_end = billing_cycle_end + INTERVAL '1 month',
@@ -152,7 +162,9 @@ export class SubscriptionBillingJob {
                 bids_used_this_cycle = 0,
                 updated_at = NOW()
             WHERE subscription_id = $1
-        `, [subscriptionId]);
+        `,
+            [subscriptionId]
+        );
 
         logger.info('Extended subscription', { garage: garageName });
     }
@@ -201,9 +213,12 @@ export class SubscriptionBillingJob {
 
             // Mark reminder sent (only for 1-day reminder to allow multiple reminders)
             if (days === 1) {
-                await this.pool.query(`
+                await this.pool.query(
+                    `
                     UPDATE garage_subscriptions SET renewal_reminder_sent = true WHERE subscription_id = $1
-                `, [sub.subscription_id]);
+                `,
+                    [sub.subscription_id]
+                );
             }
         }
     }
@@ -216,10 +231,13 @@ export class SubscriptionBillingJob {
         logger.info('Would send reminder', { type, email: sub.email });
 
         // Log the reminder attempt
-        await this.pool.query(`
+        await this.pool.query(
+            `
             INSERT INTO admin_actions (admin_id, action_type, target_id, target_type, action_data)
             VALUES ('00000000-0000-0000-0000-000000000000', 'billing_reminder', $1, 'subscription', $2)
-        `, [sub.subscription_id, JSON.stringify({ type, email: sub.email, plan: sub.plan_name })]);
+        `,
+            [sub.subscription_id, JSON.stringify({ type, email: sub.email, plan: sub.plan_name })]
+        );
     }
 
     /**

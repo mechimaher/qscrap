@@ -27,10 +27,7 @@ export const PaymentTypeSelector: React.FC<PaymentTypeSelectorProps> = ({
     return (
         <View style={styles.paymentOptionsSection}>
             <TouchableOpacity
-                style={[
-                    styles.vvipPaymentOption,
-                    paymentType === 'delivery_only' && styles.vvipPaymentSelected
-                ]}
+                style={[styles.vvipPaymentOption, paymentType === 'delivery_only' && styles.vvipPaymentSelected]}
                 onPress={() => {
                     if (paymentType !== 'delivery_only') {
                         Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
@@ -56,10 +53,7 @@ export const PaymentTypeSelector: React.FC<PaymentTypeSelectorProps> = ({
             </TouchableOpacity>
 
             <TouchableOpacity
-                style={[
-                    styles.vvipPaymentOption,
-                    paymentType === 'full' && styles.vvipPaymentSelected
-                ]}
+                style={[styles.vvipPaymentOption, paymentType === 'full' && styles.vvipPaymentSelected]}
                 onPress={() => {
                     if (paymentType !== 'full') {
                         Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
@@ -90,7 +84,7 @@ export const PaymentTypeSelector: React.FC<PaymentTypeSelectorProps> = ({
 const styles = StyleSheet.create({
     paymentOptionsSection: {
         marginBottom: Spacing.md,
-        gap: Spacing.sm,
+        gap: Spacing.sm
     },
     vvipPaymentOption: {
         flexDirection: 'row',
@@ -101,45 +95,45 @@ const styles = StyleSheet.create({
         padding: Spacing.md,
         borderWidth: 2,
         borderColor: '#E5E7EB',
-        ...Shadows.sm,
+        ...Shadows.sm
     },
     vvipPaymentSelected: {
         borderColor: '#3B82F6',
-        backgroundColor: '#F0F9FF',
+        backgroundColor: '#F0F9FF'
     },
     vvipPaymentLeft: {
         flexDirection: 'row',
         alignItems: 'center',
-        gap: Spacing.md,
+        gap: Spacing.md
     },
     vvipPaymentIcon: {
         width: 44,
         height: 44,
         borderRadius: BorderRadius.xl,
         alignItems: 'center',
-        justifyContent: 'center',
+        justifyContent: 'center'
     },
     vvipPaymentTitle: {
         fontSize: FontSizes.md,
         fontWeight: '700',
-        color: '#1F2937',
+        color: '#1F2937'
     },
     vvipPaymentSubtitle: {
         fontSize: FontSizes.sm,
         color: '#6B7280',
-        marginTop: 2,
+        marginTop: 2
     },
     vvipPaymentRight: {
-        alignItems: 'flex-end',
+        alignItems: 'flex-end'
     },
     vvipPaymentAmount: {
         fontSize: 22,
         fontWeight: '800',
-        color: '#3B82F6',
+        color: '#3B82F6'
     },
     vvipPaymentCurrency: {
         fontSize: FontSizes.xs,
         color: '#9CA3AF',
-        fontWeight: '600',
-    },
+        fontWeight: '600'
+    }
 });

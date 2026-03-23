@@ -58,7 +58,7 @@ export const BILINGUAL_LABELS = {
     generated_via: { en: 'Generated via QScrap Platform', ar: 'صدرت عبر منصة كيو سكراب' },
     customer_info: { en: 'Customer', ar: 'العميل' },
     support_info: { en: 'Customer Support', ar: 'خدمة العملاء' },
-    need_help: { en: 'Need Help?', ar: 'تحتاج مساعدة؟' },
+    need_help: { en: 'Need Help?', ar: 'تحتاج مساعدة؟' }
 };
 
 // Company official contact information (Qatar Commercial Registration)
@@ -76,7 +76,7 @@ export const COMPANY_INFO = {
         ar: 'المنطقة الصناعية، شارع 10، ص.ب 32544، الدوحة، قطر'
     },
     country: { en: 'State of Qatar', ar: 'دولة قطر' },
-    cr_number: '155892', // QScrap Commercial Registration
+    cr_number: '155892' // QScrap Commercial Registration
 };
 
 export function formatConditionBilingual(condition: string): { en: string; ar: string } {

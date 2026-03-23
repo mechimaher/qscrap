@@ -25,17 +25,30 @@ export default function VehicleSelectionStep({
     selectedVehicle,
     handleVehicleSelect,
     handleVehiclesLoaded,
-    navigation,
+    navigation
 }: VehicleSelectionStepProps) {
     return (
         <View style={[styles.section, { backgroundColor: colors.surface }]}>
             <View style={[styles.sectionHeader, { flexDirection: rtlFlexDirection(isRTL) }]}>
-                <View style={[styles.stepBadge, { backgroundColor: Colors.primary + '15' }, isRTL && { marginRight: 0, marginLeft: Spacing.md }]}>
+                <View
+                    style={[
+                        styles.stepBadge,
+                        { backgroundColor: Colors.primary + '15' },
+                        isRTL && { marginRight: 0, marginLeft: Spacing.md }
+                    ]}
+                >
                     <Text style={[styles.stepNumber, { color: Colors.primary }]}>1</Text>
                 </View>
                 <View style={{ flex: 1 }}>
-                    <Text style={[styles.sectionTitle, { color: colors.text, textAlign: rtlTextAlign(isRTL) }]}>{t('newRequest.selectVehicle')}</Text>
-                    <Text style={[styles.sectionSubtitle, { color: colors.textSecondary, textAlign: rtlTextAlign(isRTL) }]}>
+                    <Text style={[styles.sectionTitle, { color: colors.text, textAlign: rtlTextAlign(isRTL) }]}>
+                        {t('newRequest.selectVehicle')}
+                    </Text>
+                    <Text
+                        style={[
+                            styles.sectionSubtitle,
+                            { color: colors.textSecondary, textAlign: rtlTextAlign(isRTL) }
+                        ]}
+                    >
                         {t('newRequest.chooseFromCars')}
                     </Text>
                 </View>
@@ -63,9 +76,7 @@ export default function VehicleSelectionStep({
                                 onPress={() => navigation.navigate('MyVehicles')}
                                 style={styles.vinWarningBtn}
                             >
-                                <Text style={styles.vinStatusRed}>
-                                    {t('newRequest.tapToAddVin')}
-                                </Text>
+                                <Text style={styles.vinStatusRed}>{t('newRequest.tapToAddVin')}</Text>
                             </TouchableOpacity>
                         )}
                     </View>
@@ -73,10 +84,7 @@ export default function VehicleSelectionStep({
             )}
 
             {!selectedVehicle && (
-                <TouchableOpacity
-                    onPress={() => navigation.navigate('MyVehicles')}
-                    style={styles.addVehicleButton}
-                >
+                <TouchableOpacity onPress={() => navigation.navigate('MyVehicles')} style={styles.addVehicleButton}>
                     <Text style={[styles.addVehicleText, { color: Colors.primary }]}>
                         {t('newRequest.addNewVehicle')}
                     </Text>
@@ -90,20 +98,20 @@ const styles = StyleSheet.create({
     section: {
         borderRadius: BorderRadius.lg,
         padding: Spacing.lg,
-        marginBottom: Spacing.md,
+        marginBottom: Spacing.md
     },
     sectionHeader: {
         flexDirection: 'row',
         alignItems: 'center',
         marginBottom: Spacing.lg,
-        gap: Spacing.md,
+        gap: Spacing.md
     },
     stepBadge: {
         width: 36,
         height: 36,
         borderRadius: 18,
         alignItems: 'center',
-        justifyContent: 'center',
+        justifyContent: 'center'
     },
     stepNumber: { fontSize: FontSizes.md, fontWeight: '800' },
     sectionTitle: { fontSize: FontSizes.lg, fontWeight: '700' },
@@ -114,7 +122,7 @@ const styles = StyleSheet.create({
         padding: Spacing.md,
         borderRadius: BorderRadius.md,
         marginTop: Spacing.md,
-        gap: Spacing.sm,
+        gap: Spacing.sm
     },
     selectedText: { fontSize: FontSizes.md, fontWeight: '600' },
     vinStatusGreen: { fontSize: FontSizes.xs, color: '#22C55E', marginTop: 2 },
@@ -124,12 +132,12 @@ const styles = StyleSheet.create({
         paddingVertical: 4,
         paddingHorizontal: 8,
         backgroundColor: '#FEE2E2',
-        borderRadius: BorderRadius.sm,
+        borderRadius: BorderRadius.sm
     },
     addVehicleButton: {
         padding: Spacing.md,
         alignItems: 'center',
-        marginTop: Spacing.sm,
+        marginTop: Spacing.sm
     },
-    addVehicleText: { fontSize: FontSizes.md, fontWeight: '600' },
+    addVehicleText: { fontSize: FontSizes.md, fontWeight: '600' }
 });

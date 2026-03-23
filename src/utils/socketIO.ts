@@ -1,6 +1,6 @@
 /**
  * Socket.IO Singleton Module
- * 
+ *
  * Provides type-safe access to the Socket.IO server instance
  * throughout the application without using global type casting.
  */
@@ -33,7 +33,9 @@ export function getIO(): Server | null {
  * Safely handles the case where socket is not initialized
  */
 export function emitToRoom(room: string, event: string, data: unknown): boolean {
-    if (!ioInstance) {return false;}
+    if (!ioInstance) {
+        return false;
+    }
     ioInstance.to(room).emit(event, data);
     return true;
 }
@@ -73,4 +75,3 @@ export function emitToDriver(driverId: string, event: string, data: unknown): bo
 export function emitToAdmin(event: string, data: unknown): boolean {
     return emitToRoom('admin', event, data);
 }
-

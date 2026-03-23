@@ -13,16 +13,16 @@ interface UseAppStateReturn {
 /**
  * Hook to monitor app state (active, background, inactive).
  * Useful for pausing/resuming operations based on app visibility.
- * 
+ *
  * @example
  * const { isActive, isBackground } = useAppState();
- * 
+ *
  * useEffect(() => {
  *   if (isActive) {
  *     refreshData();
  *   }
  * }, [isActive]);
- * 
+ *
  * // With callbacks
  * useAppStateWithCallbacks({
  *   onForeground: () => refreshData(),
@@ -46,7 +46,7 @@ export const useAppState = (): UseAppStateReturn => {
         appState,
         isActive: appState === 'active',
         isBackground: appState === 'background',
-        isInactive: appState === 'inactive',
+        isInactive: appState === 'inactive'
     };
 };
 
@@ -63,7 +63,7 @@ interface AppStateCallbacks {
 export const useAppStateWithCallbacks = ({
     onForeground,
     onBackground,
-    onInactive,
+    onInactive
 }: AppStateCallbacks): AppStateStatus => {
     const appState = useRef<AppStateStatus>(AppState.currentState);
 

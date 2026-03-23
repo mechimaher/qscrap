@@ -1,7 +1,22 @@
-import { apiClient } from "./apiClient";
-import { API_ENDPOINTS, API_BASE_URL } from "../config/api";
-import { log, warn, error } from "../utils/logger";
-import { User, AuthResponse, Request, Bid, Order, Stats, Address, Product, Notification, SupportTicket, Vehicle, LoyaltyTransaction, PaymentMethod, UrgentAction } from "./types";
+import { apiClient } from './apiClient';
+import { API_ENDPOINTS, API_BASE_URL } from '../config/api';
+import { log, warn, error } from '../utils/logger';
+import {
+    User,
+    AuthResponse,
+    Request,
+    Bid,
+    Order,
+    Stats,
+    Address,
+    Product,
+    Notification,
+    SupportTicket,
+    Vehicle,
+    LoyaltyTransaction,
+    PaymentMethod,
+    UrgentAction
+} from './types';
 
 export class DashboardService {
     async getStats(): Promise<{ stats: Stats }> {
@@ -12,7 +27,11 @@ export class DashboardService {
         return apiClient.request(API_ENDPOINTS.PROFILE);
     }
 
-    async updateProfile(data: { full_name?: string; email?: string; phone_number?: string }): Promise<{ success: boolean; user: User }> {
+    async updateProfile(data: {
+        full_name?: string;
+        email?: string;
+        phone_number?: string;
+    }): Promise<{ success: boolean; user: User }> {
         return apiClient.request(API_ENDPOINTS.UPDATE_PROFILE, {
             method: 'PUT',
             body: JSON.stringify(data)
@@ -31,12 +50,12 @@ export class DashboardService {
     }
 
     async getContextualData(): Promise<{
-            unread_bids: number;
-            active_services: number;
-            money_saved_this_month: number;
-            loyalty_points: number;
-            orders_this_month: number;
-        }> {
+        unread_bids: number;
+        active_services: number;
+        money_saved_this_month: number;
+        loyalty_points: number;
+        orders_this_month: number;
+    }> {
         return apiClient.request('/v1/dashboard/customer/contextual-data');
     }
 }

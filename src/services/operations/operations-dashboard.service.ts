@@ -7,7 +7,7 @@ import { cacheGetOrSet, CacheTTL, dashboardStatsKey, invalidateDashboardCache } 
 import { DashboardStats } from './types';
 
 export class OperationsDashboardService {
-    constructor(private pool: Pool) { }
+    constructor(private pool: Pool) {}
 
     /**
      * Get live dashboard stats (cached: 1 minute TTL)

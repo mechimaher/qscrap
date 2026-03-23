@@ -1,6 +1,6 @@
 /**
  * FinanceService - Payout & Financial Operations Business Logic
- * 
+ *
  * Extracted from finance.controller.ts (1,293 lines) to enable:
  * - Testability
  * - Reusability
@@ -67,7 +67,6 @@ export interface RevenueReport {
 // ============================================
 
 export class FinanceService {
-
     /**
      * Get payout summary statistics
      */
@@ -119,14 +118,12 @@ export class FinanceService {
         }
 
         // Count
-        const countResult = await pool.query(
-            `SELECT COUNT(*) FROM garage_payouts gp ${whereClause}`,
-            params
-        );
+        const countResult = await pool.query(`SELECT COUNT(*) FROM garage_payouts gp ${whereClause}`, params);
         const total = parseInt(countResult.rows[0].count);
 
         // Data
-        const result = await pool.query(`
+        const result = await pool.query(
+            `
             SELECT gp.*, o.order_number, g.garage_name
             FROM garage_payouts gp
             JOIN orders o ON gp.order_id = o.order_id
@@ -134,7 +131,9 @@ export class FinanceService {
             ${whereClause}
             ORDER BY gp.created_at DESC
             LIMIT $${paramIndex++} OFFSET $${paramIndex}
-        `, [...params, limit, offset]);
+        `,
+            [...params, limit, offset]
+        );
 
         return {
             payouts: result.rows,
@@ -162,7 +161,8 @@ export class FinanceService {
             await client.query('BEGIN');
 
             // Update payout status
-            const result = await client.query(`
+            const result = await client.query(
+                `
                 UPDATE garage_payouts SET
                     status = 'sent',
                     sent_at = NOW(),
@@ -172,7 +172,9 @@ export class FinanceService {
                     updated_at = NOW()
                 WHERE payout_id = $4 AND status = 'pending'
                 RETURNING *
-            `, [sent_by, reference_number, notes || 'Payment sent', payout_id]);
+            `,
+                [sent_by, reference_number, notes || 'Payment sent', payout_id]
+            );
 
             if (result.rows.length === 0) {
                 throw ApiError.badRequest('Payout not found or already processed');
@@ -209,10 +211,7 @@ export class FinanceService {
     /**
      * Garage confirms payment receipt
      */
-    static async confirmPayment(params: {
-        payout_id: string;
-        garage_id: string;
-    }): Promise<{ payout: PayoutRecord }> {
+    static async confirmPayment(params: { payout_id: string; garage_id: string }): Promise<{ payout: PayoutRecord }> {
         const { payout_id, garage_id } = params;
         const client = await pool.connect();
 
@@ -220,14 +219,17 @@ export class FinanceService {
             await client.query('BEGIN');
 
             // Verify ownership and status
-            const result = await client.query(`
+            const result = await client.query(
+                `
                 UPDATE garage_payouts SET
                     status = 'confirmed',
                     confirmed_at = NOW(),
                     updated_at = NOW()
                 WHERE payout_id = $1 AND garage_id = $2 AND status = 'sent'
                 RETURNING *
-            `, [payout_id, garage_id]);
+            `,
+                [payout_id, garage_id]
+            );
 
             if (result.rows.length === 0) {
                 throw ApiError.badRequest('Payout not found or cannot be confirmed');
@@ -266,7 +268,8 @@ export class FinanceService {
         try {
             await client.query('BEGIN');
 
-            const result = await client.query(`
+            const result = await client.query(
+                `
                 UPDATE garage_payouts SET
                     status = 'disputed',
                     dispute_reason = $1,
@@ -274,7 +277,9 @@ export class FinanceService {
                     updated_at = NOW()
                 WHERE payout_id = $2 AND garage_id = $3 AND status = 'sent'
                 RETURNING *
-            `, [reason, payout_id, garage_id]);
+            `,
+                [reason, payout_id, garage_id]
+            );
 
             if (result.rows.length === 0) {
                 throw ApiError.badRequest('Payout not found or cannot be disputed');
@@ -339,11 +344,11 @@ export class FinanceService {
 
     /**
      * Create a refund
-     * 
+     *
      * @deprecated This method does NOT call Stripe. Use RefundService.createRefund() instead.
      * This is a legacy path that only creates a DB record without executing the actual refund.
      * Scheduled for removal in Q2 2026.
-     * 
+     *
      * @see src/services/finance/refund.service.ts for the canonical implementation
      */
     static async createRefund(params: {
@@ -353,7 +358,9 @@ export class FinanceService {
         created_by: string;
     }): Promise<{ refund: unknown }> {
         // G-01 FIX: Deprecation warning - this method doesn't call Stripe!
-        logger.warn('DEPRECATED FinanceService.createRefund() called - use RefundService.createRefund() instead', { orderId: params.order_id });
+        logger.warn('DEPRECATED FinanceService.createRefund() called - use RefundService.createRefund() instead', {
+            orderId: params.order_id
+        });
 
         const { order_id, amount, reason, created_by } = params;
         const client = await pool.connect();
@@ -362,10 +369,7 @@ export class FinanceService {
             await client.query('BEGIN');
 
             // Get order details
-            const orderResult = await client.query(
-                `SELECT * FROM orders WHERE order_id = $1`,
-                [order_id]
-            );
+            const orderResult = await client.query(`SELECT * FROM orders WHERE order_id = $1`, [order_id]);
 
             if (orderResult.rows.length === 0) {
                 throw ApiError.notFound('Order not found');
@@ -378,20 +382,26 @@ export class FinanceService {
             }
 
             // Create refund record
-            const refundResult = await client.query(`
+            const refundResult = await client.query(
+                `
                 INSERT INTO refunds (order_id, amount, reason, created_by, status)
                 VALUES ($1, $2, $3, $4, 'completed')
                 RETURNING *
-            `, [order_id, amount, reason, created_by]);
+            `,
+                [order_id, amount, reason, created_by]
+            );
 
             // Adjust payout if exists
-            await client.query(`
+            await client.query(
+                `
                 UPDATE garage_payouts SET
                     net_amount = net_amount - $1,
                     notes = COALESCE(notes || E'\n', '') || $2,
                     updated_at = NOW()
                 WHERE order_id = $3 AND status IN ('pending', 'sent')
-            `, [amount, `Refund: ${amount} QAR - ${reason}`, order_id]);
+            `,
+                [amount, `Refund: ${amount} QAR - ${reason}`, order_id]
+            );
 
             // Notify customer
             await createNotification({
@@ -417,13 +427,16 @@ export class FinanceService {
      * Hold a payout
      */
     static async holdPayout(payout_id: string, reason: string): Promise<{ success: boolean }> {
-        await pool.query(`
+        await pool.query(
+            `
             UPDATE garage_payouts SET
                 status = 'on_hold',
                 notes = COALESCE(notes || E'\n', '') || $1,
                 updated_at = NOW()
             WHERE payout_id = $2 AND status = 'pending'
-        `, [`Hold: ${reason}`, payout_id]);
+        `,
+            [`Hold: ${reason}`, payout_id]
+        );
 
         return { success: true };
     }
@@ -432,13 +445,16 @@ export class FinanceService {
      * Release a held payout
      */
     static async releasePayout(payout_id: string): Promise<{ success: boolean }> {
-        await pool.query(`
+        await pool.query(
+            `
             UPDATE garage_payouts SET
                 status = 'pending',
                 notes = COALESCE(notes || E'\n', '') || $1,
                 updated_at = NOW()
             WHERE payout_id = $2 AND status = 'on_hold'
-        `, ['Released from hold', payout_id]);
+        `,
+            ['Released from hold', payout_id]
+        );
 
         return { success: true };
     }
@@ -471,7 +487,8 @@ export class FinanceService {
         }
         // all_pending = true means no additional filter
 
-        const result = await pool.query(`
+        const result = await pool.query(
+            `
             SELECT 
                 g.garage_id,
                 g.garage_name,
@@ -482,9 +499,11 @@ export class FinanceService {
             ${whereClause}
             GROUP BY g.garage_id, g.garage_name
             ORDER BY total DESC
-        `, queryParams);
+        `,
+            queryParams
+        );
 
-        const garages = result.rows.map(r => ({
+        const garages = result.rows.map((r) => ({
             garage_id: r.garage_id,
             garage_name: r.garage_name,
             payout_count: r.payout_count,
@@ -537,7 +556,8 @@ export class FinanceService {
             // all_pending = true processes everything with status = 'pending'
 
             // Single bulk UPDATE for efficiency
-            const updateResult = await client.query(`
+            const updateResult = await client.query(
+                `
                 UPDATE garage_payouts SET
                     status = 'sent',
                     sent_at = NOW(),
@@ -547,7 +567,9 @@ export class FinanceService {
                     updated_at = NOW()
                 WHERE ${whereClause}
                 RETURNING payout_id, garage_id, net_amount
-            `, queryParams);
+            `,
+                queryParams
+            );
 
             const processedPayouts = updateResult.rows;
             const processed_count = processedPayouts.length;
@@ -581,9 +603,10 @@ export class FinanceService {
                     userId: garageId,
                     type: 'payment_sent',
                     title: 'Payments Sent 💰',
-                    message: data.count === 1
-                        ? `Payment of ${data.total.toFixed(2)} QAR has been sent`
-                        : `${data.count} payments totaling ${data.total.toFixed(2)} QAR have been sent`,
+                    message:
+                        data.count === 1
+                            ? `Payment of ${data.total.toFixed(2)} QAR has been sent`
+                            : `${data.count} payments totaling ${data.total.toFixed(2)} QAR have been sent`,
                     data: {
                         batch: true,
                         count: data.count,
@@ -645,7 +668,7 @@ export class FinanceService {
         `);
 
         return {
-            garages: result.rows.map(r => ({
+            garages: result.rows.map((r) => ({
                 garage_id: r.garage_id,
                 garage_name: r.garage_name,
                 pending_count: r.pending_count,
@@ -656,4 +679,3 @@ export class FinanceService {
 }
 
 export default FinanceService;
-

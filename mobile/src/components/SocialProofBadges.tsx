@@ -15,7 +15,7 @@ interface SocialProofBadgesProps {
 export const SocialProofBadges: React.FC<SocialProofBadgesProps> = ({
     avgResponseTime,
     ratingAverage,
-    totalTransactions,
+    totalTransactions
 }) => {
     const { t } = useTranslation();
     const badges: Array<{ icon: React.ComponentProps<typeof Ionicons>['name']; text: string; gradient: string[] }> = [];
@@ -25,7 +25,7 @@ export const SocialProofBadges: React.FC<SocialProofBadgesProps> = ({
         badges.push({
             icon: 'flash' as const,
             text: t('socialProof.fastResponse'),
-            gradient: ['#F59E0B', '#D97706'],
+            gradient: ['#F59E0B', '#D97706']
         });
     }
 
@@ -34,7 +34,7 @@ export const SocialProofBadges: React.FC<SocialProofBadgesProps> = ({
         badges.push({
             icon: 'star' as const,
             text: t('socialProof.topRated'),
-            gradient: ['#8D1B3D', '#C9A227'],
+            gradient: ['#8D1B3D', '#C9A227']
         });
     }
 
@@ -43,7 +43,7 @@ export const SocialProofBadges: React.FC<SocialProofBadgesProps> = ({
         badges.push({
             icon: 'trophy' as const,
             text: t('socialProof.trustedSeller'),
-            gradient: ['#3B82F6', '#2563EB'],
+            gradient: ['#3B82F6', '#2563EB']
         });
     }
 
@@ -72,7 +72,7 @@ const styles = StyleSheet.create({
         flexDirection: 'row',
         flexWrap: 'wrap',
         gap: Spacing.xs,
-        marginTop: Spacing.sm,
+        marginTop: Spacing.sm
     },
     badge: {
         flexDirection: 'row',
@@ -81,16 +81,16 @@ const styles = StyleSheet.create({
         paddingVertical: 4,
         borderRadius: BorderRadius.full,
         gap: 4,
-        ...Shadows.sm,
+        ...Shadows.sm
     },
     badgeIcon: {
-        fontSize: 12,
+        fontSize: 12
     },
     badgeText: {
         fontSize: FontSizes.xs,
         fontWeight: '700',
-        color: '#FFFFFF',
-    },
+        color: '#FFFFFF'
+    }
 });
 
 export default SocialProofBadges;

@@ -1,9 +1,9 @@
 /**
  * QScrap Cache Utility
- * 
+ *
  * Provides type-safe caching operations with automatic JSON serialization.
  * Falls back gracefully when Redis is not available.
- * 
+ *
  * ENTERPRISE FEATURE: Cache versioning ensures stale data is never served
  * when schema changes. Increment version when adding/removing cached fields.
  */
@@ -18,7 +18,7 @@ import logger from './logger';
 /**
  * CACHE VERSION - Increment this when cached data structure changes
  * This ensures old cache is automatically invalidated on deploy
- * 
+ *
  * Version History:
  * v1 - Initial cache structure
  * v2 - Added loyalty_discount fields to dashboard stats (2026-01-26)
@@ -31,10 +31,10 @@ const CACHE_VERSION = 'v2';
 
 /** Default TTL values in seconds */
 export const CacheTTL = {
-    SHORT: 60,           // 1 minute - for rapidly changing data
-    MEDIUM: 300,         // 5 minutes - for dashboard stats
-    LONG: 3600,          // 1 hour - for reference data
-    DAY: 86400,          // 24 hours - for rarely changing data
+    SHORT: 60, // 1 minute - for rapidly changing data
+    MEDIUM: 300, // 5 minutes - for dashboard stats
+    LONG: 3600, // 1 hour - for reference data
+    DAY: 86400 // 24 hours - for rarely changing data
 } as const;
 
 /** Cache key prefixes for organization - all include version */
@@ -44,7 +44,7 @@ export const CachePrefix = {
     USER: `${CACHE_VERSION}:user:`,
     REQUEST: `${CACHE_VERSION}:req:`,
     ORDER: `${CACHE_VERSION}:order:`,
-    STATS: `${CACHE_VERSION}:stats:`,
+    STATS: `${CACHE_VERSION}:stats:`
 } as const;
 
 // ============================================
@@ -56,11 +56,15 @@ export const CachePrefix = {
  */
 export async function cacheGet<T>(key: string): Promise<T | null> {
     const client = getRedisClient();
-    if (!client) {return null;}
+    if (!client) {
+        return null;
+    }
 
     try {
         const value = await client.get(key);
-        if (!value) {return null;}
+        if (!value) {
+            return null;
+        }
         return JSON.parse(value) as T;
     } catch (err) {
         logger.warn('Cache get failed', { key, error: (err as Error).message });
@@ -73,7 +77,9 @@ export async function cacheGet<T>(key: string): Promise<T | null> {
  */
 export async function cacheSet<T>(key: string, value: T, ttlSeconds: number = CacheTTL.MEDIUM): Promise<boolean> {
     const client = getRedisClient();
-    if (!client) {return false;}
+    if (!client) {
+        return false;
+    }
 
     try {
         await client.setEx(key, ttlSeconds, JSON.stringify(value));
@@ -89,7 +95,9 @@ export async function cacheSet<T>(key: string, value: T, ttlSeconds: number = Ca
  */
 export async function cacheDel(key: string): Promise<boolean> {
     const client = getRedisClient();
-    if (!client) {return false;}
+    if (!client) {
+        return false;
+    }
 
     try {
         await client.del(key);
@@ -106,11 +114,15 @@ export async function cacheDel(key: string): Promise<boolean> {
  */
 export async function cacheInvalidatePattern(pattern: string): Promise<number> {
     const client = getRedisClient();
-    if (!client) {return 0;}
+    if (!client) {
+        return 0;
+    }
 
     try {
         const keys = await client.keys(pattern);
-        if (keys.length === 0) {return 0;}
+        if (keys.length === 0) {
+            return 0;
+        }
 
         await client.del(keys);
         logger.debug('Cache pattern invalidated', { pattern, count: keys.length });

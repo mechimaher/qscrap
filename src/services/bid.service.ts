@@ -1,6 +1,6 @@
 /**
  * Bid Service
- * 
+ *
  * Centralized business logic for bidding operations.
  * Extracted from bid.controller.ts
  */
@@ -53,9 +53,13 @@ export const validateBidAmount = (amount: unknown): { valid: boolean; value: num
 };
 
 export const validateWarrantyDays = (days: unknown): number | null => {
-    if (days === undefined || days === null || days === '') { return null; }
+    if (days === undefined || days === null || days === '') {
+        return null;
+    }
     const numDays = parseInt(String(days), 10);
-    if (isNaN(numDays) || numDays < 0 || numDays > 365) { return null; }
+    if (isNaN(numDays) || numDays < 0 || numDays > 365) {
+        return null;
+    }
     return numDays;
 };
 
@@ -94,24 +98,30 @@ export async function submitBid(params: SubmitBidParams): Promise<BidResult> {
         throw new Error(`Part condition is required. Must be one of: ${VALID_PART_CONDITIONS.join(', ')}`);
     }
 
-    const imageUrls = files ? files.map(f => `/${f.path.replace(/\\/g, '/')}`) : [];
+    const imageUrls = files ? files.map((f) => `/${f.path.replace(/\\/g, '/')}`) : [];
 
     const client = await pool.connect();
     try {
         await client.query('BEGIN');
 
         // 2. Check Request Validity
-        const reqCheck = await client.query('SELECT status, customer_id FROM part_requests WHERE request_id = $1', [requestId]);
-        if (reqCheck.rows.length === 0) { throw new Error('Request not found'); }
-        if (reqCheck.rows[0].status !== 'active') { throw new Error('Request is no longer active'); }
+        const reqCheck = await client.query('SELECT status, customer_id FROM part_requests WHERE request_id = $1', [
+            requestId
+        ]);
+        if (reqCheck.rows.length === 0) {
+            throw new Error('Request not found');
+        }
+        if (reqCheck.rows[0].status !== 'active') {
+            throw new Error('Request is no longer active');
+        }
 
         const customerId = reqCheck.rows[0].customer_id;
 
         // 3. Check Duplicate Bid
-        const existingBid = await client.query(
-            'SELECT bid_id FROM bids WHERE request_id = $1 AND garage_id = $2',
-            [requestId, garageId]
-        );
+        const existingBid = await client.query('SELECT bid_id FROM bids WHERE request_id = $1 AND garage_id = $2', [
+            requestId,
+            garageId
+        ]);
         if (existingBid.rows.length > 0) {
             throw new Error('You have already submitted a bid for this request');
         }
@@ -139,33 +149,45 @@ export async function submitBid(params: SubmitBidParams): Promise<BidResult> {
        (request_id, garage_id, bid_amount, warranty_days, notes, part_condition, brand_name, part_number, image_urls)
        VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9)
        RETURNING bid_id, created_at`,
-            [requestId, garageId, amountCheck.value, validatedWarranty, notes, partCondition, brandName, partNumber, imageUrls]
+            [
+                requestId,
+                garageId,
+                amountCheck.value,
+                validatedWarranty,
+                notes,
+                partCondition,
+                brandName,
+                partNumber,
+                imageUrls
+            ]
         );
 
         // 6. Update Request Count
-        await client.query(
-            `UPDATE part_requests SET bid_count = bid_count + 1 WHERE request_id = $1`,
-            [requestId]
-        );
+        await client.query(`UPDATE part_requests SET bid_count = bid_count + 1 WHERE request_id = $1`, [requestId]);
 
         // Get bid number for anon display
-        const bidCountResult = await client.query(
-            'SELECT COUNT(*) FROM bids WHERE request_id = $1',
-            [requestId]
-        );
+        const bidCountResult = await client.query('SELECT COUNT(*) FROM bids WHERE request_id = $1', [requestId]);
         const bidNumber = parseInt(bidCountResult.rows[0].count);
 
         await client.query('COMMIT');
 
         // 7. Notifications
         const bid = bidResult.rows[0];
-        notifyBidSubmission(customerId, requestId, bid.bid_id, bidNumber, amountCheck.value, partCondition, validatedWarranty || 0, bid.created_at);
+        notifyBidSubmission(
+            customerId,
+            requestId,
+            bid.bid_id,
+            bidNumber,
+            amountCheck.value,
+            partCondition,
+            validatedWarranty || 0,
+            bid.created_at
+        );
 
         return {
             bid,
             message: 'Bid submitted successfully'
         };
-
     } catch (err) {
         await client.query('ROLLBACK');
 
@@ -174,7 +196,9 @@ export async function submitBid(params: SubmitBidParams): Promise<BidResult> {
             for (const file of files) {
                 try {
                     await fs.unlink(file.path);
-                } catch (e) { logger.error('File cleanup failed', { error: e }); }
+                } catch (e) {
+                    logger.error('File cleanup failed', { error: e });
+                }
             }
         }
 
@@ -184,7 +208,16 @@ export async function submitBid(params: SubmitBidParams): Promise<BidResult> {
     }
 }
 
-async function notifyBidSubmission(customerId: string, requestId: string, bidId: string, bidNumber: number, amount: number, condition: string, warranty: number, createdAt: Date) {
+async function notifyBidSubmission(
+    customerId: string,
+    requestId: string,
+    bidId: string,
+    bidNumber: number,
+    amount: number,
+    condition: string,
+    warranty: number,
+    createdAt: Date
+) {
     try {
         // Send push notification
         const { pushService } = await import('./push.service');
@@ -196,28 +229,30 @@ async function notifyBidSubmission(customerId: string, requestId: string, bidId:
                 type: 'new_bid',
                 requestId,
                 bidId,
-                bidAmount: amount,
+                bidAmount: amount
             },
             { channelId: 'bids', sound: true }
         );
 
         // Send in-app notification
-        await import('../services/notification.service').then(ns => ns.createNotification({
-            userId: customerId,
-            type: 'new_bid',
-            title: 'New Bid Received 🏷️',
-            message: `Garage #${bidNumber} placed a bid of ${amount} QAR`,
-            data: {
-                bid_id: bidId,
-                request_id: requestId,
-                garage_name: `Garage #${bidNumber}`,
-                bid_amount: amount,
-                part_condition: condition,
-                warranty_days: warranty,
-                created_at: createdAt
-            },
-            target_role: 'customer'
-        }));
+        await import('../services/notification.service').then((ns) =>
+            ns.createNotification({
+                userId: customerId,
+                type: 'new_bid',
+                title: 'New Bid Received 🏷️',
+                message: `Garage #${bidNumber} placed a bid of ${amount} QAR`,
+                data: {
+                    bid_id: bidId,
+                    request_id: requestId,
+                    garage_name: `Garage #${bidNumber}`,
+                    bid_amount: amount,
+                    part_condition: condition,
+                    warranty_days: warranty,
+                    created_at: createdAt
+                },
+                target_role: 'customer'
+            })
+        );
 
         // Send WebSocket notification
         emitToUser(customerId, 'new_bid', {

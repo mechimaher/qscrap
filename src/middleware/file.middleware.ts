@@ -29,11 +29,13 @@ export const upload = multer({
 // 3. Image Optimization Middleware
 // This runs AFTER upload.single() / upload.array() and compresses the image
 export const optimizeImage = async (req: Request, res: Response, next: NextFunction) => {
-    if (!req.file) {return next();}
+    if (!req.file) {
+        return next();
+    }
 
     try {
-        const uniqueSuffix = `${Date.now()  }-${  Math.round(Math.random() * 1E9)}`;
-        const filename = `${uniqueSuffix  }.webp`; // Force WebP extension
+        const uniqueSuffix = `${Date.now()}-${Math.round(Math.random() * 1e9)}`;
+        const filename = `${uniqueSuffix}.webp`; // Force WebP extension
         const filepath = path.join(uploadDir, filename);
 
         // Process with sharp
@@ -67,7 +69,9 @@ export const optimizeImage = async (req: Request, res: Response, next: NextFunct
 
 // 4. Multiple Image Optimization (for arrays OR fields object)
 export const optimizeFiles = async (req: Request, res: Response, next: NextFunction) => {
-    if (!req.files) {return next();}
+    if (!req.files) {
+        return next();
+    }
 
     // Handle both upload.array() (returns File[]) and upload.fields() (returns { fieldName: File[] })
     let allFiles: Express.Multer.File[] = [];
@@ -83,12 +87,14 @@ export const optimizeFiles = async (req: Request, res: Response, next: NextFunct
         }
     }
 
-    if (allFiles.length === 0) {return next();}
+    if (allFiles.length === 0) {
+        return next();
+    }
 
     try {
         const promises = allFiles.map(async (file) => {
-            const uniqueSuffix = `${Date.now()  }-${  Math.round(Math.random() * 1E9)}`;
-            const filename = `${uniqueSuffix  }.webp`;
+            const uniqueSuffix = `${Date.now()}-${Math.round(Math.random() * 1e9)}`;
+            const filename = `${uniqueSuffix}.webp`;
             const filepath = path.join(uploadDir, filename);
 
             await sharp(file.buffer)
@@ -120,10 +126,12 @@ export const optimizeFiles = async (req: Request, res: Response, next: NextFunct
 
 // 5. Save Temp File (for OCR where we need high res)
 export const saveTempFile = async (req: Request, res: Response, next: NextFunction) => {
-    if (!req.file) {return next();}
+    if (!req.file) {
+        return next();
+    }
 
     try {
-        const uniqueSuffix = `${Date.now()  }-${  Math.round(Math.random() * 1E9)}`;
+        const uniqueSuffix = `${Date.now()}-${Math.round(Math.random() * 1e9)}`;
         const filename = uniqueSuffix + path.extname(req.file.originalname);
         const filepath = path.join(uploadDir, filename);
 

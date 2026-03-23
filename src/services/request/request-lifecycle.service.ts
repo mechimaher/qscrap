@@ -7,7 +7,7 @@ import { createNotification } from '../notification.service';
 import { getIO } from '../../utils/socketIO';
 
 export class RequestLifecycleService {
-    constructor(private pool: Pool) { }
+    constructor(private pool: Pool) {}
 
     /**
      * Cancel an active request
@@ -57,21 +57,19 @@ export class RequestLifecycleService {
             const request = requestResult.rows[0];
 
             // Check if any orders exist for this request
-            const orderCheck = await client.query(
-                'SELECT order_id FROM orders WHERE request_id = $1 LIMIT 1',
-                [requestId]
-            );
+            const orderCheck = await client.query('SELECT order_id FROM orders WHERE request_id = $1 LIMIT 1', [
+                requestId
+            ]);
 
             if (orderCheck.rows.length > 0) {
                 throw new Error('Cannot delete request with existing orders');
             }
 
             // Get garage IDs for notification before deletion
-            const bidsResult = await client.query(
-                'SELECT DISTINCT garage_id FROM bids WHERE request_id = $1',
-                [requestId]
-            );
-            const garageIds = bidsResult.rows.map(r => r.garage_id);
+            const bidsResult = await client.query('SELECT DISTINCT garage_id FROM bids WHERE request_id = $1', [
+                requestId
+            ]);
+            const garageIds = bidsResult.rows.map((r) => r.garage_id);
 
             // Delete counter-offers first (foreign key constraint)
             await client.query('DELETE FROM counter_offers WHERE request_id = $1', [requestId]);

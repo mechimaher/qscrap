@@ -28,7 +28,7 @@ export function useStripeCheckout({
     partDescription,
     navigation,
     t,
-    toast,
+    toast
 }: StripeCheckoutParams) {
     const { confirmPayment, confirmPlatformPayPayment, isPlatformPaySupported } = useStripe();
     const [isLoading, setIsLoading] = useState(false);
@@ -62,44 +62,46 @@ export function useStripeCheckout({
             }
         };
         checkPlatformPay();
-        return () => { isMounted = false; };
+        return () => {
+            isMounted = false;
+        };
     }, [isPlatformPaySupported]);
 
     const navigateToOrder = useCallback(() => {
         if (orderId) {
             navigation.reset({
                 index: 1,
-                routes: [
-                    { name: 'Main' },
-                    { name: 'Tracking', params: { orderId, orderNumber: '' } },
-                ],
+                routes: [{ name: 'Main' }, { name: 'Tracking', params: { orderId, orderNumber: '' } }]
             });
         } else {
             navigation.reset({
                 index: 0,
-                routes: [{ name: 'Main', params: { screen: 'Orders' } }],
+                routes: [{ name: 'Main', params: { screen: 'Orders' } }]
             });
         }
     }, [navigation, orderId]);
 
-    const handlePaymentSuccess = useCallback(async (paymentIntentId?: string) => {
-        try {
-            if (paymentIntentId) {
-                await api.confirmDeliveryFeePayment(paymentIntentId);
+    const handlePaymentSuccess = useCallback(
+        async (paymentIntentId?: string) => {
+            try {
+                if (paymentIntentId) {
+                    await api.confirmDeliveryFeePayment(paymentIntentId);
+                }
+            } catch (confirmError: any) {
+                // Continue anyway - Stripe webhook will handle as fallback
+                warn('Post-payment confirm failed', confirmError);
             }
-        } catch (confirmError: any) {
-            // Continue anyway - Stripe webhook will handle as fallback
-            warn('Post-payment confirm failed', confirmError);
-        }
 
-        Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success);
-        toast.show({
-            type: 'success',
-            title: t('payment.paymentSuccessTitle'),
-            message: t('payment.paymentSuccessMsg'),
-        });
-        setTimeout(navigateToOrder, 500);
-    }, [navigateToOrder, t, toast]);
+            Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success);
+            toast.show({
+                type: 'success',
+                title: t('payment.paymentSuccessTitle'),
+                message: t('payment.paymentSuccessMsg')
+            });
+            setTimeout(navigateToOrder, 500);
+        },
+        [navigateToOrder, t, toast]
+    );
 
     const handlePayment = useCallback(async () => {
         if (!clientSecret || !cardComplete) {
@@ -112,7 +114,7 @@ export function useStripeCheckout({
 
         try {
             const { error, paymentIntent } = await confirmPayment(clientSecret, {
-                paymentMethodType: 'Card',
+                paymentMethodType: 'Card'
             });
 
             if (error) {
@@ -132,12 +134,13 @@ export function useStripeCheckout({
                 toast.show({
                     type: 'info',
                     title: t('payment.paymentProcessing'),
-                    message: t('payment.paymentProcessingMsg') + (paymentIntent?.status ? ` (${paymentIntent.status})` : ''),
+                    message:
+                        t('payment.paymentProcessingMsg') + (paymentIntent?.status ? ` (${paymentIntent.status})` : '')
                 });
                 setTimeout(() => {
                     navigation.reset({
                         index: 0,
-                        routes: [{ name: 'Main' }],
+                        routes: [{ name: 'Main' }]
                     });
                 }, 1000);
             }
@@ -161,16 +164,24 @@ export function useStripeCheckout({
                     merchantCountryCode: 'QA',
                     currencyCode: 'QAR',
                     cartItems: [
-                        { label: garageName || 'QScrap', amount: payNowAmount.toFixed(2), paymentType: PlatformPay.PaymentType.Immediate },
-                        { label: partDescription || t('common.part'), amount: '0.00', paymentType: PlatformPay.PaymentType.Immediate },
-                    ],
+                        {
+                            label: garageName || 'QScrap',
+                            amount: payNowAmount.toFixed(2),
+                            paymentType: PlatformPay.PaymentType.Immediate
+                        },
+                        {
+                            label: partDescription || t('common.part'),
+                            amount: '0.00',
+                            paymentType: PlatformPay.PaymentType.Immediate
+                        }
+                    ]
                 },
                 googlePay: {
                     testEnv: __DEV__,
                     merchantCountryCode: 'QA',
                     currencyCode: 'QAR',
-                    merchantName: KEYS.GOOGLE_PAY_MERCHANT_NAME || 'QScrap',
-                },
+                    merchantName: KEYS.GOOGLE_PAY_MERCHANT_NAME || 'QScrap'
+                }
             });
 
             if (error) {
@@ -189,12 +200,13 @@ export function useStripeCheckout({
                 toast.show({
                     type: 'info',
                     title: t('payment.paymentProcessing'),
-                    message: t('payment.paymentProcessingMsg') + (paymentIntent?.status ? ` (${paymentIntent.status})` : ''),
+                    message:
+                        t('payment.paymentProcessingMsg') + (paymentIntent?.status ? ` (${paymentIntent.status})` : '')
                 });
                 setTimeout(() => {
                     navigation.reset({
                         index: 0,
-                        routes: [{ name: 'Main' }],
+                        routes: [{ name: 'Main' }]
                     });
                 }, 1000);
             }
@@ -203,42 +215,52 @@ export function useStripeCheckout({
         } finally {
             setIsLoading(false);
         }
-    }, [clientSecret, confirmPlatformPayPayment, garageName, payNowAmount, partDescription, t, toast, handlePaymentSuccess, navigation]);
+    }, [
+        clientSecret,
+        confirmPlatformPayPayment,
+        garageName,
+        payNowAmount,
+        partDescription,
+        t,
+        toast,
+        handlePaymentSuccess,
+        navigation
+    ]);
 
-    const handleFreeOrder = useCallback(async (calculateDiscount: any) => {
-        if (!orderId) {
-            toast.error(t('common.error'), t('payment.orderNotFound'));
-            return;
-        }
+    const handleFreeOrder = useCallback(
+        async (calculateDiscount: any) => {
+            if (!orderId) {
+                toast.error(t('common.error'), t('payment.orderNotFound'));
+                return;
+            }
 
-        setIsLoading(true);
-        Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success);
+            setIsLoading(true);
+            Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success);
 
-        try {
-            const { discountOnTotal } = calculateDiscount;
-            await api.confirmFreeOrder(orderId, discountOnTotal);
+            try {
+                const { discountOnTotal } = calculateDiscount;
+                await api.confirmFreeOrder(orderId, discountOnTotal);
 
-            toast.show({
-                type: 'success',
-                title: t('payment.freeOrderTitle'),
-                message: t('payment.freeOrderMsg'),
-            });
-
-            setTimeout(() => {
-                navigation.reset({
-                    index: 1,
-                    routes: [
-                        { name: 'Main' },
-                        { name: 'Tracking', params: { orderId, orderNumber: '' } },
-                    ],
+                toast.show({
+                    type: 'success',
+                    title: t('payment.freeOrderTitle'),
+                    message: t('payment.freeOrderMsg')
                 });
-            }, 1000);
-        } catch (error: any) {
-            handleApiError(error, toast);
-        } finally {
-            setIsLoading(false);
-        }
-    }, [orderId, navigation, toast, t]);
+
+                setTimeout(() => {
+                    navigation.reset({
+                        index: 1,
+                        routes: [{ name: 'Main' }, { name: 'Tracking', params: { orderId, orderNumber: '' } }]
+                    });
+                }, 1000);
+            } catch (error: any) {
+                handleApiError(error, toast);
+            } finally {
+                setIsLoading(false);
+            }
+        },
+        [orderId, navigation, toast, t]
+    );
 
     return {
         isLoading,
@@ -247,6 +269,6 @@ export function useStripeCheckout({
         handlePlatformPay,
         handleFreeOrder,
         platformPayReady,
-        platformPayLabel,
+        platformPayLabel
     };
 }

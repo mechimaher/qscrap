@@ -1,12 +1,12 @@
 /**
  * QScrap Biometric Authentication Component
  * Provides Face ID / Touch ID / Fingerprint authentication
- * 
+ *
  * INSTALLATION REQUIRED (run this first):
  * npx expo install expo-local-authentication
- * 
+ *
  * Until installed, this component will show a prompt to install.
- * 
+ *
  * @example
  * <BiometricLogin onSuccess={() => navigation.navigate('Main')} />
  */
@@ -34,10 +34,7 @@ interface BiometricLoginProps {
     onFail?: () => void;
 }
 
-export const BiometricLogin: React.FC<BiometricLoginProps> = ({
-    onSuccess,
-    onFail,
-}) => {
+export const BiometricLogin: React.FC<BiometricLoginProps> = ({ onSuccess, onFail }) => {
     const { t, isRTL } = useTranslation();
     const { login } = useAuth();
     const [hasHardware, setHasHardware] = useState(false);
@@ -65,7 +62,7 @@ export const BiometricLogin: React.FC<BiometricLoginProps> = ({
 
             // Get supported biometric types
             const supportedTypes = await LocalAuthentication.supportedAuthenticationTypesAsync();
-            
+
             if (supportedTypes.includes(LocalAuthentication.AuthenticationType.FACIAL_RECOGNITION)) {
                 setBiometricType(Platform.OS === 'ios' ? 'Face ID' : 'Face Unlock');
             } else if (supportedTypes.includes(LocalAuthentication.AuthenticationType.FINGERPRINT)) {
@@ -89,8 +86,9 @@ export const BiometricLogin: React.FC<BiometricLoginProps> = ({
                     { text: t('common.cancel'), style: 'cancel' },
                     {
                         text: 'Install',
-                        onPress: () => Linking.openURL('https://docs.expo.dev/versions/latest/sdk/local-authentication/'),
-                    },
+                        onPress: () =>
+                            Linking.openURL('https://docs.expo.dev/versions/latest/sdk/local-authentication/')
+                    }
                 ]
             );
             onFail?.();
@@ -98,11 +96,7 @@ export const BiometricLogin: React.FC<BiometricLoginProps> = ({
         }
 
         if (!hasHardware || !isEnrolled) {
-            Alert.alert(
-                t('common.error'),
-                t('auth.biometricNotAvailable'),
-                [{ text: t('common.ok') }]
-            );
+            Alert.alert(t('common.error'), t('auth.biometricNotAvailable'), [{ text: t('common.ok') }]);
             onFail?.();
             return;
         }
@@ -116,15 +110,15 @@ export const BiometricLogin: React.FC<BiometricLoginProps> = ({
                 promptMessage: t('auth.biometricPrompt'),
                 fallbackLabel: t('auth.usePasscode'),
                 cancelLabel: t('common.cancel'),
-                disableDeviceFallback: false, // Allow PIN/pattern fallback
+                disableDeviceFallback: false // Allow PIN/pattern fallback
             });
 
             if (result.success) {
                 Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success);
-                
+
                 // Retrieve stored credentials and auto-login
                 const credentials = await api.getBiometricCredentials();
-                
+
                 if (credentials?.phone && credentials?.password) {
                     // Auto-login with stored credentials
                     const loginResult = await login(credentials.phone, credentials.password);
@@ -143,17 +137,13 @@ export const BiometricLogin: React.FC<BiometricLoginProps> = ({
                     }
                 } else {
                     // No credentials stored - provide helpful message
-                    const missingInfo = !credentials 
+                    const missingInfo = !credentials
                         ? 'Biometric login was not set up. Please login with your password first.'
-                        : !credentials.phone 
-                            ? 'Phone number not saved. Please login manually.'
-                            : 'Password not saved. Please login manually.';
-                    
-                    Alert.alert(
-                        t('common.error'),
-                        missingInfo,
-                        [{ text: t('common.ok') }]
-                    );
+                        : !credentials.phone
+                          ? 'Phone number not saved. Please login manually.'
+                          : 'Password not saved. Please login manually.';
+
+                    Alert.alert(t('common.error'), missingInfo, [{ text: t('common.ok') }]);
                     onFail?.();
                 }
             } else {
@@ -163,7 +153,7 @@ export const BiometricLogin: React.FC<BiometricLoginProps> = ({
         } catch (error: any) {
             Haptics.notificationAsync(Haptics.NotificationFeedbackType.Error);
             console.error('[BiometricLogin] Auth error:', error);
-            
+
             // Don't show error for user cancellation
             if (error.code !== 'ESystem' || error.message !== 'User cancel') {
                 Alert.alert(t('common.error'), t('auth.biometricFailed'));
@@ -196,9 +186,7 @@ export const BiometricLogin: React.FC<BiometricLoginProps> = ({
                 />
             </View>
             <View style={styles.textContainer}>
-                <Text style={[styles.title, { color: Colors.primary }]}>
-                    {t('auth.quickLogin')}
-                </Text>
+                <Text style={[styles.title, { color: Colors.primary }]}>{t('auth.quickLogin')}</Text>
                 <Text style={[styles.subtitle, { color: '#666' }]}>
                     {biometricType ? t('auth.biometricLogin', { type: biometricType }) : ''}
                 </Text>
@@ -226,7 +214,7 @@ const styles = StyleSheet.create({
         padding: Spacing.md,
         ...Shadows.md,
         borderWidth: 1,
-        borderColor: Colors.primary + '30',
+        borderColor: Colors.primary + '30'
     },
     iconContainer: {
         width: 56,
@@ -234,22 +222,22 @@ const styles = StyleSheet.create({
         borderRadius: BorderRadius.lg,
         justifyContent: 'center',
         alignItems: 'center',
-        marginRight: Spacing.md,
+        marginRight: Spacing.md
     },
     textContainer: {
-        flex: 1,
+        flex: 1
     },
     title: {
         fontSize: FontSizes.lg,
-        fontWeight: '700',
+        fontWeight: '700'
     },
     subtitle: {
         fontSize: FontSizes.sm,
-        marginTop: 2,
+        marginTop: 2
     },
     loadingIndicator: {
-        padding: Spacing.sm,
-    },
+        padding: Spacing.sm
+    }
 });
 
 export default BiometricLogin;

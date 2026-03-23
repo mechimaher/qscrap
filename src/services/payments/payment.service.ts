@@ -102,7 +102,15 @@ export class PaymentService {
 
             // 8. Log audit: completed or failed
             const auditAction: TransactionAction = providerResponse.success ? 'completed' : 'failed';
-            await this.createAuditLog(client, transaction.transaction_id, auditAction, ipAddress, userAgent, null, providerResponse);
+            await this.createAuditLog(
+                client,
+                transaction.transaction_id,
+                auditAction,
+                ipAddress,
+                userAgent,
+                null,
+                providerResponse
+            );
 
             // 9. Store in idempotency cache
             const result: PaymentResult = {
@@ -125,7 +133,6 @@ export class PaymentService {
             logger.info('Payment transaction completed', { transactionId: transaction.transaction_id, processingTime });
 
             return result;
-
         } catch (error: any) {
             await client.query('ROLLBACK');
             logger.error('Payment transaction failed', { error });
@@ -145,10 +152,9 @@ export class PaymentService {
             await client.query('BEGIN');
 
             // 1. Fetch transaction
-            const txResult = await client.query(
-                'SELECT * FROM payment_transactions WHERE transaction_id = $1',
-                [transactionId]
-            );
+            const txResult = await client.query('SELECT * FROM payment_transactions WHERE transaction_id = $1', [
+                transactionId
+            ]);
 
             if (txResult.rows.length === 0) {
                 throw new Error('Transaction not found');
@@ -162,7 +168,7 @@ export class PaymentService {
             }
 
             const refundAmount = amount || transaction.amount;
-            if (refundAmount > (transaction.amount - transaction.refund_amount)) {
+            if (refundAmount > transaction.amount - transaction.refund_amount) {
                 throw new Error('Refund amount exceeds available balance');
             }
 
@@ -174,7 +180,8 @@ export class PaymentService {
             });
 
             // 4. Update transaction
-            await client.query(`
+            await client.query(
+                `
                 UPDATE payment_transactions
                 SET 
                     status = CASE WHEN (refund_amount + $1) >= amount THEN 'refunded' ELSE status END,
@@ -182,7 +189,9 @@ export class PaymentService {
                     refund_reason = $2,
                     refunded_at = CURRENT_TIMESTAMP
                 WHERE transaction_id = $3
-            `, [refundAmount, reason, transactionId]);
+            `,
+                [refundAmount, reason, transactionId]
+            );
 
             // 5. Audit log
             await this.createAuditLog(client, transactionId, 'refunded', null, null, { amount: refundAmount, reason });
@@ -190,7 +199,6 @@ export class PaymentService {
             await client.query('COMMIT');
 
             return refundResult;
-
         } catch (error: any) {
             await client.query('ROLLBACK');
             throw error;
@@ -203,10 +211,9 @@ export class PaymentService {
      * Get transaction details
      */
     async getTransaction(transactionId: string): Promise<PaymentTransaction | null> {
-        const result = await pool.query(
-            'SELECT * FROM payment_transactions WHERE transaction_id = $1',
-            [transactionId]
-        );
+        const result = await pool.query('SELECT * FROM payment_transactions WHERE transaction_id = $1', [
+            transactionId
+        ]);
         return result.rows[0] || null;
     }
 
@@ -214,12 +221,15 @@ export class PaymentService {
      * Get user's payment history
      */
     async getUserPayments(userId: string, limit: number = 50): Promise<PaymentTransaction[]> {
-        const result = await pool.query(`
+        const result = await pool.query(
+            `
             SELECT * FROM payment_transactions
             WHERE user_id = $1
             ORDER BY created_at DESC
             LIMIT $2
-        `, [userId, limit]);
+        `,
+            [userId, limit]
+        );
         return result.rows;
     }
 
@@ -228,7 +238,8 @@ export class PaymentService {
     // ========================================================================
 
     private generateIdempotencyKey(data: ProcessPaymentDTO): string {
-        const hash = crypto.createHash('sha256')
+        const hash = crypto
+            .createHash('sha256')
             .update(`${data.orderId}-${data.userId}-${data.amount}-${Date.now()}`)
             .digest('hex');
         return `idem_${hash.substring(0, 32)}`;
@@ -263,38 +274,46 @@ export class PaymentService {
         }
     }
 
-    private async createTransaction(client: any, data: ProcessPaymentDTO, idempotencyKey: string): Promise<PaymentTransaction> {
+    private async createTransaction(
+        client: any,
+        data: ProcessPaymentDTO,
+        idempotencyKey: string
+    ): Promise<PaymentTransaction> {
         const cardLast4 = data.paymentMethod.cardNumber?.slice(-4);
         const cardBrand = this.detectCardBrand(data.paymentMethod.cardNumber);
         const [expiryMonth, expiryYear] = this.parseExpiry(data.paymentMethod.cardExpiry);
 
-        const result = await client.query(`
+        const result = await client.query(
+            `
             INSERT INTO payment_transactions (
                 order_id, user_id, amount, currency, payment_method,
                 card_last4, card_brand, card_expiry_month, card_expiry_year,
                 idempotency_key, metadata, status
             ) VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12)
             RETURNING *
-        `, [
-            data.orderId,
-            data.userId,
-            data.amount,
-            'QAR',
-            data.paymentMethod.type,
-            cardLast4,
-            cardBrand,
-            expiryMonth,
-            expiryYear,
-            idempotencyKey,
-            JSON.stringify(data.metadata || {}),
-            'pending'
-        ]);
+        `,
+            [
+                data.orderId,
+                data.userId,
+                data.amount,
+                'QAR',
+                data.paymentMethod.type,
+                cardLast4,
+                cardBrand,
+                expiryMonth,
+                expiryYear,
+                idempotencyKey,
+                JSON.stringify(data.metadata || {}),
+                'pending'
+            ]
+        );
 
         return result.rows[0];
     }
 
     private async updateTransaction(client: any, transactionId: string, response: PaymentResponse): Promise<void> {
-        await client.query(`
+        await client.query(
+            `
             UPDATE payment_transactions
             SET 
                 status = $1,
@@ -305,22 +324,33 @@ export class PaymentService {
                 failure_reason = $4,
                 error_code = $5
             WHERE transaction_id = $6
-        `, [
-            response.status,
-            response.providerTransactionId,
-            JSON.stringify(response),
-            response.message,
-            response.errorCode,
-            transactionId
-        ]);
+        `,
+            [
+                response.status,
+                response.providerTransactionId,
+                JSON.stringify(response),
+                response.message,
+                response.errorCode,
+                transactionId
+            ]
+        );
     }
 
-    private async storeIdempotency(client: any, key: string, transactionId: string, response: PaymentResult, userId: string): Promise<void> {
-        await client.query(`
+    private async storeIdempotency(
+        client: any,
+        key: string,
+        transactionId: string,
+        response: PaymentResult,
+        userId: string
+    ): Promise<void> {
+        await client.query(
+            `
             INSERT INTO idempotency_keys (key, transaction_id, response, user_id)
             VALUES ($1, $2, $3, $4)
             ON CONFLICT (key) DO NOTHING
-        `, [key, transactionId, JSON.stringify(response), userId]);
+        `,
+            [key, transactionId, JSON.stringify(response), userId]
+        );
     }
 
     private async createAuditLog(
@@ -332,40 +362,58 @@ export class PaymentService {
         requestData?: any,
         responseData?: any
     ): Promise<void> {
-        await client.query(`
+        await client.query(
+            `
             INSERT INTO payment_audit_logs (
                 transaction_id, action, ip_address, user_agent, request_data, response_data
             ) VALUES ($1, $2, $3, $4, $5, $6)
-        `, [
-            transactionId,
-            action,
-            ipAddress,
-            userAgent,
-            requestData ? JSON.stringify(requestData) : null,
-            responseData ? JSON.stringify(responseData) : null
-        ]);
+        `,
+            [
+                transactionId,
+                action,
+                ipAddress,
+                userAgent,
+                requestData ? JSON.stringify(requestData) : null,
+                responseData ? JSON.stringify(responseData) : null
+            ]
+        );
     }
 
     private async markOrderAsPaid(client: any, orderId: string): Promise<void> {
-        await client.query(`
+        await client.query(
+            `
             UPDATE orders
             SET payment_status = 'paid', updated_at = CURRENT_TIMESTAMP
             WHERE order_id = $1
-        `, [orderId]);
+        `,
+            [orderId]
+        );
     }
 
     private detectCardBrand(cardNumber?: string): string | null {
-        if (!cardNumber) {return null;}
+        if (!cardNumber) {
+            return null;
+        }
         const cleaned = cardNumber.replace(/\D/g, '');
-        if (/^4/.test(cleaned)) {return 'visa';}
-        if (/^5[1-5]/.test(cleaned)) {return 'mastercard';}
-        if (/^3[47]/.test(cleaned)) {return 'amex';}
-        if (/^6(?:011|5)/.test(cleaned)) {return 'discover';}
+        if (/^4/.test(cleaned)) {
+            return 'visa';
+        }
+        if (/^5[1-5]/.test(cleaned)) {
+            return 'mastercard';
+        }
+        if (/^3[47]/.test(cleaned)) {
+            return 'amex';
+        }
+        if (/^6(?:011|5)/.test(cleaned)) {
+            return 'discover';
+        }
         return null;
     }
 
     private parseExpiry(expiry?: string): [number | null, number | null] {
-        if (!expiry) {return [null, null];}
+        if (!expiry) {
+            return [null, null];
+        }
         const [month, year] = expiry.split('/').map(Number);
         return [month || null, year ? 2000 + year : null];
     }

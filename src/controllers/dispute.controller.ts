@@ -87,8 +87,7 @@ const toOptionalNumber = (value: unknown): number | undefined => {
     return undefined;
 };
 
-const isRecord = (value: unknown): value is JsonRecord =>
-    typeof value === 'object' && value !== null;
+const isRecord = (value: unknown): value is JsonRecord => typeof value === 'object' && value !== null;
 
 const toRecord = (value: unknown): JsonRecord | null => (isRecord(value) ? value : null);
 
@@ -112,11 +111,7 @@ const toCreateDisputeResult = (value: unknown): CreateDisputeResult | null => {
     if (!disputeId || !garageId || !orderNumber || refundAmount === undefined || restockingFee === undefined) {
         return null;
     }
-    if (
-        returnShippingBy !== 'customer' &&
-        returnShippingBy !== 'garage' &&
-        returnShippingBy !== 'platform'
-    ) {
+    if (returnShippingBy !== 'customer' && returnShippingBy !== 'garage' && returnShippingBy !== 'platform') {
         return null;
     }
     if (typeof deliveryRefundRaw !== 'boolean') {
@@ -178,9 +173,7 @@ const getUploadedPhotoUrls = (req: AuthRequest): string[] => {
     }
 
     return filesValue
-        .filter((file): file is Express.Multer.File =>
-            isRecord(file) && typeof file.filename === 'string'
-        )
+        .filter((file): file is Express.Multer.File => isRecord(file) && typeof file.filename === 'string')
         .map((file) => `/uploads/${file.filename}`);
 };
 
@@ -313,11 +306,7 @@ export const garageRespondToDispute = async (req: AuthRequest, res: Response) =>
             return res.status(400).json({ error: 'response_message is required' });
         }
 
-        const resultValue: unknown = await disputeService.garageRespond(
-            disputeId,
-            user.userId,
-            responseMessage
-        );
+        const resultValue: unknown = await disputeService.garageRespond(disputeId, user.userId, responseMessage);
         const result = toGarageRespondResult(resultValue);
         if (!result) {
             return res.status(500).json({ error: 'Failed to process garage response' });
@@ -341,8 +330,8 @@ export const autoResolveDisputes = async () => {
         const resolvedValue: unknown = await disputeService.autoResolveDisputes();
         const resolved = Array.isArray(resolvedValue)
             ? resolvedValue
-                .map((row) => toAutoResolvedDispute(row))
-                .filter((row): row is AutoResolvedDispute => row !== null)
+                  .map((row) => toAutoResolvedDispute(row))
+                  .filter((row): row is AutoResolvedDispute => row !== null)
             : [];
 
         const io = getIO();

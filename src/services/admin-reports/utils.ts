@@ -28,14 +28,18 @@ export const getPeriodDates = (period: string): { start: Date; end: Date } => {
 };
 
 export const formatCSV = (data: Record<string, unknown>[], columns: { key: string; label: string }[]): string => {
-    const header = columns.map(c => c.label).join(',');
-    const rows = data.map(row =>
-        columns.map(c => {
-            const val = row[c.key];
-            if (val === null || val === undefined) {return '';}
-            const str = String(val).replace(/"/g, '""');
-            return str.includes(',') || str.includes('"') ? `"${str}"` : str;
-        }).join(',')
+    const header = columns.map((c) => c.label).join(',');
+    const rows = data.map((row) =>
+        columns
+            .map((c) => {
+                const val = row[c.key];
+                if (val === null || val === undefined) {
+                    return '';
+                }
+                const str = String(val).replace(/"/g, '""');
+                return str.includes(',') || str.includes('"') ? `"${str}"` : str;
+            })
+            .join(',')
     );
     return [header, ...rows].join('\n');
 };

@@ -1,8 +1,28 @@
 import { Router } from 'express';
-import { register, login, refreshToken, logout, deleteAccount, checkDeletionEligibility, registerWithEmail, verifyEmailOTP, resendOTP, changePassword, requestPasswordReset, verifyPasswordResetOTP, resetPassword, resendPasswordResetOTP } from '../controllers/auth.controller';
+import {
+    register,
+    login,
+    refreshToken,
+    logout,
+    deleteAccount,
+    checkDeletionEligibility,
+    registerWithEmail,
+    verifyEmailOTP,
+    resendOTP,
+    changePassword,
+    requestPasswordReset,
+    verifyPasswordResetOTP,
+    resetPassword,
+    resendPasswordResetOTP
+} from '../controllers/auth.controller';
 import { authenticate } from '../middleware/auth.middleware';
 import { loginLimiter, registerLimiter, passwordResetLimiter } from '../middleware/rateLimiter.middleware';
-import { validate, loginSchema, registerCustomerSchema, registerGarageSchema } from '../middleware/validation.middleware';
+import {
+    validate,
+    loginSchema,
+    registerCustomerSchema,
+    registerGarageSchema
+} from '../middleware/validation.middleware';
 
 const router = Router();
 
@@ -28,4 +48,3 @@ router.post('/reset-password', passwordResetLimiter, resetPassword);
 router.post('/resend-password-reset-otp', passwordResetLimiter, resendPasswordResetOTP);
 
 export default router;
-

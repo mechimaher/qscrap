@@ -2,15 +2,7 @@
 // Premium animated carousel showing the 4-step process
 
 import React, { useState, useRef, useEffect } from 'react';
-import {
-    View,
-    Text,
-    StyleSheet,
-    Dimensions,
-    TouchableOpacity,
-    Animated,
-    PanResponder,
-} from 'react-native';
+import { View, Text, StyleSheet, Dimensions, TouchableOpacity, Animated, PanResponder } from 'react-native';
 import { LinearGradient } from 'expo-linear-gradient';
 import * as Haptics from 'expo-haptics';
 import { useIsFocused } from '@react-navigation/native';
@@ -21,7 +13,7 @@ import { useTranslation } from '../contexts/LanguageContext';
 import { rtlFlexDirection, rtlTextAlign } from '../utils/rtl';
 
 const { width } = Dimensions.get('window');
-const SLIDE_WIDTH = width - (Spacing.lg * 2);
+const SLIDE_WIDTH = width - Spacing.lg * 2;
 const AUTO_SWIPE_INTERVAL = 4000; // 4 seconds
 
 interface Step {
@@ -31,8 +23,6 @@ interface Step {
     color: string;
     gradient: string[];
 }
-
-
 
 interface Props {
     onGetStarted?: () => void;
@@ -55,29 +45,29 @@ export default function HowItWorksCarousel({ onGetStarted, autoPlay = true }: Pr
             title: t('home.howItWorksSteps.step1.title'),
             subtitle: t('home.howItWorksSteps.step1.subtitle'),
             color: '#3B82F6',
-            gradient: ['#3B82F6', '#2563EB'],
+            gradient: ['#3B82F6', '#2563EB']
         },
         {
             icon: 'cash-outline' as const,
             title: t('home.howItWorksSteps.step2.title'),
             subtitle: t('home.howItWorksSteps.step2.subtitle'),
             color: '#F59E0B',
-            gradient: ['#F59E0B', '#D97706'],
+            gradient: ['#F59E0B', '#D97706']
         },
         {
             icon: 'checkmark-circle' as const,
             title: t('home.howItWorksSteps.step3.title'),
             subtitle: t('home.howItWorksSteps.step3.subtitle'),
             color: '#22C55E',
-            gradient: ['#22C55E', '#16A34A'],
+            gradient: ['#22C55E', '#16A34A']
         },
         {
             icon: 'car-sport' as const,
             title: t('home.howItWorksSteps.step4.title'),
             subtitle: t('home.howItWorksSteps.step4.subtitle'),
             color: Colors.primary,
-            gradient: [Colors.primary, '#B31D4A'],
-        },
+            gradient: [Colors.primary, '#B31D4A']
+        }
     ];
 
     // Pan responder for swipe gestures
@@ -95,13 +85,13 @@ export default function HowItWorksCarousel({ onGetStarted, autoPlay = true }: Pr
                 Haptics.selectionAsync();
             },
             onPanResponderMove: (_, gestureState) => {
-                // RTL Fix: Invert visual feedback for RTL if needed, 
+                // RTL Fix: Invert visual feedback for RTL if needed,
                 // but usually direct mapping feels most natural (finger follows content).
                 // If we want "pulling" feel, simple dx mapping works.
                 Animated.spring(slideAnim, {
                     toValue: -gestureState.dx / SLIDE_WIDTH,
                     useNativeDriver: true,
-                    friction: 10,
+                    friction: 10
                 }).start();
             },
             onPanResponderRelease: (_, gestureState) => {
@@ -123,12 +113,12 @@ export default function HowItWorksCarousel({ onGetStarted, autoPlay = true }: Pr
                     Animated.spring(slideAnim, {
                         toValue: 0,
                         useNativeDriver: true,
-                        friction: 8,
+                        friction: 8
                     }).start();
                 }
 
                 setIsPaused(false);
-            },
+            }
         })
     ).current;
 
@@ -140,13 +130,13 @@ export default function HowItWorksCarousel({ onGetStarted, autoPlay = true }: Pr
             Animated.spring(slideAnim, {
                 toValue: 0,
                 useNativeDriver: true,
-                friction: 8,
+                friction: 8
             }),
             Animated.spring(scrollX, {
                 toValue: index * SLIDE_WIDTH,
                 useNativeDriver: true,
-                friction: 9,
-            }),
+                friction: 9
+            })
         ]).start();
     };
 
@@ -206,31 +196,24 @@ export default function HowItWorksCarousel({ onGetStarted, autoPlay = true }: Pr
                             {
                                 translateX: slideAnim.interpolate({
                                     inputRange: [-1, 0, 1],
-                                    outputRange: [-SLIDE_WIDTH, 0, SLIDE_WIDTH],
-                                }),
-                            },
-                        ],
-                    },
+                                    outputRange: [-SLIDE_WIDTH, 0, SLIDE_WIDTH]
+                                })
+                            }
+                        ]
+                    }
                 ]}
             >
                 {/* Step indicator dots */}
                 <View style={styles.dotsContainer}>
                     {STEPS.map((_, index) => (
-                        <TouchableOpacity
-                            key={index}
-                            onPress={() => goToSlide(index)}
-                            style={styles.dotWrapper}
-                        >
+                        <TouchableOpacity key={index} onPress={() => goToSlide(index)} style={styles.dotWrapper}>
                             <View
                                 style={[
                                     styles.dot,
                                     {
-                                        backgroundColor:
-                                            index === currentIndex
-                                                ? currentStep.color
-                                                : colors.border,
-                                        width: index === currentIndex ? 24 : 8,
-                                    },
+                                        backgroundColor: index === currentIndex ? currentStep.color : colors.border,
+                                        width: index === currentIndex ? 24 : 8
+                                    }
                                 ]}
                             />
                         </TouchableOpacity>
@@ -243,8 +226,8 @@ export default function HowItWorksCarousel({ onGetStarted, autoPlay = true }: Pr
                         styles.iconContainer,
                         {
                             backgroundColor: currentStep.color + '15',
-                            borderColor: currentStep.color + '30',
-                        },
+                            borderColor: currentStep.color + '30'
+                        }
                     ]}
                 >
                     <Ionicons name={currentStep.icon} size={40} color={currentStep.color} />
@@ -261,19 +244,22 @@ export default function HowItWorksCarousel({ onGetStarted, autoPlay = true }: Pr
                 </Text>
 
                 {/* Subtitle */}
-                <Text style={[styles.subtitle, { color: colors.textSecondary }]}>
-                    {currentStep.subtitle}
-                </Text>
+                <Text style={[styles.subtitle, { color: colors.textSecondary }]}>{currentStep.subtitle}</Text>
 
                 {/* Progress bar */}
-                <View style={[styles.progressBar, { backgroundColor: colors.border, flexDirection: rtlFlexDirection(isRTL) }]}>
+                <View
+                    style={[
+                        styles.progressBar,
+                        { backgroundColor: colors.border, flexDirection: rtlFlexDirection(isRTL) }
+                    ]}
+                >
                     <Animated.View
                         style={[
                             styles.progressFill,
                             {
                                 backgroundColor: currentStep.color,
-                                width: `${((currentIndex + 1) / STEPS.length) * 100}%`,
-                            },
+                                width: `${((currentIndex + 1) / STEPS.length) * 100}%`
+                            }
                         ]}
                     />
                 </View>
@@ -316,29 +302,29 @@ const styles = StyleSheet.create({
         height: 320, // Reduced from 400 for more compact look
         alignSelf: 'center',
         borderRadius: BorderRadius.xl,
-        overflow: 'hidden',
+        overflow: 'hidden'
     },
     backgroundGradient: {
-        ...StyleSheet.absoluteFillObject,
+        ...StyleSheet.absoluteFillObject
     },
     slideContainer: {
         flex: 1,
         alignItems: 'center',
         justifyContent: 'center',
-        paddingHorizontal: Spacing.lg,
+        paddingHorizontal: Spacing.lg
     },
     dotsContainer: {
         flexDirection: 'row',
         position: 'absolute',
         top: Spacing.md,
-        gap: 6,
+        gap: 6
     },
     dotWrapper: {
-        padding: 4,
+        padding: 4
     },
     dot: {
         height: 8,
-        borderRadius: 4,
+        borderRadius: 4
     },
     iconContainer: {
         width: 80, // Reduced from 100
@@ -347,17 +333,17 @@ const styles = StyleSheet.create({
         alignItems: 'center',
         justifyContent: 'center',
         marginBottom: Spacing.md, // Reduced spacing
-        borderWidth: 2,
+        borderWidth: 2
     },
     icon: {
-        fontSize: 40, // Reduced from 48
+        fontSize: 40 // Reduced from 48
     },
     stepNumber: {
         fontSize: FontSizes.xs,
         fontWeight: '800',
         // RTL Fix: Remove letter spacing for Arabic
         letterSpacing: 1.5,
-        marginBottom: Spacing.sm,
+        marginBottom: Spacing.sm
     },
     title: {
         fontSize: FontSizes.xxl,
@@ -365,46 +351,46 @@ const styles = StyleSheet.create({
         textAlign: 'center',
         marginBottom: Spacing.sm,
         // RTL Fix: Remove letter spacing for Arabic to keep letters connected
-        letterSpacing: -0.5,
+        letterSpacing: -0.5
     },
     subtitle: {
         fontSize: FontSizes.md,
         textAlign: 'center',
         lineHeight: 22,
         marginBottom: Spacing.lg,
-        paddingHorizontal: Spacing.md,
+        paddingHorizontal: Spacing.md
     },
     progressBar: {
         width: '60%',
         height: 4,
         borderRadius: 2,
         overflow: 'hidden',
-        marginBottom: Spacing.lg,
+        marginBottom: Spacing.lg
     },
     progressFill: {
         height: '100%',
-        borderRadius: 2,
+        borderRadius: 2
     },
     ctaButton: {
         width: '100%',
         maxWidth: 280,
         marginTop: Spacing.md,
         borderRadius: BorderRadius.lg,
-        overflow: 'hidden',
+        overflow: 'hidden'
     },
     ctaGradient: {
         paddingVertical: Spacing.md,
         paddingHorizontal: Spacing.xl,
-        alignItems: 'center',
+        alignItems: 'center'
     },
     ctaText: {
         color: '#fff',
         fontSize: FontSizes.lg,
-        fontWeight: '700',
+        fontWeight: '700'
     },
     swipeHint: {
         fontSize: FontSizes.xs,
         marginTop: Spacing.md,
-        opacity: 0.6,
-    },
+        opacity: 0.6
+    }
 });

@@ -110,8 +110,7 @@ const toOptionalNumber = (value: unknown): number | undefined => {
     return Number.isFinite(parsed) ? parsed : undefined;
 };
 
-const isRecord = (value: unknown): value is JsonRecord =>
-    typeof value === 'object' && value !== null;
+const isRecord = (value: unknown): value is JsonRecord => typeof value === 'object' && value !== null;
 
 const toRecord = (value: unknown): JsonRecord | null => (isRecord(value) ? value : null);
 
@@ -153,7 +152,7 @@ export const acceptBid = catchAsync(async (req: AuthRequest, res: Response) => {
     const request = requestResult.rows[0];
 
     // Calculate delivery fee (Zone-based: Garage → Customer only, not driver position)
-    let deliveryFee = 10.00; // Zone 1 base fee
+    let deliveryFee = 10.0; // Zone 1 base fee
     let deliveryZoneId: number | null = null;
     let deliveryAddress = '';
 
@@ -162,10 +161,7 @@ export const acceptBid = catchAsync(async (req: AuthRequest, res: Response) => {
         const deliveryLat = toOptionalNumber(request.delivery_lat);
         const deliveryLng = toOptionalNumber(request.delivery_lng);
         if (deliveryLat !== undefined && deliveryLng !== undefined) {
-            const zoneInfo = await getDeliveryFeeForLocation(
-                deliveryLat,
-                deliveryLng
-            );
+            const zoneInfo = await getDeliveryFeeForLocation(deliveryLat, deliveryLng);
             deliveryFee = zoneInfo.fee;
             deliveryZoneId = zoneInfo.zone_id;
         }
@@ -262,19 +258,17 @@ export const updateOrderStatus = async (req: AuthRequest, res: Response) => {
         const notes = toQueryString(body.notes);
 
         // Validate garage-allowed statuses
-        if (!orderStatus || !GARAGE_ALLOWED_STATUSES.includes(orderStatus as (typeof GARAGE_ALLOWED_STATUSES)[number])) {
+        if (
+            !orderStatus ||
+            !GARAGE_ALLOWED_STATUSES.includes(orderStatus as (typeof GARAGE_ALLOWED_STATUSES)[number])
+        ) {
             return res.status(400).json({
                 error: 'Garages can only set status to "preparing" or "ready_for_pickup"',
                 hint: 'Collection and delivery are handled by Operations team'
             });
         }
 
-        const result = await orderLifecycleService.updateOrderStatus(
-            orderId,
-            user.userId,
-            orderStatus,
-            notes
-        );
+        const result = await orderLifecycleService.updateOrderStatus(orderId, user.userId, orderStatus, notes);
 
         res.json({
             message: 'Status updated successfully',
@@ -430,10 +424,9 @@ export const getOrderCount = async (req: AuthRequest, res: Response) => {
     }
 
     try {
-        const result = await pool.query<OrderCountRow>(
-            'SELECT COUNT(*) as total FROM orders WHERE customer_id = $1',
-            [user.userId]
-        );
+        const result = await pool.query<OrderCountRow>('SELECT COUNT(*) as total FROM orders WHERE customer_id = $1', [
+            user.userId
+        ]);
         const total = Number.parseInt(result.rows[0]?.total ?? '0', 10);
         res.json({ total: Number.isFinite(total) ? total : 0 });
     } catch (error) {

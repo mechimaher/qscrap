@@ -57,26 +57,16 @@ export interface HandleApiErrorOptions {
  * @param toast - Toast context (from useToast())
  * @param options - Optional config: customMessage, useAlert, onDismiss
  */
-export const handleApiError = (
-    error: any,
-    toast: ErrorContext,
-    options?: string | HandleApiErrorOptions
-) => {
+export const handleApiError = (error: any, toast: ErrorContext, options?: string | HandleApiErrorOptions) => {
     // Backward compatible: accept string as customMessage
-    const opts: HandleApiErrorOptions = typeof options === 'string'
-        ? { customMessage: options }
-        : (options || {});
+    const opts: HandleApiErrorOptions = typeof options === 'string' ? { customMessage: options } : options || {};
 
     const message = opts.customMessage || extractErrorMessage(error);
     logError('API Error:', error);
     Haptics.notificationAsync(Haptics.NotificationFeedbackType.Error);
 
     if (opts.useAlert) {
-        Alert.alert(
-            t('common.error'),
-            message,
-            [{ text: t('common.ok'), onPress: opts.onDismiss }]
-        );
+        Alert.alert(t('common.error'), message, [{ text: t('common.ok'), onPress: opts.onDismiss }]);
     } else {
         toast.error(t('common.error'), message);
     }

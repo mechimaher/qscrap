@@ -6,13 +6,7 @@ import { log, warn, error as logError } from '../utils/logger';
  */
 
 import React, { Component, ReactNode } from 'react';
-import {
-    View,
-    Text,
-    TouchableOpacity,
-    StyleSheet,
-    ScrollView,
-} from 'react-native';
+import { View, Text, TouchableOpacity, StyleSheet, ScrollView } from 'react-native';
 import { MaterialCommunityIcons } from '@expo/vector-icons';
 import { Colors, Spacing, BorderRadius, FontSize } from '../constants';
 import { useTranslation } from '../contexts/LanguageContext';
@@ -45,11 +39,7 @@ const ErrorFallbackContent: React.FC<{
         >
             <View style={styles.content}>
                 <View style={styles.iconContainer} accessibilityElementsHidden={true}>
-                    <MaterialCommunityIcons
-                        name="alert-circle-outline"
-                        size={64}
-                        color={Colors.primary}
-                    />
+                    <MaterialCommunityIcons name="alert-circle-outline" size={64} color={Colors.primary} />
                 </View>
                 <Text style={styles.title} accessibilityRole="header">
                     {t('errorBoundary.title')}
@@ -71,17 +61,10 @@ const ErrorFallbackContent: React.FC<{
                     accessibilityRole="button"
                     accessibilityLabel={t('errorBoundary.tryAgain')}
                 >
-                    <MaterialCommunityIcons
-                        name="refresh"
-                        size={20}
-                        color="#FFF"
-                        style={styles.retryIcon}
-                    />
+                    <MaterialCommunityIcons name="refresh" size={20} color="#FFF" style={styles.retryIcon} />
                     <Text style={styles.retryText}>{t('errorBoundary.tryAgain')}</Text>
                 </TouchableOpacity>
-                <Text style={styles.helpText}>
-                    {t('screenError.restartHint')}
-                </Text>
+                <Text style={styles.helpText}>{t('screenError.restartHint')}</Text>
             </View>
         </View>
     );
@@ -93,7 +76,7 @@ export class ScreenErrorBoundary extends Component<Props, State> {
         this.state = {
             hasError: false,
             error: null,
-            errorInfo: null,
+            errorInfo: null
         };
     }
 
@@ -113,7 +96,7 @@ export class ScreenErrorBoundary extends Component<Props, State> {
         this.setState({
             hasError: false,
             error: null,
-            errorInfo: null,
+            errorInfo: null
         });
         this.props.onRetry?.();
     };
@@ -123,13 +106,7 @@ export class ScreenErrorBoundary extends Component<Props, State> {
             const { screenName } = this.props;
             const { error } = this.state;
 
-            return (
-                <ErrorFallbackContent
-                    screenName={screenName}
-                    error={error}
-                    onRetry={this.handleRetry}
-                />
-            );
+            return <ErrorFallbackContent screenName={screenName} error={error} onRetry={this.handleRetry} />;
         }
 
         return this.props.children;
@@ -142,11 +119,11 @@ const styles = StyleSheet.create({
         backgroundColor: '#F9FAFB',
         justifyContent: 'center',
         alignItems: 'center',
-        padding: Spacing.xl,
+        padding: Spacing.xl
     },
     content: {
         alignItems: 'center',
-        maxWidth: 320,
+        maxWidth: 320
     },
     iconContainer: {
         width: 100,
@@ -155,21 +132,21 @@ const styles = StyleSheet.create({
         backgroundColor: Colors.primary + '15',
         justifyContent: 'center',
         alignItems: 'center',
-        marginBottom: Spacing.lg,
+        marginBottom: Spacing.lg
     },
     title: {
         fontSize: FontSize.xl,
         fontWeight: '700',
         color: '#1F2937',
         textAlign: 'center',
-        marginBottom: Spacing.sm,
+        marginBottom: Spacing.sm
     },
     subtitle: {
         fontSize: FontSize.md,
         color: '#6B7280',
         textAlign: 'center',
         marginBottom: Spacing.lg,
-        lineHeight: 22,
+        lineHeight: 22
     },
     errorDetails: {
         backgroundColor: '#FEE2E2',
@@ -177,12 +154,12 @@ const styles = StyleSheet.create({
         padding: Spacing.md,
         marginBottom: Spacing.lg,
         maxHeight: 80,
-        width: '100%',
+        width: '100%'
     },
     errorText: {
         fontSize: 11,
         fontFamily: 'monospace',
-        color: '#991B1B',
+        color: '#991B1B'
     },
     retryButton: {
         flexDirection: 'row',
@@ -191,21 +168,21 @@ const styles = StyleSheet.create({
         paddingHorizontal: Spacing.xl,
         paddingVertical: Spacing.md,
         borderRadius: BorderRadius.full,
-        marginBottom: Spacing.lg,
+        marginBottom: Spacing.lg
     },
     retryIcon: {
-        marginRight: Spacing.sm,
+        marginRight: Spacing.sm
     },
     retryText: {
         color: '#FFF',
         fontSize: FontSize.md,
-        fontWeight: '600',
+        fontWeight: '600'
     },
     helpText: {
         fontSize: FontSize.sm,
         color: '#9CA3AF',
-        textAlign: 'center',
-    },
+        textAlign: 'center'
+    }
 });
 
 export default ScreenErrorBoundary;

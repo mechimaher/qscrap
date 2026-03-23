@@ -106,7 +106,9 @@ describe('API Configuration', () => {
 
         it('should generate correct counter-offer URLs', () => {
             expect(API_ENDPOINTS.COUNTER_OFFER(testId)).toBe(`/negotiations/bids/${testId}/counter-offer`);
-            expect(API_ENDPOINTS.RESPOND_TO_COUNTER(testId)).toBe(`/negotiations/counter-offers/${testId}/customer-respond`);
+            expect(API_ENDPOINTS.RESPOND_TO_COUNTER(testId)).toBe(
+                `/negotiations/counter-offers/${testId}/customer-respond`
+            );
             expect(API_ENDPOINTS.ACCEPT_LAST_OFFER(testId)).toBe(`/negotiations/bids/${testId}/accept-last-offer`);
             expect(API_ENDPOINTS.NEGOTIATION_HISTORY(testId)).toBe(`/negotiations/bids/${testId}/negotiations`);
         });

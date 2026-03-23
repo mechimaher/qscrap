@@ -1,13 +1,13 @@
 /**
  * API v1 Routes
- * 
+ *
  * Aggregates all API routes under the v1 namespace.
  * This file provides a single entry point for all versioned API routes.
- * 
+ *
  * Usage in app.ts:
  *   app.use('/api/v1', v1Router);
  *   app.use('/api', v1Router); // Backward compatibility
- * 
+ *
  * @module routes/v1.routes
  */
 
@@ -133,7 +133,6 @@ v1Router.use('/addresses', addressRoutes);
 import featureFlagsRoutes from './featureFlags.routes';
 v1Router.use('/feature-flags', featureFlagsRoutes);
 
-
 // Vehicle Routes (My Vehicles / Family Fleet)
 import vehicleRoutes from './vehicle.routes';
 v1Router.use('/vehicles', vehicleRoutes);
@@ -141,7 +140,6 @@ v1Router.use('/vehicles', vehicleRoutes);
 // History Routes (Public/Data)
 import historyRoutes from './history.routes';
 v1Router.use('/history', historyRoutes);
-
 
 // Payment Routes (Mock Payment System)
 import paymentRoutes from './payments.routes';

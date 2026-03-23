@@ -28,7 +28,7 @@ export interface DeliveryFeeResult {
 }
 
 export class GeoService {
-    constructor(private pool: Pool) { }
+    constructor(private pool: Pool) {}
 
     /**
      * Calculate distance between two GPS coordinates using Haversine formula
@@ -36,13 +36,15 @@ export class GeoService {
      */
     calculateDistance(lat1: number, lng1: number, lat2: number, lng2: number): number {
         const R = 6371; // Earth's radius in kilometers
-        const dLat = (lat2 - lat1) * Math.PI / 180;
-        const dLng = (lng2 - lng1) * Math.PI / 180;
+        const dLat = ((lat2 - lat1) * Math.PI) / 180;
+        const dLng = ((lng2 - lng1) * Math.PI) / 180;
 
         const a =
             Math.sin(dLat / 2) * Math.sin(dLat / 2) +
-            Math.cos(lat1 * Math.PI / 180) * Math.cos(lat2 * Math.PI / 180) *
-            Math.sin(dLng / 2) * Math.sin(dLng / 2);
+            Math.cos((lat1 * Math.PI) / 180) *
+                Math.cos((lat2 * Math.PI) / 180) *
+                Math.sin(dLng / 2) *
+                Math.sin(dLng / 2);
 
         const c = 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1 - a));
         return R * c; // Distance in km
@@ -89,7 +91,8 @@ export class GeoService {
      * Find delivery zone for a specific distance
      */
     async getZoneForDistance(distanceKm: number): Promise<Zone | null> {
-        const result = await this.pool.query(`
+        const result = await this.pool.query(
+            `
             SELECT zone_id, zone_name, delivery_fee, min_distance_km, max_distance_km
             FROM delivery_zones
             WHERE is_active = true 
@@ -97,7 +100,9 @@ export class GeoService {
             AND $1 < max_distance_km
             ORDER BY min_distance_km ASC 
             LIMIT 1
-        `, [distanceKm]);
+        `,
+            [distanceKm]
+        );
 
         if (result.rows.length === 0) {
             // Return highest zone if outside all zones
@@ -154,10 +159,9 @@ export class GeoService {
             await client.query('BEGIN');
 
             // Get current fee for history
-            const currentResult = await client.query(
-                'SELECT delivery_fee FROM delivery_zones WHERE zone_id = $1',
-                [zoneId]
-            );
+            const currentResult = await client.query('SELECT delivery_fee FROM delivery_zones WHERE zone_id = $1', [
+                zoneId
+            ]);
 
             if (currentResult.rows.length === 0) {
                 throw new Error('Delivery zone not found');
@@ -166,18 +170,24 @@ export class GeoService {
             const oldFee = currentResult.rows[0].delivery_fee;
 
             // Update zone
-            const updateResult = await client.query(`
+            const updateResult = await client.query(
+                `
                 UPDATE delivery_zones 
                 SET delivery_fee = $1, updated_at = NOW()
                 WHERE zone_id = $2 
                 RETURNING *
-            `, [newFee, zoneId]);
+            `,
+                [newFee, zoneId]
+            );
 
             // Log change
-            await client.query(`
+            await client.query(
+                `
                 INSERT INTO delivery_zone_history (zone_id, old_fee, new_fee, changed_by, reason)
                 VALUES ($1, $2, $3, $4, $5)
-            `, [zoneId, oldFee, newFee, changedBy, reason || 'Admin update']);
+            `,
+                [zoneId, oldFee, newFee, changedBy, reason || 'Admin update']
+            );
 
             await client.query('COMMIT');
             return updateResult.rows[0];
@@ -222,11 +232,7 @@ export class GeoService {
  * Helper function for backward compatibility with order.controller.ts
  * Can be used as a standalone function without instantiating GeoService
  */
-export async function getDeliveryFeeForLocation(
-    pool: Pool,
-    lat: number,
-    lng: number
-): Promise<DeliveryFeeResult> {
+export async function getDeliveryFeeForLocation(pool: Pool, lat: number, lng: number): Promise<DeliveryFeeResult> {
     const geoService = new GeoService(pool);
     return geoService.calculateDeliveryFee(lat, lng);
 }

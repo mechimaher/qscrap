@@ -10,7 +10,7 @@ import { createNotification } from '../notification.service';
 import { getIO } from '../../utils/socketIO';
 
 export class ReviewService {
-    constructor(private pool: Pool) { }
+    constructor(private pool: Pool) {}
 
     /**
      * Submit review for completed order
@@ -42,7 +42,8 @@ export class ReviewService {
             const orderNumber = orderCheck.rows[0].order_number;
 
             // Insert or update review (pending moderation)
-            await client.query(`
+            await client.query(
+                `
                 INSERT INTO order_reviews 
                 (order_id, customer_id, garage_id, overall_rating, part_quality_rating, 
                  communication_rating, delivery_rating, review_text, moderation_status, is_visible)
@@ -56,8 +57,18 @@ export class ReviewService {
                    moderation_status = 'pending',
                    is_visible = false,
                    updated_at = NOW()
-            `, [orderId, customerId, garageId, overall_rating, part_quality_rating,
-                communication_rating, delivery_rating, review_text]);
+            `,
+                [
+                    orderId,
+                    customerId,
+                    garageId,
+                    overall_rating,
+                    part_quality_rating,
+                    communication_rating,
+                    delivery_rating,
+                    review_text
+                ]
+            );
 
             await client.query('COMMIT');
 
@@ -75,16 +86,20 @@ export class ReviewService {
      * Get garage reviews (public only)
      */
     async getGarageReviews(garageId: string): Promise<ReviewsWithStats> {
-        const result = await this.pool.query(`
+        const result = await this.pool.query(
+            `
             SELECT r.*, u.full_name as customer_name
             FROM order_reviews r
             JOIN users u ON r.customer_id = u.user_id
             WHERE r.garage_id = $1 AND r.is_visible = true
             ORDER BY r.created_at DESC
             LIMIT 50
-        `, [garageId]);
+        `,
+            [garageId]
+        );
 
-        const stats = await this.pool.query(`
+        const stats = await this.pool.query(
+            `
             SELECT 
                 COUNT(*) as total_reviews,
                 ROUND(AVG(overall_rating)::numeric, 2) as avg_rating,
@@ -93,7 +108,9 @@ export class ReviewService {
                 ROUND(AVG(delivery_rating)::numeric, 2) as avg_delivery
             FROM order_reviews
             WHERE garage_id = $1 AND is_visible = true
-        `, [garageId]);
+        `,
+            [garageId]
+        );
 
         return {
             reviews: result.rows,

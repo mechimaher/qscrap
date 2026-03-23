@@ -20,7 +20,7 @@ const ProTipCard = ({ navigation }: { navigation: any }) => {
             toValue: 1,
             duration: 300,
             delay: 400,
-            useNativeDriver: true,
+            useNativeDriver: true
         }).start();
     }, []);
 
@@ -36,17 +36,31 @@ const ProTipCard = ({ navigation }: { navigation: any }) => {
             onPressOut={() => Animated.spring(scaleAnim, { toValue: 1, useNativeDriver: true }).start()}
             activeOpacity={1}
         >
-            <Animated.View style={[
-                styles.proTipCard,
-                { opacity: fadeAnim, backgroundColor: colors.surface, transform: [{ scale: scaleAnim }], flexDirection: rtlFlexDirection(isRTL) }
-            ]}>
-                <View style={[styles.proTipIconWrapper, isRTL ? { marginLeft: Spacing.sm, marginRight: 0 } : { marginRight: Spacing.sm, marginLeft: 0 }]}>
+            <Animated.View
+                style={[
+                    styles.proTipCard,
+                    {
+                        opacity: fadeAnim,
+                        backgroundColor: colors.surface,
+                        transform: [{ scale: scaleAnim }],
+                        flexDirection: rtlFlexDirection(isRTL)
+                    }
+                ]}
+            >
+                <View
+                    style={[
+                        styles.proTipIconWrapper,
+                        isRTL ? { marginLeft: Spacing.sm, marginRight: 0 } : { marginRight: Spacing.sm, marginLeft: 0 }
+                    ]}
+                >
                     <Animated.View style={{ opacity: glowAnim }}>
                         <Ionicons name="bulb-outline" size={22} color={Colors.secondary} />
                     </Animated.View>
                 </View>
                 <View style={styles.proTipContent}>
-                    <Text style={[styles.proTipTitle, { color: colors.text, textAlign: rtlTextAlign(isRTL) }]}>{t('home.proTip')}</Text>
+                    <Text style={[styles.proTipTitle, { color: colors.text, textAlign: rtlTextAlign(isRTL) }]}>
+                        {t('home.proTip')}
+                    </Text>
                     <Text style={[styles.proTipText, { color: colors.textSecondary, textAlign: rtlTextAlign(isRTL) }]}>
                         {t('home.proTipMessage')} {isRTL ? '←' : '→'}
                     </Text>
@@ -65,13 +79,13 @@ const styles = StyleSheet.create({
         padding: Spacing.sm,
         borderRadius: BorderRadius.md,
         borderWidth: 1,
-        borderColor: Colors.secondary + '50',
+        borderColor: Colors.secondary + '50'
     },
     proTipIconWrapper: { marginRight: Spacing.sm },
     proTipIcon: { fontSize: 22 },
     proTipContent: { flex: 1 },
     proTipTitle: { fontSize: FontSizes.xs, fontWeight: '600', color: Colors.secondary, marginBottom: 1 },
-    proTipText: { fontSize: 11, lineHeight: 14 },
+    proTipText: { fontSize: 11, lineHeight: 14 }
 });
 
 export default ProTipCard;

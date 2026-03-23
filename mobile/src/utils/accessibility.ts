@@ -40,8 +40,8 @@ export function buttonA11y(
         accessibilityHint: options?.hint,
         accessibilityState: {
             disabled: options?.disabled,
-            selected: options?.selected,
-        },
+            selected: options?.selected
+        }
     };
 }
 
@@ -53,7 +53,7 @@ export function linkA11y(label: string, hint?: string): A11yProps {
         accessible: true,
         accessibilityRole: 'link',
         accessibilityLabel: label,
-        accessibilityHint: hint,
+        accessibilityHint: hint
     };
 }
 
@@ -64,7 +64,7 @@ export function headerA11y(label: string): A11yProps {
     return {
         accessible: true,
         accessibilityRole: 'header',
-        accessibilityLabel: label,
+        accessibilityLabel: label
     };
 }
 
@@ -75,7 +75,7 @@ export function imageA11y(description: string): A11yProps {
     return {
         accessible: true,
         accessibilityRole: 'image',
-        accessibilityLabel: description,
+        accessibilityLabel: description
     };
 }
 
@@ -94,44 +94,37 @@ export function inputA11y(
         accessibilityLabel: label,
         accessibilityHint: options?.hint,
         accessibilityState: {
-            disabled: options?.disabled,
-        },
+            disabled: options?.disabled
+        }
     };
 }
 
 /**
  * Generate accessibility props for checkboxes/switches
  */
-export function toggleA11y(
-    label: string,
-    checked: boolean,
-    hint?: string
-): A11yProps {
+export function toggleA11y(label: string, checked: boolean, hint?: string): A11yProps {
     return {
         accessible: true,
         accessibilityRole: 'switch',
         accessibilityLabel: label,
         accessibilityHint: hint,
         accessibilityState: {
-            checked,
-        },
+            checked
+        }
     };
 }
 
 /**
  * Generate accessibility props for progress indicators
  */
-export function progressA11y(
-    label: string,
-    busy: boolean = true
-): A11yProps {
+export function progressA11y(label: string, busy: boolean = true): A11yProps {
     return {
         accessible: true,
         accessibilityRole: 'progressbar',
         accessibilityLabel: label,
         accessibilityState: {
-            busy,
-        },
+            busy
+        }
     };
 }
 
@@ -142,44 +135,32 @@ export function alertA11y(message: string): A11yProps {
     return {
         accessible: true,
         accessibilityRole: 'alert',
-        accessibilityLabel: message,
+        accessibilityLabel: message
     };
 }
 
 /**
  * Generate accessibility props for tabs
  */
-export function tabA11y(
-    label: string,
-    selected: boolean,
-    index: number,
-    total: number
-): A11yProps {
+export function tabA11y(label: string, selected: boolean, index: number, total: number): A11yProps {
     return {
         accessible: true,
         accessibilityRole: 'tab',
         accessibilityLabel: `${label}, tab ${index + 1} of ${total}`,
         accessibilityState: {
-            selected,
-        },
+            selected
+        }
     };
 }
 
 /**
  * Generate accessibility props for list items
  */
-export function listItemA11y(
-    label: string,
-    index?: number,
-    total?: number
-): A11yProps {
-    const positionLabel =
-        index !== undefined && total !== undefined
-            ? `, item ${index + 1} of ${total}`
-            : '';
+export function listItemA11y(label: string, index?: number, total?: number): A11yProps {
+    const positionLabel = index !== undefined && total !== undefined ? `, item ${index + 1} of ${total}` : '';
     return {
         accessible: true,
-        accessibilityLabel: `${label}${positionLabel}`,
+        accessibilityLabel: `${label}${positionLabel}`
     };
 }
 
@@ -193,5 +174,5 @@ export default {
     progressA11y,
     alertA11y,
     tabA11y,
-    listItemA11y,
+    listItemA11y
 };

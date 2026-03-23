@@ -154,11 +154,11 @@ export interface SupportTicket {
     created_at: string;
     updated_at: string;
     replies?: Array<{
-            reply_id: string;
-            message: string;
-            sender_type: 'customer' | 'support';
-            created_at: string;
-        }>;
+        reply_id: string;
+        message: string;
+        sender_type: 'customer' | 'support';
+        created_at: string;
+    }>;
 }
 
 export interface Vehicle {

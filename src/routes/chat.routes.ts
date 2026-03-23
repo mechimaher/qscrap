@@ -1,6 +1,12 @@
 import { Router } from 'express';
 import { authenticate } from '../middleware/auth.middleware';
-import { getChatMessages, sendChatMessage, getUnreadCount, getOrderChatMessages, sendOrderChatMessage } from '../controllers/chat.controller';
+import {
+    getChatMessages,
+    sendChatMessage,
+    getUnreadCount,
+    getOrderChatMessages,
+    sendOrderChatMessage
+} from '../controllers/chat.controller';
 
 const router = Router();
 

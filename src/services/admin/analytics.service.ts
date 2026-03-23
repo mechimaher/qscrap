@@ -4,14 +4,10 @@
  */
 
 import { Pool } from 'pg';
-import {
-    DashboardStats,
-    AuditFilters,
-    PaginatedAuditLog
-} from './types';
+import { DashboardStats, AuditFilters, PaginatedAuditLog } from './types';
 
 export class AnalyticsService {
-    constructor(private pool: Pool) { }
+    constructor(private pool: Pool) {}
 
     /**
      * Get admin dashboard overview statistics
@@ -60,12 +56,7 @@ export class AnalyticsService {
      * Tracks all administrative actions for compliance
      */
     async getAuditLog(filters: AuditFilters): Promise<PaginatedAuditLog> {
-        const {
-            action_type,
-            target_type,
-            page = 1,
-            limit = 20
-        } = filters;
+        const { action_type, target_type, page = 1, limit = 20 } = filters;
 
         const pageNum = Math.max(1, page);
         const limitNum = Math.min(100, Math.max(1, limit));
@@ -87,14 +78,12 @@ export class AnalyticsService {
         }
 
         // Get total count
-        const countResult = await this.pool.query(
-            `SELECT COUNT(*) FROM admin_audit_log al ${whereClause}`,
-            params
-        );
+        const countResult = await this.pool.query(`SELECT COUNT(*) FROM admin_audit_log al ${whereClause}`, params);
         const total = parseInt(countResult.rows[0].count);
 
         // Get paginated logs
-        const result = await this.pool.query(`
+        const result = await this.pool.query(
+            `
             SELECT 
                 al.*,
                 u.full_name as admin_name,
@@ -104,7 +93,9 @@ export class AnalyticsService {
             ${whereClause}
             ORDER BY al.created_at DESC
             LIMIT $${paramIndex++} OFFSET $${paramIndex}
-        `, [...params, limitNum, offset]);
+        `,
+            [...params, limitNum, offset]
+        );
 
         return {
             logs: result.rows,

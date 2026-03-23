@@ -19,9 +19,9 @@ const poolConfig: PoolConfig = {
     port: parseInt(process.env.DB_PORT || '5432'),
 
     // Connection Pool Tuning for Vertical Scaling (Phase 1)
-    max: parseInt(process.env.DB_POOL_MAX || (isTestEnv ? '5' : '20')),              // Max connections (increase for high load)
-    min: parseInt(process.env.DB_POOL_MIN || (isTestEnv ? '0' : '5')),               // Min idle connections
-    idleTimeoutMillis: parseInt(process.env.DB_IDLE_TIMEOUT || (isTestEnv ? '1000' : '30000')),  // Close idle after 30s
+    max: parseInt(process.env.DB_POOL_MAX || (isTestEnv ? '5' : '20')), // Max connections (increase for high load)
+    min: parseInt(process.env.DB_POOL_MIN || (isTestEnv ? '0' : '5')), // Min idle connections
+    idleTimeoutMillis: parseInt(process.env.DB_IDLE_TIMEOUT || (isTestEnv ? '1000' : '30000')), // Close idle after 30s
     connectionTimeoutMillis: parseInt(process.env.DB_CONNECT_TIMEOUT || '5000'), // Connection timeout
     // Critical for Jest workers: allows Node to exit with idle clients in test runs.
     allowExitOnIdle: isTestEnv,
@@ -33,11 +33,14 @@ const poolConfig: PoolConfig = {
     // SSL Configuration for production
     // SECURITY: Set DB_SSL=true for cloud databases (Azure/AWS/GCP)
     // For Docker deployments with internal Postgres: DB_SSL=false (default for Docker)
-    ssl: process.env.DB_SSL === 'true'
-        ? {
-            rejectUnauthorized: process.env.DB_SSL_REJECT_UNAUTHORIZED !== 'false'
-        }
-        : (process.env.DB_SSL === 'false' ? false : undefined)
+    ssl:
+        process.env.DB_SSL === 'true'
+            ? {
+                  rejectUnauthorized: process.env.DB_SSL_REJECT_UNAUTHORIZED !== 'false'
+              }
+            : process.env.DB_SSL === 'false'
+              ? false
+              : undefined
 };
 
 // Primary database pool (read-write)
@@ -56,7 +59,7 @@ if (process.env.DB_READ_REPLICA_HOST) {
         host: process.env.DB_READ_REPLICA_HOST,
         port: parseInt(process.env.DB_READ_REPLICA_PORT || process.env.DB_PORT || '5432'),
         // Read replicas can have larger pool size
-        max: parseInt(process.env.DB_READ_POOL_MAX || '30'),
+        max: parseInt(process.env.DB_READ_POOL_MAX || '30')
     };
 
     readReplicaPool = new Pool(replicaConfig);
@@ -82,7 +85,9 @@ const MAX_BACKOFF_MS = 30000;
 let lastErrorTimestamp: string | null = null;
 
 const getBackoffDelay = (errorCount: number): number => {
-    if (errorCount <= 0) { return 0; }
+    if (errorCount <= 0) {
+        return 0;
+    }
     return Math.min(BASE_BACKOFF_MS * Math.pow(2, errorCount - 1), MAX_BACKOFF_MS);
 };
 
@@ -151,11 +156,13 @@ export const getPoolStats = () => {
             idle: pool.idleCount,
             waiting: pool.waitingCount
         },
-        replica: readReplicaPool ? {
-            total: readReplicaPool.totalCount,
-            idle: readReplicaPool.idleCount,
-            waiting: readReplicaPool.waitingCount
-        } : null
+        replica: readReplicaPool
+            ? {
+                  total: readReplicaPool.totalCount,
+                  idle: readReplicaPool.idleCount,
+                  waiting: readReplicaPool.waitingCount
+              }
+            : null
     };
 };
 

@@ -14,7 +14,7 @@ import {
     Linking,
     Alert,
     PanResponder,
-    ScrollView,
+    ScrollView
 } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import MapView, { Marker, Polyline, PROVIDER_GOOGLE } from 'react-native-maps';
@@ -47,7 +47,7 @@ const LIGHT_MAP_STYLE = [
     { featureType: 'transit', elementType: 'labels', stylers: [{ visibility: 'off' }] },
     { featureType: 'water', elementType: 'geometry', stylers: [{ color: '#e9e9e9' }] },
     { featureType: 'road.highway', elementType: 'geometry.fill', stylers: [{ color: '#ffffff' }] },
-    { featureType: 'landscape', elementType: 'geometry', stylers: [{ color: '#f5f5f5' }] },
+    { featureType: 'landscape', elementType: 'geometry', stylers: [{ color: '#f5f5f5' }] }
 ];
 
 interface RouteCoordinate {
@@ -58,14 +58,27 @@ interface RouteCoordinate {
 /** Decode Google Maps encoded polyline string into coordinates */
 const decodePolyline = (encoded: string): RouteCoordinate[] => {
     const points: RouteCoordinate[] = [];
-    let index = 0, lat = 0, lng = 0;
+    let index = 0,
+        lat = 0,
+        lng = 0;
     while (index < encoded.length) {
-        let b, shift = 0, result = 0;
-        do { b = encoded.charCodeAt(index++) - 63; result |= (b & 0x1f) << shift; shift += 5; } while (b >= 0x20);
-        lat += (result & 1) ? ~(result >> 1) : result >> 1;
-        shift = 0; result = 0;
-        do { b = encoded.charCodeAt(index++) - 63; result |= (b & 0x1f) << shift; shift += 5; } while (b >= 0x20);
-        lng += (result & 1) ? ~(result >> 1) : result >> 1;
+        let b,
+            shift = 0,
+            result = 0;
+        do {
+            b = encoded.charCodeAt(index++) - 63;
+            result |= (b & 0x1f) << shift;
+            shift += 5;
+        } while (b >= 0x20);
+        lat += result & 1 ? ~(result >> 1) : result >> 1;
+        shift = 0;
+        result = 0;
+        do {
+            b = encoded.charCodeAt(index++) - 63;
+            result |= (b & 0x1f) << shift;
+            shift += 5;
+        } while (b >= 0x20);
+        lng += result & 1 ? ~(result >> 1) : result >> 1;
         points.push({ latitude: lat / 1e5, longitude: lng / 1e5 });
     }
     return points;
@@ -97,7 +110,7 @@ export default function TrackingScreen() {
     // Draggable bottom sheet - SIMPLE: Fixed height, starts almost hidden
     const SHEET_HEIGHT = height * 0.75; // Fixed sheet height
     const PEEK_HEIGHT = 80; // Only 80px visible when collapsed
-    const HALF_HEIGHT = height * 0.40; // Half-expanded state
+    const HALF_HEIGHT = height * 0.4; // Half-expanded state
 
     // Y positions (positive = pushed down/hidden)
     const COLLAPSED_Y = SHEET_HEIGHT - PEEK_HEIGHT; // Most of sheet hidden
@@ -116,7 +129,7 @@ export default function TrackingScreen() {
             toValue: targetY,
             useNativeDriver: true,
             damping: 20,
-            stiffness: 200,
+            stiffness: 200
         }).start();
     };
 
@@ -148,13 +161,13 @@ export default function TrackingScreen() {
                     const distances = [
                         Math.abs(currentY - COLLAPSED_Y),
                         Math.abs(currentY - HALF_Y),
-                        Math.abs(currentY - EXPANDED_Y),
+                        Math.abs(currentY - EXPANDED_Y)
                     ];
                     const nearest = distances.indexOf(Math.min(...distances));
                     const positions = [COLLAPSED_Y, HALF_Y, EXPANDED_Y];
                     snapToPosition(positions[nearest], nearest);
                 }
-            },
+            }
         })
     ).current;
 
@@ -165,7 +178,9 @@ export default function TrackingScreen() {
     const [etaMinutes, setEtaMinutes] = useState<number | null>(null);
     const [distance, setDistance] = useState<string | null>(null);
     const [isConnected, setIsConnected] = useState(false);
-    const [driverInfo, setDriverInfo] = useState<{ id?: string; name: string; phone: string; vehicle: string } | null>(null);
+    const [driverInfo, setDriverInfo] = useState<{ id?: string; name: string; phone: string; vehicle: string } | null>(
+        null
+    );
     const [orderDetails, setOrderDetails] = useState<{
         garage_name: string;
         part_description: string;
@@ -181,15 +196,17 @@ export default function TrackingScreen() {
     const [routeCoordinates, setRouteCoordinates] = useState<RouteCoordinate[]>([]);
 
     // Driver visible immediately after order is collected (no QC gate)
-    const canShowDriver = !!(orderDetails?.order_status &&
-        ['collected', 'in_transit', 'delivered', 'completed'].includes(orderDetails.order_status));
+    const canShowDriver = !!(
+        orderDetails?.order_status &&
+        ['collected', 'in_transit', 'delivered', 'completed'].includes(orderDetails.order_status)
+    );
 
     // Pulse animation for driver marker
     useEffect(() => {
         const pulse = Animated.loop(
             Animated.sequence([
                 Animated.timing(pulseAnim, { toValue: 1.3, duration: 1000, useNativeDriver: true }),
-                Animated.timing(pulseAnim, { toValue: 1, duration: 1000, useNativeDriver: true }),
+                Animated.timing(pulseAnim, { toValue: 1, duration: 1000, useNativeDriver: true })
             ])
         );
         pulse.start();
@@ -203,7 +220,7 @@ export default function TrackingScreen() {
 
             socket.current = io(SOCKET_URL, {
                 auth: { token },
-                transports: ['websocket'],
+                transports: ['websocket']
             });
 
             socket.current.on('connect', () => {
@@ -223,7 +240,7 @@ export default function TrackingScreen() {
                             longitude: lng,
                             heading: parseFloat(String(data.heading || 0)),
                             speed: parseFloat(String(data.speed || 0)),
-                            updated_at: data.timestamp,
+                            updated_at: data.timestamp
                         });
 
                         // Fetch route via Google Directions for accurate ETA & polyline
@@ -240,7 +257,7 @@ export default function TrackingScreen() {
             socket.current.on('order_status_update', (data: any) => {
                 if (data.order_id === orderId) {
                     // Update order status
-                    setOrderDetails(prev => prev ? { ...prev, order_status: data.status } : null);
+                    setOrderDetails((prev) => (prev ? { ...prev, order_status: data.status } : null));
 
                     // Haptic feedback for key status changes
                     if (data.status === 'in_transit' || data.status === 'delivered' || data.status === 'completed') {
@@ -313,7 +330,9 @@ export default function TrackingScreen() {
                         id: order.driver_id,
                         name: order.driver_name,
                         phone: order.driver_phone || '',
-                        vehicle: order.vehicle_plate ? `${order.vehicle_type || 'Vehicle'} (${order.vehicle_plate})` : (order.vehicle_type || 'Vehicle'),
+                        vehicle: order.vehicle_plate
+                            ? `${order.vehicle_type || 'Vehicle'} (${order.vehicle_plate})`
+                            : order.vehicle_type || 'Vehicle'
                     });
                 }
 
@@ -327,7 +346,7 @@ export default function TrackingScreen() {
                     delivery_fee: parseFloat(String(order.delivery_fee || 0)),
                     loyalty_discount: parseFloat(String(order.loyalty_discount || 0)),
                     total_amount: parseFloat(String(order.total_amount)) || 0,
-                    order_status: order.order_status || 'in_transit',
+                    order_status: order.order_status || 'in_transit'
                 });
             }
         } catch (error) {
@@ -336,31 +355,31 @@ export default function TrackingScreen() {
     };
 
     // Fetch accurate route via Google Directions API
-    const fetchRoute = useCallback(async (
-        origin: { lat: number; lng: number },
-        destination: { lat: number; lng: number }
-    ) => {
-        try {
-            const url = `https://maps.googleapis.com/maps/api/directions/json?origin=${origin.lat},${origin.lng}&destination=${destination.lat},${destination.lng}&key=${KEYS.GOOGLE_MAPS_API_KEY}&mode=driving`;
-            const response = await fetch(url);
-            const data = await response.json();
+    const fetchRoute = useCallback(
+        async (origin: { lat: number; lng: number }, destination: { lat: number; lng: number }) => {
+            try {
+                const url = `https://maps.googleapis.com/maps/api/directions/json?origin=${origin.lat},${origin.lng}&destination=${destination.lat},${destination.lng}&key=${KEYS.GOOGLE_MAPS_API_KEY}&mode=driving`;
+                const response = await fetch(url);
+                const data = await response.json();
 
-            if (data.routes && data.routes.length > 0) {
-                const route = data.routes[0];
-                const leg = route.legs[0];
+                if (data.routes && data.routes.length > 0) {
+                    const route = data.routes[0];
+                    const leg = route.legs[0];
 
-                // Use Google's accurate ETA and distance
-                if (leg.duration?.text) setEta(leg.duration.text);
-                if (leg.distance?.text) setDistance(leg.distance.text);
+                    // Use Google's accurate ETA and distance
+                    if (leg.duration?.text) setEta(leg.duration.text);
+                    if (leg.distance?.text) setDistance(leg.distance.text);
 
-                // Decode polyline for accurate road route
-                const points = decodePolyline(route.overview_polyline.points);
-                setRouteCoordinates(points);
+                    // Decode polyline for accurate road route
+                    const points = decodePolyline(route.overview_polyline.points);
+                    setRouteCoordinates(points);
+                }
+            } catch (error) {
+                log('Route fetch error:', error);
             }
-        } catch (error) {
-            log('Route fetch error:', error);
-        }
-    }, []);
+        },
+        []
+    );
 
     // Watch customer location
     useEffect(() => {
@@ -375,18 +394,18 @@ export default function TrackingScreen() {
                     {
                         accuracy: Location.Accuracy.High,
                         timeInterval: 5000,
-                        distanceInterval: 10,
+                        distanceInterval: 10
                     },
                     (location) => {
                         setMyLocation({
                             latitude: location.coords.latitude,
-                            longitude: location.coords.longitude,
+                            longitude: location.coords.longitude
                         });
 
                         // Update customer location on map if we have real GPS
                         setCustomerLocation({
                             latitude: location.coords.latitude,
-                            longitude: location.coords.longitude,
+                            longitude: location.coords.longitude
                         });
                     }
                 );
@@ -408,7 +427,8 @@ export default function TrackingScreen() {
             return;
         }
 
-        if (!driverInfo) { // Need driver to share with
+        if (!driverInfo) {
+            // Need driver to share with
             Alert.alert(t('tracking.noDriver'), t('tracking.noDriverMsg'));
             return;
         }
@@ -420,11 +440,11 @@ export default function TrackingScreen() {
             const message = `My Live Location:\n${mapsUrl}`;
 
             // Send to driver via chat API
-            // We use the driver ID from order or find it. 
+            // We use the driver ID from order or find it.
             // In a real app we'd have driver_id. Here we assume we can chat using orderId
 
             // NOTE: The previous chat screen used driver_$recipientId room.
-            // We need the driver's User ID. 
+            // We need the driver's User ID.
             // For now, let's assume we can rely on the server to route it if we send to the order chat
             // OR we can navigate to chat with pre-filled message.
 
@@ -438,50 +458,47 @@ export default function TrackingScreen() {
             // Let's modify loadOrder to save driver_id or just use order_id chat route.
 
             // Let's send it to the order chat room.
-            await api.sendMessage(orderId, message, 'driver'); // 'driver' alias or actual ID? 
+            await api.sendMessage(orderId, message, 'driver'); // 'driver' alias or actual ID?
             // Actually the API expects recipient_id.
-            // Let's rely on the user navigating to chat if we can't get ID, 
+            // Let's rely on the user navigating to chat if we can't get ID,
             // OR better: navigate to ChatScreen with the message to "confirm" sending.
             // That might be safer and "smarter" UX allowing user to add text.
 
             // But user said "once clicked ... is sent". Automation is key.
             // Let's assume we can get driver_id.
 
-            Alert.alert(
-                t('tracking.locationShared'),
-                t('tracking.locationSharedMsg'),
-                [{ text: t('common.ok') }]
-            );
-
+            Alert.alert(t('tracking.locationShared'), t('tracking.locationSharedMsg'), [{ text: t('common.ok') }]);
         } catch (error) {
             Alert.alert(t('common.error'), t('tracking.shareError'));
         }
     };
 
-
     // calculateDistance removed — Google Directions API now provides accurate ETA/distance
 
     const centerOnDriver = () => {
         if (driverLocation && mapRef.current) {
-            mapRef.current.animateToRegion({
-                latitude: driverLocation.latitude,
-                longitude: driverLocation.longitude,
-                latitudeDelta: LATITUDE_DELTA,
-                longitudeDelta: LONGITUDE_DELTA,
-            }, 500);
+            mapRef.current.animateToRegion(
+                {
+                    latitude: driverLocation.latitude,
+                    longitude: driverLocation.longitude,
+                    latitudeDelta: LATITUDE_DELTA,
+                    longitudeDelta: LONGITUDE_DELTA
+                },
+                500
+            );
             Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
         }
     };
 
     const fitAllMarkers = () => {
         if (mapRef.current && driverLocation && customerLocation) {
-            mapRef.current.fitToCoordinates([
-                { latitude: driverLocation.latitude, longitude: driverLocation.longitude },
-                customerLocation,
-            ], {
-                edgePadding: { top: 100, right: 50, bottom: 250, left: 50 },
-                animated: true,
-            });
+            mapRef.current.fitToCoordinates(
+                [{ latitude: driverLocation.latitude, longitude: driverLocation.longitude }, customerLocation],
+                {
+                    edgePadding: { top: 100, right: 50, bottom: 250, left: 50 },
+                    animated: true
+                }
+            );
             Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
         }
     };
@@ -489,9 +506,9 @@ export default function TrackingScreen() {
     // Default region (Qatar)
     const defaultRegion = {
         latitude: 25.2854,
-        longitude: 51.5310,
+        longitude: 51.531,
         latitudeDelta: 0.1,
-        longitudeDelta: 0.1 * ASPECT_RATIO,
+        longitudeDelta: 0.1 * ASPECT_RATIO
     };
 
     return (
@@ -577,7 +594,7 @@ export default function TrackingScreen() {
                             orderId: orderId,
                             orderNumber: orderNumber,
                             recipientName: driverInfo?.name || t('common.driver'),
-                            recipientType: 'driver',
+                            recipientType: 'driver'
                         });
                     }}
                 >
@@ -585,9 +602,14 @@ export default function TrackingScreen() {
                         <Ionicons name="chatbubble" size={18} color="#fff" style={{ marginRight: 6 }} />
                         <View style={styles.chatBannerText}>
                             <Text style={styles.chatBannerFrom}>{newChatMessage.from}</Text>
-                            <Text style={styles.chatBannerMessage} numberOfLines={1}>{newChatMessage.text}</Text>
+                            <Text style={styles.chatBannerMessage} numberOfLines={1}>
+                                {newChatMessage.text}
+                            </Text>
                         </View>
-                        <Text style={styles.chatBannerAction}>{t('tracking.view')} <Ionicons name={isRTL ? 'chevron-back' : 'chevron-forward'} size={12} color="#fff" /></Text>
+                        <Text style={styles.chatBannerAction}>
+                            {t('tracking.view')}{' '}
+                            <Ionicons name={isRTL ? 'chevron-back' : 'chevron-forward'} size={12} color="#fff" />
+                        </Text>
                     </View>
                 </TouchableOpacity>
             )}
@@ -599,8 +621,12 @@ export default function TrackingScreen() {
                         <Ionicons name={isRTL ? 'arrow-forward' : 'arrow-back'} size={24} color="#1a1a1a" />
                     </TouchableOpacity>
                     <View style={styles.headerInfo}>
-                        <Text style={[styles.headerTitle, { textAlign: rtlTextAlign(isRTL) }]}>{t('tracking.liveTracking')}</Text>
-                        <Text style={[styles.orderNumber, { textAlign: rtlTextAlign(isRTL) }]}>{t('tracking.orderNumber', { number: orderNumber })}</Text>
+                        <Text style={[styles.headerTitle, { textAlign: rtlTextAlign(isRTL) }]}>
+                            {t('tracking.liveTracking')}
+                        </Text>
+                        <Text style={[styles.orderNumber, { textAlign: rtlTextAlign(isRTL) }]}>
+                            {t('tracking.orderNumber', { number: orderNumber })}
+                        </Text>
                     </View>
                     <View style={styles.headerActions}>
                         <View style={[styles.connectionDot, isConnected && styles.connectionDotActive]} />
@@ -634,26 +660,26 @@ export default function TrackingScreen() {
 
             {/* Draggable Bottom Sheet */}
             <Animated.View
-                style={[
-                    styles.bottomSheet,
-                    { transform: [{ translateY: bottomSheetY }] }
-                ]}
+                style={[styles.bottomSheet, { transform: [{ translateY: bottomSheetY }] }]}
                 {...panResponder.panHandlers}
             >
                 <View style={styles.handle} />
 
                 {/* ETA Card */}
-                <LinearGradient
-                    colors={Colors.gradients.primaryDark}
-                    style={styles.etaCard}
-                >
+                <LinearGradient colors={Colors.gradients.primaryDark} style={styles.etaCard}>
                     <View style={styles.etaContent}>
-                        <Text style={[styles.etaLabel, { textAlign: rtlTextAlign(isRTL) }]}>{t('tracking.estimatedArrival')}</Text>
+                        <Text style={[styles.etaLabel, { textAlign: rtlTextAlign(isRTL) }]}>
+                            {t('tracking.estimatedArrival')}
+                        </Text>
                         <View style={[styles.etaRow, { flexDirection: rtlFlexDirection(isRTL) }]}>
                             {eta ? (
                                 <>
                                     <Text style={styles.etaTime}>{eta}</Text>
-                                    {distance && <Text style={styles.etaDistance}>• {distance} {t('tracking.away')}</Text>}
+                                    {distance && (
+                                        <Text style={styles.etaDistance}>
+                                            • {distance} {t('tracking.away')}
+                                        </Text>
+                                    )}
                                 </>
                             ) : (
                                 <Text style={styles.etaCalculating}>{t('common.loading')}</Text>
@@ -696,7 +722,7 @@ export default function TrackingScreen() {
                                     orderId: orderId,
                                     orderNumber: orderNumber,
                                     recipientName: driverInfo?.name || t('common.driver'),
-                                    recipientType: 'driver',
+                                    recipientType: 'driver'
                                 });
                             }}
                         >
@@ -714,37 +740,59 @@ export default function TrackingScreen() {
                                 const statusIdx = getStatusIndex(orderDetails.order_status);
                                 const isCompleted = statusIdx > index;
                                 const isCurrent = statusIdx === index;
-                                const labels = [t('tracking.timelinePrepared'), t('tracking.timelineInTransit'), t('tracking.timelineDelivered'), t('tracking.timelineCompleted')];
-                                const icons: (keyof typeof Ionicons.glyphMap)[] = ['checkmark', 'car-sport', 'cube', 'star'];
+                                const labels = [
+                                    t('tracking.timelinePrepared'),
+                                    t('tracking.timelineInTransit'),
+                                    t('tracking.timelineDelivered'),
+                                    t('tracking.timelineCompleted')
+                                ];
+                                const icons: (keyof typeof Ionicons.glyphMap)[] = [
+                                    'checkmark',
+                                    'car-sport',
+                                    'cube',
+                                    'star'
+                                ];
 
                                 return (
                                     <React.Fragment key={step}>
                                         <View style={styles.timelineStep}>
-                                            <View style={[
-                                                styles.timelineNode,
-                                                isCompleted && styles.timelineNodeCompleted,
-                                                isCurrent && styles.timelineNodeCurrent,
-                                            ]}>
-                                                <Text style={[
-                                                    styles.timelineIcon,
-                                                    (isCompleted || isCurrent) && styles.timelineIconActive,
-                                                ]}>
-                                                    {isCompleted || isCurrent ? <Ionicons name={icons[index]} size={14} color="#fff" /> : <Text style={styles.timelineIcon}>○</Text>}
+                                            <View
+                                                style={[
+                                                    styles.timelineNode,
+                                                    isCompleted && styles.timelineNodeCompleted,
+                                                    isCurrent && styles.timelineNodeCurrent
+                                                ]}
+                                            >
+                                                <Text
+                                                    style={[
+                                                        styles.timelineIcon,
+                                                        (isCompleted || isCurrent) && styles.timelineIconActive
+                                                    ]}
+                                                >
+                                                    {isCompleted || isCurrent ? (
+                                                        <Ionicons name={icons[index]} size={14} color="#fff" />
+                                                    ) : (
+                                                        <Text style={styles.timelineIcon}>○</Text>
+                                                    )}
                                                 </Text>
                                             </View>
-                                            <Text style={[
-                                                styles.timelineLabel,
-                                                isCompleted && styles.timelineLabelCompleted,
-                                                isCurrent && styles.timelineLabelCurrent,
-                                            ]}>
+                                            <Text
+                                                style={[
+                                                    styles.timelineLabel,
+                                                    isCompleted && styles.timelineLabelCompleted,
+                                                    isCurrent && styles.timelineLabelCurrent
+                                                ]}
+                                            >
                                                 {labels[index]}
                                             </Text>
                                         </View>
                                         {index < 3 && (
-                                            <View style={[
-                                                styles.timelineConnector,
-                                                isCompleted && styles.timelineConnectorCompleted,
-                                            ]} />
+                                            <View
+                                                style={[
+                                                    styles.timelineConnector,
+                                                    isCompleted && styles.timelineConnectorCompleted
+                                                ]}
+                                            />
                                         )}
                                     </React.Fragment>
                                 );
@@ -754,7 +802,9 @@ export default function TrackingScreen() {
                         {/* Garage & Part Info */}
                         <View style={styles.orderInfoRow}>
                             <View style={styles.garageSection}>
-                                <Text style={[styles.orderLabel, { textAlign: rtlTextAlign(isRTL) }]}>{t('tracking.from')}</Text>
+                                <Text style={[styles.orderLabel, { textAlign: rtlTextAlign(isRTL) }]}>
+                                    {t('tracking.from')}
+                                </Text>
                                 <Text style={styles.garageName}>{orderDetails.garage_name}</Text>
                             </View>
                             <View style={styles.partSection}>
@@ -782,22 +832,32 @@ export default function TrackingScreen() {
                         <View style={styles.pricingSection}>
                             <View style={[styles.priceRow, { flexDirection: rtlFlexDirection(isRTL) }]}>
                                 <Text style={styles.priceLabel}>{t('order.partPrice')}</Text>
-                                <Text style={styles.priceValue}>{orderDetails.part_price.toFixed(0)} {t('common.currency')}</Text>
+                                <Text style={styles.priceValue}>
+                                    {orderDetails.part_price.toFixed(0)} {t('common.currency')}
+                                </Text>
                             </View>
                             <View style={[styles.priceRow, { flexDirection: rtlFlexDirection(isRTL) }]}>
                                 <Text style={styles.priceLabel}>{t('order.deliveryFee')}</Text>
-                                <Text style={styles.priceValue}>{orderDetails.delivery_fee.toFixed(0)} {t('common.currency')}</Text>
+                                <Text style={styles.priceValue}>
+                                    {orderDetails.delivery_fee.toFixed(0)} {t('common.currency')}
+                                </Text>
                             </View>
                             {orderDetails.loyalty_discount > 0 && (
                                 <View style={[styles.priceRow, { flexDirection: rtlFlexDirection(isRTL) }]}>
-                                    <Text style={[styles.priceLabel, { color: Colors.success }]}>{t('order.loyaltyDiscount')}</Text>
-                                    <Text style={[styles.priceValue, { color: Colors.success }]}>-{orderDetails.loyalty_discount.toFixed(0)} {t('common.currency')}</Text>
+                                    <Text style={[styles.priceLabel, { color: Colors.success }]}>
+                                        {t('order.loyaltyDiscount')}
+                                    </Text>
+                                    <Text style={[styles.priceValue, { color: Colors.success }]}>
+                                        -{orderDetails.loyalty_discount.toFixed(0)} {t('common.currency')}
+                                    </Text>
                                 </View>
                             )}
                             <View style={styles.priceDivider} />
                             <View style={[styles.priceRow, { flexDirection: rtlFlexDirection(isRTL) }]}>
                                 <Text style={styles.totalLabel}>{t('common.total')}</Text>
-                                <Text style={styles.totalValue}>{orderDetails.total_amount.toFixed(0)} {t('common.currency')}</Text>
+                                <Text style={styles.totalValue}>
+                                    {orderDetails.total_amount.toFixed(0)} {t('common.currency')}
+                                </Text>
                             </View>
                         </View>
                     </View>
@@ -829,21 +889,19 @@ const getStatusIndex = (status: string): number => {
     // Map order statuses to timeline steps:
     // 0 = Prepared, 1 = In Transit, 2 = Delivered, 3 = Completed
     const statusMapping: Record<string, number> = {
-        'confirmed': 0,
-        'preparing': 0,
-        'ready_for_pickup': 0,
-        'collected': 0,
-        'qc_in_progress': 0,
-        'qc_passed': 0,
-        'in_transit': 1,
-        'arriving': 1,
-        'delivered': 2,
-        'completed': 3,
+        confirmed: 0,
+        preparing: 0,
+        ready_for_pickup: 0,
+        collected: 0,
+        qc_in_progress: 0,
+        qc_passed: 0,
+        in_transit: 1,
+        arriving: 1,
+        delivered: 2,
+        completed: 3
     };
     return statusMapping[status] ?? 0;
 };
-
-
 
 const styles = StyleSheet.create({
     container: { flex: 1, backgroundColor: Colors.light.background },
@@ -852,13 +910,13 @@ const styles = StyleSheet.create({
         position: 'absolute',
         top: 0,
         left: 0,
-        right: 0,
+        right: 0
     },
     headerContent: {
         flexDirection: 'row',
         alignItems: 'center',
         padding: Spacing.lg,
-        paddingTop: Spacing.md,
+        paddingTop: Spacing.md
     },
     backButton: {
         width: 44,
@@ -867,7 +925,7 @@ const styles = StyleSheet.create({
         backgroundColor: Colors.light.surface,
         justifyContent: 'center',
         alignItems: 'center',
-        ...Shadows.md,
+        ...Shadows.md
     },
     backIcon: { fontSize: 24, color: Colors.light.text },
     headerInfo: { flex: 1, marginLeft: Spacing.md },
@@ -877,13 +935,13 @@ const styles = StyleSheet.create({
         width: 12,
         height: 12,
         borderRadius: 6,
-        backgroundColor: Colors.error,
+        backgroundColor: Colors.error
     },
     connectionDotActive: { backgroundColor: Colors.success },
     headerActions: {
         flexDirection: 'row',
         alignItems: 'center',
-        gap: Spacing.sm,
+        gap: Spacing.sm
     },
     supportButton: {
         width: 40,
@@ -892,15 +950,15 @@ const styles = StyleSheet.create({
         backgroundColor: Colors.light.surface,
         justifyContent: 'center',
         alignItems: 'center',
-        ...Shadows.md,
+        ...Shadows.md
     },
     supportIcon: {
-        fontSize: 20,
+        fontSize: 20
     },
     mapControls: {
         position: 'absolute',
         right: Spacing.lg,
-        top: 140,
+        top: 140
     },
     mapButton: {
         width: 48,
@@ -910,7 +968,7 @@ const styles = StyleSheet.create({
         justifyContent: 'center',
         alignItems: 'center',
         marginBottom: Spacing.sm,
-        ...Shadows.md,
+        ...Shadows.md
     },
     mapButtonIcon: { fontSize: 20 },
     // Google Maps Markers
@@ -918,7 +976,7 @@ const styles = StyleSheet.create({
         width: 50,
         height: 50,
         justifyContent: 'center',
-        alignItems: 'center',
+        alignItems: 'center'
     },
     driverMarkerPulse: {
         position: 'absolute',
@@ -926,7 +984,7 @@ const styles = StyleSheet.create({
         height: 50,
         borderRadius: 25,
         backgroundColor: Colors.primary,
-        opacity: 0.3,
+        opacity: 0.3
     },
     driverMarkerInner: {
         width: 40,
@@ -939,10 +997,10 @@ const styles = StyleSheet.create({
         shadowOffset: { width: 0, height: 2 },
         shadowOpacity: 0.3,
         shadowRadius: 4,
-        elevation: 5,
+        elevation: 5
     },
     driverMarkerIcon: {
-        fontSize: 20,
+        fontSize: 20
     },
     locationMarker: {
         width: 40,
@@ -954,23 +1012,23 @@ const styles = StyleSheet.create({
         shadowOffset: { width: 0, height: 2 },
         shadowOpacity: 0.3,
         shadowRadius: 4,
-        elevation: 5,
+        elevation: 5
     },
     markerIcon: {
-        fontSize: 18,
+        fontSize: 18
     },
     shareLocButton: {
         width: 48,
         height: 48,
         borderRadius: 24,
         overflow: 'hidden',
-        ...Shadows.md,
+        ...Shadows.md
     },
     shareLocGradient: {
         width: '100%',
         height: '100%',
         justifyContent: 'center',
-        alignItems: 'center',
+        alignItems: 'center'
     },
     shareLocIcon: { fontSize: 22 },
     destinationMarker: { alignItems: 'center' },
@@ -981,7 +1039,7 @@ const styles = StyleSheet.create({
         width: 20,
         height: 20,
         borderRadius: 10,
-        backgroundColor: Colors.primary + '40',
+        backgroundColor: Colors.primary + '40'
     },
     bottomSheet: {
         position: 'absolute',
@@ -994,7 +1052,7 @@ const styles = StyleSheet.create({
         borderTopRightRadius: BorderRadius.xl,
         padding: Spacing.lg,
         paddingBottom: Spacing.xxl,
-        ...Shadows.lg,
+        ...Shadows.lg
     },
     handle: {
         width: 40,
@@ -1002,7 +1060,7 @@ const styles = StyleSheet.create({
         borderRadius: 2,
         backgroundColor: Colors.light.border,
         alignSelf: 'center',
-        marginBottom: Spacing.lg,
+        marginBottom: Spacing.lg
     },
     etaCard: {
         flexDirection: 'row',
@@ -1010,10 +1068,9 @@ const styles = StyleSheet.create({
         alignItems: 'center',
         padding: Spacing.lg,
         borderRadius: BorderRadius.lg,
-        marginBottom: Spacing.md,
+        marginBottom: Spacing.md
     },
     etaContent: { flex: 1 },
-
 
     etaLabel: { fontSize: FontSizes.sm, color: 'rgba(255,255,255,0.7)' },
     etaRow: { flexDirection: 'row', alignItems: 'baseline', marginTop: Spacing.xs },
@@ -1027,7 +1084,7 @@ const styles = StyleSheet.create({
         backgroundColor: Colors.light.surfaceSecondary,
         padding: Spacing.md,
         borderRadius: BorderRadius.md,
-        marginBottom: Spacing.md,
+        marginBottom: Spacing.md
     },
     driverAvatar: {
         width: 50,
@@ -1035,7 +1092,7 @@ const styles = StyleSheet.create({
         borderRadius: 25,
         backgroundColor: Colors.light.surface,
         justifyContent: 'center',
-        alignItems: 'center',
+        alignItems: 'center'
     },
     driverAvatarIcon: { fontSize: 24 },
     driverDetails: { flex: 1, marginLeft: Spacing.md },
@@ -1048,7 +1105,7 @@ const styles = StyleSheet.create({
         backgroundColor: Colors.primary,
         justifyContent: 'center',
         alignItems: 'center',
-        marginRight: Spacing.sm,
+        marginRight: Spacing.sm
     },
     callDriverIcon: { fontSize: 20 },
     messageDriverButton: {
@@ -1057,7 +1114,7 @@ const styles = StyleSheet.create({
         borderRadius: BorderRadius.xl,
         backgroundColor: Colors.primary,
         justifyContent: 'center',
-        alignItems: 'center',
+        alignItems: 'center'
     },
     messageDriverIcon: { fontSize: 20 },
     // Premium Order Card Styles
@@ -1067,17 +1124,17 @@ const styles = StyleSheet.create({
         padding: Spacing.md,
         marginBottom: Spacing.md,
         borderWidth: 1,
-        borderColor: Colors.light.border,
+        borderColor: Colors.light.border
     },
     statusTimeline: {
         flexDirection: 'row',
         justifyContent: 'space-between',
         alignItems: 'center',
         marginBottom: Spacing.lg,
-        paddingHorizontal: Spacing.sm,
+        paddingHorizontal: Spacing.sm
     },
     timelineStep: {
-        alignItems: 'center',
+        alignItems: 'center'
     },
     timelineNode: {
         width: 36,
@@ -1087,130 +1144,130 @@ const styles = StyleSheet.create({
         justifyContent: 'center',
         alignItems: 'center',
         borderWidth: 2,
-        borderColor: Colors.light.border,
+        borderColor: Colors.light.border
     },
     timelineNodeCompleted: {
         backgroundColor: Colors.primary,
-        borderColor: Colors.primary,
+        borderColor: Colors.primary
     },
     timelineNodeCurrent: {
         borderColor: Colors.primary,
-        borderWidth: 3,
+        borderWidth: 3
     },
     timelineIcon: {
         fontSize: 16,
-        color: Colors.light.text,
+        color: Colors.light.text
     },
     timelineLabel: {
         fontSize: FontSizes.xs,
         color: Colors.light.textMuted,
         marginTop: Spacing.xs,
-        fontWeight: '500',
+        fontWeight: '500'
     },
     timelineLabelCompleted: {
         color: Colors.primary,
-        fontWeight: '600',
+        fontWeight: '600'
     },
     timelineConnector: {
         flex: 1,
         height: 3,
         backgroundColor: Colors.light.border,
         marginHorizontal: Spacing.xs,
-        marginBottom: Spacing.lg,
+        marginBottom: Spacing.lg
     },
     timelineConnectorCompleted: {
-        backgroundColor: Colors.primary,
+        backgroundColor: Colors.primary
     },
     orderInfoRow: {
-        marginBottom: Spacing.md,
+        marginBottom: Spacing.md
     },
     garageSection: {
-        marginBottom: Spacing.sm,
+        marginBottom: Spacing.sm
     },
     orderLabel: {
         fontSize: FontSizes.xs,
         color: Colors.light.textMuted,
         fontWeight: '700',
-        letterSpacing: 0.5,
+        letterSpacing: 0.5
     },
     garageName: {
         fontSize: FontSizes.lg,
         fontWeight: '700',
         color: Colors.light.text,
-        marginTop: Spacing.xs,
+        marginTop: Spacing.xs
     },
     partSection: {
-        marginTop: Spacing.sm,
+        marginTop: Spacing.sm
     },
     partName: {
         fontSize: FontSizes.md,
         color: Colors.light.textSecondary,
-        marginBottom: Spacing.xs,
+        marginBottom: Spacing.xs
     },
     partBadges: {
         flexDirection: 'row',
-        gap: Spacing.xs,
+        gap: Spacing.xs
     },
     conditionBadge: {
         backgroundColor: Colors.info + '20',
         paddingHorizontal: Spacing.sm,
         paddingVertical: Spacing.xs,
-        borderRadius: BorderRadius.sm,
+        borderRadius: BorderRadius.sm
     },
     conditionText: {
         fontSize: FontSizes.xs,
         color: Colors.info,
-        fontWeight: '600',
+        fontWeight: '600'
     },
     warrantyBadge: {
         backgroundColor: Colors.success + '20',
         paddingHorizontal: Spacing.sm,
         paddingVertical: Spacing.xs,
-        borderRadius: BorderRadius.sm,
+        borderRadius: BorderRadius.sm
     },
     warrantyText: {
         fontSize: FontSizes.xs,
         color: Colors.success,
-        fontWeight: '600',
+        fontWeight: '600'
     },
     pricingSection: {
         borderTopWidth: 1,
         borderTopColor: Colors.light.border,
         paddingTop: Spacing.sm,
-        marginTop: Spacing.sm,
+        marginTop: Spacing.sm
     },
     priceRow: {
         flexDirection: 'row',
         justifyContent: 'space-between',
-        marginBottom: Spacing.xs,
+        marginBottom: Spacing.xs
     },
     priceLabel: {
         fontSize: FontSizes.sm,
-        color: Colors.light.textMuted,
+        color: Colors.light.textMuted
     },
     priceValue: {
         fontSize: FontSizes.sm,
-        color: Colors.light.textSecondary,
+        color: Colors.light.textSecondary
     },
     priceDivider: {
         height: 1,
         backgroundColor: Colors.light.border,
-        marginVertical: Spacing.xs,
+        marginVertical: Spacing.xs
     },
     totalLabel: {
         fontSize: FontSizes.md,
         fontWeight: '700',
-        color: Colors.light.text,
+        color: Colors.light.text
     },
     totalValue: {
         fontSize: FontSizes.lg,
         fontWeight: '800',
-        color: Colors.primary,
+        color: Colors.primary
     },
     addressCard: {
         flexDirection: 'row',
         alignItems: 'flex-start',
-        marginBottom: Spacing.md,
+        marginBottom: Spacing.md
     },
     addressIcon: { fontSize: 24, marginRight: Spacing.sm },
     addressContent: { flex: 1 },
@@ -1218,14 +1275,14 @@ const styles = StyleSheet.create({
     addressText: { fontSize: FontSizes.md, color: Colors.light.text, marginTop: Spacing.xs },
     statusRow: {
         flexDirection: 'row',
-        alignItems: 'center',
+        alignItems: 'center'
     },
     statusDot: {
         width: 8,
         height: 8,
         borderRadius: 4,
         backgroundColor: Colors.primary,
-        marginRight: Spacing.sm,
+        marginRight: Spacing.sm
     },
     statusText: { fontSize: FontSizes.sm, color: Colors.primary, fontWeight: '600' },
     // QC Overlay Styles
@@ -1234,25 +1291,25 @@ const styles = StyleSheet.create({
         backgroundColor: 'rgba(255, 255, 255, 0.95)',
         justifyContent: 'center',
         alignItems: 'center',
-        zIndex: 100,
+        zIndex: 100
     },
     qcCard: {
         backgroundColor: '#fff',
         borderRadius: BorderRadius.xl,
         padding: Spacing.xl,
         alignItems: 'center',
-        ...Shadows.lg,
+        ...Shadows.lg
     },
     qcTitle: {
         fontSize: FontSizes.lg,
         fontWeight: '700',
         color: Colors.light.text,
-        marginTop: Spacing.md,
+        marginTop: Spacing.md
     },
     qcSubtitle: {
         fontSize: FontSizes.sm,
         color: Colors.light.textSecondary,
-        marginTop: Spacing.xs,
+        marginTop: Spacing.xs
     },
     // Chat Banner Styles
     chatBanner: {
@@ -1263,77 +1320,76 @@ const styles = StyleSheet.create({
         backgroundColor: '#fff',
         borderRadius: BorderRadius.lg,
         ...Shadows.lg,
-        zIndex: 50,
+        zIndex: 50
     },
     chatBannerContent: {
         flexDirection: 'row',
         alignItems: 'center',
-        padding: Spacing.md,
+        padding: Spacing.md
     },
     chatBannerIcon: {
         fontSize: 28,
-        marginRight: Spacing.md,
+        marginRight: Spacing.md
     },
     chatBannerText: {
-        flex: 1,
+        flex: 1
     },
     chatBannerFrom: {
         fontSize: FontSizes.md,
         fontWeight: '600',
-        color: Colors.light.text,
+        color: Colors.light.text
     },
     chatBannerMessage: {
         fontSize: FontSizes.sm,
         color: Colors.light.textSecondary,
-        marginTop: 2,
+        marginTop: 2
     },
     chatBannerAction: {
         fontSize: FontSizes.sm,
         color: Colors.primary,
-        fontWeight: '600',
+        fontWeight: '600'
     },
     // Timeline Active States
     timelineIconActive: {
-        color: '#fff',
+        color: '#fff'
     },
     timelineLabelCurrent: {
         color: Colors.primary,
-        fontWeight: '700',
+        fontWeight: '700'
     },
     // Share Location Button Styles
     shareLocationCard: {
         borderRadius: BorderRadius.lg,
         overflow: 'hidden',
         marginTop: Spacing.md,
-        ...Shadows.md,
+        ...Shadows.md
     },
     shareLocationGradient: {
         flexDirection: 'row',
         alignItems: 'center',
         paddingVertical: Spacing.md,
-        paddingHorizontal: Spacing.lg,
+        paddingHorizontal: Spacing.lg
     },
     shareLocationIcon: {
         fontSize: 28,
-        marginRight: Spacing.md,
+        marginRight: Spacing.md
     },
     shareLocationText: {
-        flex: 1,
+        flex: 1
     },
     shareLocationTitle: {
         fontSize: FontSizes.md,
         fontWeight: '700',
-        color: '#fff',
+        color: '#fff'
     },
     shareLocationSubtitle: {
         fontSize: FontSizes.xs,
         color: 'rgba(255, 255, 255, 0.8)',
-        marginTop: 2,
+        marginTop: 2
     },
     shareLocationArrow: {
         fontSize: 24,
         color: '#fff',
-        fontWeight: '300',
-    },
+        fontWeight: '300'
+    }
 });
-

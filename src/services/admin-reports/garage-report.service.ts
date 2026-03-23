@@ -6,7 +6,7 @@ import { Pool } from 'pg';
 import { getPeriodDates, formatCSV, getPagination, PaginationResult } from './utils';
 
 export class GarageReportService {
-    constructor(private pool: Pool) { }
+    constructor(private pool: Pool) {}
 
     async getDemoGaragesReport(params: { page?: number; limit?: number; format?: string; sort?: string }) {
         const { pageNum, limitNum, offset } = getPagination(params);
@@ -18,7 +18,8 @@ export class GarageReportService {
         `);
         const total = parseInt(countResult.rows[0].count);
 
-        const result = await this.pool.query(`
+        const result = await this.pool.query(
+            `
             SELECT 
                 g.garage_id, g.garage_name, u.phone_number, u.email, g.demo_expires_at,
                 EXTRACT(DAYS FROM (g.demo_expires_at - NOW()))::int as days_left,
@@ -30,11 +31,19 @@ export class GarageReportService {
             FROM garages g
             JOIN users u ON g.garage_id = u.user_id
             WHERE g.approval_status = 'demo' AND g.demo_expires_at > NOW()
-            ORDER BY ${sort === 'days_left' ? 'g.demo_expires_at ASC' :
-                sort === 'bids' ? 'total_bids DESC' :
-                    sort === 'revenue' ? 'total_revenue DESC' : 'g.demo_expires_at ASC'}
+            ORDER BY ${
+                sort === 'days_left'
+                    ? 'g.demo_expires_at ASC'
+                    : sort === 'bids'
+                      ? 'total_bids DESC'
+                      : sort === 'revenue'
+                        ? 'total_revenue DESC'
+                        : 'g.demo_expires_at ASC'
+            }
             LIMIT $1 OFFSET $2
-        `, [limitNum, offset]);
+        `,
+            [limitNum, offset]
+        );
 
         if (params.format === 'csv') {
             return formatCSV(result.rows, [
@@ -53,7 +62,7 @@ export class GarageReportService {
             pagination: { current_page: pageNum, total_pages: Math.ceil(total / limitNum), total, limit: limitNum },
             summary: {
                 total_demo_garages: total,
-                expiring_soon: result.rows.filter(r => r.days_left <= 7).length
+                expiring_soon: result.rows.filter((r) => r.days_left <= 7).length
             }
         };
     }
@@ -62,14 +71,18 @@ export class GarageReportService {
         const { pageNum, limitNum, offset } = getPagination(params);
         const { start } = getPeriodDates(params.period || '30d');
 
-        const countResult = await this.pool.query(`
+        const countResult = await this.pool.query(
+            `
             SELECT COUNT(*) FROM garages g 
             WHERE g.approval_status = 'expired' 
             OR (g.approval_status = 'demo' AND g.demo_expires_at <= NOW() AND g.demo_expires_at >= $1)
-        `, [start]);
+        `,
+            [start]
+        );
         const total = parseInt(countResult.rows[0].count);
 
-        const result = await this.pool.query(`
+        const result = await this.pool.query(
+            `
             SELECT 
                 g.garage_id, g.garage_name, u.phone_number, u.email,
                 g.demo_expires_at as expired_at,
@@ -89,7 +102,9 @@ export class GarageReportService {
             OR (g.approval_status = 'demo' AND g.demo_expires_at <= NOW() AND g.demo_expires_at >= $1)
             ORDER BY g.demo_expires_at DESC
             LIMIT $2 OFFSET $3
-        `, [start, limitNum, offset]);
+        `,
+            [start, limitNum, offset]
+        );
 
         if (params.format === 'csv') {
             return formatCSV(result.rows, [
@@ -109,8 +124,8 @@ export class GarageReportService {
             pagination: { current_page: pageNum, total_pages: Math.ceil(total / limitNum), total, limit: limitNum },
             summary: {
                 total_expired: total,
-                with_activity: result.rows.filter(r => r.activity_level !== 'no_activity').length,
-                potential_conversions: result.rows.filter(r => r.total_orders > 0).length
+                with_activity: result.rows.filter((r) => r.activity_level !== 'no_activity').length,
+                potential_conversions: result.rows.filter((r) => r.total_orders > 0).length
             }
         };
     }
@@ -119,15 +134,19 @@ export class GarageReportService {
         const { pageNum, limitNum, offset } = getPagination(params);
         const { start } = getPeriodDates(params.period || '90d');
 
-        const countResult = await this.pool.query(`
+        const countResult = await this.pool.query(
+            `
             SELECT COUNT(*) FROM garages g 
             WHERE g.approval_status = 'approved' 
             AND g.approval_date >= $1
             AND EXISTS (SELECT 1 FROM garage_subscriptions gs WHERE gs.garage_id = g.garage_id)
-        `, [start]);
+        `,
+            [start]
+        );
         const total = parseInt(countResult.rows[0].count);
 
-        const result = await this.pool.query(`
+        const result = await this.pool.query(
+            `
             SELECT 
                 g.garage_id, g.garage_name, u.phone_number,
                 g.created_at as registered_at, g.approval_date as converted_at,
@@ -145,7 +164,9 @@ export class GarageReportService {
             AND EXISTS (SELECT 1 FROM garage_subscriptions gs2 WHERE gs2.garage_id = g.garage_id)
             ORDER BY g.approval_date DESC
             LIMIT $2 OFFSET $3
-        `, [start, limitNum, offset]);
+        `,
+            [start, limitNum, offset]
+        );
 
         const demoCount = await this.pool.query(`SELECT COUNT(*) FROM garages WHERE created_at >= $1`, [start]);
         const totalNewGarages = parseInt(demoCount.rows[0].count);
@@ -170,9 +191,12 @@ export class GarageReportService {
                 total_conversions: total,
                 total_new_garages: totalNewGarages,
                 conversion_rate: `${conversionRate}%`,
-                avg_days_to_convert: result.rows.length > 0
-                    ? Math.round(result.rows.reduce((sum, r) => sum + (r.days_to_convert || 0), 0) / result.rows.length)
-                    : 0
+                avg_days_to_convert:
+                    result.rows.length > 0
+                        ? Math.round(
+                              result.rows.reduce((sum, r) => sum + (r.days_to_convert || 0), 0) / result.rows.length
+                          )
+                        : 0
             }
         };
     }
@@ -190,13 +214,11 @@ export class GarageReportService {
             queryParams.push(status);
         }
 
-        const countResult = await this.pool.query(
-            `SELECT COUNT(*) FROM garages g ${whereClause}`,
-            queryParams
-        );
+        const countResult = await this.pool.query(`SELECT COUNT(*) FROM garages g ${whereClause}`, queryParams);
         const total = parseInt(countResult.rows[0].count);
 
-        const result = await this.pool.query(`
+        const result = await this.pool.query(
+            `
             SELECT 
                 g.garage_id, g.garage_name, g.approval_status, u.phone_number, u.email,
                 g.created_at, g.approval_date, g.demo_expires_at,
@@ -217,7 +239,9 @@ export class GarageReportService {
             ${whereClause}
             ORDER BY g.created_at DESC
             LIMIT $${paramIndex++} OFFSET $${paramIndex}
-        `, [...queryParams, limitNum, offset]);
+        `,
+            [...queryParams, limitNum, offset]
+        );
 
         if (params.format === 'csv') {
             return formatCSV(result.rows, [

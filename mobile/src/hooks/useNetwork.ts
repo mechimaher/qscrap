@@ -17,10 +17,10 @@ interface UseNetworkReturn extends NetworkState {
 /**
  * Hook to monitor network connectivity status.
  * Provides real-time updates on connection changes.
- * 
+ *
  * @example
  * const { isConnected, isInternetReachable, refresh } = useNetwork();
- * 
+ *
  * if (!isConnected) {
  *   return <OfflineScreen onRetry={refresh} />;
  * }
@@ -31,7 +31,7 @@ export const useNetwork = (): UseNetworkReturn => {
         isInternetReachable: true,
         connectionType: null,
         isWifi: false,
-        isCellular: false,
+        isCellular: false
     });
 
     const updateState = useCallback((netInfoState: NetInfoState) => {
@@ -40,7 +40,7 @@ export const useNetwork = (): UseNetworkReturn => {
             isInternetReachable: netInfoState.isInternetReachable,
             connectionType: netInfoState.type,
             isWifi: netInfoState.type === 'wifi',
-            isCellular: netInfoState.type === 'cellular',
+            isCellular: netInfoState.type === 'cellular'
         });
     }, []);
 
@@ -67,7 +67,7 @@ export const useNetwork = (): UseNetworkReturn => {
 
     return {
         ...state,
-        refresh,
+        refresh
     };
 };
 

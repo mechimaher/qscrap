@@ -1,9 +1,9 @@
 /**
  * DocumentService - Invoice & Document Generation Business Logic
- * 
+ *
  * Extracted from documents.controller.ts (1,470 lines) to enable:
  * - Testability
- * - Reusability  
+ * - Reusability
  * - Consistent error handling
  */
 
@@ -55,15 +55,11 @@ export interface DocumentRecord {
 // ============================================
 
 export class DocumentService {
-
     /**
      * Get document by ID with verification
      */
     static async getDocument(document_id: string, user_id?: string): Promise<DocumentRecord> {
-        const result = await pool.query(
-            `SELECT * FROM documents WHERE document_id = $1`,
-            [document_id]
-        );
+        const result = await pool.query(`SELECT * FROM documents WHERE document_id = $1`, [document_id]);
 
         if (result.rows.length === 0) {
             throw ApiError.notFound('Document not found');
@@ -81,13 +77,16 @@ export class DocumentService {
      * Get all documents for an order
      */
     static async getOrderDocuments(order_id: string): Promise<DocumentRecord[]> {
-        const result = await pool.query(`
+        const result = await pool.query(
+            `
             SELECT document_id, document_type, document_number, 
                    created_at, verification_code
             FROM documents 
             WHERE order_id = $1
             ORDER BY created_at DESC
-        `, [order_id]);
+        `,
+            [order_id]
+        );
 
         return result.rows;
     }
@@ -105,26 +104,27 @@ export class DocumentService {
         const offset = (page - 1) * limit;
 
         // Build query based on user type
-        const joinCondition = user_type === 'customer'
-            ? 'JOIN orders o ON d.order_id = o.order_id AND o.customer_id = $1'
-            : 'JOIN orders o ON d.order_id = o.order_id AND o.garage_id = $1';
+        const joinCondition =
+            user_type === 'customer'
+                ? 'JOIN orders o ON d.order_id = o.order_id AND o.customer_id = $1'
+                : 'JOIN orders o ON d.order_id = o.order_id AND o.garage_id = $1';
 
         // Count
-        const countResult = await pool.query(
-            `SELECT COUNT(*) FROM documents d ${joinCondition}`,
-            [user_id]
-        );
+        const countResult = await pool.query(`SELECT COUNT(*) FROM documents d ${joinCondition}`, [user_id]);
         const total = parseInt(countResult.rows[0].count);
 
         // Data
-        const result = await pool.query(`
+        const result = await pool.query(
+            `
             SELECT d.document_id, d.document_type, d.document_number,
                    d.created_at, d.verification_code, o.order_number
             FROM documents d
             ${joinCondition}
             ORDER BY d.created_at DESC
             LIMIT $2 OFFSET $3
-        `, [user_id, limit, offset]);
+        `,
+            [user_id, limit, offset]
+        );
 
         return {
             documents: result.rows,
@@ -143,14 +143,17 @@ export class DocumentService {
         valid: boolean;
         document?: Partial<DocumentRecord>;
     }> {
-        const result = await pool.query(`
+        const result = await pool.query(
+            `
             SELECT d.document_id, d.document_type, d.document_number,
                    d.created_at, d.verification_code,
                    o.order_number, o.order_status
             FROM documents d
             JOIN orders o ON d.order_id = o.order_id
             WHERE d.verification_code = $1
-        `, [verification_code]);
+        `,
+            [verification_code]
+        );
 
         if (result.rows.length === 0) {
             return { valid: false };
@@ -175,12 +178,15 @@ export class DocumentService {
      */
     static async generateInvoiceNumber(): Promise<string> {
         const year = new Date().getFullYear();
-        const result = await pool.query(`
+        const result = await pool.query(
+            `
             SELECT COUNT(*) + 1 as next_number 
             FROM documents 
             WHERE document_type = 'invoice' 
             AND EXTRACT(YEAR FROM created_at) = $1
-        `, [year]);
+        `,
+            [year]
+        );
 
         const nextNumber = result.rows[0].next_number;
         return `INV-${year}-${String(nextNumber).padStart(6, '0')}`;
@@ -196,10 +202,13 @@ export class DocumentService {
         actor_type: string
     ): Promise<void> {
         try {
-            await pool.query(`
+            await pool.query(
+                `
                 INSERT INTO document_access_log (document_id, action, actor_id, actor_type, accessed_at)
                 VALUES ($1, $2, $3, $4, NOW())
-            `, [document_id, action, actor_id, actor_type]);
+            `,
+                [document_id, action, actor_id, actor_type]
+            );
         } catch (err) {
             // Non-critical - don't fail main operation
             logger.error('Failed to log document access', { error: err });

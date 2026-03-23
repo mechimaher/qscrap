@@ -62,12 +62,7 @@ class SmartNotificationService {
         return this.sendImmediately(userId, title, message, type);
     }
 
-    private async sendImmediately(
-        userId: string,
-        title: string,
-        message: string,
-        type: string
-    ): Promise<boolean> {
+    private async sendImmediately(userId: string, title: string, message: string, type: string): Promise<boolean> {
         const io = getIO();
 
         if (io) {
@@ -75,7 +70,7 @@ class SmartNotificationService {
                 title,
                 message,
                 type,
-                timestamp: new Date().toISOString(),
+                timestamp: new Date().toISOString()
             });
         }
 
@@ -148,10 +143,9 @@ class SmartNotificationService {
                 notification.type
             );
 
-            await pool.query(
-                'UPDATE queued_notifications SET sent = true, sent_at = NOW() WHERE id = $1',
-                [notification.id]
-            );
+            await pool.query('UPDATE queued_notifications SET sent = true, sent_at = NOW() WHERE id = $1', [
+                notification.id
+            ]);
         }
 
         logger.info('Processed queued notifications', { count: result.rows.length });

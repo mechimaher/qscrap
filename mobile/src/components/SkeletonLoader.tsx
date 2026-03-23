@@ -1,12 +1,5 @@
 import React, { useEffect, useRef } from 'react';
-import {
-    View,
-    Animated,
-    StyleSheet,
-    ViewStyle,
-    Dimensions,
-    DimensionValue,
-} from 'react-native';
+import { View, Animated, StyleSheet, ViewStyle, Dimensions, DimensionValue } from 'react-native';
 import { useTheme } from '../contexts';
 import { Spacing, BorderRadius } from '../constants';
 
@@ -27,7 +20,7 @@ export const SkeletonLoader: React.FC<SkeletonLoaderProps> = ({
     width = '100%',
     height = 20,
     borderRadius = BorderRadius.sm,
-    style,
+    style
 }) => {
     const { colors } = useTheme();
     const shimmerAnim = useRef(new Animated.Value(0)).current;
@@ -38,13 +31,13 @@ export const SkeletonLoader: React.FC<SkeletonLoaderProps> = ({
                 Animated.timing(shimmerAnim, {
                     toValue: 1,
                     duration: 1000,
-                    useNativeDriver: true,
+                    useNativeDriver: true
                 }),
                 Animated.timing(shimmerAnim, {
                     toValue: 0,
                     duration: 1000,
-                    useNativeDriver: true,
-                }),
+                    useNativeDriver: true
+                })
             ])
         );
         animation.start();
@@ -53,7 +46,7 @@ export const SkeletonLoader: React.FC<SkeletonLoaderProps> = ({
 
     const opacity = shimmerAnim.interpolate({
         inputRange: [0, 1],
-        outputRange: [0.3, 0.7],
+        outputRange: [0.3, 0.7]
     });
 
     return (
@@ -65,9 +58,9 @@ export const SkeletonLoader: React.FC<SkeletonLoaderProps> = ({
                     height,
                     borderRadius,
                     backgroundColor: colors.surfaceSecondary,
-                    opacity,
+                    opacity
                 },
-                style,
+                style
             ]}
         />
     );
@@ -106,10 +99,7 @@ export const SkeletonCard: React.FC<{ style?: ViewStyle }> = ({ style }) => {
 /**
  * Pre-built skeleton list for multiple items
  */
-export const SkeletonList: React.FC<{ count?: number; style?: ViewStyle }> = ({
-    count = 3,
-    style,
-}) => {
+export const SkeletonList: React.FC<{ count?: number; style?: ViewStyle }> = ({ count = 3, style }) => {
     return (
         <View style={style}>
             {Array.from({ length: count }).map((_, index) => (
@@ -121,26 +111,26 @@ export const SkeletonList: React.FC<{ count?: number; style?: ViewStyle }> = ({
 
 const styles = StyleSheet.create({
     skeleton: {
-        overflow: 'hidden',
+        overflow: 'hidden'
     },
     card: {
         padding: Spacing.lg,
-        borderRadius: BorderRadius.lg,
+        borderRadius: BorderRadius.lg
     },
     cardHeader: {
         flexDirection: 'row',
-        alignItems: 'center',
+        alignItems: 'center'
     },
     cardHeaderText: {
         flex: 1,
-        marginLeft: Spacing.md,
+        marginLeft: Spacing.md
     },
     cardFooter: {
         flexDirection: 'row',
         justifyContent: 'space-between',
         alignItems: 'center',
-        marginTop: Spacing.lg,
-    },
+        marginTop: Spacing.lg
+    }
 });
 
 export default SkeletonLoader;

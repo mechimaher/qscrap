@@ -1,13 +1,13 @@
 /**
  * Security Configuration Module
- * 
+ *
  * Centralized security settings for QScrap platform.
  * This module provides:
  * - JWT secret management with production safety
  * - Environment validation at startup
  * - Security-related constants
  * - Token configuration
- * 
+ *
  * @module config/security
  */
 
@@ -29,14 +29,21 @@ export const TOKEN_EXPIRY_STRING = process.env.ACCESS_TOKEN_EXPIRY || '15m';
 /** Parse token expiry string to seconds */
 function parseExpiryToSeconds(expiry: string): number {
     const match = expiry.match(/^(\d+)(s|m|h|d)$/);
-    if (!match) { return 30 * 24 * 60 * 60; } // fallback 30 days
+    if (!match) {
+        return 30 * 24 * 60 * 60;
+    } // fallback 30 days
     const value = parseInt(match[1], 10);
     switch (match[2]) {
-        case 's': return value;
-        case 'm': return value * 60;
-        case 'h': return value * 3600;
-        case 'd': return value * 86400;
-        default: return 30 * 86400;
+        case 's':
+            return value;
+        case 'm':
+            return value * 60;
+        case 'h':
+            return value * 3600;
+        case 'd':
+            return value * 86400;
+        default:
+            return 30 * 86400;
     }
 }
 
@@ -66,16 +73,16 @@ let isProduction = false;
 
 /**
  * Validates and retrieves the JWT secret.
- * 
+ *
  * Production requirements:
  * - JWT_SECRET must be set via environment variable
  * - Secret must be at least 32 characters
  * - Will throw fatal error if requirements not met
- * 
+ *
  * Development behavior:
  * - Falls back to a development-only secret
  * - Logs warning to console
- * 
+ *
  * @returns The JWT secret string
  * @throws Error if production requirements not met
  */
@@ -93,15 +100,15 @@ export const getJwtSecret = (): string => {
         if (!secret) {
             throw new Error(
                 'FATAL: JWT_SECRET environment variable is required in production. ' +
-                'Generate a secure secret: openssl rand -base64 48'
+                    'Generate a secure secret: openssl rand -base64 48'
             );
         }
 
         if (secret.length < MIN_SECRET_LENGTH) {
             throw new Error(
                 `FATAL: JWT_SECRET must be at least ${MIN_SECRET_LENGTH} characters. ` +
-                `Current length: ${secret.length}. ` +
-                'Generate a secure secret: openssl rand -base64 48'
+                    `Current length: ${secret.length}. ` +
+                    'Generate a secure secret: openssl rand -base64 48'
             );
         }
 
@@ -136,7 +143,7 @@ interface EnvValidationResult {
 /**
  * Validates all required environment variables at startup.
  * Call this during server initialization.
- * 
+ *
  * @returns Validation result with warnings and errors
  */
 export const validateSecurityEnvironment = (): EnvValidationResult => {
@@ -194,7 +201,7 @@ export const validateSecurityEnvironment = (): EnvValidationResult => {
 /**
  * Performs startup security checks and logs results.
  * Will throw in production if critical checks fail.
- * 
+ *
  * @throws Error if critical security requirements not met in production
  */
 export const performStartupSecurityChecks = (): void => {
@@ -223,7 +230,9 @@ export const performStartupSecurityChecks = (): void => {
     getJwtSecret();
 
     // Log security summary
-    logger.startup(`Security: ${isProd ? 'PRODUCTION' : 'development'}, Token: ${TOKEN_EXPIRY_SECONDS / 86400}d, Bcrypt: ${BCRYPT_ROUNDS} rounds`);
+    logger.startup(
+        `Security: ${isProd ? 'PRODUCTION' : 'development'}, Token: ${TOKEN_EXPIRY_SECONDS / 86400}d, Bcrypt: ${BCRYPT_ROUNDS} rounds`
+    );
 };
 
 // ============================================
@@ -240,7 +249,7 @@ export const getJwtSignOptions = () => ({
 
 /**
  * Generates a secure random string for various purposes.
- * 
+ *
  * @param length - Desired string length
  * @returns Cryptographically secure random string
  */

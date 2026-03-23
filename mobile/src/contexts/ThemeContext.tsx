@@ -17,7 +17,7 @@ export interface ExtendedThemeColors extends ThemeColors {
 
 export interface ThemeContextType {
     isDarkMode: boolean;
-    isDark: boolean;  // Alias for backward compatibility
+    isDark: boolean; // Alias for backward compatibility
     toggleTheme: () => void;
     setTheme: (mode: 'light' | 'dark' | 'system') => void;
     themeMode: 'light' | 'dark' | 'system';
@@ -64,9 +64,7 @@ export function ThemeProvider({ children }: { children: ReactNode }) {
     };
 
     // Determine actual dark mode based on preference
-    const isDarkMode = themeMode === 'system'
-        ? systemColorScheme === 'dark'
-        : themeMode === 'dark';
+    const isDarkMode = themeMode === 'system' ? systemColorScheme === 'dark' : themeMode === 'dark';
 
     const isDark = isDarkMode; // Alias
 
@@ -78,7 +76,7 @@ export function ThemeProvider({ children }: { children: ReactNode }) {
         ...baseColors,
         primaryDark: '#6B1530',
         primaryLight: '#A82050',
-        gold: '#C9A227',
+        gold: '#C9A227'
     };
 
     // Don't render until theme is loaded to prevent flash
@@ -87,14 +85,16 @@ export function ThemeProvider({ children }: { children: ReactNode }) {
     }
 
     return (
-        <ThemeContext.Provider value={{
-            isDarkMode,
-            isDark,
-            toggleTheme,
-            setTheme,
-            themeMode,
-            colors
-        }}>
+        <ThemeContext.Provider
+            value={{
+                isDarkMode,
+                isDark,
+                toggleTheme,
+                setTheme,
+                themeMode,
+                colors
+            }}
+        >
             {children}
         </ThemeContext.Provider>
     );

@@ -35,7 +35,7 @@ export const lightTheme = {
     inputBackground: '#FFFFFF',
     inputBorder: '#E5E5E5',
     inputText: '#1A1A1A',
-    placeholder: '#9CA3AF',
+    placeholder: '#9CA3AF'
 };
 
 // ============================================
@@ -71,7 +71,7 @@ export const darkTheme = {
     inputBackground: '#1C1C1F',
     inputBorder: '#2C2C30',
     inputText: '#FAFAFA',
-    placeholder: '#71717A',
+    placeholder: '#71717A'
 };
 
 // Proper type that supports both light and dark themes
@@ -140,7 +140,7 @@ export const Colors = {
         champagne: ['#FFFFFF', '#FFF9E6'] as const, // Warm premium light
         champagneDark: ['#1C1C1F', '#1F1A10'] as const, // Warm premium dark
         pearl: ['#FFFFFF', '#F5F5F7'] as const, // Cool premium light
-        pearlDark: ['#141416', '#1C1C1F'] as const, // Cool premium dark
+        pearlDark: ['#141416', '#1C1C1F'] as const // Cool premium dark
     }
 };
 
@@ -151,7 +151,7 @@ export const Spacing = {
     lg: 24,
     xl: 32,
     xxl: 48,
-    xxxl: 64,
+    xxxl: 64
 };
 
 export const BorderRadius = {
@@ -160,7 +160,7 @@ export const BorderRadius = {
     lg: 16,
     xl: 24,
     xxl: 48,
-    full: 9999,
+    full: 9999
 };
 
 export const FontSizes = {
@@ -171,7 +171,7 @@ export const FontSizes = {
     xl: 18,
     xxl: 24,
     xxxl: 32,
-    display: 40,
+    display: 40
 };
 
 // Alias for backward compatibility
@@ -182,7 +182,7 @@ export const FontWeights = {
     medium: '500' as const,
     semibold: '600' as const,
     bold: '700' as const,
-    heavy: '800' as const,
+    heavy: '800' as const
 };
 
 // VVIP 2026 - Inter Font Family
@@ -191,7 +191,7 @@ export const FontFamily = {
     medium: 'Inter_500Medium',
     semibold: 'Inter_600SemiBold',
     bold: 'Inter_700Bold',
-    heavy: 'Inter_800ExtraBold',
+    heavy: 'Inter_800ExtraBold'
 };
 
 export const Shadows = {
@@ -200,41 +200,41 @@ export const Shadows = {
         shadowOffset: { width: 0, height: 1 },
         shadowOpacity: 0.1,
         shadowRadius: 2,
-        elevation: 2,
+        elevation: 2
     },
     md: {
         shadowColor: '#000',
         shadowOffset: { width: 0, height: 4 },
         shadowOpacity: 0.15,
         shadowRadius: 6,
-        elevation: 4,
+        elevation: 4
     },
     lg: {
         shadowColor: '#000',
         shadowOffset: { width: 0, height: 8 },
         shadowOpacity: 0.2,
         shadowRadius: 12,
-        elevation: 8,
+        elevation: 8
     },
     xl: {
         shadowColor: '#000',
         shadowOffset: { width: 0, height: 12 },
         shadowOpacity: 0.25,
         shadowRadius: 16,
-        elevation: 12,
+        elevation: 12
     },
     xxl: {
         shadowColor: '#000',
         shadowOffset: { width: 0, height: 16 },
         shadowOpacity: 0.3,
         shadowRadius: 24,
-        elevation: 16,
+        elevation: 16
     },
     glow: {
         shadowColor: '#8D1B3D',
         shadowOffset: { width: 0, height: 0 },
         shadowOpacity: 0.3,
         shadowRadius: 16,
-        elevation: 10,
-    },
+        elevation: 10
+    }
 };

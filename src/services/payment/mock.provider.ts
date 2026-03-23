@@ -27,7 +27,7 @@ export class MockPaymentProvider implements PaymentGateway {
         SUCCESS: '4242424242424242',
         DECLINE: '4000000000000002',
         INSUFFICIENT: '4000000000009995',
-        REQUIRES_3DS: '4000002760003184',
+        REQUIRES_3DS: '4000002760003184'
     };
 
     async createPaymentIntent(options: CreatePaymentOptions): Promise<PaymentIntent> {
@@ -164,7 +164,7 @@ export class MockPaymentProvider implements PaymentGateway {
     async detachPaymentMethod(paymentMethodId: string): Promise<boolean> {
         // Find and remove from all customers
         for (const [customerId, methods] of this.paymentMethods) {
-            const filtered = methods.filter(m => m.id !== paymentMethodId && m.providerId !== paymentMethodId);
+            const filtered = methods.filter((m) => m.id !== paymentMethodId && m.providerId !== paymentMethodId);
             if (filtered.length !== methods.length) {
                 this.paymentMethods.set(customerId, filtered);
                 logger.info('MockPayment detached method', { paymentMethodId });

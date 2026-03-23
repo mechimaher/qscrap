@@ -35,10 +35,7 @@ export class LoyaltyService {
      */
     static async getCustomerSummary(customerId: string): Promise<RewardsSummary | null> {
         try {
-            const result = await pool.query(
-                'SELECT * FROM get_customer_rewards_summary($1)',
-                [customerId]
-            );
+            const result = await pool.query('SELECT * FROM get_customer_rewards_summary($1)', [customerId]);
 
             if (result.rows.length === 0) {
                 // Initialize rewards account if it doesn't exist
@@ -97,15 +94,12 @@ export class LoyaltyService {
     /**
      * Redeem points for discount
      */
-    static async redeemPoints(
-        customerId: string,
-        pointsToRedeem: number
-    ): Promise<RedemptionResult> {
+    static async redeemPoints(customerId: string, pointsToRedeem: number): Promise<RedemptionResult> {
         try {
-            const result = await pool.query(
-                'SELECT * FROM redeem_points_for_discount($1, $2)',
-                [customerId, pointsToRedeem]
-            );
+            const result = await pool.query('SELECT * FROM redeem_points_for_discount($1, $2)', [
+                customerId,
+                pointsToRedeem
+            ]);
 
             return result.rows[0];
         } catch (error) {
@@ -117,10 +111,7 @@ export class LoyaltyService {
     /**
      * Get transaction history
      */
-    static async getTransactionHistory(
-        customerId: string,
-        limit: number = 50
-    ): Promise<RewardTransaction[]> {
+    static async getTransactionHistory(customerId: string, limit: number = 50): Promise<RewardTransaction[]> {
         try {
             const result = await pool.query(
                 `SELECT 
@@ -250,13 +241,7 @@ export class LoyaltyService {
         reason: string
     ): Promise<{ new_balance: number; new_tier: string }> {
         try {
-            return await this.addPoints(
-                customerId,
-                points,
-                'bonus',
-                undefined,
-                `Admin bonus: ${reason}`
-            );
+            return await this.addPoints(customerId, points, 'bonus', undefined, `Admin bonus: ${reason}`);
         } catch (error) {
             logger.error('Error awarding bonus points', { error: (error as Error).message });
             throw new Error('Failed to award bonus points');

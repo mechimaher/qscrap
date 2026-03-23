@@ -2,14 +2,7 @@ import { log, warn, error as logError } from '../utils/logger';
 // QScrap - My Vehicles Selector (Family Fleet)
 // Allows customers to quickly select from previously used vehicles
 import React, { useState, useEffect, useCallback } from 'react';
-import {
-    View,
-    Text,
-    StyleSheet,
-    TouchableOpacity,
-    ScrollView,
-    ActivityIndicator,
-} from 'react-native';
+import { View, Text, StyleSheet, TouchableOpacity, ScrollView, ActivityIndicator } from 'react-native';
 import { useNavigation, useFocusEffect } from '@react-navigation/native';
 import { api, Vehicle as SavedVehicle } from '../services/api';
 import { Colors, Spacing, BorderRadius, FontSizes, Shadows } from '../constants/theme';
@@ -93,17 +86,27 @@ export default function MyVehiclesSelector({ onSelect, selectedVehicleId, onVehi
                 }}
             >
                 <View style={[styles.headerLeft, { flexDirection: isRTL ? 'row-reverse' : 'row' }]}>
-                    <Ionicons name="car-sport" size={20} color={Colors.primary} style={isRTL ? { marginRight: 0, marginLeft: Spacing.sm } : { marginRight: Spacing.sm }} />
-                    <Text style={[styles.headerTitle, { color: colors.text }]}>
-                        {t('home.myVehicles')}
-                    </Text>
-                    <View style={[styles.countBadge, { backgroundColor: Colors.primary, marginLeft: isRTL ? 0 : Spacing.sm, marginRight: isRTL ? Spacing.sm : 0 }]}>
+                    <Ionicons
+                        name="car-sport"
+                        size={20}
+                        color={Colors.primary}
+                        style={isRTL ? { marginRight: 0, marginLeft: Spacing.sm } : { marginRight: Spacing.sm }}
+                    />
+                    <Text style={[styles.headerTitle, { color: colors.text }]}>{t('home.myVehicles')}</Text>
+                    <View
+                        style={[
+                            styles.countBadge,
+                            {
+                                backgroundColor: Colors.primary,
+                                marginLeft: isRTL ? 0 : Spacing.sm,
+                                marginRight: isRTL ? Spacing.sm : 0
+                            }
+                        ]}
+                    >
                         <Text style={styles.countText}>{vehicles.length}</Text>
                     </View>
                 </View>
-                <Text style={[styles.chevron, { color: colors.textMuted }]}>
-                    {isExpanded ? '▲' : '▼'}
-                </Text>
+                <Text style={[styles.chevron, { color: colors.textMuted }]}>{isExpanded ? '▲' : '▼'}</Text>
             </TouchableOpacity>
 
             {isExpanded && (
@@ -131,12 +134,14 @@ export default function MyVehiclesSelector({ onSelect, selectedVehicleId, onVehi
                                 ]}
                                 onPress={() => handleSelect(vehicle)}
                             >
-                                <Ionicons name={vehicle.is_primary ? 'star' : 'car-sport-outline'} size={28} color={vehicle.is_primary ? '#F59E0B' : Colors.primary} style={{ marginBottom: Spacing.xs }} />
+                                <Ionicons
+                                    name={vehicle.is_primary ? 'star' : 'car-sport-outline'}
+                                    size={28}
+                                    color={vehicle.is_primary ? '#F59E0B' : Colors.primary}
+                                    style={{ marginBottom: Spacing.xs }}
+                                />
                                 <Text
-                                    style={[
-                                        styles.vehicleName,
-                                        { color: isSelected ? Colors.primary : colors.text }
-                                    ]}
+                                    style={[styles.vehicleName, { color: isSelected ? Colors.primary : colors.text }]}
                                     numberOfLines={1}
                                 >
                                     {displayName}
@@ -148,10 +153,12 @@ export default function MyVehiclesSelector({ onSelect, selectedVehicleId, onVehi
                                     <View style={styles.vinBadge}>
                                         <Text style={styles.vinBadgeText}>{t('common.vinVerifiedShort')}</Text>
                                     </View>
-                                ) : (vehicle.request_count ?? 0) > 0 && (
-                                    <Text style={[styles.vehicleRequests, { color: colors.textSecondary }]}>
-                                        {t('common.requestsCount', { count: vehicle.request_count ?? 0 })}
-                                    </Text>
+                                ) : (
+                                    (vehicle.request_count ?? 0) > 0 && (
+                                        <Text style={[styles.vehicleRequests, { color: colors.textSecondary }]}>
+                                            {t('common.requestsCount', { count: vehicle.request_count ?? 0 })}
+                                        </Text>
+                                    )
                                 )}
                             </TouchableOpacity>
                         );
@@ -164,10 +171,13 @@ export default function MyVehiclesSelector({ onSelect, selectedVehicleId, onVehi
                             navigation.navigate('MyVehicles');
                         }}
                     >
-                        <Ionicons name="add-circle-outline" size={20} color={Colors.primary} style={{ marginBottom: 4 }} />
-                        <Text style={[styles.addHintText, { color: Colors.primary }]}>
-                            {t('common.addVehicle')}
-                        </Text>
+                        <Ionicons
+                            name="add-circle-outline"
+                            size={20}
+                            color={Colors.primary}
+                            style={{ marginBottom: 4 }}
+                        />
+                        <Text style={[styles.addHintText, { color: Colors.primary }]}>{t('common.addVehicle')}</Text>
                     </TouchableOpacity>
                 </ScrollView>
             )}
@@ -180,46 +190,46 @@ const styles = StyleSheet.create({
         marginBottom: Spacing.lg,
         borderRadius: BorderRadius.xl,
         overflow: 'hidden',
-        ...Shadows.sm,
+        ...Shadows.sm
     },
     header: {
         flexDirection: 'row',
         justifyContent: 'space-between',
         alignItems: 'center',
-        padding: Spacing.md,
+        padding: Spacing.md
     },
     headerLeft: {
         flexDirection: 'row',
-        alignItems: 'center',
+        alignItems: 'center'
     },
     headerIcon: {
         fontSize: 20,
-        marginRight: Spacing.sm,
+        marginRight: Spacing.sm
     },
     headerTitle: {
         fontSize: FontSizes.md,
-        fontWeight: '700',
+        fontWeight: '700'
     },
     countBadge: {
         marginLeft: Spacing.sm,
         paddingHorizontal: 8,
         paddingVertical: 2,
-        borderRadius: 10,
+        borderRadius: 10
     },
     countText: {
         color: '#fff',
         fontSize: FontSizes.xs,
-        fontWeight: '700',
+        fontWeight: '700'
     },
     chevron: {
-        fontSize: 12,
+        fontSize: 12
     },
     vehicleList: {
-        paddingBottom: Spacing.md,
+        paddingBottom: Spacing.md
     },
     vehicleListContent: {
         paddingHorizontal: Spacing.md,
-        gap: Spacing.sm,
+        gap: Spacing.sm
     },
     vehicleCard: {
         width: 120,
@@ -227,36 +237,36 @@ const styles = StyleSheet.create({
         borderRadius: BorderRadius.lg,
         borderWidth: 2,
         alignItems: 'center',
-        marginRight: Spacing.sm,
+        marginRight: Spacing.sm
     },
     vehicleEmoji: {
         fontSize: 28,
-        marginBottom: Spacing.xs,
+        marginBottom: Spacing.xs
     },
     vehicleName: {
         fontSize: FontSizes.sm,
         fontWeight: '600',
-        textAlign: 'center',
+        textAlign: 'center'
     },
     vehicleYear: {
         fontSize: FontSizes.xs,
-        marginTop: 2,
+        marginTop: 2
     },
     vehicleRequests: {
         fontSize: 10,
-        marginTop: 4,
+        marginTop: 4
     },
     vinBadge: {
         backgroundColor: 'rgba(34, 197, 94, 0.15)',
         paddingHorizontal: 6,
         paddingVertical: 2,
         borderRadius: 8,
-        marginTop: 4,
+        marginTop: 4
     },
     vinBadgeText: {
         fontSize: 9,
         color: '#22C55E',
-        fontWeight: '600',
+        fontWeight: '600'
     },
     addHint: {
         width: 100,
@@ -265,15 +275,15 @@ const styles = StyleSheet.create({
         borderWidth: 2,
         borderStyle: 'dashed',
         alignItems: 'center',
-        justifyContent: 'center',
+        justifyContent: 'center'
     },
     addHintIcon: {
         fontSize: 20,
-        marginBottom: 4,
+        marginBottom: 4
     },
     addHintText: {
         fontSize: FontSizes.xs,
         fontWeight: '700',
-        textAlign: 'center',
-    },
+        textAlign: 'center'
+    }
 });

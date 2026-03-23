@@ -14,7 +14,7 @@ import {
     Image,
     Animated,
     Easing,
-    Alert,
+    Alert
 } from 'react-native';
 import { LinearGradient } from 'expo-linear-gradient';
 import { SafeAreaView } from 'react-native-safe-area-context';
@@ -27,7 +27,15 @@ import { useTheme } from '../../contexts/ThemeContext';
 import { useTranslation } from '../../contexts/LanguageContext';
 import { rtlFlexDirection, rtlTextAlign, rtlChevron } from '../../utils/rtl';
 import { api, Stats } from '../../services/api';
-import { Colors, Spacing, BorderRadius, FontSizes, FontFamily, Shadows, Colors as ThemeColors } from '../../constants/theme';
+import {
+    Colors,
+    Spacing,
+    BorderRadius,
+    FontSizes,
+    FontFamily,
+    Shadows,
+    Colors as ThemeColors
+} from '../../constants/theme';
 import { RootStackParamList } from '../../../App';
 import { useSocketContext } from '../../hooks/useSocket';
 import { useToast } from '../../components/Toast';
@@ -59,19 +67,22 @@ const HomeSkeletonLoading = () => {
     const { isRTL } = useTranslation();
 
     useEffect(() => {
-        Animated.loop(
-            Animated.timing(shimmerAnim, { toValue: 1, duration: 1200, useNativeDriver: true })
-        ).start();
+        Animated.loop(Animated.timing(shimmerAnim, { toValue: 1, duration: 1200, useNativeDriver: true })).start();
     }, []);
 
     const shimmerTranslate = shimmerAnim.interpolate({
         inputRange: [0, 1],
-        outputRange: [-width, width],
+        outputRange: [-width, width]
     });
 
     const SkeletonBox = ({ style }: { style: any }) => (
         <View style={[styles.skeletonBox, style, { backgroundColor: colors.surfaceSecondary }]}>
-            <Animated.View style={[styles.skeletonShimmer, { transform: [{ translateX: shimmerTranslate }], backgroundColor: colors.surface }]} />
+            <Animated.View
+                style={[
+                    styles.skeletonShimmer,
+                    { transform: [{ translateX: shimmerTranslate }], backgroundColor: colors.surface }
+                ]}
+            />
         </View>
     );
 
@@ -141,7 +152,7 @@ export default function HomeScreen() {
 
             // Get position with 5-second timeout (Balanced accuracy for speed)
             const locationPromise = Location.getCurrentPositionAsync({
-                accuracy: Location.Accuracy.Balanced,
+                accuracy: Location.Accuracy.Balanced
             });
             const timeoutPromise = new Promise<never>((_, reject) =>
                 setTimeout(() => reject(new Error('GPS Timeout')), 5000)
@@ -174,7 +185,7 @@ export default function HomeScreen() {
                     setDeliveryLocationData({
                         lat: location.coords.latitude,
                         lng: location.coords.longitude,
-                        address: fullAddress,
+                        address: fullAddress
                     });
                     Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success);
                 } else {
@@ -183,7 +194,7 @@ export default function HomeScreen() {
                     setDeliveryLocationData({
                         lat: location.coords.latitude,
                         lng: location.coords.longitude,
-                        address: t('home.currentLocation'),
+                        address: t('home.currentLocation')
                     });
                 }
             } catch (geocodeError) {
@@ -193,7 +204,7 @@ export default function HomeScreen() {
                 setDeliveryLocationData({
                     lat: location.coords.latitude,
                     lng: location.coords.longitude,
-                    address: t('home.currentLocation'),
+                    address: t('home.currentLocation')
                 });
             }
         } catch (error) {
@@ -205,7 +216,6 @@ export default function HomeScreen() {
             setIsDetectingLocation(false);
         }
     }, [t]);
-
 
     const loadData = useCallback(async () => {
         try {
@@ -222,11 +232,13 @@ export default function HomeScreen() {
             // WATERFALL PATTERN: Saved addresses first, GPS fallback if none
             if (addressesData.addresses && addressesData.addresses.length > 0) {
                 // Priority 1: Use saved default address (instant)
-                const defaultAddr = addressesData.addresses.find((a: any) => a.is_default) || addressesData.addresses[0];
+                const defaultAddr =
+                    addressesData.addresses.find((a: any) => a.is_default) || addressesData.addresses[0];
                 const displayText = defaultAddr.address_text;
                 // Format concise for display
                 const parts = displayText.split(',').map((p: string) => p.trim());
-                const concise = parts.length >= 2 ? `${parts[parts.length - 2]}, ${parts[parts.length - 1]}` : displayText;
+                const concise =
+                    parts.length >= 2 ? `${parts[parts.length - 2]}, ${parts[parts.length - 1]}` : displayText;
                 setDeliveryAddress(concise);
                 setDeliveryLocationData({
                     lat: defaultAddr.latitude || 0,
@@ -245,10 +257,12 @@ export default function HomeScreen() {
         }
     }, [toast]);
 
-    useFocusEffect(useCallback(() => {
-        setLoading(true); // Ensure loading state is true on focus
-        loadData();
-    }, [loadData]));
+    useFocusEffect(
+        useCallback(() => {
+            setLoading(true); // Ensure loading state is true on focus
+            loadData();
+        }, [loadData])
+    );
 
     useEffect(() => {
         if (newBids.length > 0 || orderUpdates.length > 0) {
@@ -266,21 +280,17 @@ export default function HomeScreen() {
         // Block if no address
         if (!deliveryLocationData.lat || !deliveryLocationData.lng) {
             Haptics.notificationAsync(Haptics.NotificationFeedbackType.Warning);
-            Alert.alert(
-                t('home.alertAddressTitle'),
-                t('home.alertAddressMessage'),
-                [
-                    {
-                        text: t('home.addAddress'),
-                        onPress: () => setShowLocationPicker(true),
-                        style: 'default'
-                    },
-                    {
-                        text: t('common.cancel'),
-                        style: 'cancel'
-                    }
-                ]
-            );
+            Alert.alert(t('home.alertAddressTitle'), t('home.alertAddressMessage'), [
+                {
+                    text: t('home.addAddress'),
+                    onPress: () => setShowLocationPicker(true),
+                    style: 'default'
+                },
+                {
+                    text: t('common.cancel'),
+                    style: 'cancel'
+                }
+            ]);
             return;
         }
 
@@ -289,7 +299,7 @@ export default function HomeScreen() {
             deliveryLocation: {
                 lat: deliveryLocationData.lat,
                 lng: deliveryLocationData.lng,
-                address: deliveryLocationData.address,
+                address: deliveryLocationData.address
             }
         });
     };
@@ -308,11 +318,7 @@ export default function HomeScreen() {
                 style={styles.scrollView}
                 showsVerticalScrollIndicator={false}
                 refreshControl={
-                    <RefreshControl
-                        refreshing={refreshing}
-                        onRefresh={onRefresh}
-                        tintColor={Colors.primary}
-                    />
+                    <RefreshControl refreshing={refreshing} onRefresh={onRefresh} tintColor={Colors.primary} />
                 }
             >
                 {/* Hero Welcome with Integrated Loyalty */}
@@ -340,7 +346,7 @@ export default function HomeScreen() {
                 />
 
                 {/* Animated Stats OR Welcome for New Users */}
-                {stats && (stats.active_requests === 0 && stats.pending_deliveries === 0 && stats.total_orders === 0) ? (
+                {stats && stats.active_requests === 0 && stats.pending_deliveries === 0 && stats.total_orders === 0 ? (
                     <WelcomeNewUser onGetStarted={handleNewRequest} />
                 ) : (
                     <AnimatedStats
@@ -355,13 +361,24 @@ export default function HomeScreen() {
 
                 {/* How It Works Carousel */}
                 <View style={{ marginTop: Spacing.xl, marginBottom: Spacing.lg }}>
-                    <Text style={[styles.sectionTitle, { color: colors.text, marginBottom: Spacing.md, paddingHorizontal: Spacing.lg, textAlign: rtlTextAlign(isRTL) }]}>{t('home.howItWorks')}</Text>
+                    <Text
+                        style={[
+                            styles.sectionTitle,
+                            {
+                                color: colors.text,
+                                marginBottom: Spacing.md,
+                                paddingHorizontal: Spacing.lg,
+                                textAlign: rtlTextAlign(isRTL)
+                            }
+                        ]}
+                    >
+                        {t('home.howItWorks')}
+                    </Text>
                     <HowItWorksCarousel onGetStarted={handleNewRequest} autoPlay={true} />
                 </View>
 
                 <View style={{ height: 80 }} />
             </ScrollView>
-
 
             {/* Location Picker Modal - Premium Integration */}
             {showLocationPicker && (
@@ -370,7 +387,7 @@ export default function HomeScreen() {
                         if (address) {
                             // Show full geocoded address (or smart truncation if too long)
                             const fullAddress = address.address_text;
-                            const parts = fullAddress.split(',').map(p => p.trim());
+                            const parts = fullAddress.split(',').map((p) => p.trim());
 
                             // Smart display: Show first 3 parts (street, area, city) or full if short
                             let displayAddress;
@@ -386,7 +403,7 @@ export default function HomeScreen() {
                             setDeliveryLocationData({
                                 lat: address.latitude || null,
                                 lng: address.longitude || null,
-                                address: address.address_text,
+                                address: address.address_text
                             });
                         }
                         setShowLocationPicker(false);
@@ -407,15 +424,28 @@ const styles = StyleSheet.create({
         fontSize: FontSizes.md,
         fontWeight: '600',
         fontFamily: FontFamily.semibold,
-        marginBottom: Spacing.sm,
+        marginBottom: Spacing.sm
     },
 
     // Skeleton
     skeletonContainer: { padding: Spacing.lg },
     skeletonBox: { backgroundColor: '#E8E8E8', borderRadius: BorderRadius.xl, overflow: 'hidden' },
-    skeletonShimmer: { position: 'absolute', top: 0, left: 0, right: 0, bottom: 0, backgroundColor: 'rgba(255,255,255,0.4)' },
-    skeletonHero: { height: 140, marginBottom: Spacing.lg, borderRadius: 0, borderBottomLeftRadius: BorderRadius.xl * 1.5, borderBottomRightRadius: BorderRadius.xl * 1.5 },
+    skeletonShimmer: {
+        position: 'absolute',
+        top: 0,
+        left: 0,
+        right: 0,
+        bottom: 0,
+        backgroundColor: 'rgba(255,255,255,0.4)'
+    },
+    skeletonHero: {
+        height: 140,
+        marginBottom: Spacing.lg,
+        borderRadius: 0,
+        borderBottomLeftRadius: BorderRadius.xl * 1.5,
+        borderBottomRightRadius: BorderRadius.xl * 1.5
+    },
     skeletonCTA: { height: 120, marginBottom: Spacing.lg },
     skeletonStatsRow: { flexDirection: 'row', justifyContent: 'space-between' },
-    skeletonStatCard: { height: 130 },
+    skeletonStatCard: { height: 130 }
 });

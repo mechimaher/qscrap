@@ -62,7 +62,6 @@ export async function initializeRedis(): Promise<RedisClientType | null> {
         logger.startup('Redis available for caching');
 
         return redisClient;
-
     } catch (err: unknown) {
         logger.error('Redis connection failed', { error: getErrorMessage(err) });
         logger.warn('Application will work without Redis');
@@ -106,10 +105,10 @@ export async function closeRedis(): Promise<void> {
 /**
  * NOTE: For Redis session store in multi-server deployment:
  * See CLUSTER_DEPLOYMENT.md for complete setup instructions.
- * 
+ *
  * The connect-redis v7 package requires static imports which conflict
  * with our modular architecture. For production multi-server setup:
- * 
+ *
  * 1. Install packages: npm install redis connect-redis express-session
  * 2. Follow CLUSTER_DEPLOYMENT.md nginx load balancer setup
  * 3. Configure sticky sessions in nginx OR use express-session with Redis

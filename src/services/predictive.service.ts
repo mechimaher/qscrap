@@ -4,7 +4,6 @@
  */
 
 export class PredictiveService {
-
     // Maintenance Rules (Simplified Knowledge Base)
     private static rules = [
         {
@@ -40,11 +39,9 @@ export class PredictiveService {
         const product = lastPartPurchased.toLowerCase();
 
         // Find matching rules
-        const matches = PredictiveService.rules.filter(rule =>
-            product.includes(rule.trigger_part)
-        );
+        const matches = PredictiveService.rules.filter((rule) => product.includes(rule.trigger_part));
 
-        return matches.map(rule => ({
+        return matches.map((rule) => ({
             service_name: rule.suggestion,
             reason: rule.reason,
             recommended_date: this.addMonths(new Date(), rule.due_in_months)

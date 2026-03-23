@@ -1,6 +1,6 @@
 /**
  * Kysely Database Configuration
- * 
+ *
  * Type-safe SQL query builder for PostgreSQL.
  * This provides compile-time type checking for database operations.
  */
@@ -108,7 +108,22 @@ interface OrdersTable {
     delivery_fee: number;
     total_amount: number;
     garage_payout_amount: number;
-    order_status: 'confirmed' | 'preparing' | 'ready_for_pickup' | 'collected' | 'qc_in_progress' | 'qc_passed' | 'qc_failed' | 'in_transit' | 'delivered' | 'completed' | 'cancelled_by_customer' | 'cancelled_by_garage' | 'cancelled_by_ops' | 'disputed' | 'refunded';
+    order_status:
+        | 'confirmed'
+        | 'preparing'
+        | 'ready_for_pickup'
+        | 'collected'
+        | 'qc_in_progress'
+        | 'qc_passed'
+        | 'qc_failed'
+        | 'in_transit'
+        | 'delivered'
+        | 'completed'
+        | 'cancelled_by_customer'
+        | 'cancelled_by_garage'
+        | 'cancelled_by_ops'
+        | 'disputed'
+        | 'refunded';
     payment_method: string;
     payment_status: 'pending' | 'processing' | 'paid' | 'refunded' | 'failed';
     delivery_address: string | null;

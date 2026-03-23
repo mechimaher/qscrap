@@ -11,7 +11,7 @@ import {
     RefreshControl,
     Dimensions,
     Animated,
-    Easing,
+    Easing
 } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { useNavigation, useFocusEffect } from '@react-navigation/native';
@@ -36,82 +36,92 @@ const { width } = Dimensions.get('window');
 // ============================================
 const getStatusConfig = (status: string, t: any) => {
     switch (status) {
-        case 'confirmed': return {
-            color: '#3B82F6',
-            bg: '#DBEAFE',
-            icon: 'checkmark-circle' as const,
-            label: t('status.confirmed'),
-            gradient: ['#3B82F6', '#2563EB'] as const
-        };
-        case 'preparing': return {
-            color: '#F59E0B',
-            bg: '#FEF3C7',
-            icon: 'settings' as const,
-            label: t('status.preparing'),
-            gradient: ['#F59E0B', '#D97706'] as const
-        };
-        case 'ready_for_pickup': return {
-            color: '#8B5CF6',
-            bg: '#EDE9FE',
-            icon: 'cube' as const,
-            label: t('status.ready'),
-            gradient: ['#8B5CF6', '#7C3AED'] as const
-        };
+        case 'confirmed':
+            return {
+                color: '#3B82F6',
+                bg: '#DBEAFE',
+                icon: 'checkmark-circle' as const,
+                label: t('status.confirmed'),
+                gradient: ['#3B82F6', '#2563EB'] as const
+            };
+        case 'preparing':
+            return {
+                color: '#F59E0B',
+                bg: '#FEF3C7',
+                icon: 'settings' as const,
+                label: t('status.preparing'),
+                gradient: ['#F59E0B', '#D97706'] as const
+            };
+        case 'ready_for_pickup':
+            return {
+                color: '#8B5CF6',
+                bg: '#EDE9FE',
+                icon: 'cube' as const,
+                label: t('status.ready'),
+                gradient: ['#8B5CF6', '#7C3AED'] as const
+            };
         case 'collected':
         case 'qc_in_progress':
         case 'qc_passed':
-        case 'in_transit': return {
-            color: '#22C55E',
-            bg: '#DCFCE7',
-            icon: 'car-sport' as const,
-            label: t('status.onTheWay'),
-            gradient: ['#22C55E', '#16A34A'] as const
-        };
-        case 'qc_failed': return {
-            color: '#F59E0B',
-            bg: '#FEF3C7',
-            icon: 'hourglass' as const,
-            label: t('status.processing'),
-            gradient: ['#F59E0B', '#D97706'] as const
-        };
-        case 'delivered': return {
-            color: '#06B6D4',
-            bg: '#CFFAFE',
-            icon: 'checkmark-done' as const,
-            label: t('status.delivered'),
-            gradient: ['#06B6D4', '#0891B2'] as const
-        };
-        case 'completed': return {
-            color: '#22C55E',
-            bg: '#DCFCE7',
-            icon: 'checkmark-circle' as const,
-            label: t('status.completed'),
-            gradient: ['#22C55E', '#16A34A'] as const
-        };
+        case 'in_transit':
+            return {
+                color: '#22C55E',
+                bg: '#DCFCE7',
+                icon: 'car-sport' as const,
+                label: t('status.onTheWay'),
+                gradient: ['#22C55E', '#16A34A'] as const
+            };
+        case 'qc_failed':
+            return {
+                color: '#F59E0B',
+                bg: '#FEF3C7',
+                icon: 'hourglass' as const,
+                label: t('status.processing'),
+                gradient: ['#F59E0B', '#D97706'] as const
+            };
+        case 'delivered':
+            return {
+                color: '#06B6D4',
+                bg: '#CFFAFE',
+                icon: 'checkmark-done' as const,
+                label: t('status.delivered'),
+                gradient: ['#06B6D4', '#0891B2'] as const
+            };
+        case 'completed':
+            return {
+                color: '#22C55E',
+                bg: '#DCFCE7',
+                icon: 'checkmark-circle' as const,
+                label: t('status.completed'),
+                gradient: ['#22C55E', '#16A34A'] as const
+            };
         case 'cancelled':
         case 'cancelled_by_customer':
         case 'cancelled_by_garage':
-        case 'cancelled_by_ops': return {
-            color: '#EF4444',
-            bg: '#FEE2E2',
-            icon: 'close-circle' as const,
-            label: t('status.cancelled'),
-            gradient: ['#EF4444', '#DC2626'] as const
-        };
-        case 'refunded': return {
-            color: '#6B7280',
-            bg: '#F3F4F6',
-            icon: 'return-down-back' as const,
-            label: t('status.refunded'),
-            gradient: ['#6B7280', '#4B5563'] as const
-        };
-        default: return {
-            color: '#6B7280',
-            bg: '#F3F4F6',
-            icon: 'ellipse' as const,
-            label: status.replace(/_/g, ' '),
-            gradient: ['#6B7280', '#4B5563'] as const
-        };
+        case 'cancelled_by_ops':
+            return {
+                color: '#EF4444',
+                bg: '#FEE2E2',
+                icon: 'close-circle' as const,
+                label: t('status.cancelled'),
+                gradient: ['#EF4444', '#DC2626'] as const
+            };
+        case 'refunded':
+            return {
+                color: '#6B7280',
+                bg: '#F3F4F6',
+                icon: 'return-down-back' as const,
+                label: t('status.refunded'),
+                gradient: ['#6B7280', '#4B5563'] as const
+            };
+        default:
+            return {
+                color: '#6B7280',
+                bg: '#F3F4F6',
+                icon: 'ellipse' as const,
+                label: status.replace(/_/g, ' '),
+                gradient: ['#6B7280', '#4B5563'] as const
+            };
     }
 };
 
@@ -123,7 +133,7 @@ const PremiumOrderCard = ({
     index,
     colors,
     onPress,
-    onTrack,
+    onTrack
 }: {
     item: Order;
     index: number;
@@ -149,14 +159,14 @@ const PremiumOrderCard = ({
                 duration: 400,
                 delay: index * 80,
                 easing: Easing.out(Easing.back(1.1)),
-                useNativeDriver: true,
+                useNativeDriver: true
             }),
             Animated.timing(fadeAnim, {
                 toValue: 1,
                 duration: 300,
                 delay: index * 80,
-                useNativeDriver: true,
-            }),
+                useNativeDriver: true
+            })
         ]).start();
 
         // Pulse animation for in-transit orders
@@ -167,14 +177,14 @@ const PremiumOrderCard = ({
                         toValue: 1,
                         duration: 1200,
                         easing: Easing.inOut(Easing.ease),
-                        useNativeDriver: true,
+                        useNativeDriver: true
                     }),
                     Animated.timing(pulseAnim, {
                         toValue: 0,
                         duration: 1200,
                         easing: Easing.inOut(Easing.ease),
-                        useNativeDriver: true,
-                    }),
+                        useNativeDriver: true
+                    })
                 ])
             ).start();
         }
@@ -190,61 +200,76 @@ const PremiumOrderCard = ({
 
     const pulseOpacity = pulseAnim.interpolate({
         inputRange: [0, 1],
-        outputRange: [0.6, 1],
+        outputRange: [0.6, 1]
     });
 
     const glowScale = pulseAnim.interpolate({
         inputRange: [0, 1],
-        outputRange: [1, 1.02],
+        outputRange: [1, 1.02]
     });
 
     return (
-        <Animated.View style={[
-            styles.cardWrapper,
-            {
-                opacity: fadeAnim,
-                transform: [
-                    { translateY: slideAnim },
-                    { scale: scaleAnim },
-                    ...(isInTransit ? [{ scale: glowScale }] : []),
-                ],
-            },
-        ]}>
+        <Animated.View
+            style={[
+                styles.cardWrapper,
+                {
+                    opacity: fadeAnim,
+                    transform: [
+                        { translateY: slideAnim },
+                        { scale: scaleAnim },
+                        ...(isInTransit ? [{ scale: glowScale }] : [])
+                    ]
+                }
+            ]}
+        >
             <TouchableOpacity
                 onPress={onPress}
                 onPressIn={handlePressIn}
                 onPressOut={handlePressOut}
                 activeOpacity={0.95}
             >
-                <View style={[
-                    styles.orderCard,
-                    { backgroundColor: colors.surface },
-                    isInTransit && styles.orderCardInTransit,
-                    needsConfirmation && styles.orderCardNeedsAction,
-                ]}>
+                <View
+                    style={[
+                        styles.orderCard,
+                        { backgroundColor: colors.surface },
+                        isInTransit && styles.orderCardInTransit,
+                        needsConfirmation && styles.orderCardNeedsAction
+                    ]}
+                >
                     {/* Status Accent Bar */}
-                    <LinearGradient
-                        colors={statusConfig.gradient}
-                        style={styles.accentBar}
-                    />
+                    <LinearGradient colors={statusConfig.gradient} style={styles.accentBar} />
 
                     <View style={styles.cardContent}>
                         {/* Header: Order Number + Status */}
                         <View style={[styles.cardHeader, { flexDirection: rtlFlexDirection(isRTL) }]}>
                             <View style={[styles.orderInfo, { flexDirection: rtlFlexDirection(isRTL) }]}>
-                                <Animated.View style={[
-                                    styles.orderIconBg,
-                                    { backgroundColor: statusConfig.bg },
-                                    isInTransit && { opacity: pulseOpacity },
-                                    isRTL ? { marginLeft: Spacing.md, marginRight: 0 } : { marginRight: Spacing.md, marginLeft: 0 }
-                                ]}>
+                                <Animated.View
+                                    style={[
+                                        styles.orderIconBg,
+                                        { backgroundColor: statusConfig.bg },
+                                        isInTransit && { opacity: pulseOpacity },
+                                        isRTL
+                                            ? { marginLeft: Spacing.md, marginRight: 0 }
+                                            : { marginRight: Spacing.md, marginLeft: 0 }
+                                    ]}
+                                >
                                     <Ionicons name={statusConfig.icon} size={20} color={statusConfig.color} />
                                 </Animated.View>
                                 <View style={{ flex: 1 }}>
-                                    <Text style={[styles.orderNumber, { color: colors.text, textAlign: rtlTextAlign(isRTL) }]}>
+                                    <Text
+                                        style={[
+                                            styles.orderNumber,
+                                            { color: colors.text, textAlign: rtlTextAlign(isRTL) }
+                                        ]}
+                                    >
                                         {t('common.order')} #{item.order_number}
                                     </Text>
-                                    <Text style={[styles.garageName, { color: statusConfig.color, textAlign: rtlTextAlign(isRTL) }]}>
+                                    <Text
+                                        style={[
+                                            styles.garageName,
+                                            { color: statusConfig.color, textAlign: rtlTextAlign(isRTL) }
+                                        ]}
+                                    >
                                         {item.garage_name}
                                     </Text>
                                 </View>
@@ -258,8 +283,18 @@ const PremiumOrderCard = ({
 
                         {/* Car Info Chip */}
                         <View style={[styles.carChip, { backgroundColor: colors.background }]}>
-                            <Ionicons name="car-sport" size={16} color={colors.textSecondary} style={{ marginRight: Spacing.sm }} />
-                            <Text style={[styles.carText, { color: colors.textSecondary, textAlign: rtlTextAlign(isRTL) }]}>
+                            <Ionicons
+                                name="car-sport"
+                                size={16}
+                                color={colors.textSecondary}
+                                style={{ marginRight: Spacing.sm }}
+                            />
+                            <Text
+                                style={[
+                                    styles.carText,
+                                    { color: colors.textSecondary, textAlign: rtlTextAlign(isRTL) }
+                                ]}
+                            >
                                 {item.car_make} {item.car_model} ({item.car_year})
                             </Text>
                         </View>
@@ -270,7 +305,9 @@ const PremiumOrderCard = ({
                         {/* Footer: Price + Date + Escrow */}
                         <View style={[styles.cardFooter, { flexDirection: rtlFlexDirection(isRTL) }]}>
                             <View>
-                                <Text style={[styles.priceLabel, { textAlign: rtlTextAlign(isRTL) }]}>{t('orders.total')}</Text>
+                                <Text style={[styles.priceLabel, { textAlign: rtlTextAlign(isRTL) }]}>
+                                    {t('orders.total')}
+                                </Text>
                                 <Text style={[styles.priceAmount, { color: statusConfig.color }]}>
                                     {item.total_amount} {t('common.currency')}
                                 </Text>
@@ -281,12 +318,17 @@ const PremiumOrderCard = ({
                                 <Text style={styles.escrowText}>{t('common.protected')}</Text>
                             </View>
                             <View style={styles.dateSection}>
-                                <Text style={[styles.dateLabel, { textAlign: rtlTextAlign(isRTL) }]}>{t('orders.ordered')}</Text>
+                                <Text style={[styles.dateLabel, { textAlign: rtlTextAlign(isRTL) }]}>
+                                    {t('orders.ordered')}
+                                </Text>
                                 <Text style={[styles.dateText, { color: colors.text }]}>
-                                    {new Date(item.created_at).toLocaleDateString(language === 'ar' ? 'ar-QA' : 'en-US', {
-                                        month: 'short',
-                                        day: 'numeric'
-                                    })}
+                                    {new Date(item.created_at).toLocaleDateString(
+                                        language === 'ar' ? 'ar-QA' : 'en-US',
+                                        {
+                                            month: 'short',
+                                            day: 'numeric'
+                                        }
+                                    )}
                                 </Text>
                             </View>
                         </View>
@@ -344,22 +386,19 @@ const SkeletonCard = ({ index }: { index: number }) => {
                 toValue: 1,
                 duration: 1200,
                 delay: index * 100,
-                useNativeDriver: true,
+                useNativeDriver: true
             })
         ).start();
     }, []);
 
     const shimmerTranslate = shimmerAnim.interpolate({
         inputRange: [0, 1],
-        outputRange: [-width, width],
+        outputRange: [-width, width]
     });
 
     return (
         <View style={styles.skeletonCard}>
-            <Animated.View style={[
-                styles.skeletonShimmer,
-                { transform: [{ translateX: shimmerTranslate }] }
-            ]} />
+            <Animated.View style={[styles.skeletonShimmer, { transform: [{ translateX: shimmerTranslate }] }]} />
         </View>
     );
 };
@@ -404,7 +443,7 @@ export default function OrdersScreen() {
     // G-03: Auto-refresh when app resumes from background (stale data prevention)
     useAppStateRefresh({
         onRefresh: loadOrders,
-        minBackgroundTimeMs: 30000, // Refresh if backgrounded for 30+ seconds
+        minBackgroundTimeMs: 30000 // Refresh if backgrounded for 30+ seconds
     });
 
     const onRefresh = useCallback(() => {
@@ -423,13 +462,12 @@ export default function OrdersScreen() {
         navigation.navigate('Tracking', {
             orderId: order.order_id,
             orderNumber: order.order_number,
-            deliveryAddress: order.delivery_address,
+            deliveryAddress: order.delivery_address
         });
     };
 
-    const activeOrders = orders.filter(o =>
-        !['completed', 'refunded'].includes(o.order_status) &&
-        !o.order_status.startsWith('cancelled')
+    const activeOrders = orders.filter(
+        (o) => !['completed', 'refunded'].includes(o.order_status) && !o.order_status.startsWith('cancelled')
     );
 
     const EmptyState = () => (
@@ -438,33 +476,48 @@ export default function OrdersScreen() {
                 <Ionicons name="cube-outline" size={48} color="#999" />
             </View>
             <Text style={[styles.emptyTitle, { color: colors.text }]}>{t('orders.noOrders')}</Text>
-            <Text style={[styles.emptyText, { color: colors.textSecondary }]}>
-                {t('orders.noOrdersMsg')}
-            </Text>
+            <Text style={[styles.emptyText, { color: colors.textSecondary }]}>{t('orders.noOrdersMsg')}</Text>
         </View>
     );
 
     return (
         <SafeAreaView style={[styles.container, { backgroundColor: colors.background }]} edges={['top']}>
             {/* Header */}
-            <View style={[styles.header, { backgroundColor: colors.surface, borderBottomColor: colors.border, flexDirection: rtlFlexDirection(isRTL) }]}>
+            <View
+                style={[
+                    styles.header,
+                    {
+                        backgroundColor: colors.surface,
+                        borderBottomColor: colors.border,
+                        flexDirection: rtlFlexDirection(isRTL)
+                    }
+                ]}
+            >
                 <View>
-                    <Text style={[styles.headerTitle, { color: colors.text, textAlign: rtlTextAlign(isRTL) }]}>{t('orders.title')}</Text>
-                    <Text style={[styles.headerSubtitle, { color: colors.textSecondary, textAlign: rtlTextAlign(isRTL) }]}>
+                    <Text style={[styles.headerTitle, { color: colors.text, textAlign: rtlTextAlign(isRTL) }]}>
+                        {t('orders.title')}
+                    </Text>
+                    <Text
+                        style={[styles.headerSubtitle, { color: colors.textSecondary, textAlign: rtlTextAlign(isRTL) }]}
+                    >
                         {orders.length} {t('orders.totalOrders')}
                     </Text>
                 </View>
                 {activeOrders.length > 0 && (
                     <View style={styles.activeBadge}>
                         <View style={styles.activeDot} />
-                        <Text style={styles.activeBadgeText}>{activeOrders.length} {t('orders.active')}</Text>
+                        <Text style={styles.activeBadgeText}>
+                            {activeOrders.length} {t('orders.active')}
+                        </Text>
                     </View>
                 )}
             </View>
 
             {isLoading ? (
                 <View style={styles.skeletonContainer}>
-                    {[0, 1, 2, 3].map(i => <SkeletonCard key={i} index={i} />)}
+                    {[0, 1, 2, 3].map((i) => (
+                        <SkeletonCard key={i} index={i} />
+                    ))}
                 </View>
             ) : (
                 <FlatList
@@ -482,11 +535,7 @@ export default function OrdersScreen() {
                     contentContainerStyle={styles.listContent}
                     showsVerticalScrollIndicator={false}
                     refreshControl={
-                        <RefreshControl
-                            refreshing={isRefreshing}
-                            onRefresh={onRefresh}
-                            tintColor={Colors.primary}
-                        />
+                        <RefreshControl refreshing={isRefreshing} onRefresh={onRefresh} tintColor={Colors.primary} />
                     }
                     ListEmptyComponent={EmptyState}
                     initialNumToRender={5}
@@ -509,17 +558,17 @@ const styles = StyleSheet.create({
         alignItems: 'center',
         paddingHorizontal: Spacing.lg,
         paddingVertical: Spacing.md,
-        borderBottomWidth: 1,
+        borderBottomWidth: 1
         // borderBottomColor set dynamically
     },
     headerTitle: {
         fontSize: FontSizes.xxl,
         fontWeight: '800',
-        letterSpacing: -0.5,
+        letterSpacing: -0.5
     },
     headerSubtitle: {
         fontSize: FontSizes.sm,
-        marginTop: 2,
+        marginTop: 2
     },
     activeBadge: {
         flexDirection: 'row',
@@ -527,19 +576,19 @@ const styles = StyleSheet.create({
         backgroundColor: '#DCFCE7',
         paddingHorizontal: Spacing.md,
         paddingVertical: Spacing.xs,
-        borderRadius: BorderRadius.full,
+        borderRadius: BorderRadius.full
     },
     activeDot: {
         width: 8,
         height: 8,
         borderRadius: 4,
         backgroundColor: '#22C55E',
-        marginRight: Spacing.xs,
+        marginRight: Spacing.xs
     },
     activeBadgeText: {
         fontSize: FontSizes.xs,
         color: '#16A34A',
-        fontWeight: '600',
+        fontWeight: '600'
     },
     listContent: { padding: Spacing.lg },
     skeletonContainer: { padding: Spacing.lg },
@@ -548,7 +597,7 @@ const styles = StyleSheet.create({
         backgroundColor: '#E8E8E8',
         borderRadius: BorderRadius.xl,
         marginBottom: Spacing.md,
-        overflow: 'hidden',
+        overflow: 'hidden'
     },
     skeletonShimmer: {
         position: 'absolute',
@@ -556,7 +605,7 @@ const styles = StyleSheet.create({
         left: 0,
         right: 0,
         bottom: 0,
-        backgroundColor: 'rgba(255,255,255,0.4)',
+        backgroundColor: 'rgba(255,255,255,0.4)'
     },
 
     // Card styles
@@ -565,18 +614,18 @@ const styles = StyleSheet.create({
         borderRadius: BorderRadius.xl,
         overflow: 'hidden',
         flexDirection: 'row',
-        ...Shadows.md,
+        ...Shadows.md
     },
     orderCardInTransit: {
         shadowColor: '#22C55E',
         shadowOpacity: 0.3,
         shadowRadius: 12,
-        elevation: 8,
+        elevation: 8
     },
     orderCardNeedsAction: {
         shadowColor: '#06B6D4',
         shadowOpacity: 0.3,
-        shadowRadius: 12,
+        shadowRadius: 12
     },
     accentBar: { width: 5 },
     cardContent: { flex: 1, padding: Spacing.lg },
@@ -584,13 +633,13 @@ const styles = StyleSheet.create({
         flexDirection: 'row',
         justifyContent: 'space-between',
         alignItems: 'flex-start',
-        marginBottom: Spacing.md,
+        marginBottom: Spacing.md
     },
     orderInfo: {
         flexDirection: 'row',
         alignItems: 'center',
         flex: 1,
-        marginRight: Spacing.md,
+        marginRight: Spacing.md
     },
     orderIconBg: {
         width: 44,
@@ -599,7 +648,7 @@ const styles = StyleSheet.create({
         justifyContent: 'center',
         alignItems: 'center',
         marginRight: Spacing.md,
-        flexShrink: 0,
+        flexShrink: 0
     },
     orderIcon: { fontSize: 22 },
     orderNumber: { fontSize: FontSizes.lg, fontWeight: '700' },
@@ -609,7 +658,7 @@ const styles = StyleSheet.create({
         paddingVertical: Spacing.xs,
         borderRadius: BorderRadius.full,
         flexShrink: 1,
-        maxWidth: 120,
+        maxWidth: 120
     },
     statusText: { fontSize: FontSizes.xs, fontWeight: '700' },
     carChip: {
@@ -617,7 +666,7 @@ const styles = StyleSheet.create({
         alignItems: 'center',
         padding: Spacing.sm,
         borderRadius: BorderRadius.md,
-        marginBottom: Spacing.md,
+        marginBottom: Spacing.md
     },
     carEmoji: { fontSize: 16, marginRight: Spacing.sm },
     carText: { fontSize: FontSizes.sm },
@@ -625,7 +674,7 @@ const styles = StyleSheet.create({
     cardFooter: {
         flexDirection: 'row',
         justifyContent: 'space-between',
-        alignItems: 'flex-end',
+        alignItems: 'flex-end'
     },
     priceLabel: { fontSize: FontSizes.xs, opacity: 0.6 },
     priceAmount: { fontSize: FontSizes.xl, fontWeight: '800' },
@@ -641,7 +690,7 @@ const styles = StyleSheet.create({
         paddingHorizontal: Spacing.sm,
         paddingVertical: 4,
         borderRadius: BorderRadius.sm,
-        gap: 4,
+        gap: 4
     },
     escrowIcon: { fontSize: 12 },
     escrowText: { fontSize: FontSizes.xs, color: '#2E7D32', fontWeight: '600' },
@@ -650,14 +699,14 @@ const styles = StyleSheet.create({
     trackGradient: {
         flexDirection: 'row',
         alignItems: 'center',
-        padding: Spacing.md,
+        padding: Spacing.md
     },
     liveDot: {
         width: 8,
         height: 8,
         borderRadius: 4,
         backgroundColor: '#fff',
-        marginRight: Spacing.sm,
+        marginRight: Spacing.sm
     },
     trackText: { flex: 1, color: '#fff', fontWeight: '700', fontSize: FontSizes.sm },
     trackArrow: { color: '#fff', fontSize: FontSizes.lg },
@@ -669,7 +718,7 @@ const styles = StyleSheet.create({
     emptyState: {
         alignItems: 'center',
         paddingVertical: Spacing.xxl * 2,
-        paddingHorizontal: Spacing.xl,
+        paddingHorizontal: Spacing.xl
     },
     emptyIconBg: {
         width: 100,
@@ -678,19 +727,19 @@ const styles = StyleSheet.create({
         backgroundColor: '#E3F2FD',
         justifyContent: 'center',
         alignItems: 'center',
-        marginBottom: Spacing.lg,
+        marginBottom: Spacing.lg
     },
     emptyIcon: { fontSize: 48 },
     emptyTitle: {
         fontSize: FontSizes.xl,
         fontWeight: '700',
         // color set dynamically
-        marginBottom: Spacing.sm,
+        marginBottom: Spacing.sm
     },
     emptyText: {
         fontSize: FontSizes.md,
         // color set dynamically
         textAlign: 'center',
-        lineHeight: 22,
-    },
+        lineHeight: 22
+    }
 });

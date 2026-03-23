@@ -1,14 +1,29 @@
-import { apiClient, BIOMETRIC_PHONE, BIOMETRIC_PASSWORD, BIOMETRIC_ENABLED } from "./apiClient";
-import { API_ENDPOINTS, API_BASE_URL } from "../config/api";
-import { log, warn, error } from "../utils/logger";
-import * as SecureStore from "expo-secure-store";
-import { User, AuthResponse, Request, Bid, Order, Stats, Address, Product, Notification, SupportTicket, Vehicle, LoyaltyTransaction, PaymentMethod, UrgentAction } from "./types";
+import { apiClient, BIOMETRIC_PHONE, BIOMETRIC_PASSWORD, BIOMETRIC_ENABLED } from './apiClient';
+import { API_ENDPOINTS, API_BASE_URL } from '../config/api';
+import { log, warn, error } from '../utils/logger';
+import * as SecureStore from 'expo-secure-store';
+import {
+    User,
+    AuthResponse,
+    Request,
+    Bid,
+    Order,
+    Stats,
+    Address,
+    Product,
+    Notification,
+    SupportTicket,
+    Vehicle,
+    LoyaltyTransaction,
+    PaymentMethod,
+    UrgentAction
+} from './types';
 
 export class AuthService {
     async login(phone_number: string, password: string): Promise<AuthResponse> {
         const data = await apiClient.request<AuthResponse>(API_ENDPOINTS.LOGIN, {
             method: 'POST',
-            body: JSON.stringify({ phone_number, password }),
+            body: JSON.stringify({ phone_number, password })
         });
         if (data.token) {
             await apiClient.setToken(data.token);
@@ -18,24 +33,30 @@ export class AuthService {
 
             // If user data is provided in login response, save it directly
             // including the critical userId and userType from the response root
-            const userToSave = data.user ? {
-                ...data.user,
-                user_id: data.userId, // Ensure root userId takes precedence or matches
-                user_type: data.userType
-            } : {
-                user_id: data.userId,
-                user_type: data.userType,
-            };
+            const userToSave = data.user
+                ? {
+                      ...data.user,
+                      user_id: data.userId, // Ensure root userId takes precedence or matches
+                      user_type: data.userType
+                  }
+                : {
+                      user_id: data.userId,
+                      user_type: data.userType
+                  };
 
             await apiClient.saveUser(userToSave as User);
         }
         return data;
     }
 
-    async register(full_name: string, phone_number: string, password: string): Promise<{ success: boolean; message: string }> {
+    async register(
+        full_name: string,
+        phone_number: string,
+        password: string
+    ): Promise<{ success: boolean; message: string }> {
         return apiClient.request(API_ENDPOINTS.REGISTER, {
             method: 'POST',
-            body: JSON.stringify({ full_name, phone_number, password, user_type: 'customer' }),
+            body: JSON.stringify({ full_name, phone_number, password, user_type: 'customer' })
         });
     }
 
@@ -47,7 +68,7 @@ export class AuthService {
     }): Promise<{ success: boolean; message: string; email: string; expiresIn: number }> {
         return apiClient.request('/auth/register-with-email', {
             method: 'POST',
-            body: JSON.stringify(data),
+            body: JSON.stringify(data)
         });
     }
 
@@ -62,7 +83,7 @@ export class AuthService {
             '/auth/verify-email-otp',
             {
                 method: 'POST',
-                body: JSON.stringify(data),
+                body: JSON.stringify(data)
             }
         );
 
@@ -76,16 +97,19 @@ export class AuthService {
                 user_type: response.userType as 'customer',
                 full_name: data.full_name,
                 email: data.email,
-                phone_number: data.phone_number,
+                phone_number: data.phone_number
             });
         }
         return response;
     }
 
-    async resendOTP(email: string, full_name?: string): Promise<{ success: boolean; message: string; expiresIn: number }> {
+    async resendOTP(
+        email: string,
+        full_name?: string
+    ): Promise<{ success: boolean; message: string; expiresIn: number }> {
         return apiClient.request('/auth/resend-otp', {
             method: 'POST',
-            body: JSON.stringify({ email, full_name }),
+            body: JSON.stringify({ email, full_name })
         });
     }
 
@@ -96,7 +120,7 @@ export class AuthService {
                 await fetch(`${API_BASE_URL}${API_ENDPOINTS.LOGOUT}`, {
                     method: 'POST',
                     headers: { 'Content-Type': 'application/json' },
-                    body: JSON.stringify({ refreshToken: rt }),
+                    body: JSON.stringify({ refreshToken: rt })
                 });
             }
         } catch {
@@ -107,7 +131,7 @@ export class AuthService {
     async requestPasswordReset(email: string): Promise<{ success: boolean; message: string }> {
         return apiClient.request('/auth/request-password-reset', {
             method: 'POST',
-            body: JSON.stringify({ email }),
+            body: JSON.stringify({ email })
         });
     }
 
@@ -117,14 +141,14 @@ export class AuthService {
     }): Promise<{ success: boolean; token: string; message: string }> {
         return apiClient.request('/auth/verify-password-reset-otp', {
             method: 'POST',
-            body: JSON.stringify(data),
+            body: JSON.stringify(data)
         });
     }
 
     async resendPasswordResetOTP(email: string): Promise<{ success: boolean; message: string }> {
         return apiClient.request('/auth/resend-password-reset-otp', {
             method: 'POST',
-            body: JSON.stringify({ email }),
+            body: JSON.stringify({ email })
         });
     }
 
@@ -135,7 +159,7 @@ export class AuthService {
     }): Promise<{ success: boolean; message: string }> {
         return apiClient.request('/auth/reset-password', {
             method: 'POST',
-            body: JSON.stringify(data),
+            body: JSON.stringify(data)
         });
     }
 
@@ -204,6 +228,16 @@ export class AuthService {
         } catch (error) {
             warn('[API] Failed to set biometric enabled:', error);
         }
+    }
+
+    async checkDeletionEligibility(): Promise<{ canDelete: boolean; blockers: any[] }> {
+        return apiClient.request(API_ENDPOINTS.DELETION_ELIGIBILITY);
+    }
+
+    async deleteAccount(): Promise<{ success: boolean; message: string }> {
+        return apiClient.request(API_ENDPOINTS.DELETE_ACCOUNT, {
+            method: 'DELETE'
+        });
     }
 }
 

@@ -12,7 +12,7 @@ import {
     Platform,
     ScrollView,
     ActivityIndicator,
-    Alert,
+    Alert
 } from 'react-native';
 import { LinearGradient } from 'expo-linear-gradient';
 import { Ionicons } from '@expo/vector-icons';
@@ -52,7 +52,7 @@ export default function ResetPasswordScreen() {
         uppercase: false,
         lowercase: false,
         number: false,
-        special: false,
+        special: false
     });
 
     // Validate password in real-time
@@ -62,7 +62,7 @@ export default function ResetPasswordScreen() {
             uppercase: /[A-Z]/.test(newPassword),
             lowercase: /[a-z]/.test(newPassword),
             number: /[0-9]/.test(newPassword),
-            special: /[!@#$%^&*(),.?":{}|<>]/.test(newPassword),
+            special: /[!@#$%^&*(),.?":{}|<>]/.test(newPassword)
         });
     }, [newPassword]);
 
@@ -131,25 +131,21 @@ export default function ResetPasswordScreen() {
             await api.resetPassword({
                 email,
                 otp,
-                newPassword,
+                newPassword
             });
 
             setIsLoading(false);
             Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success);
 
-            Alert.alert(
-                t('auth.passwordResetSuccess'),
-                t('auth.passwordResetSuccessMessage'),
-                [
-                    {
-                        text: t('common.ok'),
-                        onPress: () => {
-                            // Navigate back to login
-                            (navigation as any).navigate('Login');
-                        },
-                    },
-                ]
-            );
+            Alert.alert(t('auth.passwordResetSuccess'), t('auth.passwordResetSuccessMessage'), [
+                {
+                    text: t('common.ok'),
+                    onPress: () => {
+                        // Navigate back to login
+                        (navigation as any).navigate('Login');
+                    }
+                }
+            ]);
         } catch (error: any) {
             setIsLoading(false);
             Haptics.notificationAsync(Haptics.NotificationFeedbackType.Error);
@@ -172,7 +168,12 @@ export default function ResetPasswordScreen() {
                 color={met ? Colors.success : colors.textMuted}
                 style={[isRTL && { marginRight: 0, marginLeft: Spacing.xs }, !isRTL && { marginRight: Spacing.xs }]}
             />
-            <Text style={[styles.requirementText, { color: met ? Colors.success : colors.textMuted, textAlign: rtlTextAlign(isRTL) }]}>
+            <Text
+                style={[
+                    styles.requirementText,
+                    { color: met ? Colors.success : colors.textMuted, textAlign: rtlTextAlign(isRTL) }
+                ]}
+            >
                 {text}
             </Text>
         </View>
@@ -185,10 +186,7 @@ export default function ResetPasswordScreen() {
             start={{ x: 0, y: 0 }}
             end={{ x: 1, y: 1 }}
         >
-            <KeyboardAvoidingView
-                behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
-                style={styles.keyboardView}
-            >
+            <KeyboardAvoidingView behavior={Platform.OS === 'ios' ? 'padding' : 'height'} style={styles.keyboardView}>
                 <ScrollView
                     contentContainerStyle={styles.scrollContent}
                     keyboardShouldPersistTaps="handled"
@@ -196,10 +194,7 @@ export default function ResetPasswordScreen() {
                 >
                     {/* Header */}
                     <View style={styles.header}>
-                        <TouchableOpacity
-                            onPress={() => navigation.goBack()}
-                            style={styles.backButton}
-                        >
+                        <TouchableOpacity onPress={() => navigation.goBack()} style={styles.backButton}>
                             <Ionicons name="arrow-back" size={20} color="#fff" />
                         </TouchableOpacity>
                     </View>
@@ -210,9 +205,7 @@ export default function ResetPasswordScreen() {
                             <Ionicons name="shield-checkmark" size={48} color="#fff" />
                         </View>
                         <Text style={styles.title}>{t('auth.resetPassword')}</Text>
-                        <Text style={styles.subtitle}>
-                            {t('auth.createStrongPassword')}
-                        </Text>
+                        <Text style={styles.subtitle}>{t('auth.createStrongPassword')}</Text>
                     </View>
 
                     {/* Error Message */}
@@ -231,8 +224,8 @@ export default function ResetPasswordScreen() {
                                     styles.strengthFill,
                                     {
                                         width: `${(Object.values(passwordStrength).filter(Boolean).length / 5) * 100}%`,
-                                        backgroundColor: strength.color,
-                                    },
+                                        backgroundColor: strength.color
+                                    }
                                 ]}
                             />
                         </View>
@@ -243,7 +236,12 @@ export default function ResetPasswordScreen() {
 
                     {/* New Password Input */}
                     <View style={styles.inputContainer}>
-                        <Text style={[styles.inputLabel, { color: 'rgba(255,255,255,0.8)', textAlign: rtlTextAlign(isRTL) }]}>
+                        <Text
+                            style={[
+                                styles.inputLabel,
+                                { color: 'rgba(255,255,255,0.8)', textAlign: rtlTextAlign(isRTL) }
+                            ]}
+                        >
                             {t('auth.newPassword')}
                         </Text>
                         <View style={[styles.inputWrapper, { backgroundColor: 'rgba(255,255,255,0.95)' }]}>
@@ -251,7 +249,10 @@ export default function ResetPasswordScreen() {
                                 name="lock-closed"
                                 size={20}
                                 color={Colors.primary}
-                                style={[isRTL && { marginRight: 0, marginLeft: Spacing.sm }, !isRTL && { marginRight: Spacing.sm }]}
+                                style={[
+                                    isRTL && { marginRight: 0, marginLeft: Spacing.sm },
+                                    !isRTL && { marginRight: Spacing.sm }
+                                ]}
                             />
                             <TextInput
                                 style={[styles.input, { textAlign: rtlTextAlign(isRTL) }]}
@@ -264,22 +265,20 @@ export default function ResetPasswordScreen() {
                                 autoCorrect={false}
                                 editable={!isLoading}
                             />
-                            <TouchableOpacity
-                                onPress={() => setShowPassword(!showPassword)}
-                                style={styles.eyeIcon}
-                            >
-                                <Ionicons
-                                    name={showPassword ? 'eye-off' : 'eye'}
-                                    size={20}
-                                    color="#666"
-                                />
+                            <TouchableOpacity onPress={() => setShowPassword(!showPassword)} style={styles.eyeIcon}>
+                                <Ionicons name={showPassword ? 'eye-off' : 'eye'} size={20} color="#666" />
                             </TouchableOpacity>
                         </View>
                     </View>
 
                     {/* Confirm Password Input */}
                     <View style={styles.inputContainer}>
-                        <Text style={[styles.inputLabel, { color: 'rgba(255,255,255,0.8)', textAlign: rtlTextAlign(isRTL) }]}>
+                        <Text
+                            style={[
+                                styles.inputLabel,
+                                { color: 'rgba(255,255,255,0.8)', textAlign: rtlTextAlign(isRTL) }
+                            ]}
+                        >
                             {t('auth.confirmPassword')}
                         </Text>
                         <View style={[styles.inputWrapper, { backgroundColor: 'rgba(255,255,255,0.95)' }]}>
@@ -287,7 +286,10 @@ export default function ResetPasswordScreen() {
                                 name="lock-closed"
                                 size={20}
                                 color={Colors.primary}
-                                style={[isRTL && { marginRight: 0, marginLeft: Spacing.sm }, !isRTL && { marginRight: Spacing.sm }]}
+                                style={[
+                                    isRTL && { marginRight: 0, marginLeft: Spacing.sm },
+                                    !isRTL && { marginRight: Spacing.sm }
+                                ]}
                             />
                             <TextInput
                                 style={[styles.input, { textAlign: rtlTextAlign(isRTL) }]}
@@ -304,11 +306,7 @@ export default function ResetPasswordScreen() {
                                 onPress={() => setShowConfirmPassword(!showConfirmPassword)}
                                 style={styles.eyeIcon}
                             >
-                                <Ionicons
-                                    name={showConfirmPassword ? 'eye-off' : 'eye'}
-                                    size={20}
-                                    color="#666"
-                                />
+                                <Ionicons name={showConfirmPassword ? 'eye-off' : 'eye'} size={20} color="#666" />
                             </TouchableOpacity>
                         </View>
                     </View>
@@ -327,15 +325,16 @@ export default function ResetPasswordScreen() {
 
                     {/* Submit Button */}
                     <TouchableOpacity
-                        style={[styles.submitButton, (isLoading || Object.values(passwordStrength).filter(Boolean).length < 5) && styles.submitButtonDisabled]}
+                        style={[
+                            styles.submitButton,
+                            (isLoading || Object.values(passwordStrength).filter(Boolean).length < 5) &&
+                                styles.submitButtonDisabled
+                        ]}
                         onPress={handleResetPassword}
                         disabled={isLoading || Object.values(passwordStrength).filter(Boolean).length < 5}
                         activeOpacity={0.9}
                     >
-                        <LinearGradient
-                            colors={Colors.gradients.primary}
-                            style={styles.submitButtonGradient}
-                        >
+                        <LinearGradient colors={Colors.gradients.primary} style={styles.submitButtonGradient}>
                             {isLoading ? (
                                 <ActivityIndicator color="#fff" />
                             ) : (
@@ -347,9 +346,7 @@ export default function ResetPasswordScreen() {
                     {/* Security Notice */}
                     <View style={styles.securityNotice}>
                         <Ionicons name="shield-checkmark" size={16} color="rgba(255,255,255,0.7)" />
-                        <Text style={styles.securityNoticeText}>
-                            {t('auth.passwordResetSecure')}
-                        </Text>
+                        <Text style={styles.securityNoticeText}>{t('auth.passwordResetSecure')}</Text>
                     </View>
                 </ScrollView>
             </KeyboardAvoidingView>
@@ -359,18 +356,18 @@ export default function ResetPasswordScreen() {
 
 const styles = StyleSheet.create({
     container: {
-        flex: 1,
+        flex: 1
     },
     keyboardView: {
-        flex: 1,
+        flex: 1
     },
     scrollContent: {
         flexGrow: 1,
-        padding: Spacing.lg,
+        padding: Spacing.lg
     },
     header: {
         marginTop: Spacing.lg,
-        marginBottom: Spacing.xl,
+        marginBottom: Spacing.xl
     },
     backButton: {
         width: 44,
@@ -378,11 +375,11 @@ const styles = StyleSheet.create({
         borderRadius: 22,
         backgroundColor: 'rgba(255,255,255,0.15)',
         justifyContent: 'center',
-        alignItems: 'center',
+        alignItems: 'center'
     },
     iconSection: {
         alignItems: 'center',
-        marginBottom: Spacing.xl,
+        marginBottom: Spacing.xl
     },
     iconContainer: {
         width: 80,
@@ -391,20 +388,20 @@ const styles = StyleSheet.create({
         backgroundColor: 'rgba(255,255,255,0.15)',
         justifyContent: 'center',
         alignItems: 'center',
-        marginBottom: Spacing.lg,
+        marginBottom: Spacing.lg
     },
     title: {
         fontSize: FontSizes.xxl + 4,
         fontWeight: '800',
         color: '#fff',
         textAlign: 'center',
-        marginBottom: Spacing.sm,
+        marginBottom: Spacing.sm
     },
     subtitle: {
         fontSize: FontSizes.md,
         color: 'rgba(255,255,255,0.7)',
         textAlign: 'center',
-        lineHeight: 22,
+        lineHeight: 22
     },
     errorContainer: {
         flexDirection: 'row',
@@ -414,94 +411,94 @@ const styles = StyleSheet.create({
         padding: Spacing.md,
         marginBottom: Spacing.md,
         borderWidth: 1,
-        borderColor: Colors.error,
+        borderColor: Colors.error
     },
     errorText: {
         flex: 1,
         color: '#fff',
         fontSize: FontSizes.sm,
-        marginLeft: Spacing.sm,
+        marginLeft: Spacing.sm
     },
     strengthContainer: {
         backgroundColor: 'rgba(255,255,255,0.1)',
         borderRadius: BorderRadius.lg,
         padding: Spacing.md,
-        marginBottom: Spacing.lg,
+        marginBottom: Spacing.lg
     },
     strengthBar: {
         height: 4,
         backgroundColor: 'rgba(255,255,255,0.2)',
         borderRadius: 2,
         overflow: 'hidden',
-        marginBottom: Spacing.xs,
+        marginBottom: Spacing.xs
     },
     strengthFill: {
         height: '100%',
-        borderRadius: 2,
+        borderRadius: 2
     },
     strengthText: {
         fontSize: FontSizes.xs,
-        fontWeight: '600',
+        fontWeight: '600'
     },
     inputContainer: {
-        marginBottom: Spacing.lg,
+        marginBottom: Spacing.lg
     },
     inputLabel: {
         fontSize: FontSizes.sm,
         fontWeight: '600',
-        marginBottom: Spacing.xs,
+        marginBottom: Spacing.xs
     },
     inputWrapper: {
         flexDirection: 'row',
         alignItems: 'center',
         borderRadius: BorderRadius.lg,
-        padding: Spacing.md,
+        padding: Spacing.md
     },
     input: {
         flex: 1,
         fontSize: FontSizes.lg,
-        color: '#1a1a1a',
+        color: '#1a1a1a'
     },
     eyeIcon: {
-        padding: Spacing.xs,
+        padding: Spacing.xs
     },
     requirementsContainer: {
         backgroundColor: 'rgba(255,255,255,0.1)',
         borderRadius: BorderRadius.lg,
         padding: Spacing.md,
-        marginBottom: Spacing.lg,
+        marginBottom: Spacing.lg
     },
     requirementsTitle: {
         fontSize: FontSizes.sm,
         fontWeight: '600',
-        marginBottom: Spacing.sm,
+        marginBottom: Spacing.sm
     },
     requirementRow: {
         flexDirection: 'row',
         alignItems: 'center',
-        marginBottom: Spacing.xs,
+        marginBottom: Spacing.xs
     },
     requirementText: {
         fontSize: FontSizes.sm,
-        flex: 1,
+        flex: 1
     },
     submitButton: {
         borderRadius: BorderRadius.xl,
         overflow: 'hidden',
         ...Shadows.md,
-        marginBottom: Spacing.lg,
+        marginBottom: Spacing.lg
     },
     submitButtonDisabled: {
-        opacity: 0.7,
+        opacity: 0.7
     },
     submitButtonGradient: {
         paddingVertical: Spacing.md + 4,
-        alignItems: 'center',
+        alignItems: 'center'
     },
     submitButtonText: {
         fontSize: FontSizes.lg,
         fontWeight: '800',
-        color: '#fff',
+        color: '#fff'
     },
     securityNotice: {
         flexDirection: 'row',
@@ -509,15 +506,15 @@ const styles = StyleSheet.create({
         justifyContent: 'center',
         backgroundColor: 'rgba(255,255,255,0.1)',
         borderRadius: BorderRadius.lg,
-        padding: Spacing.md,
+        padding: Spacing.md
     },
     securityNoticeText: {
         color: 'rgba(255,255,255,0.7)',
         fontSize: FontSizes.sm,
         marginLeft: Spacing.sm,
         textAlign: 'center',
-        flex: 1,
-    },
+        flex: 1
+    }
 });
 
 // Helper for RTL

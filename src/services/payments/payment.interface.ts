@@ -3,7 +3,14 @@
 
 export type PaymentMethod = 'mock_card' | 'cash' | 'qpay';
 export type PaymentStatus = 'pending' | 'processing' | 'success' | 'failed' | 'refunded' | 'cancelled';
-export type TransactionAction = 'initiated' | 'validated' | 'processing' | 'completed' | 'failed' | 'refunded' | 'cancelled';
+export type TransactionAction =
+    | 'initiated'
+    | 'validated'
+    | 'processing'
+    | 'completed'
+    | 'failed'
+    | 'refunded'
+    | 'cancelled';
 
 // ============================================================================
 // PAYMENT REQUEST/RESPONSE TYPES

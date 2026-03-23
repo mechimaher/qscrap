@@ -167,10 +167,7 @@ export function getHttpStatusForError(error: AdminError): number {
     }
 
     // 409 Conflict
-    if (
-        error instanceof DuplicateEmailError ||
-        error instanceof DuplicatePhoneError
-    ) {
+    if (error instanceof DuplicateEmailError || error instanceof DuplicatePhoneError) {
         return 409;
     }
 

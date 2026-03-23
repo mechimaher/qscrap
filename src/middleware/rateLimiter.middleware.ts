@@ -63,7 +63,7 @@ export const driverLocationLimiter = rateLimit({
     standardHeaders: true,
     legacyHeaders: false,
     message: {
-        error: 'Location updates are rate limited to once per 5 seconds',
+        error: 'Location updates are rate limited to once per 5 seconds'
     }
 });
 
@@ -80,7 +80,7 @@ export const orderWriteLimiter = rateLimit({
     keyGenerator: (req: any) => req.user?.userId || 'anonymous',
     message: 'Order rate limit exceeded. Please wait before placing more orders.',
     standardHeaders: true,
-    legacyHeaders: false,
+    legacyHeaders: false
 });
 
 // Bid submission rate limiter
@@ -91,7 +91,7 @@ export const bidWriteLimiter = rateLimit({
     keyGenerator: (req: any) => req.user?.userId || 'anonymous',
     message: 'Bid rate limit exceeded. Please wait before submitting more bids.',
     standardHeaders: true,
-    legacyHeaders: false,
+    legacyHeaders: false
 });
 
 // Request creation rate limiter
@@ -102,7 +102,7 @@ export const requestWriteLimiter = rateLimit({
     keyGenerator: (req: any) => req.user?.userId || 'anonymous',
     message: 'Request rate limit exceeded. Please wait before creating more requests.',
     standardHeaders: true,
-    legacyHeaders: false,
+    legacyHeaders: false
 });
 
 // Admin action rate limiter
@@ -113,5 +113,5 @@ export const adminWriteLimiter = rateLimit({
     keyGenerator: (req: any) => req.user?.userId || 'anonymous',
     message: 'Admin action rate limit exceeded.',
     standardHeaders: true,
-    legacyHeaders: false,
+    legacyHeaders: false
 });

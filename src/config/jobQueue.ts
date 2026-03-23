@@ -138,11 +138,10 @@ export function createJobWorker(
             password: url.password || undefined
         };
 
-        const worker = new Worker(
-            queueName === 'scheduled' ? 'scheduled-jobs' : 'notifications',
-            processor,
-            { connection, concurrency: 5 }
-        );
+        const worker = new Worker(queueName === 'scheduled' ? 'scheduled-jobs' : 'notifications', processor, {
+            connection,
+            concurrency: 5
+        });
 
         worker.on('completed', (job) => {
             logger.info('Job completed', { jobName: job.name });

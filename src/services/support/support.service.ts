@@ -3,10 +3,15 @@
  * Handles support tickets, messages, dashboard stats, and urgent items
  */
 import { Pool, PoolClient } from 'pg';
-import { CANCELLATION_FEES, STATUS_TO_STAGE, FEE_POLICY, CancellationStage } from '../cancellation/cancellation.constants';
+import {
+    CANCELLATION_FEES,
+    STATUS_TO_STAGE,
+    FEE_POLICY,
+    CancellationStage
+} from '../cancellation/cancellation.constants';
 
 export class SupportService {
-    constructor(private pool: Pool) { }
+    constructor(private pool: Pool) {}
 
     async createTicket(
         userId: string,
@@ -34,31 +39,34 @@ export class SupportService {
                 urgent: 4,
                 high: 12,
                 normal: 24,
-                low: 72,
+                low: 72
             };
             const categoryAdjust: Record<string, number> = {
                 payout: 4,
                 billing: 8,
-                delivery: 12,
+                delivery: 12
             };
             const slaHours = categoryAdjust[category] || slaHoursMap[priority] || 24;
 
-            const ticketResult = await client.query(`
+            const ticketResult = await client.query(
+                `
                 INSERT INTO support_tickets (
                     customer_id, requester_id, requester_type, subject, priority, 
                     category, subcategory, order_id, sla_deadline
                 ) VALUES ($1, $2, $3, $4, $5, $6, $7, $8, NOW() + INTERVAL '${slaHours} hours') 
                 RETURNING *
-            `, [
-                requesterType === 'customer' ? userId : null, // keep customer_id for backward compat
-                userId,
-                requesterType,
-                data.subject,
-                priority,
-                category,
-                data.subcategory || null,
-                data.order_id || null
-            ]);
+            `,
+                [
+                    requesterType === 'customer' ? userId : null, // keep customer_id for backward compat
+                    userId,
+                    requesterType,
+                    data.subject,
+                    priority,
+                    category,
+                    data.subcategory || null,
+                    data.order_id || null
+                ]
+            );
 
             const ticket = ticketResult.rows[0];
 
@@ -96,7 +104,7 @@ export class SupportService {
 
         if (params.status) {
             // Support comma-separated status values (e.g., "open,in_progress")
-            const statuses = params.status.split(',').map(s => s.trim());
+            const statuses = params.status.split(',').map((s) => s.trim());
             whereClause += ` AND t.status = ANY($${paramIndex++}::text[])`;
             queryParams.push(statuses);
         }
@@ -105,7 +113,8 @@ export class SupportService {
         const total = parseInt(countResult.rows[0].count);
         const totalPages = Math.ceil(total / limitNum);
 
-        const result = await this.pool.query(`
+        const result = await this.pool.query(
+            `
             SELECT t.*, 
                    (SELECT message_text FROM chat_messages WHERE ticket_id = t.ticket_id ORDER BY created_at DESC LIMIT 1) as last_message, 
                    u.full_name as customer_name,
@@ -114,7 +123,9 @@ export class SupportService {
             JOIN users u ON t.customer_id = u.user_id 
             LEFT JOIN orders o ON t.order_id = o.order_id
             ${whereClause}
-            ORDER BY t.last_message_at DESC LIMIT $${paramIndex++} OFFSET $${paramIndex}`, [...queryParams, limitNum, offset]);
+            ORDER BY t.last_message_at DESC LIMIT $${paramIndex++} OFFSET $${paramIndex}`,
+            [...queryParams, limitNum, offset]
+        );
 
         return { tickets: result.rows, pagination: { page: pageNum, limit: limitNum, total, pages: totalPages } };
     }
@@ -123,26 +134,45 @@ export class SupportService {
         // CRITICAL: Filter out internal notes for customers
         const isAgent = ['admin', 'superadmin', 'operations', 'cs_admin', 'support', 'staff'].includes(userType);
 
-        const result = await this.pool.query(`
+        const result = await this.pool.query(
+            `
             SELECT m.*, u.full_name as sender_name 
             FROM chat_messages m 
             JOIN users u ON m.sender_id = u.user_id 
             WHERE m.ticket_id = $1 
             AND (m.is_internal = false OR $2 = true)
             ORDER BY m.created_at ASC
-        `, [ticketId, isAgent]);
+        `,
+            [ticketId, isAgent]
+        );
         return result.rows;
     }
 
-    async verifyTicketAccess(ticketId: string, userId: string, userType: string): Promise<{ hasAccess: boolean; customerId?: string }> {
-        const result = await this.pool.query(`SELECT customer_id FROM support_tickets WHERE ticket_id = $1`, [ticketId]);
-        if (result.rows.length === 0) {return { hasAccess: false };}
+    async verifyTicketAccess(
+        ticketId: string,
+        userId: string,
+        userType: string
+    ): Promise<{ hasAccess: boolean; customerId?: string }> {
+        const result = await this.pool.query(`SELECT customer_id FROM support_tickets WHERE ticket_id = $1`, [
+            ticketId
+        ]);
+        if (result.rows.length === 0) {
+            return { hasAccess: false };
+        }
         const customerId = result.rows[0].customer_id;
-        if (userType === 'customer' && customerId !== userId) {return { hasAccess: false };}
+        if (userType === 'customer' && customerId !== userId) {
+            return { hasAccess: false };
+        }
         return { hasAccess: true, customerId };
     }
 
-    async sendMessage(ticketId: string, senderId: string, senderType: string, messageText: string, attachments?: string[]) {
+    async sendMessage(
+        ticketId: string,
+        senderId: string,
+        senderType: string,
+        messageText: string,
+        attachments?: string[]
+    ) {
         const client = await this.pool.connect();
         try {
             await client.query('BEGIN');
@@ -153,14 +183,20 @@ export class SupportService {
 
             // Track first_response_at for SLA metrics when staff responds
             if (senderType === 'admin') {
-                await client.query(`
+                await client.query(
+                    `
                     UPDATE support_tickets 
                     SET last_message_at = NOW(), 
                         updated_at = NOW(),
                         first_response_at = COALESCE(first_response_at, NOW())
-                    WHERE ticket_id = $1`, [ticketId]);
+                    WHERE ticket_id = $1`,
+                    [ticketId]
+                );
             } else {
-                await client.query(`UPDATE support_tickets SET last_message_at = NOW(), updated_at = NOW() WHERE ticket_id = $1`, [ticketId]);
+                await client.query(
+                    `UPDATE support_tickets SET last_message_at = NOW(), updated_at = NOW() WHERE ticket_id = $1`,
+                    [ticketId]
+                );
             }
 
             await client.query('COMMIT');
@@ -176,22 +212,30 @@ export class SupportService {
     async updateTicketStatus(ticketId: string, status: string) {
         // Calculate resolution time when marking as resolved/closed
         if (status === 'resolved' || status === 'closed') {
-            const result = await this.pool.query(`
+            const result = await this.pool.query(
+                `
                 UPDATE support_tickets 
                 SET status = $1, 
                     updated_at = NOW(),
                     resolution_time_minutes = EXTRACT(EPOCH FROM (NOW() - created_at))/60
                 WHERE ticket_id = $2 
-                RETURNING *`, [status, ticketId]);
+                RETURNING *`,
+                [status, ticketId]
+            );
             return result.rows[0];
         }
-        const result = await this.pool.query(`UPDATE support_tickets SET status = $1, updated_at = NOW() WHERE ticket_id = $2 RETURNING *`, [status, ticketId]);
+        const result = await this.pool.query(
+            `UPDATE support_tickets SET status = $1, updated_at = NOW() WHERE ticket_id = $2 RETURNING *`,
+            [status, ticketId]
+        );
         return result.rows[0];
     }
 
     async getStats() {
         const [statsResult, orderDisputeResult, paymentDisputeResult, reviewResult] = await Promise.all([
-            this.pool.query(`SELECT COUNT(*) FILTER (WHERE status = 'open') as open_tickets, COUNT(*) FILTER (WHERE status = 'in_progress') as in_progress_tickets, COUNT(*) FILTER (WHERE status = 'resolved' AND DATE(updated_at) = CURRENT_DATE) as resolved_today FROM support_tickets`),
+            this.pool.query(
+                `SELECT COUNT(*) FILTER (WHERE status = 'open') as open_tickets, COUNT(*) FILTER (WHERE status = 'in_progress') as in_progress_tickets, COUNT(*) FILTER (WHERE status = 'resolved' AND DATE(updated_at) = CURRENT_DATE) as resolved_today FROM support_tickets`
+            ),
             this.pool.query(`SELECT COUNT(*) as order_disputes FROM disputes WHERE status IN ('pending', 'contested')`),
             this.pool.query(`SELECT COUNT(*) as payment_disputes FROM garage_payouts WHERE payout_status = 'disputed'`),
             this.pool.query(`SELECT COUNT(*) as pending_reviews FROM order_reviews WHERE moderation_status = 'pending'`)
@@ -237,7 +281,8 @@ export class SupportService {
     async getTicketDetail(ticketId: string) {
         // Enhanced query with order/garage context for support team
         // Uses requester_id for multi-party support (customer/garage/driver)
-        const ticketResult = await this.pool.query(`
+        const ticketResult = await this.pool.query(
+            `
             SELECT t.*, 
                    t.requester_type,
                    u.full_name as requester_name, 
@@ -261,17 +306,24 @@ export class SupportService {
             LEFT JOIN garages g ON o.garage_id = g.garage_id
             LEFT JOIN users gu ON g.garage_id = gu.user_id
             WHERE t.ticket_id = $1
-        `, [ticketId]);
-        if (ticketResult.rows.length === 0) {return null;}
+        `,
+            [ticketId]
+        );
+        if (ticketResult.rows.length === 0) {
+            return null;
+        }
 
         // Get messages with internal notes visible for agents
-        const messagesResult = await this.pool.query(`
+        const messagesResult = await this.pool.query(
+            `
             SELECT m.*, u.full_name as sender_name 
             FROM chat_messages m 
             JOIN users u ON m.sender_id = u.user_id 
             WHERE m.ticket_id = $1 
             ORDER BY m.created_at ASC
-        `, [ticketId]);
+        `,
+            [ticketId]
+        );
 
         return { ticket: ticketResult.rows[0], messages: messagesResult.rows };
     }
@@ -290,14 +342,17 @@ export class SupportService {
     }
 
     async assignTicket(ticketId: string, assigneeId: string) {
-        const result = await this.pool.query(`
+        const result = await this.pool.query(
+            `
             UPDATE support_tickets 
             SET assigned_to = $1, 
                 status = CASE WHEN status = 'open' THEN 'in_progress' ELSE status END,
                 updated_at = NOW()
             WHERE ticket_id = $2 
             RETURNING *
-        `, [assigneeId, ticketId]);
+        `,
+            [assigneeId, ticketId]
+        );
         return result.rows[0];
     }
 
@@ -328,18 +383,25 @@ export class SupportService {
     /**
      * Customer can reopen a closed ticket within 7 days
      */
-    async reopenTicket(ticketId: string, customerId: string, message?: string): Promise<{ success: boolean; ticket?: any; error?: string }> {
+    async reopenTicket(
+        ticketId: string,
+        customerId: string,
+        message?: string
+    ): Promise<{ success: boolean; ticket?: any; error?: string }> {
         const client = await this.pool.connect();
         try {
             await client.query('BEGIN');
 
             // Verify ticket belongs to customer and was closed within 7 days
-            const ticketResult = await client.query(`
+            const ticketResult = await client.query(
+                `
                 SELECT * FROM support_tickets 
                 WHERE ticket_id = $1 
                 AND customer_id = $2
                 FOR UPDATE
-            `, [ticketId, customerId]);
+            `,
+                [ticketId, customerId]
+            );
 
             if (ticketResult.rows.length === 0) {
                 return { success: false, error: 'Ticket not found' };
@@ -360,7 +422,8 @@ export class SupportService {
             }
 
             // Reopen the ticket
-            const updateResult = await client.query(`
+            const updateResult = await client.query(
+                `
                 UPDATE support_tickets 
                 SET status = 'open',
                     reopened_at = NOW(),
@@ -368,14 +431,19 @@ export class SupportService {
                     updated_at = NOW()
                 WHERE ticket_id = $1
                 RETURNING *
-            `, [ticketId]);
+            `,
+                [ticketId]
+            );
 
             // Add reopen message if provided
             if (message) {
-                await client.query(`
+                await client.query(
+                    `
                     INSERT INTO chat_messages (ticket_id, sender_id, sender_type, message_text)
                     VALUES ($1, $2, 'customer', $3)
-                `, [ticketId, customerId, `[TICKET REOPENED] ${message}`]);
+                `,
+                    [ticketId, customerId, `[TICKET REOPENED] ${message}`]
+                );
             }
 
             await client.query('COMMIT');
@@ -401,7 +469,8 @@ export class SupportService {
         const query = searchQuery.trim();
 
         // Try to find customer by different identifiers
-        const result = await this.pool.query(`
+        const result = await this.pool.query(
+            `
             SELECT 
                 u.user_id, u.full_name, u.phone_number, u.email, u.created_at as member_since,
                 (SELECT COUNT(*) FROM orders WHERE customer_id = u.user_id) as total_orders,
@@ -419,7 +488,9 @@ export class SupportService {
                 OR u.user_id IN (SELECT customer_id FROM orders WHERE order_number ILIKE $1)
             )
             LIMIT 1
-        `, [`%${query}%`, query]);
+        `,
+            [`%${query}%`, query]
+        );
 
         if (result.rows.length === 0) {
             return null;
@@ -428,7 +499,8 @@ export class SupportService {
         const customer = result.rows[0];
 
         // Get recent orders with issues highlighted + payout status + warranty info
-        const orders = await this.pool.query(`
+        const orders = await this.pool.query(
+            `
             SELECT 
                 o.order_id, o.order_number, o.order_status, o.payment_status,
                 o.total_amount, o.created_at, o.completed_at, o.delivered_at, o.delivery_address,
@@ -455,20 +527,26 @@ export class SupportService {
                 CASE WHEN d.dispute_id IS NOT NULL THEN 0 ELSE 1 END,
                 o.created_at DESC
             LIMIT 10
-        `, [customer.user_id]);
+        `,
+            [customer.user_id]
+        );
 
         // Get internal notes
-        const notes = await this.pool.query(`
+        const notes = await this.pool.query(
+            `
             SELECT n.*, u.full_name as agent_name
             FROM customer_notes n
             JOIN users u ON n.agent_id = u.user_id
             WHERE n.customer_id = $1
             ORDER BY n.created_at DESC
             LIMIT 10
-        `, [customer.user_id]);
+        `,
+            [customer.user_id]
+        );
 
         // Get resolution history
-        const resolutions = await this.pool.query(`
+        const resolutions = await this.pool.query(
+            `
             SELECT r.*, u.full_name as agent_name, o.order_number
             FROM resolution_logs r
             JOIN users u ON r.agent_id = u.user_id
@@ -476,10 +554,13 @@ export class SupportService {
             WHERE r.customer_id = $1
             ORDER BY r.created_at DESC
             LIMIT 10
-        `, [customer.user_id]);
+        `,
+            [customer.user_id]
+        );
 
         // Get active support tickets for this customer
-        const tickets = await this.pool.query(`
+        const tickets = await this.pool.query(
+            `
             SELECT 
                 t.ticket_id, t.subject, t.status, t.priority, t.created_at, t.last_message_at,
                 t.order_id, t.first_response_at, t.sla_deadline,
@@ -499,7 +580,9 @@ export class SupportService {
                      ELSE 2 END,
                 t.last_message_at DESC
             LIMIT 10
-        `, [customer.user_id]);
+        `,
+            [customer.user_id]
+        );
 
         return {
             customer,
@@ -514,11 +597,14 @@ export class SupportService {
      * Add internal note about customer
      */
     async addCustomerNote(customerId: string, agentId: string, noteText: string): Promise<any> {
-        const result = await this.pool.query(`
+        const result = await this.pool.query(
+            `
             INSERT INTO customer_notes (customer_id, agent_id, note_text)
             VALUES ($1, $2, $3)
             RETURNING *
-        `, [customerId, agentId, noteText]);
+        `,
+            [customerId, agentId, noteText]
+        );
         return result.rows[0];
     }
 
@@ -543,7 +629,9 @@ export class SupportService {
             switch (params.actionType) {
                 case 'request_refund': // Unified refund button - Finance determines full/partial based on reason
                 case 'full_refund':
-                    if (!params.orderId) {throw new Error('Order ID required for refund');}
+                    if (!params.orderId) {
+                        throw new Error('Order ID required for refund');
+                    }
 
                     // P0 FIX: Check for existing pending refund to prevent duplicates
                     const existingPendingRefund = await client.query(
@@ -551,7 +639,9 @@ export class SupportService {
                         [params.orderId]
                     );
                     if (existingPendingRefund.rows.length > 0) {
-                        throw new Error('A pending refund request already exists for this order. Please wait for Finance to process it.');
+                        throw new Error(
+                            'A pending refund request already exists for this order. Please wait for Finance to process it.'
+                        );
                     }
 
                     // Get order details including status for BRAIN v3.0 fee calculation
@@ -560,16 +650,19 @@ export class SupportService {
                         [params.orderId]
                     );
 
-                    if (orderResult.rows.length === 0) {throw new Error('Order not found');}
+                    if (orderResult.rows.length === 0) {
+                        throw new Error('Order not found');
+                    }
                     const order = orderResult.rows[0];
 
                     // BRAIN v3.0 Fee Calculation based on order status
                     const totalAmount = parseFloat(String(order.total_amount));
                     const deliveryFee = parseFloat(String(order.delivery_fee || 0));
-                    const partPrice = parseFloat(String(order.part_price || (totalAmount - deliveryFee)));
+                    const partPrice = parseFloat(String(order.part_price || totalAmount - deliveryFee));
 
                     // Map status to cancellation stage
-                    const stage = (STATUS_TO_STAGE as Record<string, CancellationStage>)[order.order_status] || 'BEFORE_PAYMENT';
+                    const stage =
+                        (STATUS_TO_STAGE as Record<string, CancellationStage>)[order.order_status] || 'BEFORE_PAYMENT';
 
                     // Get fee rate based on stage
                     let feeRate = 0;
@@ -626,21 +719,25 @@ export class SupportService {
                     // This just creates a pending refund request for Finance team review.
 
                     // Create refund record with PENDING status and BRAIN v3.1 fee calculation
-                    await client.query(`
+                    await client.query(
+                        `
                         INSERT INTO refunds (
                             order_id, customer_id, original_amount, refund_amount, 
                             fee_retained, delivery_fee_retained,
                             refund_status, refund_reason, initiated_by
                         ) VALUES ($1, $2, $3, $4, $5, $6, 'pending', $7, 'support')
-                    `, [
-                        params.orderId,
-                        order.customer_id,
-                        totalAmount,
-                        refundAmount,
-                        cancellationFee,
-                        deliveryFeeRetained,
-                        params.notes || `Refund requested by support (Stage: ${stage}, Fee: ${cancellationFee > 0 ? `${feeRate * 100  }%` : 'FREE'})`
-                    ]);
+                    `,
+                        [
+                            params.orderId,
+                            order.customer_id,
+                            totalAmount,
+                            refundAmount,
+                            cancellationFee,
+                            deliveryFeeRetained,
+                            params.notes ||
+                                `Refund requested by support (Stage: ${stage}, Fee: ${cancellationFee > 0 ? `${feeRate * 100}%` : 'FREE'})`
+                        ]
+                    );
 
                     result = {
                         action: 'refund_request',
@@ -655,7 +752,9 @@ export class SupportService {
                     break;
 
                 case 'partial_refund':
-                    if (!params.orderId || !params.actionDetails?.amount) {throw new Error('Order ID and amount required');}
+                    if (!params.orderId || !params.actionDetails?.amount) {
+                        throw new Error('Order ID and amount required');
+                    }
 
                     // Get order details
                     const partialOrderResult = await client.query(
@@ -663,23 +762,28 @@ export class SupportService {
                         [params.orderId]
                     );
 
-                    if (partialOrderResult.rows.length === 0) {throw new Error('Order not found');}
+                    if (partialOrderResult.rows.length === 0) {
+                        throw new Error('Order not found');
+                    }
                     const partialOrder = partialOrderResult.rows[0];
                     const partialRefundAmount = params.actionDetails.amount;
 
                     // Create refund record with PENDING status for Finance approval
-                    await client.query(`
+                    await client.query(
+                        `
                         INSERT INTO refunds (
                             order_id, customer_id, original_amount, refund_amount, 
                             refund_status, refund_reason, initiated_by
                         ) VALUES ($1, $2, $3, $4, 'pending', $5, 'support')
-                    `, [
-                        params.orderId,
-                        partialOrder.customer_id,
-                        partialOrder.total_amount,
-                        partialRefundAmount,
-                        params.notes || 'Partial refund requested by support'
-                    ]);
+                    `,
+                        [
+                            params.orderId,
+                            partialOrder.customer_id,
+                            partialOrder.total_amount,
+                            partialRefundAmount,
+                            params.notes || 'Partial refund requested by support'
+                        ]
+                    );
 
                     result = { action: 'partial_refund', amount: partialRefundAmount, orderId: params.orderId };
                     break;
@@ -691,35 +795,49 @@ export class SupportService {
                     break;
 
                 case 'cancel_order':
-                    if (!params.orderId) {throw new Error('Order ID required');}
-                    await client.query(`
+                    if (!params.orderId) {
+                        throw new Error('Order ID required');
+                    }
+                    await client.query(
+                        `
                         UPDATE orders SET 
                             order_status = 'cancelled',
                             updated_at = NOW()
                         WHERE order_id = $1
-                    `, [params.orderId]);
+                    `,
+                        [params.orderId]
+                    );
                     result = { action: 'cancel_order', orderId: params.orderId };
                     break;
 
                 case 'reassign_driver':
-                    if (!params.orderId) {throw new Error('Order ID required');}
-                    await client.query(`
+                    if (!params.orderId) {
+                        throw new Error('Order ID required');
+                    }
+                    await client.query(
+                        `
                         UPDATE orders SET 
                             driver_id = NULL,
                             updated_at = NOW()
                         WHERE order_id = $1
-                    `, [params.orderId]);
+                    `,
+                        [params.orderId]
+                    );
                     result = { action: 'reassign_driver', orderId: params.orderId };
                     break;
 
                 case 'rush_delivery':
-                    if (!params.orderId) {throw new Error('Order ID required');}
+                    if (!params.orderId) {
+                        throw new Error('Order ID required');
+                    }
                     // Just log - no priority column exists
                     result = { action: 'rush_delivery', orderId: params.orderId };
                     break;
 
                 case 'escalate_to_ops':
-                    if (!params.orderId) {throw new Error('Order ID required');}
+                    if (!params.orderId) {
+                        throw new Error('Order ID required');
+                    }
                     // Just log escalation - will appear in resolution_logs
                     result = { action: 'escalate_to_ops', orderId: params.orderId };
                     break;
@@ -729,15 +847,23 @@ export class SupportService {
             }
 
             // Log the resolution action (this is the main record)
-            await client.query(`
+            await client.query(
+                `
                 INSERT INTO resolution_logs (order_id, customer_id, agent_id, action_type, action_details, notes)
                 VALUES ($1, $2, $3, $4, $5, $6)
-            `, [params.orderId || null, params.customerId, params.agentId, params.actionType,
-            JSON.stringify(params.actionDetails || {}), params.notes || null]);
+            `,
+                [
+                    params.orderId || null,
+                    params.customerId,
+                    params.agentId,
+                    params.actionType,
+                    JSON.stringify(params.actionDetails || {}),
+                    params.notes || null
+                ]
+            );
 
             await client.query('COMMIT');
             return { success: true, result };
-
         } catch (err: any) {
             await client.query('ROLLBACK');
             return { success: false, error: err.message };
@@ -761,7 +887,8 @@ export class SupportService {
             queryParams.push(params.customerId);
         }
 
-        const result = await this.pool.query(`
+        const result = await this.pool.query(
+            `
             SELECT r.*, u.full_name as agent_name, o.order_number
             FROM resolution_logs r
             JOIN users u ON r.agent_id = u.user_id
@@ -769,7 +896,9 @@ export class SupportService {
             ${whereClause}
             ORDER BY r.created_at DESC
             LIMIT 50
-        `, queryParams);
+        `,
+            queryParams
+        );
 
         return result.rows;
     }
@@ -778,11 +907,14 @@ export class SupportService {
      * Add internal note to ticket (not visible to customer)
      */
     async addInternalNote(ticketId: string, agentId: string, noteText: string): Promise<any> {
-        const result = await this.pool.query(`
+        const result = await this.pool.query(
+            `
             INSERT INTO chat_messages (ticket_id, sender_id, sender_type, message_text, is_internal)
             VALUES ($1, $2, 'admin', $3, true)
             RETURNING *
-        `, [ticketId, agentId, noteText]);
+        `,
+            [ticketId, agentId, noteText]
+        );
         return result.rows[0];
     }
 
@@ -819,19 +951,22 @@ export class SupportService {
             ? `NOW() + INTERVAL '${params.expiresInDays} days'`
             : `NOW() + INTERVAL '90 days'`;
 
-        const result = await this.pool.query(`
+        const result = await this.pool.query(
+            `
             INSERT INTO customer_credits 
             (customer_id, amount, reason, granted_by, ticket_id, order_id, expires_at)
             VALUES ($1, $2, $3, $4, $5, $6, ${expiresAt})
             RETURNING *
-        `, [
-            params.customerId,
-            params.amount,
-            params.reason,
-            params.grantedBy,
-            params.ticketId || null,
-            params.orderId || null
-        ]);
+        `,
+            [
+                params.customerId,
+                params.amount,
+                params.reason,
+                params.grantedBy,
+                params.ticketId || null,
+                params.orderId || null
+            ]
+        );
 
         return result.rows[0];
     }
@@ -840,13 +975,16 @@ export class SupportService {
      * Get active credits for a customer
      */
     async getCustomerCredits(customerId: string): Promise<any[]> {
-        const result = await this.pool.query(`
+        const result = await this.pool.query(
+            `
             SELECT * FROM customer_credits
             WHERE customer_id = $1 
             AND status = 'active'
             AND (expires_at IS NULL OR expires_at > NOW())
             ORDER BY created_at DESC
-        `, [customerId]);
+        `,
+            [customerId]
+        );
 
         return result.rows;
     }

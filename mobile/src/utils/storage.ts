@@ -21,7 +21,7 @@ export enum StorageKey {
     DRAFT_REQUEST = 'draft_request',
     APP_VERSION = 'app_version',
     LAST_SYNC = 'last_sync',
-    SWIPE_HINT_SHOWN = 'swipe_hint_shown',
+    SWIPE_HINT_SHOWN = 'swipe_hint_shown'
 }
 
 /**
@@ -83,9 +83,7 @@ export const removeItems = async (keys: (StorageKey | string)[]): Promise<boolea
 /**
  * Get multiple values from storage
  */
-export const getItems = async <T extends Record<string, any>>(
-    keys: (StorageKey | string)[]
-): Promise<Partial<T>> => {
+export const getItems = async <T extends Record<string, any>>(keys: (StorageKey | string)[]): Promise<Partial<T>> => {
     try {
         const pairs = await AsyncStorage.multiGet(keys);
         const result: Partial<T> = {};
@@ -112,10 +110,7 @@ export const getItems = async <T extends Record<string, any>>(
  */
 export const setItems = async (items: Record<string, any>): Promise<boolean> => {
     try {
-        const pairs: [string, string][] = Object.entries(items).map(([key, value]) => [
-            key,
-            JSON.stringify(value),
-        ]);
+        const pairs: [string, string][] = Object.entries(items).map(([key, value]) => [key, JSON.stringify(value)]);
         await AsyncStorage.multiSet(pairs);
         return true;
     } catch (error) {
@@ -171,7 +166,7 @@ export const hasItem = async (key: StorageKey | string): Promise<boolean> => {
 export const saveDraftRequest = async (draft: any): Promise<boolean> => {
     return setItem(StorageKey.DRAFT_REQUEST, {
         ...draft,
-        savedAt: new Date().toISOString(),
+        savedAt: new Date().toISOString()
     });
 };
 
@@ -208,7 +203,7 @@ export const addRecentSearch = async (search: string): Promise<boolean> => {
     const searches = (await getItem<string[]>(StorageKey.RECENT_SEARCHES)) || [];
 
     // Remove if already exists
-    const filtered = searches.filter(s => s !== search);
+    const filtered = searches.filter((s) => s !== search);
 
     // Add to front
     filtered.unshift(search);
@@ -239,9 +234,5 @@ export const clearRecentSearches = async (): Promise<boolean> => {
  * Clear all auth-related data (for logout)
  */
 export const clearAuthData = async (): Promise<boolean> => {
-    return removeItems([
-        StorageKey.TOKEN,
-        StorageKey.USER,
-        StorageKey.PUSH_TOKEN,
-    ]);
+    return removeItems([StorageKey.TOKEN, StorageKey.USER, StorageKey.PUSH_TOKEN]);
 };

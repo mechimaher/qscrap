@@ -6,7 +6,7 @@ jest.mock('../../services/api', () => ({
     api: {
         acceptBid: jest.fn(),
         createFullPaymentIntent: jest.fn(),
-        createDeliveryFeeIntent: jest.fn(),
+        createDeliveryFeeIntent: jest.fn()
     }
 }));
 jest.mock('../../utils/errorHandler');
@@ -21,6 +21,8 @@ describe('usePaymentInitialization', () => {
 
     const baseParams = {
         bidId: 'bid-123',
+        orderId: null,
+        setOrderId: jest.fn(),
         paymentType: 'full' as 'full' | 'delivery_only',
         applyDiscount: false,
         loyaltyData: null,
@@ -32,7 +34,7 @@ describe('usePaymentInitialization', () => {
         setDiscountAmount: mockSetDiscountAmount,
         t: mockT,
         toast: mockToast,
-        navigation: mockNavigation,
+        navigation: mockNavigation
     };
 
     beforeEach(() => {
@@ -42,13 +44,13 @@ describe('usePaymentInitialization', () => {
     it('should initialize with existing order ID and create full payment intent', async () => {
         (api.createFullPaymentIntent as jest.Mock).mockResolvedValue({
             intent: { clientSecret: 'secret_123' },
-            breakdown: { total: 100 },
+            breakdown: { total: 100 }
         });
 
         const { result } = renderHook(() =>
             usePaymentInitialization({
                 ...baseParams,
-                existingOrderId: 'order-123',
+                existingOrderId: 'order-123'
             })
         );
 
@@ -69,13 +71,13 @@ describe('usePaymentInitialization', () => {
         (api.acceptBid as jest.Mock).mockResolvedValue({ order_id: 'new-order-456' });
         (api.createFullPaymentIntent as jest.Mock).mockResolvedValue({
             intent: { clientSecret: 'secret_456' },
-            breakdown: { total: 100 },
+            breakdown: { total: 100 }
         });
 
         const { result } = renderHook(() =>
             usePaymentInitialization({
                 ...baseParams,
-                existingOrderId: undefined,
+                existingOrderId: undefined
             })
         );
 
@@ -87,21 +89,21 @@ describe('usePaymentInitialization', () => {
             expect(api.acceptBid).toHaveBeenCalledWith('bid-123', 'card');
             expect(api.createFullPaymentIntent).toHaveBeenCalledWith('new-order-456', 0);
             expect(mockSetClientSecret).toHaveBeenCalledWith('secret_456');
-            expect(result.current.orderId).toBe('new-order-456');
+            expect(baseParams.setOrderId).toHaveBeenCalledWith('new-order-456');
         });
     });
 
     it('should create delivery fee intent for delivery_only payment type', async () => {
         (api.createDeliveryFeeIntent as jest.Mock).mockResolvedValue({
             intent: { clientSecret: 'secret_delivery' },
-            breakdown: { total: 20 },
+            breakdown: { total: 20 }
         });
 
         const { result } = renderHook(() =>
             usePaymentInitialization({
                 ...baseParams,
                 existingOrderId: 'order-123',
-                paymentType: 'delivery_only',
+                paymentType: 'delivery_only'
             })
         );
 
@@ -119,7 +121,7 @@ describe('usePaymentInitialization', () => {
     it('should apply loyalty discount correctly during full payment', async () => {
         (api.createFullPaymentIntent as jest.Mock).mockResolvedValue({
             intent: { clientSecret: 'secret_discounted' },
-            breakdown: { total: 90 },
+            breakdown: { total: 90 }
         });
 
         const { result } = renderHook(() =>
@@ -127,7 +129,7 @@ describe('usePaymentInitialization', () => {
                 ...baseParams,
                 existingOrderId: 'order-123',
                 applyDiscount: true,
-                loyaltyData: { discountPercentage: 10 },
+                loyaltyData: { discountPercentage: 10 }
             })
         );
 
@@ -149,7 +151,7 @@ describe('usePaymentInitialization', () => {
         const { result } = renderHook(() =>
             usePaymentInitialization({
                 ...baseParams,
-                existingOrderId: 'order-123',
+                existingOrderId: 'order-123'
             })
         );
 

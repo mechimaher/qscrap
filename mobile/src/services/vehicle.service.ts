@@ -1,7 +1,22 @@
-import { apiClient } from "./apiClient";
-import { API_ENDPOINTS, API_BASE_URL } from "../config/api";
-import { log, warn, error } from "../utils/logger";
-import { User, AuthResponse, Request, Bid, Order, Stats, Address, Product, Notification, SupportTicket, Vehicle, LoyaltyTransaction, PaymentMethod, UrgentAction } from "./types";
+import { apiClient } from './apiClient';
+import { API_ENDPOINTS, API_BASE_URL } from '../config/api';
+import { log, warn, error } from '../utils/logger';
+import {
+    User,
+    AuthResponse,
+    Request,
+    Bid,
+    Order,
+    Stats,
+    Address,
+    Product,
+    Notification,
+    SupportTicket,
+    Vehicle,
+    LoyaltyTransaction,
+    PaymentMethod,
+    UrgentAction
+} from './types';
 
 export class VehicleService {
     async getMyVehicles(): Promise<{ vehicles: Vehicle[] }> {
@@ -9,12 +24,12 @@ export class VehicleService {
     }
 
     async addVehicle(vehicleData: {
-            car_make: string;
-            car_model: string;
-            car_year: number;
-            vin_number?: string;
-            nickname?: string;
-        }): Promise<{ success: boolean; vehicle: Vehicle }> {
+        car_make: string;
+        car_model: string;
+        car_year: number;
+        vin_number?: string;
+        nickname?: string;
+    }): Promise<{ success: boolean; vehicle: Vehicle }> {
         return apiClient.request('/vehicles', {
             method: 'POST',
             body: JSON.stringify(vehicleData)
@@ -27,7 +42,10 @@ export class VehicleService {
         });
     }
 
-    async updateVehicle(vehicleId: string, data: { nickname?: string; is_primary?: boolean; vin_number?: string }): Promise<{ success: boolean; vehicle: Vehicle }> {
+    async updateVehicle(
+        vehicleId: string,
+        data: { nickname?: string; is_primary?: boolean; vin_number?: string }
+    ): Promise<{ success: boolean; vehicle: Vehicle }> {
         return apiClient.request(`/vehicles/${vehicleId}`, {
             method: 'PATCH',
             body: JSON.stringify(data)

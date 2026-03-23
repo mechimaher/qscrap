@@ -24,15 +24,15 @@ const QuickActions = ({ navigation }: { navigation: any }) => {
                 toValue: 1,
                 duration: 400,
                 delay: 700,
-                useNativeDriver: true,
+                useNativeDriver: true
             }),
             Animated.timing(slideAnim, {
                 toValue: 0,
                 duration: 500,
                 delay: 700,
                 easing: Easing.out(Easing.back(1.1)),
-                useNativeDriver: true,
-            }),
+                useNativeDriver: true
+            })
         ]).start();
     }, []);
 
@@ -51,29 +51,35 @@ const QuickActions = ({ navigation }: { navigation: any }) => {
 
         return (
             <TouchableOpacity
-                onPress={() => { Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light); onPress(); }}
+                onPress={() => {
+                    Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
+                    onPress();
+                }}
                 onPressIn={() => Animated.spring(scaleAnim, { toValue: 0.9, useNativeDriver: true }).start()}
                 onPressOut={() => Animated.spring(scaleAnim, { toValue: 1, useNativeDriver: true }).start()}
                 activeOpacity={1}
                 accessibilityLabel={label}
                 accessibilityRole="button"
             >
-                <Animated.View style={[styles.actionCard, { transform: [{ scale: scaleAnim }], backgroundColor: colors.surface }]}>
+                <Animated.View
+                    style={[styles.actionCard, { transform: [{ scale: scaleAnim }], backgroundColor: colors.surface }]}
+                >
                     <View style={[styles.actionIconBg, { backgroundColor: bgColor }]}>
                         <Ionicons name={emoji as any} size={22} color="#525252" />
                     </View>
-                    <Text style={[styles.actionLabel, { color: colors.textSecondary, textAlign: 'center' }]}>{label}</Text>
+                    <Text style={[styles.actionLabel, { color: colors.textSecondary, textAlign: 'center' }]}>
+                        {label}
+                    </Text>
                 </Animated.View>
             </TouchableOpacity>
         );
     };
 
     return (
-        <Animated.View style={[
-            styles.actionsSection,
-            { opacity: fadeAnim, transform: [{ translateY: slideAnim }] }
-        ]}>
-            <Text style={[styles.sectionTitle, { color: colors.text, textAlign: rtlTextAlign(isRTL) }]}>{t('home.quickActions')}</Text>
+        <Animated.View style={[styles.actionsSection, { opacity: fadeAnim, transform: [{ translateY: slideAnim }] }]}>
+            <Text style={[styles.sectionTitle, { color: colors.text, textAlign: rtlTextAlign(isRTL) }]}>
+                {t('home.quickActions')}
+            </Text>
             <View style={[styles.actionsGrid, { flexDirection: rtlFlexDirection(isRTL) }]}>
                 <ActionButton
                     emoji="clipboard-outline"
@@ -91,7 +97,11 @@ const QuickActions = ({ navigation }: { navigation: any }) => {
                     emoji="chatbubble-ellipses-outline"
                     label={t('nav.support')}
                     bgColor="#FFF3E0"
-                    onPress={() => Linking.openURL(`https://wa.me/${CONTACT.SUPPORT_PHONE_RAW}?text=${encodeURIComponent(t('nav.whatsappGreeting'))}`)}
+                    onPress={() =>
+                        Linking.openURL(
+                            `https://wa.me/${CONTACT.SUPPORT_PHONE_RAW}?text=${encodeURIComponent(t('nav.whatsappGreeting'))}`
+                        )
+                    }
                 />
                 <ActionButton
                     emoji="settings-outline"
@@ -110,7 +120,7 @@ const styles = StyleSheet.create({
         fontSize: FontSizes.md,
         fontWeight: '600',
         fontFamily: FontFamily.semibold,
-        marginBottom: Spacing.sm,
+        marginBottom: Spacing.sm
     },
     actionsGrid: { flexDirection: 'row', flexWrap: 'wrap', justifyContent: 'space-between' },
     actionCard: {
@@ -119,7 +129,7 @@ const styles = StyleSheet.create({
         borderRadius: BorderRadius.md,
         padding: Spacing.sm,
         alignItems: 'center',
-        marginBottom: Spacing.sm,
+        marginBottom: Spacing.sm
     },
     actionIconBg: {
         width: 44,
@@ -127,10 +137,10 @@ const styles = StyleSheet.create({
         borderRadius: 22,
         justifyContent: 'center',
         alignItems: 'center',
-        marginBottom: 4,
+        marginBottom: 4
     },
     actionEmoji: { fontSize: 22 },
-    actionLabel: { fontSize: FontSizes.xs, fontWeight: '600' },
+    actionLabel: { fontSize: FontSizes.xs, fontWeight: '600' }
 });
 
 export default QuickActions;

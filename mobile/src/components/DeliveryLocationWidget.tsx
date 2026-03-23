@@ -33,7 +33,7 @@ export const DeliveryLocationWidget: React.FC<DeliveryLocationWidgetProps> = ({ 
     const loadAddresses = async () => {
         try {
             setIsLoading(true);
-            const result = await api.request('/addresses') as { addresses: Address[] };
+            const result = (await api.request('/addresses')) as { addresses: Address[] };
             const addresses = result.addresses || [];
             setSavedAddresses(addresses);
 
@@ -65,13 +65,13 @@ export const DeliveryLocationWidget: React.FC<DeliveryLocationWidgetProps> = ({ 
 
             // Get current position
             const location = await Location.getCurrentPositionAsync({
-                accuracy: Location.Accuracy.Balanced,
+                accuracy: Location.Accuracy.Balanced
             });
 
             // Reverse geocode
             const [geocoded] = await Location.reverseGeocodeAsync({
                 latitude: location.coords.latitude,
-                longitude: location.coords.longitude,
+                longitude: location.coords.longitude
             });
 
             if (geocoded) {
@@ -79,10 +79,11 @@ export const DeliveryLocationWidget: React.FC<DeliveryLocationWidgetProps> = ({ 
                 const detectedAddress: Address = {
                     address_id: 'current',
                     label: t('home.deliveryWidget.currentLocation'),
-                    address_text: `${geocoded.street || ''}, ${geocoded.district || geocoded.subregion || ''}, ${geocoded.city || 'Doha'}`.trim(),
+                    address_text:
+                        `${geocoded.street || ''}, ${geocoded.district || geocoded.subregion || ''}, ${geocoded.city || 'Doha'}`.trim(),
                     latitude: location.coords.latitude,
                     longitude: location.coords.longitude,
-                    is_default: false,
+                    is_default: false
                 };
 
                 setCurrentAddress(detectedAddress);
@@ -108,7 +109,7 @@ export const DeliveryLocationWidget: React.FC<DeliveryLocationWidgetProps> = ({ 
         if (!currentAddress) return t('home.deliveryWidget.selectAddress');
 
         // Extract area and city for concise display (KEETA/TALABAT style)
-        const parts = currentAddress.address_text.split(',').map(p => p.trim());
+        const parts = currentAddress.address_text.split(',').map((p) => p.trim());
         if (parts.length >= 2) {
             return `${parts[parts.length - 2]}, ${parts[parts.length - 1]}`;
         }
@@ -144,12 +145,7 @@ export const DeliveryLocationWidget: React.FC<DeliveryLocationWidgetProps> = ({ 
             </TouchableOpacity>
 
             {/* Address Picker Modal */}
-            <Modal
-                visible={showPicker}
-                transparent
-                animationType="slide"
-                onRequestClose={() => setShowPicker(false)}
-            >
+            <Modal visible={showPicker} transparent animationType="slide" onRequestClose={() => setShowPicker(false)}>
                 <View style={styles.modalOverlay}>
                     <View style={[styles.modalContent, { backgroundColor: colors.background }]}>
                         <View style={styles.modalHeader}>
@@ -168,10 +164,7 @@ export const DeliveryLocationWidget: React.FC<DeliveryLocationWidgetProps> = ({ 
                                 onPress={detectCurrentLocation}
                                 disabled={isDetecting}
                             >
-                                <LinearGradient
-                                    colors={['#22C55E', '#16A34A']}
-                                    style={styles.addressIconBg}
-                                >
+                                <LinearGradient colors={['#22C55E', '#16A34A']} style={styles.addressIconBg}>
                                     {isDetecting ? (
                                         <ActivityIndicator size="small" color="#fff" />
                                     ) : (
@@ -197,10 +190,7 @@ export const DeliveryLocationWidget: React.FC<DeliveryLocationWidgetProps> = ({ 
                                     setShowPicker(false);
                                 }}
                             >
-                                <LinearGradient
-                                    colors={[Colors.primary, '#B31D4A']}
-                                    style={styles.addressIconBg}
-                                >
+                                <LinearGradient colors={[Colors.primary, '#B31D4A']} style={styles.addressIconBg}>
                                     <Ionicons name="map-outline" size={20} color="#fff" />
                                 </LinearGradient>
                                 <View style={{ flex: 1 }}>
@@ -223,10 +213,7 @@ export const DeliveryLocationWidget: React.FC<DeliveryLocationWidgetProps> = ({ 
                                     setShowPicker(false);
                                 }}
                             >
-                                <LinearGradient
-                                    colors={['#F59E0B', '#D97706']}
-                                    style={styles.addressIconBg}
-                                >
+                                <LinearGradient colors={['#F59E0B', '#D97706']} style={styles.addressIconBg}>
                                     <Ionicons name="construct-outline" size={20} color="#fff" />
                                 </LinearGradient>
                                 <View style={{ flex: 1 }}>
@@ -251,14 +238,21 @@ export const DeliveryLocationWidget: React.FC<DeliveryLocationWidgetProps> = ({ 
                                     onPress={() => handleAddressSelect(addr)}
                                 >
                                     <View style={[styles.addressIconBg, { backgroundColor: Colors.primary + '15' }]}>
-                                        <Ionicons name={addr.is_default ? 'home' : 'location'} size={20} color={Colors.primary} />
+                                        <Ionicons
+                                            name={addr.is_default ? 'home' : 'location'}
+                                            size={20}
+                                            color={Colors.primary}
+                                        />
                                     </View>
                                     <View style={{ flex: 1 }}>
                                         <Text style={[styles.addressLabel, { color: colors.text }]}>
                                             {addr.label}
                                             {addr.is_default && t('home.deliveryWidget.default')}
                                         </Text>
-                                        <Text style={[styles.addressText, { color: colors.textSecondary }]} numberOfLines={2}>
+                                        <Text
+                                            style={[styles.addressText, { color: colors.textSecondary }]}
+                                            numberOfLines={2}
+                                        >
                                             {addr.address_text}
                                         </Text>
                                     </View>
@@ -273,11 +267,7 @@ export const DeliveryLocationWidget: React.FC<DeliveryLocationWidgetProps> = ({ 
             </Modal>
 
             {/* Map Location Picker Modal */}
-            <Modal
-                visible={showMap}
-                animationType="slide"
-                onRequestClose={() => setShowMap(false)}
-            >
+            <Modal visible={showMap} animationType="slide" onRequestClose={() => setShowMap(false)}>
                 <MapLocationPicker
                     onLocationSelect={(location) => {
                         const mapAddress: Address = {
@@ -286,7 +276,7 @@ export const DeliveryLocationWidget: React.FC<DeliveryLocationWidgetProps> = ({ 
                             address_text: location.address,
                             latitude: location.latitude,
                             longitude: location.longitude,
-                            is_default: false,
+                            is_default: false
                         };
                         setCurrentAddress(mapAddress);
                         onLocationChange?.(mapAddress);
@@ -311,34 +301,34 @@ const styles = StyleSheet.create({
         borderWidth: 1,
         borderColor: '#E5E7EB', // Light gray border for visibility
         backgroundColor: '#E5E7EB', // Darker gray - more visible
-        ...Shadows.sm,
+        ...Shadows.sm
     },
     content: {},
     header: {
         flexDirection: 'row',
         alignItems: 'center',
-        gap: Spacing.sm,
+        gap: Spacing.sm
     },
     locationIcon: {
-        fontSize: 20,
+        fontSize: 20
     },
     label: {
         fontSize: FontSizes.xs,
-        marginBottom: 2,
+        marginBottom: 2
     },
     address: {
         fontSize: FontSizes.md,
-        fontWeight: '700',
+        fontWeight: '700'
     },
     chevron: {
         fontSize: 10,
-        fontWeight: '700',
+        fontWeight: '700'
     },
     // Modal
     modalOverlay: {
         flex: 1,
         backgroundColor: 'rgba(0, 0, 0, 0.75)',
-        justifyContent: 'flex-end',
+        justifyContent: 'flex-end'
     },
     modalContent: {
         borderTopLeftRadius: BorderRadius.xxl,
@@ -350,25 +340,25 @@ const styles = StyleSheet.create({
         shadowOffset: { width: 0, height: -4 },
         shadowOpacity: 0.3,
         shadowRadius: 12,
-        elevation: 24,
+        elevation: 24
     },
     modalHeader: {
         flexDirection: 'row',
         justifyContent: 'space-between',
         alignItems: 'center',
         paddingHorizontal: Spacing.lg,
-        marginBottom: Spacing.lg,
+        marginBottom: Spacing.lg
     },
     modalTitle: {
         fontSize: FontSizes.xl,
-        fontWeight: '800',
+        fontWeight: '800'
     },
     closeIcon: {
         fontSize: 24,
-        color: '#999',
+        color: '#999'
     },
     addressList: {
-        paddingHorizontal: Spacing.lg,
+        paddingHorizontal: Spacing.lg
     },
     addressItem: {
         flexDirection: 'row',
@@ -376,38 +366,37 @@ const styles = StyleSheet.create({
         padding: Spacing.md,
         borderRadius: BorderRadius.lg,
         marginBottom: Spacing.sm,
-        gap: Spacing.md,
+        gap: Spacing.md
     },
     selectedAddress: {
         borderWidth: 2,
-        borderColor: Colors.primary,
+        borderColor: Colors.primary
     },
     addressIconBg: {
         width: 44,
         height: 44,
         borderRadius: 22,
         justifyContent: 'center',
-        alignItems: 'center',
+        alignItems: 'center'
     },
     addressIconText: {
-        fontSize: 20,
+        fontSize: 20
     },
     addressLabel: {
         fontSize: FontSizes.md,
         fontWeight: '700',
-        marginBottom: 2,
+        marginBottom: 2
     },
     addressText: {
         fontSize: FontSizes.sm,
-        lineHeight: 18,
+        lineHeight: 18
     },
     addressHint: {
-        fontSize: FontSizes.sm,
+        fontSize: FontSizes.sm
     },
     checkIcon: {
         fontSize: 20,
         color: Colors.primary,
-        fontWeight: '700',
-    },
+        fontWeight: '700'
+    }
 });
-

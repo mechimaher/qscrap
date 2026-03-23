@@ -7,7 +7,8 @@
 const QATAR_PHONE_REGEX = /^(\+974|974)?[3-7]\d{7}$/;
 
 // Email regex (RFC 5322 compliant)
-const EMAIL_REGEX = /^[a-zA-Z0-9.!#$%&'*+/=?^_`{|}~-]+@[a-zA-Z0-9](?:[a-zA-Z0-9-]{0,61}[a-zA-Z0-9])?(?:\.[a-zA-Z0-9](?:[a-zA-Z0-9-]{0,61}[a-zA-Z0-9])?)*$/;
+const EMAIL_REGEX =
+    /^[a-zA-Z0-9.!#$%&'*+/=?^_`{|}~-]+@[a-zA-Z0-9](?:[a-zA-Z0-9-]{0,61}[a-zA-Z0-9])?(?:\.[a-zA-Z0-9](?:[a-zA-Z0-9-]{0,61}[a-zA-Z0-9])?)*$/;
 
 // VIN regex (17 alphanumeric characters, excluding I, O, Q)
 const VIN_REGEX = /^[A-HJ-NPR-Z0-9]{17}$/i;
@@ -20,7 +21,10 @@ export interface ValidationResult {
 /**
  * Validate a required field
  */
-export const validateRequired = (value: string | undefined | null, fieldName: string = 'This field'): ValidationResult => {
+export const validateRequired = (
+    value: string | undefined | null,
+    fieldName: string = 'This field'
+): ValidationResult => {
     if (!value || value.trim() === '') {
         return { isValid: false, error: `${fieldName} is required` };
     }
@@ -30,7 +34,11 @@ export const validateRequired = (value: string | undefined | null, fieldName: st
 /**
  * Validate minimum length
  */
-export const validateMinLength = (value: string, minLength: number, fieldName: string = 'This field'): ValidationResult => {
+export const validateMinLength = (
+    value: string,
+    minLength: number,
+    fieldName: string = 'This field'
+): ValidationResult => {
     if (value.length < minLength) {
         return { isValid: false, error: `${fieldName} must be at least ${minLength} characters` };
     }
@@ -40,7 +48,11 @@ export const validateMinLength = (value: string, minLength: number, fieldName: s
 /**
  * Validate maximum length
  */
-export const validateMaxLength = (value: string, maxLength: number, fieldName: string = 'This field'): ValidationResult => {
+export const validateMaxLength = (
+    value: string,
+    maxLength: number,
+    fieldName: string = 'This field'
+): ValidationResult => {
     if (value.length > maxLength) {
         return { isValid: false, error: `${fieldName} must be at most ${maxLength} characters` };
     }

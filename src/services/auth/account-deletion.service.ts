@@ -20,7 +20,7 @@ export interface DeletionEligibilityResult {
 }
 
 export class AccountDeletionService {
-    constructor(private pool: Pool) { }
+    constructor(private pool: Pool) {}
 
     /**
      * Check if a user account can be deleted
@@ -43,9 +43,10 @@ export class AccountDeletionService {
                 blockers.push({
                     type: 'active_orders',
                     count: activeOrdersCount,
-                    message: activeOrdersCount === 1
-                        ? 'You have 1 order in progress'
-                        : `You have ${activeOrdersCount} orders in progress`,
+                    message:
+                        activeOrdersCount === 1
+                            ? 'You have 1 order in progress'
+                            : `You have ${activeOrdersCount} orders in progress`,
                     action: 'view_orders'
                 });
             }
@@ -67,9 +68,10 @@ export class AccountDeletionService {
                 blockers.push({
                     type: 'open_tickets',
                     count: openTicketsCount,
-                    message: openTicketsCount === 1
-                        ? 'You have 1 open support ticket'
-                        : `You have ${openTicketsCount} open support tickets`,
+                    message:
+                        openTicketsCount === 1
+                            ? 'You have 1 open support ticket'
+                            : `You have ${openTicketsCount} open support tickets`,
                     action: 'view_support'
                 });
             }
@@ -91,9 +93,10 @@ export class AccountDeletionService {
                 blockers.push({
                     type: 'active_disputes',
                     count: activeDisputesCount,
-                    message: activeDisputesCount === 1
-                        ? 'You have 1 pending dispute'
-                        : `You have ${activeDisputesCount} pending disputes`,
+                    message:
+                        activeDisputesCount === 1
+                            ? 'You have 1 pending dispute'
+                            : `You have ${activeDisputesCount} pending disputes`,
                     action: 'contact_support'
                 });
             }
@@ -115,9 +118,10 @@ export class AccountDeletionService {
                 blockers.push({
                     type: 'pending_refunds',
                     count: pendingRefundsCount,
-                    message: pendingRefundsCount === 1
-                        ? 'You have 1 pending refund'
-                        : `You have ${pendingRefundsCount} pending refunds`,
+                    message:
+                        pendingRefundsCount === 1
+                            ? 'You have 1 pending refund'
+                            : `You have ${pendingRefundsCount} pending refunds`,
                     action: 'contact_support'
                 });
             }
@@ -142,9 +146,10 @@ export class AccountDeletionService {
                 blockers.push({
                     type: 'active_requests',
                     count: activeRequestsCount,
-                    message: activeRequestsCount === 1
-                        ? 'You have 1 active request with pending bids'
-                        : `You have ${activeRequestsCount} active requests with pending bids`,
+                    message:
+                        activeRequestsCount === 1
+                            ? 'You have 1 active request with pending bids'
+                            : `You have ${activeRequestsCount} active requests with pending bids`,
                     action: 'view_requests'
                 });
             }

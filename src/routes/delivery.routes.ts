@@ -56,10 +56,10 @@ router.patch('/drivers/:driver_id', updateDriver);
 
 // Orders - Collection from garages
 router.get('/collection/pending', getOrdersReadyForCollection);
-router.post('/assign-collection/:order_id', assignCollectionDriver);  // NEW: Assign driver, order stays ready_for_pickup
-router.post('/collect/:order_id', collectOrder);  // DEPRECATED: Use assign-collection + driver pickup
+router.post('/assign-collection/:order_id', assignCollectionDriver); // NEW: Assign driver, order stays ready_for_pickup
+router.post('/collect/:order_id', collectOrder); // DEPRECATED: Use assign-collection + driver pickup
 
-// Orders - Delivery to customers  
+// Orders - Delivery to customers
 router.get('/delivery/pending', getOrdersReadyForDelivery);
 
 // Legacy combined orders endpoint
@@ -67,9 +67,8 @@ router.get('/orders', getOrdersForDelivery);
 
 // Assignments
 router.post('/assign/:order_id', assignDriver);
-router.post('/reassign/:assignment_id', reassignDriver);  // Emergency driver reassignment
+router.post('/reassign/:assignment_id', reassignDriver); // Emergency driver reassignment
 router.patch('/assignment/:assignment_id/status', updateDeliveryStatus);
-router.post('/drivers/:driver_id/location', updateDriverLocation);  // Update driver GPS location
+router.post('/drivers/:driver_id/location', updateDriverLocation); // Update driver GPS location
 
 export default router;
-

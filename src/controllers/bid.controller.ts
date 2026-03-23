@@ -17,7 +17,15 @@ const bidManagementService = new BidManagementService(getWritePool());
 
 export const submitBid = catchAsync(async (req: AuthRequest, res: Response) => {
     const { request_id } = req.params;
-    const { request_id: bodyRequestId, bid_amount, warranty_days, notes, part_condition, brand_name, part_number } = req.body;
+    const {
+        request_id: bodyRequestId,
+        bid_amount,
+        warranty_days,
+        notes,
+        part_condition,
+        brand_name,
+        part_number
+    } = req.body;
     const garageId = req.user!.userId;
 
     const targetRequestId = request_id || bodyRequestId;

@@ -4,11 +4,7 @@ import * as jwt from 'jsonwebtoken';
 import { getJwtSecret } from '../config/security';
 import { getWritePool, getReadPool } from '../config/db';
 import { getErrorMessage } from '../types';
-import {
-    DocumentGenerationService,
-    DocumentQueryService,
-    DocumentAccessService
-} from '../services/documents';
+import { DocumentGenerationService, DocumentQueryService, DocumentAccessService } from '../services/documents';
 import logger from '../utils/logger';
 
 // Import template helpers (keeping these for now - can be extracted later)
@@ -27,8 +23,7 @@ export const generateInvoice = async (req: AuthRequest, res: Response) => {
     const userId = req.user!.userId;
     const userType = req.user!.userType;
 
-    const invoiceType = (req.query.type as 'customer' | 'garage') ||
-        (userType === 'garage' ? 'garage' : 'customer');
+    const invoiceType = (req.query.type as 'customer' | 'garage') || (userType === 'garage' ? 'garage' : 'customer');
 
     try {
         const result = await generationService.generateInvoice({
@@ -40,13 +35,7 @@ export const generateInvoice = async (req: AuthRequest, res: Response) => {
         });
 
         // Log access
-        await accessService.logDocumentAccess(
-            result.document.document_id,
-            'generate',
-            userId,
-            userType,
-            req
-        );
+        await accessService.logDocumentAccess(result.document.document_id, 'generate', userId, userType, req);
 
         res.status(201).json({
             success: true,
@@ -204,9 +193,7 @@ export const verifyDocument = async (req: Request, res: Response) => {
 // ============================================
 
 async function generatePDFFromDocument(doc: any): Promise<Buffer> {
-    const docData = typeof doc.document_data === 'string'
-        ? JSON.parse(doc.document_data)
-        : doc.document_data;
+    const docData = typeof doc.document_data === 'string' ? JSON.parse(doc.document_data) : doc.document_data;
 
     // Get logo
     const logoBase64 = generationService.getLogoBase64();

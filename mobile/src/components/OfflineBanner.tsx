@@ -8,21 +8,51 @@ import React from 'react';
 import { View, Text, StyleSheet, Animated } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
 import { useOffline } from '../hooks/useOffline';
+import { useSocketContext } from '../hooks/useSocket';
 import { Colors, Spacing, FontSizes, Shadows } from '../constants/theme';
 
 export const OfflineBanner: React.FC = () => {
     const { isOffline } = useOffline();
+    const { isConnected, isRealtimeDegraded } = useSocketContext();
     const fadeAnim = React.useRef(new Animated.Value(0)).current;
+    const [show, setShow] = React.useState(false);
+    const timer = React.useRef<ReturnType<typeof setTimeout> | null>(null);
+
+    // Show banner when network is offline OR socket disconnected/degraded for >30s
+    React.useEffect(() => {
+        const shouldTrigger = isOffline || isRealtimeDegraded || !isConnected;
+
+        if (shouldTrigger) {
+            if (!timer.current) {
+                timer.current = setTimeout(() => {
+                    setShow(true);
+                }, 30000);
+            }
+        } else {
+            if (timer.current) {
+                clearTimeout(timer.current);
+                timer.current = null;
+            }
+            setShow(false);
+        }
+
+        return () => {
+            if (timer.current) {
+                clearTimeout(timer.current);
+                timer.current = null;
+            }
+        };
+    }, [isOffline, isConnected, isRealtimeDegraded]);
 
     React.useEffect(() => {
         Animated.timing(fadeAnim, {
-            toValue: isOffline ? 1 : 0,
+            toValue: show ? 1 : 0,
             duration: 300,
-            useNativeDriver: true,
+            useNativeDriver: true
         }).start();
-    }, [isOffline]);
+    }, [show]);
 
-    if (!isOffline) {
+    if (!show) {
         return null;
     }
 
@@ -36,16 +66,18 @@ export const OfflineBanner: React.FC = () => {
                         {
                             translateY: fadeAnim.interpolate({
                                 inputRange: [0, 1],
-                                outputRange: [-50, 0],
-                            }),
-                        },
-                    ],
-                },
+                                outputRange: [-50, 0]
+                            })
+                        }
+                    ]
+                }
             ]}
         >
             <View style={styles.content}>
                 <Ionicons name="cloud-offline" size={20} color="#fff" />
-                <Text style={styles.text}>You're offline. Some features may be limited.</Text>
+                <Text style={styles.text}>
+                    You're offline. Reconnecting… Some features may be limited.
+                </Text>
             </View>
         </Animated.View>
     );
@@ -59,7 +91,7 @@ const styles = StyleSheet.create({
         right: 0,
         backgroundColor: 'rgba(0, 0, 0, 0.85)',
         zIndex: 9999,
-        ...Shadows.lg,
+        ...Shadows.lg
     },
     content: {
         flexDirection: 'row',
@@ -67,14 +99,14 @@ const styles = StyleSheet.create({
         justifyContent: 'center',
         paddingVertical: Spacing.sm,
         paddingHorizontal: Spacing.md,
-        gap: Spacing.sm,
+        gap: Spacing.sm
     },
     text: {
         color: '#fff',
         fontSize: FontSizes.sm,
         fontWeight: '600',
-        textAlign: 'center',
-    },
+        textAlign: 'center'
+    }
 });
 
 export default OfflineBanner;

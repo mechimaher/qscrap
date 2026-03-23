@@ -9,7 +9,7 @@ import { emitToGarage, emitToUser } from '../../utils/socketIO';
 const VALID_PART_CONDITIONS = ['new', 'used_excellent', 'used_good', 'used_fair', 'refurbished'];
 
 export class BidManagementService {
-    constructor(private pool: Pool) { }
+    constructor(private pool: Pool) {}
 
     /**
      * Validate bid amount
@@ -50,10 +50,7 @@ export class BidManagementService {
             throw new Error(`Cannot reject bid with status: ${bid.status}`);
         }
 
-        await this.pool.query(
-            "UPDATE bids SET status = 'rejected', updated_at = NOW() WHERE bid_id = $1",
-            [bidId]
-        );
+        await this.pool.query("UPDATE bids SET status = 'rejected', updated_at = NOW() WHERE bid_id = $1", [bidId]);
 
         // Notify garage their bid was rejected
         await createNotification({
@@ -132,7 +129,14 @@ export class BidManagementService {
                 brand_name = COALESCE($5, brand_name),
                 updated_at = NOW()
              WHERE bid_id = $6`,
-            [updates.bid_amount, updates.warranty_days, updates.notes, updates.part_condition, updates.brand_name, bidId]
+            [
+                updates.bid_amount,
+                updates.warranty_days,
+                updates.notes,
+                updates.part_condition,
+                updates.brand_name,
+                bidId
+            ]
         );
 
         // Notify customer of bid update
@@ -191,15 +195,11 @@ export class BidManagementService {
             throw new Error(`Cannot withdraw bid with status: ${bid.status}`);
         }
 
-        await this.pool.query(
-            "UPDATE bids SET status = 'withdrawn', updated_at = NOW() WHERE bid_id = $1",
-            [bidId]
-        );
+        await this.pool.query("UPDATE bids SET status = 'withdrawn', updated_at = NOW() WHERE bid_id = $1", [bidId]);
 
-        await this.pool.query(
-            'UPDATE part_requests SET bid_count = GREATEST(0, bid_count - 1) WHERE request_id = $1',
-            [bid.request_id]
-        );
+        await this.pool.query('UPDATE part_requests SET bid_count = GREATEST(0, bid_count - 1) WHERE request_id = $1', [
+            bid.request_id
+        ]);
 
         // Notify customer of bid withdrawal
         await createNotification({

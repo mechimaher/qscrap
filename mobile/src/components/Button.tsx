@@ -7,7 +7,7 @@ import {
     ViewStyle,
     TextStyle,
     View,
-    Platform,
+    Platform
 } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
 import * as Haptics from 'expo-haptics';
@@ -52,7 +52,7 @@ export const Button: React.FC<ButtonProps> = ({
     textStyle,
     haptic = true,
     accessibilityLabel,
-    accessibilityHint,
+    accessibilityHint
 }) => {
     const { colors } = useTheme();
 
@@ -70,7 +70,7 @@ export const Button: React.FC<ButtonProps> = ({
     const getButtonStyles = (): ViewStyle => {
         const baseStyle: ViewStyle = {
             ...styles.button,
-            ...getSizeStyles(),
+            ...getSizeStyles()
         };
 
         if (fullWidth) {
@@ -82,30 +82,30 @@ export const Button: React.FC<ButtonProps> = ({
                 return {
                     ...baseStyle,
                     backgroundColor: disabled ? colors.textMuted : colors.primary,
-                    ...Shadows.md,
+                    ...Shadows.md
                 };
             case 'secondary':
                 return {
                     ...baseStyle,
-                    backgroundColor: disabled ? colors.surfaceSecondary : colors.surfaceSecondary,
+                    backgroundColor: disabled ? colors.surfaceSecondary : colors.surfaceSecondary
                 };
             case 'outline':
                 return {
                     ...baseStyle,
                     backgroundColor: 'transparent',
                     borderWidth: 2,
-                    borderColor: disabled ? colors.textMuted : colors.primary,
+                    borderColor: disabled ? colors.textMuted : colors.primary
                 };
             case 'ghost':
                 return {
                     ...baseStyle,
-                    backgroundColor: 'transparent',
+                    backgroundColor: 'transparent'
                 };
             case 'danger':
                 return {
                     ...baseStyle,
                     backgroundColor: disabled ? colors.textMuted : colors.danger,
-                    ...Shadows.md,
+                    ...Shadows.md
                 };
             default:
                 return baseStyle;
@@ -115,7 +115,7 @@ export const Button: React.FC<ButtonProps> = ({
     const getTextStyles = (): TextStyle => {
         const baseStyle: TextStyle = {
             ...styles.text,
-            ...getTextSizeStyles(),
+            ...getTextSizeStyles()
         };
 
         switch (variant) {
@@ -165,11 +165,12 @@ export const Button: React.FC<ButtonProps> = ({
         }
     };
 
-    const iconColor = variant === 'primary' || variant === 'danger'
-        ? '#fff'
-        : variant === 'outline' || variant === 'ghost'
-            ? colors.primary
-            : colors.text;
+    const iconColor =
+        variant === 'primary' || variant === 'danger'
+            ? '#fff'
+            : variant === 'outline' || variant === 'ghost'
+              ? colors.primary
+              : colors.text;
 
     return (
         <TouchableOpacity
@@ -197,9 +198,7 @@ export const Button: React.FC<ButtonProps> = ({
                             style={styles.iconLeft}
                         />
                     )}
-                    <Text style={[getTextStyles(), disabled && { color: colors.textMuted }, textStyle]}>
-                        {title}
-                    </Text>
+                    <Text style={[getTextStyles(), disabled && { color: colors.textMuted }, textStyle]}>{title}</Text>
                     {icon && iconPosition === 'right' && (
                         <Ionicons
                             name={icon}
@@ -219,22 +218,22 @@ const styles = StyleSheet.create({
         borderRadius: BorderRadius.lg,
         alignItems: 'center',
         justifyContent: 'center',
-        flexDirection: 'row',
+        flexDirection: 'row'
     },
     content: {
         flexDirection: 'row',
         alignItems: 'center',
-        justifyContent: 'center',
+        justifyContent: 'center'
     },
     text: {
-        fontWeight: '600',
+        fontWeight: '600'
     },
     iconLeft: {
-        marginRight: Spacing.sm,
+        marginRight: Spacing.sm
     },
     iconRight: {
-        marginLeft: Spacing.sm,
-    },
+        marginLeft: Spacing.sm
+    }
 });
 
 export default Button;

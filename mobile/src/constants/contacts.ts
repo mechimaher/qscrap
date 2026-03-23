@@ -1,6 +1,6 @@
 /**
  * QScrap Enterprise Contact Constants
- * 
+ *
  * VVIP Premium App - Qatar's Largest Auto Parts Marketplace
  * Production-grade contact information for customer support
  */
@@ -31,8 +31,8 @@ export const CONTACT = {
     COMPANY_NAME_AR: 'كيوسكراب للخدمات والتجارة ذ.م.م',
     COMPANY_BRAND: 'QScrap',
 
-    TAGLINE: 'Qatar\'s Premium Auto Parts Marketplace',
-    TAGLINE_AR: 'أفضل سوق لقطع غيار السيارات في قطر',
+    TAGLINE: "Qatar's Premium Auto Parts Marketplace",
+    TAGLINE_AR: 'أفضل سوق لقطع غيار السيارات في قطر'
 } as const;
 
 // Business Hours
@@ -42,7 +42,7 @@ export const BUSINESS_HOURS = {
     SATURDAY_OPEN: '08:00',
     SATURDAY_CLOSE: '17:00',
     FRIDAY: 'closed',
-    TIMEZONE: 'Asia/Qatar',
+    TIMEZONE: 'Asia/Qatar'
 } as const;
 
 // Emergency/Priority Support
@@ -50,7 +50,7 @@ export const PRIORITY_SUPPORT = {
     ENABLED: true,
     PHONE: '+97450267974',
     EMAIL: 'urgent@qscrap.qa',
-    RESPONSE_TIME_MINUTES: 15,
+    RESPONSE_TIME_MINUTES: 15
 } as const;
 
 // Legal URLs
@@ -58,19 +58,19 @@ export const LEGAL = {
     PRIVACY_POLICY: 'https://qscrap.qa/privacy.html',
     TERMS_OF_SERVICE: 'https://qscrap.qa/terms.html',
     COOKIE_POLICY: 'https://qscrap.qa/terms.html',
-    REFUND_POLICY: 'https://qscrap.qa/refund.html',
+    REFUND_POLICY: 'https://qscrap.qa/refund.html'
 } as const;
 
 // App Store Links
 export const APP_LINKS = {
     GOOGLE_PLAY: 'https://play.google.com/store/apps/details?id=qa.qscrap.app',
     APP_STORE: 'https://apps.apple.com/qa/app/qscrap/id6740043847',
-    WEBSITE: 'https://qscrap.qa',
+    WEBSITE: 'https://qscrap.qa'
 } as const;
 
 // Quality Badges (for premium branding)
 export const CERTIFICATIONS = {
     ISO_CERTIFIED: true,
     QATAR_CHAMBER: true,
-    VERIFIED_BUSINESS: true,
+    VERIFIED_BUSINESS: true
 } as const;

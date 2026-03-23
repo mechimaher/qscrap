@@ -1,1 +1,5 @@
-export interface BidData { request_id: string; price: number; notes?: string; }
+export interface BidData {
+    request_id: string;
+    price: number;
+    notes?: string;
+}

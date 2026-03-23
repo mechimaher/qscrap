@@ -142,74 +142,41 @@ export const cleanupTestData = async (identifiers: {
     try {
         // Delete in reverse dependency order
         if (payoutIds.length > 0) {
-            await pool.query(
-                'DELETE FROM garage_payouts WHERE payout_id = ANY($1)',
-                [payoutIds]
-            );
+            await pool.query('DELETE FROM garage_payouts WHERE payout_id = ANY($1)', [payoutIds]);
         }
 
         if (transactionIds.length > 0) {
-            await pool.query(
-                'DELETE FROM reward_transactions WHERE transaction_id = ANY($1)',
-                [transactionIds]
-            );
+            await pool.query('DELETE FROM reward_transactions WHERE transaction_id = ANY($1)', [transactionIds]);
         }
 
         if (orderIds.length > 0) {
-            await pool.query(
-                'DELETE FROM support_tickets WHERE order_id = ANY($1)',
-                [orderIds]
-            );
+            await pool.query('DELETE FROM support_tickets WHERE order_id = ANY($1)', [orderIds]);
             // Attempt to delete payment_intents if table exists (swallow error if not)
             try {
-                await pool.query(
-                    'DELETE FROM payment_intents WHERE order_id = ANY($1)',
-                    [orderIds]
-                );
+                await pool.query('DELETE FROM payment_intents WHERE order_id = ANY($1)', [orderIds]);
             } catch (error) {
                 // Ignore if table doesn't exist or other cleanup errors
             }
 
-            await pool.query(
-                'DELETE FROM order_status_history WHERE order_id = ANY($1)',
-                [orderIds]
-            );
-            await pool.query(
-                'DELETE FROM orders WHERE order_id = ANY($1)',
-                [orderIds]
-            );
+            await pool.query('DELETE FROM order_status_history WHERE order_id = ANY($1)', [orderIds]);
+            await pool.query('DELETE FROM orders WHERE order_id = ANY($1)', [orderIds]);
         }
 
         if (bidIds.length > 0) {
-            await pool.query(
-                'DELETE FROM bids WHERE bid_id = ANY($1)',
-                [bidIds]
-            );
+            await pool.query('DELETE FROM bids WHERE bid_id = ANY($1)', [bidIds]);
         }
 
         if (requestIds.length > 0) {
-            await pool.query(
-                'DELETE FROM part_requests WHERE request_id = ANY($1)',
-                [requestIds]
-            );
+            await pool.query('DELETE FROM part_requests WHERE request_id = ANY($1)', [requestIds]);
         }
 
         if (garageIds.length > 0) {
-            await pool.query(
-                'DELETE FROM garage_subscriptions WHERE garage_id = ANY($1)',
-                [garageIds]
-            );
-            await pool.query(
-                'DELETE FROM garages WHERE garage_id = ANY($1)',
-                [garageIds]
-            );
+            await pool.query('DELETE FROM garage_subscriptions WHERE garage_id = ANY($1)', [garageIds]);
+            await pool.query('DELETE FROM garages WHERE garage_id = ANY($1)', [garageIds]);
         }
 
         if (userIds.length > 0) {
-            await pool.query(
-                'DELETE FROM users WHERE user_id = ANY($1)',
-                [userIds]
-            );
+            await pool.query('DELETE FROM users WHERE user_id = ANY($1)', [userIds]);
         }
     } catch (error) {
         console.error('Cleanup error:', error);
@@ -223,12 +190,8 @@ export const cleanupTestData = async (identifiers: {
 export const cleanupTestPattern = async (pattern: string): Promise<void> => {
     try {
         // Clean up users with test phone pattern
-        await pool.query(
-            "DELETE FROM users WHERE phone_number LIKE '+974999%'"
-        );
-        await pool.query(
-            "DELETE FROM users WHERE email LIKE '%@test.qscrap.qa'"
-        );
+        await pool.query("DELETE FROM users WHERE phone_number LIKE '+974999%'");
+        await pool.query("DELETE FROM users WHERE email LIKE '%@test.qscrap.qa'");
     } catch (error) {
         console.error('Pattern cleanup error:', error);
     }
@@ -242,11 +205,7 @@ export const cleanupTestPattern = async (pattern: string): Promise<void> => {
  * Create test user data
  */
 export const createTestUserData = (options: TestUserOptions = {}): TestUserData => {
-    const {
-        userType = 'customer',
-        phonePrefix = '3',
-        overrides = {}
-    } = options;
+    const { userType = 'customer', phonePrefix = '3', overrides = {} } = options;
 
     const userId = generateTestId();
     const phone = generateTestPhone(phonePrefix);
@@ -266,10 +225,7 @@ export const createTestUserData = (options: TestUserOptions = {}): TestUserData 
 /**
  * Create test garage data
  */
-export const createTestGarageData = (
-    userId: string,
-    options: TestGarageOptions = {}
-): TestGarageData => {
+export const createTestGarageData = (userId: string, options: TestGarageOptions = {}): TestGarageData => {
     const { overrides = {} } = options;
 
     return {
@@ -307,18 +263,14 @@ export const createTestPartRequestData = (
 /**
  * Create test bid data
  */
-export const createTestBidData = (
-    requestId: string,
-    garageId: string,
-    options: TestBidOptions = {}
-): TestBidData => {
+export const createTestBidData = (requestId: string, garageId: string, options: TestBidOptions = {}): TestBidData => {
     const { overrides = {} } = options;
 
     return {
         bid_id: generateTestId(),
         request_id: requestId,
         garage_id: garageId,
-        bid_amount: 150.00,
+        bid_amount: 150.0,
         status: 'pending',
         part_condition: 'new',
         ...overrides
@@ -343,7 +295,7 @@ export const createTestOrderData = (
         customer_id: customerId,
         garage_id: garageId,
         status: 'pending',
-        total_amount: 175.00,
+        total_amount: 175.0,
         ...overrides
     };
 };
@@ -355,16 +307,14 @@ export const createTestOrderData = (
 /**
  * Insert a test user into the database
  */
-export const insertTestUser = async (
-    userData: Partial<TestUserData> & { phone_number: string }
-): Promise<string> => {
+export const insertTestUser = async (userData: Partial<TestUserData> & { phone_number: string }): Promise<string> => {
     const user = {
         user_id: generateTestId(),
         full_name: 'Test User',
         phone_number: userData.phone_number,
         email: userData.email,
         user_type: userData.user_type || 'customer',
-        password_hash: userData.password_hash || await bcrypt.hash('TestPass123!', 10),
+        password_hash: userData.password_hash || (await bcrypt.hash('TestPass123!', 10)),
         is_active: userData.is_active ?? true,
         ...userData
     };
@@ -373,7 +323,15 @@ export const insertTestUser = async (
         `INSERT INTO users (user_id, full_name, phone_number, email, user_type, password_hash, is_active)
          VALUES ($1, $2, $3, $4, $5, $6, $7)
          ON CONFLICT (user_id) DO NOTHING`,
-        [user.user_id, user.full_name, user.phone_number, user.email, user.user_type, user.password_hash, user.is_active]
+        [
+            user.user_id,
+            user.full_name,
+            user.phone_number,
+            user.email,
+            user.user_type,
+            user.password_hash,
+            user.is_active
+        ]
     );
 
     return user.user_id;
@@ -382,9 +340,7 @@ export const insertTestUser = async (
 /**
  * Insert a test garage into the database
  */
-export const insertTestGarage = async (
-    garageData: Partial<TestGarageData> & { user_id: string }
-): Promise<string> => {
+export const insertTestGarage = async (garageData: Partial<TestGarageData> & { user_id: string }): Promise<string> => {
     const garage = {
         garage_id: garageData.garage_id || garageData.user_id,
         user_id: garageData.user_id,
@@ -426,7 +382,15 @@ export const insertTestPartRequest = async (
         `INSERT INTO part_requests (request_id, customer_id, car_make, car_model, car_year, part_description, status)
          VALUES ($1, $2, $3, $4, $5, $6, $7)
          ON CONFLICT (request_id) DO NOTHING`,
-        [request.request_id, request.customer_id, request.car_make, request.car_model, request.car_year, request.part_description, request.status]
+        [
+            request.request_id,
+            request.customer_id,
+            request.car_make,
+            request.car_model,
+            request.car_year,
+            request.part_description,
+            request.status
+        ]
     );
 
     return request.request_id;
@@ -442,7 +406,7 @@ export const insertTestBid = async (
         bid_id: generateTestId(),
         request_id: bidData.request_id,
         garage_id: bidData.garage_id,
-        bid_amount: bidData.bid_amount || 150.00,
+        bid_amount: bidData.bid_amount || 150.0,
         status: bidData.status || 'pending',
         part_condition: bidData.part_condition || 'new',
         ...bidData
@@ -461,10 +425,7 @@ export const insertTestBid = async (
 /**
  * Insert a test garage subscription (required for bidding)
  */
-export const insertTestSubscription = async (
-    garageId: string,
-    planCode: string = 'starter'
-): Promise<void> => {
+export const insertTestSubscription = async (garageId: string, planCode: string = 'starter'): Promise<void> => {
     await pool.query(
         `INSERT INTO garage_subscriptions (garage_id, plan_id, status, billing_cycle_start, billing_cycle_end)
          VALUES ($1, (SELECT plan_id FROM subscription_plans WHERE plan_code = $2 LIMIT 1), 'active', NOW(), NOW() + INTERVAL '30 days')
@@ -488,14 +449,16 @@ export const createMockToken = (payload: {
 }): string => {
     // Simple mock token (not cryptographically valid, but works for unit tests)
     const header = Buffer.from(JSON.stringify({ alg: 'HS256', typ: 'JWT' })).toString('base64');
-    const body = Buffer.from(JSON.stringify({
-        userId: payload.userId,
-        userType: payload.userType,
-        garageId: payload.garageId,
-        staffRole: payload.staffRole,
-        iat: Math.floor(Date.now() / 1000),
-        exp: Math.floor(Date.now() / 1000) + 3600
-    })).toString('base64');
+    const body = Buffer.from(
+        JSON.stringify({
+            userId: payload.userId,
+            userType: payload.userType,
+            garageId: payload.garageId,
+            staffRole: payload.staffRole,
+            iat: Math.floor(Date.now() / 1000),
+            exp: Math.floor(Date.now() / 1000) + 3600
+        })
+    ).toString('base64');
     const signature = Buffer.from('mock-signature').toString('base64');
 
     return `${header}.${body}.${signature}`;
@@ -548,7 +511,7 @@ export const expectStandardSuccess = (response: { status: number; body: Record<s
  * Wait for a specified number of milliseconds
  */
 export const sleep = (ms: number): Promise<void> => {
-    return new Promise(resolve => setTimeout(resolve, ms));
+    return new Promise((resolve) => setTimeout(resolve, ms));
 };
 
 /**

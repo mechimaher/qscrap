@@ -30,12 +30,15 @@ export async function autoConfirmDeliveries(pool: Pool): Promise<number> {
 
             // Record in order status history
             for (const order of result.rows) {
-                await client.query(`
+                await client.query(
+                    `
                     INSERT INTO order_status_history 
                     (order_id, old_status, new_status, changed_by_type, reason)
                     VALUES ($1, 'delivered', 'completed', 'system', 
                             'Auto-confirmed after 24-hour grace period. Customer did not respond.')
-                `, [order.order_id]);
+                `,
+                    [order.order_id]
+                );
             }
 
             await client.query('COMMIT');

@@ -170,11 +170,7 @@ export const awardBonusPoints = async (req: AuthRequest, res: Response) => {
             });
         }
 
-        const result = await LoyaltyService.awardBonusPoints(
-            customer_id,
-            points,
-            reason
-        );
+        const result = await LoyaltyService.awardBonusPoints(customer_id, points, reason);
 
         res.json({
             success: true,

@@ -26,14 +26,10 @@ export default function ImageViewerModal({ visible, images, imageIndex, onClose 
                     getItemLayout={(_, index) => ({
                         length: width,
                         offset: width * index,
-                        index,
+                        index
                     })}
                     renderItem={({ item }) => (
-                        <Image
-                            source={{ uri: item }}
-                            style={styles.image}
-                            resizeMode="contain"
-                        />
+                        <Image source={{ uri: item }} style={styles.image} resizeMode="contain" />
                     )}
                     keyExtractor={(_, i) => i.toString()}
                 />
@@ -46,7 +42,7 @@ const styles = StyleSheet.create({
     container: {
         flex: 1,
         backgroundColor: 'rgba(0,0,0,0.95)',
-        justifyContent: 'center',
+        justifyContent: 'center'
     },
     closeButton: {
         position: 'absolute',
@@ -55,15 +51,15 @@ const styles = StyleSheet.create({
         zIndex: 10,
         padding: 12,
         backgroundColor: 'rgba(255,255,255,0.2)',
-        borderRadius: 20,
+        borderRadius: 20
     },
     closeText: {
         color: '#fff',
         fontSize: 20,
-        fontWeight: 'bold',
+        fontWeight: 'bold'
     },
     image: {
         width,
-        height: height * 0.7,
-    },
+        height: height * 0.7
+    }
 });

@@ -14,7 +14,7 @@ export type Language = 'en' | 'ar';
 // All translations grouped by language
 export const translations = {
     en,
-    ar,
+    ar
 } as const;
 
 // Type-safe translation keys derived from English (base) translations
@@ -24,7 +24,7 @@ export type TranslationKeys = typeof en;
  * Get translation value by dot-notation path
  * Supports nested keys like 'auth.login' or 'home.supplierBadges.used'
  * Falls back to English if key not found in target language
- * 
+ *
  * @param lang - Target language ('en' | 'ar')
  * @param path - Dot-notation key path
  * @returns Translated string or the path if not found
@@ -59,12 +59,12 @@ export function getTranslation(lang: Language, path: string): string {
 /**
  * Get translation with interpolation support
  * Replaces {{variable}} placeholders with provided values
- * 
+ *
  * @param lang - Target language
  * @param path - Dot-notation key path
  * @param params - Object with key-value pairs for interpolation
  * @returns Interpolated translated string
- * 
+ *
  * @example
  * getTranslationWithParams('en', 'requests.count', { count: 5 })
  * // Returns: "5 requests"

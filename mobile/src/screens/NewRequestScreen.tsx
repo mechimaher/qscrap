@@ -13,7 +13,7 @@ import {
     ActivityIndicator,
     KeyboardAvoidingView,
     Platform,
-    Animated,
+    Animated
 } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { LinearGradient } from 'expo-linear-gradient';
@@ -33,16 +33,12 @@ import PartDetailsStep from '../components/request/PartDetailsStep';
 import RequestPhotosStep from '../components/request/RequestPhotosStep';
 import VehicleIdPhotosStep from '../components/request/VehicleIdPhotosStep';
 
-
-
-
 import { PART_CATEGORIES, PART_SUBCATEGORIES } from '../constants/categoryData';
 
 import { compressImage } from '../utils/imageCompressor';
 import { useRequestImages } from '../hooks/useRequestImages';
 import { useSubmitRequest } from '../hooks/useSubmitRequest';
 import { useRequestForm } from '../hooks/useRequestForm';
-
 
 type NavigationProp = NativeStackNavigationProp<RootStackParamList>;
 type NewRequestRouteProp = RouteProp<RootStackParamList, 'NewRequest'>;
@@ -58,7 +54,6 @@ interface PrefillData {
     imageUrls?: string[]; // Previous order images to reference
 }
 
-
 export default function NewRequestScreen() {
     const navigation = useNavigation<NavigationProp>();
     const route = useRoute<NewRequestRouteProp>();
@@ -70,9 +65,8 @@ export default function NewRequestScreen() {
     const CONDITION_OPTIONS = [
         { value: 'any', label: t('newRequest.anyCondition'), icon: 'sync-outline', color: '#6B7280' },
         { value: 'new', label: t('newRequest.newOnly'), icon: 'sparkles', color: '#22C55E' },
-        { value: 'used', label: t('newRequest.usedOnly'), icon: 'leaf-outline', color: '#F59E0B' },
+        { value: 'used', label: t('newRequest.usedOnly'), icon: 'leaf-outline', color: '#F59E0B' }
     ];
-
 
     const prefillData = route.params?.prefill;
     const initialDeliveryLocation = route.params?.deliveryLocation;
@@ -96,7 +90,7 @@ export default function NewRequestScreen() {
         setQuantity,
         side,
         setSide,
-        deliveryLocation,
+        deliveryLocation
     } = useRequestForm({ prefillData, initialDeliveryLocation, t, toast });
 
     const {
@@ -111,7 +105,7 @@ export default function NewRequestScreen() {
         handlePickCarFrontImage,
         handlePickCarRearImage,
         handleTakeCarFrontPhoto,
-        handleTakeCarRearPhoto,
+        handleTakeCarRearPhoto
     } = useRequestImages(t, toast);
 
     const { isSubmitting, handleSubmit } = useSubmitRequest({
@@ -129,7 +123,7 @@ export default function NewRequestScreen() {
         carRearImage,
         t,
         toast,
-        navigation,
+        navigation
     });
 
     const handleVehicleSelect = (vehicle: any) => {
@@ -146,13 +140,13 @@ export default function NewRequestScreen() {
             Animated.timing(fadeAnim, {
                 toValue: 1,
                 duration: 400,
-                useNativeDriver: true,
+                useNativeDriver: true
             }),
             Animated.timing(slideAnim, {
                 toValue: 0,
                 duration: 500,
-                useNativeDriver: true,
-            }),
+                useNativeDriver: true
+            })
         ]).start();
     }, []);
 
@@ -162,22 +156,20 @@ export default function NewRequestScreen() {
 
     return (
         <SafeAreaView style={[styles.container, { backgroundColor: colors.background }]} edges={['top']}>
-            <KeyboardAvoidingView
-                behavior={Platform.OS === 'ios' ? 'padding' : undefined}
-                style={{ flex: 1 }}
-            >
+            <KeyboardAvoidingView behavior={Platform.OS === 'ios' ? 'padding' : undefined} style={{ flex: 1 }}>
                 {/* Premium Header */}
                 <Animated.View
                     style={[
                         styles.header,
-                        { backgroundColor: colors.surface, borderBottomColor: colors.border, flexDirection: rtlFlexDirection(isRTL) },
-                        { opacity: fadeAnim },
+                        {
+                            backgroundColor: colors.surface,
+                            borderBottomColor: colors.border,
+                            flexDirection: rtlFlexDirection(isRTL)
+                        },
+                        { opacity: fadeAnim }
                     ]}
                 >
-                    <TouchableOpacity
-                        onPress={() => navigation.goBack()}
-                        style={styles.closeButton}
-                    >
+                    <TouchableOpacity onPress={() => navigation.goBack()} style={styles.closeButton}>
                         <Ionicons name="arrow-back" size={22} color={colors.text} />
                     </TouchableOpacity>
                     <View style={styles.headerCenter}>
@@ -197,20 +189,28 @@ export default function NewRequestScreen() {
                     <Animated.View
                         style={{
                             opacity: fadeAnim,
-                            transform: [{ translateY: slideAnim }],
+                            transform: [{ translateY: slideAnim }]
                         }}
                     >
                         {/* Pro Tip Header Banner - Just-in-time guidance */}
-                        <Animated.View style={[styles.proTipBanner, { backgroundColor: '#FFF8E1', flexDirection: rtlFlexDirection(isRTL) }]}>
-                            <Text style={[styles.proTipIcon, isRTL && { marginRight: 0, marginLeft: Spacing.md }]}></Text>
+                        <Animated.View
+                            style={[
+                                styles.proTipBanner,
+                                { backgroundColor: '#FFF8E1', flexDirection: rtlFlexDirection(isRTL) }
+                            ]}
+                        >
+                            <Text
+                                style={[styles.proTipIcon, isRTL && { marginRight: 0, marginLeft: Spacing.md }]}
+                            ></Text>
                             <View style={styles.proTipContent}>
-                                <Text style={[styles.proTipTitle, { textAlign: rtlTextAlign(isRTL) }]}>{t('newRequest.proTipTitle')}</Text>
+                                <Text style={[styles.proTipTitle, { textAlign: rtlTextAlign(isRTL) }]}>
+                                    {t('newRequest.proTipTitle')}
+                                </Text>
                                 <Text style={[styles.proTipText, { textAlign: rtlTextAlign(isRTL) }]}>
                                     {t('newRequest.proTipText')}
                                 </Text>
                             </View>
                         </Animated.View>
-
 
                         <VehicleSelectionStep
                             colors={colors}
@@ -283,18 +283,11 @@ export default function NewRequestScreen() {
                     <TouchableOpacity
                         onPress={handleSubmit}
                         disabled={!canSubmit || isSubmitting}
-                        style={[
-                            styles.submitButton,
-                            !canSubmit && styles.submitButtonDisabled,
-                        ]}
+                        style={[styles.submitButton, !canSubmit && styles.submitButtonDisabled]}
                         activeOpacity={0.9}
                     >
                         <LinearGradient
-                            colors={
-                                canSubmit && !isSubmitting
-                                    ? [Colors.primary, '#B31D4A']
-                                    : ['#9CA3AF', '#6B7280']
-                            }
+                            colors={canSubmit && !isSubmitting ? [Colors.primary, '#B31D4A'] : ['#9CA3AF', '#6B7280']}
                             style={styles.submitGradient}
                         >
                             {isSubmitting ? (
@@ -312,13 +305,13 @@ export default function NewRequestScreen() {
                             {!selectedVehicle
                                 ? t('newRequest.footerHint.selectVehicle')
                                 : !hasVIN
-                                    ? t('newRequest.footerHint.vinRequired')
-                                    : t('newRequest.footerHint.description')}
+                                  ? t('newRequest.footerHint.vinRequired')
+                                  : t('newRequest.footerHint.description')}
                         </Text>
                     )}
                 </View>
-            </KeyboardAvoidingView >
-        </SafeAreaView >
+            </KeyboardAvoidingView>
+        </SafeAreaView>
     );
 }
 
@@ -330,13 +323,13 @@ const styles = StyleSheet.create({
         justifyContent: 'space-between',
         paddingHorizontal: Spacing.md,
         paddingVertical: Spacing.sm,
-        borderBottomWidth: 1,
+        borderBottomWidth: 1
     },
     closeButton: {
         width: 40,
         height: 40,
         alignItems: 'center',
-        justifyContent: 'center',
+        justifyContent: 'center'
     },
     closeIcon: { fontSize: 24 },
     headerCenter: { flex: 1, alignItems: 'center' },
@@ -354,7 +347,7 @@ const styles = StyleSheet.create({
         marginBottom: Spacing.md,
         borderWidth: 1,
         borderColor: 'rgba(201, 162, 39, 0.3)',
-        gap: Spacing.sm,
+        gap: Spacing.sm
     },
     proTipIcon: { fontSize: 22 },
     proTipContent: { flex: 1 },
@@ -364,11 +357,11 @@ const styles = StyleSheet.create({
         paddingHorizontal: Spacing.lg,
         paddingTop: Spacing.md,
         paddingBottom: Spacing.lg,
-        borderTopWidth: 1,
+        borderTopWidth: 1
     },
     submitButton: {
         borderRadius: BorderRadius.lg,
-        overflow: 'hidden',
+        overflow: 'hidden'
     },
     submitButtonDisabled: { opacity: 0.5 },
     submitGradient: {
@@ -376,20 +369,20 @@ const styles = StyleSheet.create({
         alignItems: 'center',
         justifyContent: 'center',
         paddingVertical: Spacing.md,
-        gap: Spacing.sm,
+        gap: Spacing.sm
     },
     submitText: {
         color: '#fff',
         fontSize: FontSizes.lg,
-        fontWeight: '700',
+        fontWeight: '700'
     },
     submitIcon: {
         color: '#fff',
-        fontSize: FontSizes.xl,
+        fontSize: FontSizes.xl
     },
     footerHint: {
         fontSize: FontSizes.xs,
         textAlign: 'center',
-        marginTop: Spacing.sm,
-    },
+        marginTop: Spacing.sm
+    }
 });

@@ -19,7 +19,7 @@ import {
     acceptAssignment,
     rejectAssignment,
     updateAssignmentStatus,
-    updateMyLocation,
+    updateMyLocation
 } from '../controllers/driver.controller';
 
 const router = Router();
@@ -37,7 +37,6 @@ router.get('/me', getMyProfile as unknown as RequestHandler);
 
 // Get driver's statistics
 router.get('/stats', getMyStats as unknown as RequestHandler);
-
 
 // Update profile (including bank details)
 router.patch('/profile', updateProfile as unknown as RequestHandler);
@@ -62,16 +61,29 @@ router.post('/assignments/:assignment_id/reject', rejectAssignment as unknown as
 router.get('/assignments/:assignment_id', getAssignmentDetails as unknown as RequestHandler);
 
 // Update assignment status (picked_up, in_transit, delivered, failed)
-router.patch('/assignments/:assignment_id/status', validate(updateStatusSchema), updateAssignmentStatus as unknown as RequestHandler);
+router.patch(
+    '/assignments/:assignment_id/status',
+    validate(updateStatusSchema),
+    updateAssignmentStatus as unknown as RequestHandler
+);
 
 // Upload proof of delivery
-router.post('/assignments/:assignment_id/proof', validate(uploadProofSchema), uploadDeliveryProof as unknown as RequestHandler);
+router.post(
+    '/assignments/:assignment_id/proof',
+    validate(uploadProofSchema),
+    uploadDeliveryProof as unknown as RequestHandler
+);
 
 // ============================================================================
 // LOCATION TRACKING (Rate Limited)
 // ============================================================================
 
 // Update driver's current location - RATE LIMITED: 1 per 5 seconds
-router.post('/location', driverLocationLimiter, validate(updateLocationSchema), updateMyLocation as unknown as RequestHandler);
+router.post(
+    '/location',
+    driverLocationLimiter,
+    validate(updateLocationSchema),
+    updateMyLocation as unknown as RequestHandler
+);
 
 export default router;

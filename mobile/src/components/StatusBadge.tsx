@@ -16,12 +16,7 @@ interface StatusBadgeProps {
     showIcon?: boolean;
 }
 
-export const StatusBadge: React.FC<StatusBadgeProps> = ({
-    type,
-    status,
-    size = 'medium',
-    showIcon = true
-}) => {
+export const StatusBadge: React.FC<StatusBadgeProps> = ({ type, status, size = 'medium', showIcon = true }) => {
     const { isRTL } = useTranslation();
     const lang = isRTL ? 'ar' : 'en';
 
@@ -50,16 +45,9 @@ export const StatusBadge: React.FC<StatusBadgeProps> = ({
             ]}
         >
             {showIcon && (
-                <MaterialCommunityIcons
-                    name={icon as any}
-                    size={s.iconSize}
-                    color={color}
-                    style={styles.icon}
-                />
+                <MaterialCommunityIcons name={icon as any} size={s.iconSize} color={color} style={styles.icon} />
             )}
-            <Text style={[styles.label, { color, fontSize: s.fontSize }]}>
-                {label}
-            </Text>
+            <Text style={[styles.label, { color, fontSize: s.fontSize }]}>{label}</Text>
         </View>
     );
 };

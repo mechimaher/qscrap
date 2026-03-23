@@ -17,7 +17,7 @@ import {
     TextInput,
     KeyboardAvoidingView,
     Platform,
-    ScrollView,
+    ScrollView
 } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { useNavigation, useFocusEffect } from '@react-navigation/native';
@@ -73,7 +73,11 @@ export default function MyVehiclesScreen() {
         }
     }, []);
 
-    useFocusEffect(useCallback(() => { loadVehicles(); }, [loadVehicles]));
+    useFocusEffect(
+        useCallback(() => {
+            loadVehicles();
+        }, [loadVehicles])
+    );
 
     const onRefresh = () => {
         setIsRefreshing(true);
@@ -123,7 +127,7 @@ export default function MyVehiclesScreen() {
                 car_model: newModel.trim(),
                 car_year: year,
                 nickname: newNickname.trim() || undefined,
-                vin_number: trimmedVIN, // Now required
+                vin_number: trimmedVIN // Now required
             });
             Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success);
             setShowAddModal(false);
@@ -153,8 +157,8 @@ export default function MyVehiclesScreen() {
                             handleApiError(error, toast, { useAlert: true });
                         }
                     }
-                },
-            ],
+                }
+            ]
         );
     };
 
@@ -191,7 +195,7 @@ export default function MyVehiclesScreen() {
         try {
             await api.updateVehicle(editingVehicle.vehicle_id, {
                 nickname: newNickname.trim() || undefined,
-                vin_number: trimmedVIN || undefined,
+                vin_number: trimmedVIN || undefined
             });
             Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success);
             setShowAddModal(false);
@@ -211,7 +215,7 @@ export default function MyVehiclesScreen() {
         useEffect(() => {
             Animated.parallel([
                 Animated.timing(fadeAnim, { toValue: 1, duration: 300, delay: index * 80, useNativeDriver: true }),
-                Animated.timing(slideAnim, { toValue: 0, duration: 350, delay: index * 80, useNativeDriver: true }),
+                Animated.timing(slideAnim, { toValue: 0, duration: 350, delay: index * 80, useNativeDriver: true })
             ]).start();
         }, []);
 
@@ -223,12 +227,22 @@ export default function MyVehiclesScreen() {
                     activeOpacity={0.8}
                 >
                     <View style={[styles.cardLeft, { flexDirection: rtlFlexDirection(isRTL) }]}>
-                        <View style={[styles.iconBg, item.is_primary && styles.iconBgPrimary, isRTL ? { marginLeft: Spacing.md, marginRight: 0 } : { marginRight: Spacing.md, marginLeft: 0 }]}>
+                        <View
+                            style={[
+                                styles.iconBg,
+                                item.is_primary && styles.iconBgPrimary,
+                                isRTL
+                                    ? { marginLeft: Spacing.md, marginRight: 0 }
+                                    : { marginRight: Spacing.md, marginLeft: 0 }
+                            ]}
+                        >
                             <Ionicons name="car-sport" size={22} color="#1976D2" />
                         </View>
                         <View style={[styles.cardInfo, { alignItems: isRTL ? 'flex-end' : 'flex-start' }]}>
                             <View style={[styles.nameRow, { flexDirection: rtlFlexDirection(isRTL) }]}>
-                                <Text style={[styles.vehicleName, { color: colors.text, textAlign: rtlTextAlign(isRTL) }]}>
+                                <Text
+                                    style={[styles.vehicleName, { color: colors.text, textAlign: rtlTextAlign(isRTL) }]}
+                                >
                                     {item.car_make} {item.car_model}
                                 </Text>
                                 {item.is_primary && (
@@ -237,27 +251,33 @@ export default function MyVehiclesScreen() {
                                     </View>
                                 )}
                             </View>
-                            <Text style={[styles.vehicleYear, { color: colors.textSecondary, textAlign: rtlTextAlign(isRTL) }]}>
-                                {item.car_year}{item.nickname ? ` • ${item.nickname}` : ''}
+                            <Text
+                                style={[
+                                    styles.vehicleYear,
+                                    { color: colors.textSecondary, textAlign: rtlTextAlign(isRTL) }
+                                ]}
+                            >
+                                {item.car_year}
+                                {item.nickname ? ` • ${item.nickname}` : ''}
                             </Text>
                             {item.request_count && item.request_count > 0 && (
-                                <Text style={[styles.statsText, { color: Colors.primary, textAlign: rtlTextAlign(isRTL) }]}>
-                                    {item.request_count} {t('common.requestsCount_plural', { count: item.request_count })}
+                                <Text
+                                    style={[
+                                        styles.statsText,
+                                        { color: Colors.primary, textAlign: rtlTextAlign(isRTL) }
+                                    ]}
+                                >
+                                    {item.request_count}{' '}
+                                    {t('common.requestsCount_plural', { count: item.request_count })}
                                 </Text>
                             )}
                         </View>
                     </View>
                     <View style={styles.cardActions}>
-                        <TouchableOpacity
-                            style={styles.editBtn}
-                            onPress={() => handleEditVehicle(item)}
-                        >
+                        <TouchableOpacity style={styles.editBtn} onPress={() => handleEditVehicle(item)}>
                             <Ionicons name="pencil-outline" size={18} color={Colors.primary} />
                         </TouchableOpacity>
-                        <TouchableOpacity
-                            style={styles.deleteBtn}
-                            onPress={() => handleDeleteVehicle(item)}
-                        >
+                        <TouchableOpacity style={styles.deleteBtn} onPress={() => handleDeleteVehicle(item)}>
                             <Ionicons name="trash-outline" size={18} color={Colors.error} />
                         </TouchableOpacity>
                     </View>
@@ -272,14 +292,9 @@ export default function MyVehiclesScreen() {
                 <Ionicons name="car-sport" size={36} color="#999" />
             </View>
             <Text style={[styles.emptyTitle, { color: colors.text }]}>{t('vehicles.noVehicles')}</Text>
-            <Text style={[styles.emptyText, { color: colors.textSecondary }]}>
-                {t('vehicles.noVehiclesMsg')}
-            </Text>
+            <Text style={[styles.emptyText, { color: colors.textSecondary }]}>{t('vehicles.noVehiclesMsg')}</Text>
             <TouchableOpacity onPress={handleAddVehicle} style={styles.addButton}>
-                <LinearGradient
-                    colors={[Colors.primary, '#6b1029']}
-                    style={[styles.addGradient]}
-                >
+                <LinearGradient colors={[Colors.primary, '#6b1029']} style={[styles.addGradient]}>
                     <Ionicons name="add" size={20} color="#fff" />
                     <Text style={styles.addButtonText}>{t('vehicles.addNew')}</Text>
                 </LinearGradient>
@@ -292,7 +307,7 @@ export default function MyVehiclesScreen() {
             {/* Header - RTL aware */}
             <View style={[styles.header, { borderBottomColor: colors.border, flexDirection: rtlFlexDirection(isRTL) }]}>
                 <TouchableOpacity onPress={() => navigation.goBack()} style={styles.backBtn}>
-                    <Ionicons name={isRTL ? "arrow-forward" : "arrow-back"} size={24} color={colors.text} />
+                    <Ionicons name={isRTL ? 'arrow-forward' : 'arrow-back'} size={24} color={colors.text} />
                 </TouchableOpacity>
                 <Text style={[styles.headerTitle, { color: colors.text }]}>{t('vehicles.title')}</Text>
                 <TouchableOpacity onPress={handleAddVehicle} style={styles.addIconBtn}>
@@ -311,7 +326,7 @@ export default function MyVehiclesScreen() {
 
             {isLoading ? (
                 <View style={styles.loadingContainer}>
-                    {[0, 1, 2].map(i => (
+                    {[0, 1, 2].map((i) => (
                         <View key={i} style={[styles.skeletonCard, { backgroundColor: colors.surfaceSecondary }]} />
                     ))}
                 </View>
@@ -323,11 +338,7 @@ export default function MyVehiclesScreen() {
                     contentContainerStyle={styles.listContent}
                     showsVerticalScrollIndicator={false}
                     refreshControl={
-                        <RefreshControl
-                            refreshing={isRefreshing}
-                            onRefresh={onRefresh}
-                            tintColor={Colors.primary}
-                        />
+                        <RefreshControl refreshing={isRefreshing} onRefresh={onRefresh} tintColor={Colors.primary} />
                     }
                     ListEmptyComponent={EmptyState}
                 />
@@ -349,7 +360,12 @@ export default function MyVehiclesScreen() {
                             <Text style={[styles.modalTitle, { color: colors.text }]}>
                                 {editingVehicle ? t('vehicles.edit') : t('vehicles.addNew')}
                             </Text>
-                            <TouchableOpacity onPress={() => { setShowAddModal(false); setEditingVehicle(null); }}>
+                            <TouchableOpacity
+                                onPress={() => {
+                                    setShowAddModal(false);
+                                    setEditingVehicle(null);
+                                }}
+                            >
                                 <Ionicons name="close" size={24} color={colors.textMuted} />
                             </TouchableOpacity>
                         </View>
@@ -359,53 +375,159 @@ export default function MyVehiclesScreen() {
                             keyboardShouldPersistTaps="handled"
                             contentContainerStyle={{ paddingBottom: 20 }}
                         >
-
-                            <Text style={[styles.inputLabel, { color: colors.textSecondary, textAlign: rtlTextAlign(isRTL) }]}>{t('profile.carMake')} {editingVehicle ? '' : '*'}</Text>
+                            <Text
+                                style={[
+                                    styles.inputLabel,
+                                    { color: colors.textSecondary, textAlign: rtlTextAlign(isRTL) }
+                                ]}
+                            >
+                                {t('profile.carMake')} {editingVehicle ? '' : '*'}
+                            </Text>
                             {editingVehicle ? (
-                                <View style={[styles.input, styles.disabledInput, { backgroundColor: colors.surfaceSecondary, borderColor: colors.border }]}>
-                                    <Text style={[styles.inputText, { color: colors.text, textAlign: rtlTextAlign(isRTL) }]}>{newMake}</Text>
+                                <View
+                                    style={[
+                                        styles.input,
+                                        styles.disabledInput,
+                                        { backgroundColor: colors.surfaceSecondary, borderColor: colors.border }
+                                    ]}
+                                >
+                                    <Text
+                                        style={[
+                                            styles.inputText,
+                                            { color: colors.text, textAlign: rtlTextAlign(isRTL) }
+                                        ]}
+                                    >
+                                        {newMake}
+                                    </Text>
                                 </View>
                             ) : (
                                 <TouchableOpacity
-                                    style={[styles.selectorBtn, { backgroundColor: colors.background, borderColor: newMake ? Colors.primary : colors.border, flexDirection: rtlFlexDirection(isRTL) }]}
+                                    style={[
+                                        styles.selectorBtn,
+                                        {
+                                            backgroundColor: colors.background,
+                                            borderColor: newMake ? Colors.primary : colors.border,
+                                            flexDirection: rtlFlexDirection(isRTL)
+                                        }
+                                    ]}
                                     onPress={() => setShowMakePicker(true)}
                                 >
-                                    <Text style={[styles.selectorText, { color: newMake ? colors.text : colors.textMuted, textAlign: rtlTextAlign(isRTL) }]}>
+                                    <Text
+                                        style={[
+                                            styles.selectorText,
+                                            {
+                                                color: newMake ? colors.text : colors.textMuted,
+                                                textAlign: rtlTextAlign(isRTL)
+                                            }
+                                        ]}
+                                    >
                                         {newMake || t('profile.selectMake')}
                                     </Text>
                                     <Ionicons name="chevron-down" size={20} color={colors.textMuted} />
                                 </TouchableOpacity>
                             )}
 
-                            <Text style={[styles.inputLabel, { color: colors.textSecondary, textAlign: rtlTextAlign(isRTL) }]}>{t('profile.carModel')} {editingVehicle ? '' : '*'}</Text>
+                            <Text
+                                style={[
+                                    styles.inputLabel,
+                                    { color: colors.textSecondary, textAlign: rtlTextAlign(isRTL) }
+                                ]}
+                            >
+                                {t('profile.carModel')} {editingVehicle ? '' : '*'}
+                            </Text>
                             {editingVehicle ? (
-                                <View style={[styles.input, styles.disabledInput, { backgroundColor: colors.surfaceSecondary, borderColor: colors.border }]}>
-                                    <Text style={[styles.inputText, { color: colors.text, textAlign: rtlTextAlign(isRTL) }]}>{newModel}</Text>
+                                <View
+                                    style={[
+                                        styles.input,
+                                        styles.disabledInput,
+                                        { backgroundColor: colors.surfaceSecondary, borderColor: colors.border }
+                                    ]}
+                                >
+                                    <Text
+                                        style={[
+                                            styles.inputText,
+                                            { color: colors.text, textAlign: rtlTextAlign(isRTL) }
+                                        ]}
+                                    >
+                                        {newModel}
+                                    </Text>
                                 </View>
                             ) : (
                                 <TouchableOpacity
-                                    style={[styles.selectorBtn, { backgroundColor: colors.background, borderColor: newModel ? Colors.primary : colors.border, opacity: newMake ? 1 : 0.5, flexDirection: rtlFlexDirection(isRTL) }]}
+                                    style={[
+                                        styles.selectorBtn,
+                                        {
+                                            backgroundColor: colors.background,
+                                            borderColor: newModel ? Colors.primary : colors.border,
+                                            opacity: newMake ? 1 : 0.5,
+                                            flexDirection: rtlFlexDirection(isRTL)
+                                        }
+                                    ]}
                                     onPress={() => newMake && setShowModelPicker(true)}
                                     disabled={!newMake}
                                 >
-                                    <Text style={[styles.selectorText, { color: newModel ? colors.text : colors.textMuted, textAlign: rtlTextAlign(isRTL) }]}>
-                                        {newModel || (newMake ? t('profile.selectModel') : t('profile.selectMakeFirst'))}
+                                    <Text
+                                        style={[
+                                            styles.selectorText,
+                                            {
+                                                color: newModel ? colors.text : colors.textMuted,
+                                                textAlign: rtlTextAlign(isRTL)
+                                            }
+                                        ]}
+                                    >
+                                        {newModel ||
+                                            (newMake ? t('profile.selectModel') : t('profile.selectMakeFirst'))}
                                     </Text>
                                     <Ionicons name="chevron-down" size={20} color={colors.textMuted} />
                                 </TouchableOpacity>
                             )}
 
-                            <Text style={[styles.inputLabel, { color: colors.textSecondary, textAlign: rtlTextAlign(isRTL) }]}>{t('profile.carYear')} {editingVehicle ? '' : '*'}</Text>
+                            <Text
+                                style={[
+                                    styles.inputLabel,
+                                    { color: colors.textSecondary, textAlign: rtlTextAlign(isRTL) }
+                                ]}
+                            >
+                                {t('profile.carYear')} {editingVehicle ? '' : '*'}
+                            </Text>
                             {editingVehicle ? (
-                                <View style={[styles.input, styles.disabledInput, { backgroundColor: colors.surfaceSecondary, borderColor: colors.border }]}>
-                                    <Text style={[styles.inputText, { color: colors.text, textAlign: rtlTextAlign(isRTL) }]}>{newYear}</Text>
+                                <View
+                                    style={[
+                                        styles.input,
+                                        styles.disabledInput,
+                                        { backgroundColor: colors.surfaceSecondary, borderColor: colors.border }
+                                    ]}
+                                >
+                                    <Text
+                                        style={[
+                                            styles.inputText,
+                                            { color: colors.text, textAlign: rtlTextAlign(isRTL) }
+                                        ]}
+                                    >
+                                        {newYear}
+                                    </Text>
                                 </View>
                             ) : (
                                 <TouchableOpacity
-                                    style={[styles.selectorBtn, { backgroundColor: colors.background, borderColor: newYear ? Colors.primary : colors.border, flexDirection: rtlFlexDirection(isRTL) }]}
+                                    style={[
+                                        styles.selectorBtn,
+                                        {
+                                            backgroundColor: colors.background,
+                                            borderColor: newYear ? Colors.primary : colors.border,
+                                            flexDirection: rtlFlexDirection(isRTL)
+                                        }
+                                    ]}
                                     onPress={() => setShowYearPicker(true)}
                                 >
-                                    <Text style={[styles.selectorText, { color: newYear ? colors.text : colors.textMuted, textAlign: rtlTextAlign(isRTL) }]}>
+                                    <Text
+                                        style={[
+                                            styles.selectorText,
+                                            {
+                                                color: newYear ? colors.text : colors.textMuted,
+                                                textAlign: rtlTextAlign(isRTL)
+                                            }
+                                        ]}
+                                    >
                                         {newYear || t('profile.selectYear')}
                                     </Text>
                                     <Ionicons name="chevron-down" size={20} color={colors.textMuted} />
@@ -413,7 +535,14 @@ export default function MyVehiclesScreen() {
                             )}
 
                             {/* VIN Entry - Manual or Scan */}
-                            <Text style={[styles.inputLabel, { color: colors.textSecondary, textAlign: rtlTextAlign(isRTL) }]}>{t('vehicles.vinTitle')} *</Text>
+                            <Text
+                                style={[
+                                    styles.inputLabel,
+                                    { color: colors.textSecondary, textAlign: rtlTextAlign(isRTL) }
+                                ]}
+                            >
+                                {t('vehicles.vinTitle')} *
+                            </Text>
                             <View style={{ gap: Spacing.sm }}>
                                 <TextInput
                                     style={[
@@ -428,21 +557,48 @@ export default function MyVehiclesScreen() {
                                         }
                                     ]}
                                     value={newVIN}
-                                    onChangeText={(text) => setNewVIN(text.toUpperCase().replace(/[^A-HJ-NPR-Z0-9]/g, '').slice(0, 17))}
+                                    onChangeText={(text) =>
+                                        setNewVIN(
+                                            text
+                                                .toUpperCase()
+                                                .replace(/[^A-HJ-NPR-Z0-9]/g, '')
+                                                .slice(0, 17)
+                                        )
+                                    }
                                     placeholder="WVWZZZ3CZWE123456"
                                     placeholderTextColor={colors.textMuted}
                                     maxLength={17}
                                     autoCapitalize="characters"
                                     editable={!editingVehicle && !isAdding}
                                 />
-                                <Text style={[styles.inputLabel, { color: colors.textSecondary, fontSize: 11, textAlign: rtlTextAlign(isRTL) }]}>
+                                <Text
+                                    style={[
+                                        styles.inputLabel,
+                                        { color: colors.textSecondary, fontSize: 11, textAlign: rtlTextAlign(isRTL) }
+                                    ]}
+                                >
                                     {t('vehicles.vinHelp')}
                                 </Text>
                             </View>
 
-                            <Text style={[styles.inputLabel, { color: colors.textSecondary, textAlign: rtlTextAlign(isRTL) }]}>{t('profile.nicknameOptional')}</Text>
+                            <Text
+                                style={[
+                                    styles.inputLabel,
+                                    { color: colors.textSecondary, textAlign: rtlTextAlign(isRTL) }
+                                ]}
+                            >
+                                {t('profile.nicknameOptional')}
+                            </Text>
                             <TextInput
-                                style={[styles.input, { backgroundColor: colors.background, color: colors.text, borderColor: colors.border, textAlign: rtlTextAlign(isRTL) }]}
+                                style={[
+                                    styles.input,
+                                    {
+                                        backgroundColor: colors.background,
+                                        color: colors.text,
+                                        borderColor: colors.border,
+                                        textAlign: rtlTextAlign(isRTL)
+                                    }
+                                ]}
                                 value={newNickname}
                                 onChangeText={setNewNickname}
                                 placeholder={t('profile.nicknamePlaceholder')}
@@ -459,7 +615,11 @@ export default function MyVehiclesScreen() {
                                     style={styles.saveGradient}
                                 >
                                     <Text style={styles.saveButtonText}>
-                                        {isAdding ? t('common.saving') : (editingVehicle ? t('profile.updateVehicle') : t('profile.saveVehicle'))}
+                                        {isAdding
+                                            ? t('common.saving')
+                                            : editingVehicle
+                                              ? t('profile.updateVehicle')
+                                              : t('profile.saveVehicle')}
                                     </Text>
                                 </LinearGradient>
                             </TouchableOpacity>
@@ -479,7 +639,15 @@ export default function MyVehiclesScreen() {
                             </TouchableOpacity>
                         </View>
                         <TextInput
-                            style={[styles.searchInput, { backgroundColor: colors.background, color: colors.text, borderColor: colors.border, textAlign: rtlTextAlign(isRTL) }]}
+                            style={[
+                                styles.searchInput,
+                                {
+                                    backgroundColor: colors.background,
+                                    color: colors.text,
+                                    borderColor: colors.border,
+                                    textAlign: rtlTextAlign(isRTL)
+                                }
+                            ]}
                             placeholder={t('profile.searchMakes')}
                             placeholderTextColor={colors.textMuted}
                             value={newMake}
@@ -487,12 +655,16 @@ export default function MyVehiclesScreen() {
                             autoFocus
                         />
                         <FlatList
-                            data={CAR_MAKES.filter(m => m.toLowerCase().includes(newMake.toLowerCase()))}
+                            data={CAR_MAKES.filter((m) => m.toLowerCase().includes(newMake.toLowerCase()))}
                             keyExtractor={(item) => item}
                             style={styles.pickerList}
                             renderItem={({ item }) => (
                                 <TouchableOpacity
-                                    style={[styles.pickerItem, newMake === item && { backgroundColor: Colors.primary + '20' }, { flexDirection: rtlFlexDirection(isRTL) }]}
+                                    style={[
+                                        styles.pickerItem,
+                                        newMake === item && { backgroundColor: Colors.primary + '20' },
+                                        { flexDirection: rtlFlexDirection(isRTL) }
+                                    ]}
                                     onPress={() => {
                                         Haptics.selectionAsync();
                                         setNewMake(item);
@@ -521,7 +693,15 @@ export default function MyVehiclesScreen() {
                             </TouchableOpacity>
                         </View>
                         <TextInput
-                            style={[styles.searchInput, { backgroundColor: colors.background, color: colors.text, borderColor: colors.border, textAlign: rtlTextAlign(isRTL) }]}
+                            style={[
+                                styles.searchInput,
+                                {
+                                    backgroundColor: colors.background,
+                                    color: colors.text,
+                                    borderColor: colors.border,
+                                    textAlign: rtlTextAlign(isRTL)
+                                }
+                            ]}
                             placeholder={t('profile.searchModels')}
                             placeholderTextColor={colors.textMuted}
                             value={newModel}
@@ -529,12 +709,16 @@ export default function MyVehiclesScreen() {
                             autoFocus
                         />
                         <FlatList
-                            data={availableModels.filter(m => m.toLowerCase().includes(newModel.toLowerCase()))}
+                            data={availableModels.filter((m) => m.toLowerCase().includes(newModel.toLowerCase()))}
                             keyExtractor={(item) => item}
                             style={styles.pickerList}
                             renderItem={({ item }) => (
                                 <TouchableOpacity
-                                    style={[styles.pickerItem, newModel === item && { backgroundColor: Colors.primary + '20' }, { flexDirection: rtlFlexDirection(isRTL) }]}
+                                    style={[
+                                        styles.pickerItem,
+                                        newModel === item && { backgroundColor: Colors.primary + '20' },
+                                        { flexDirection: rtlFlexDirection(isRTL) }
+                                    ]}
                                     onPress={() => {
                                         Haptics.selectionAsync();
                                         setNewModel(item);
@@ -542,7 +726,9 @@ export default function MyVehiclesScreen() {
                                     }}
                                 >
                                     <Text style={[styles.pickerItemText, { color: colors.text }]}>{item}</Text>
-                                    {newModel === item && <Ionicons name="checkmark" size={20} color={Colors.primary} />}
+                                    {newModel === item && (
+                                        <Ionicons name="checkmark" size={20} color={Colors.primary} />
+                                    )}
                                 </TouchableOpacity>
                             )}
                             ListEmptyComponent={
@@ -570,21 +756,33 @@ export default function MyVehiclesScreen() {
                             keyExtractor={(item) => item.toString()}
                             style={styles.pickerList}
                             showsVerticalScrollIndicator={false}
-                            initialScrollIndex={YEARS.findIndex(y => y === new Date().getFullYear())}
+                            initialScrollIndex={YEARS.findIndex((y) => y === new Date().getFullYear())}
                             getItemLayout={(_, index) => ({ length: 50, offset: 50 * index, index })}
                             renderItem={({ item }) => (
                                 <TouchableOpacity
-                                    style={[styles.yearItem, newYear === item.toString() && { backgroundColor: Colors.primary + '20' }, { flexDirection: rtlFlexDirection(isRTL), justifyContent: 'space-between' }]}
+                                    style={[
+                                        styles.yearItem,
+                                        newYear === item.toString() && { backgroundColor: Colors.primary + '20' },
+                                        { flexDirection: rtlFlexDirection(isRTL), justifyContent: 'space-between' }
+                                    ]}
                                     onPress={() => {
                                         Haptics.selectionAsync();
                                         setNewYear(item.toString());
                                         setShowYearPicker(false);
                                     }}
                                 >
-                                    <Text style={[styles.yearText, { color: colors.text }, newYear === item.toString() && styles.yearTextSelected]}>
+                                    <Text
+                                        style={[
+                                            styles.yearText,
+                                            { color: colors.text },
+                                            newYear === item.toString() && styles.yearTextSelected
+                                        ]}
+                                    >
                                         {item}
                                     </Text>
-                                    {newYear === item.toString() && <Ionicons name="checkmark" size={20} color={Colors.primary} />}
+                                    {newYear === item.toString() && (
+                                        <Ionicons name="checkmark" size={20} color={Colors.primary} />
+                                    )}
                                 </TouchableOpacity>
                             )}
                         />
@@ -603,7 +801,7 @@ const styles = StyleSheet.create({
         justifyContent: 'space-between',
         paddingHorizontal: Spacing.md,
         paddingVertical: Spacing.sm,
-        borderBottomWidth: 1,
+        borderBottomWidth: 1
     },
     backBtn: { width: 40, height: 40, justifyContent: 'center' },
     headerTitle: { fontSize: FontSizes.lg, fontWeight: '700' },
@@ -619,7 +817,7 @@ const styles = StyleSheet.create({
         alignItems: 'center',
         justifyContent: 'space-between',
         padding: Spacing.md,
-        borderRadius: BorderRadius.lg,
+        borderRadius: BorderRadius.lg
     },
     cardLeft: { flexDirection: 'row', alignItems: 'center', flex: 1 },
     iconBg: {
@@ -629,12 +827,12 @@ const styles = StyleSheet.create({
         backgroundColor: '#E3F2FD',
         alignItems: 'center',
         justifyContent: 'center',
-        marginRight: Spacing.md,
+        marginRight: Spacing.md
     },
     iconBgPrimary: {
         backgroundColor: Colors.secondary + '30',
         borderWidth: 2,
-        borderColor: Colors.secondary,
+        borderColor: Colors.secondary
     },
     carEmoji: { fontSize: 22 },
     cardInfo: { flex: 1 },
@@ -646,7 +844,7 @@ const styles = StyleSheet.create({
         height: 18,
         borderRadius: BorderRadius.sm,
         alignItems: 'center',
-        justifyContent: 'center',
+        justifyContent: 'center'
     },
     primaryText: { fontSize: 10, color: '#fff', fontWeight: '700' },
     vehicleYear: { fontSize: FontSizes.sm, marginTop: 2 },
@@ -658,7 +856,7 @@ const styles = StyleSheet.create({
         borderRadius: BorderRadius.lg,
         backgroundColor: Colors.primary + '15',
         alignItems: 'center',
-        justifyContent: 'center',
+        justifyContent: 'center'
     },
     deleteBtn: {
         width: 34,
@@ -666,7 +864,7 @@ const styles = StyleSheet.create({
         borderRadius: BorderRadius.lg,
         backgroundColor: Colors.error + '15',
         alignItems: 'center',
-        justifyContent: 'center',
+        justifyContent: 'center'
     },
     emptyState: { flex: 1, alignItems: 'center', justifyContent: 'center', padding: Spacing.xl },
     emptyIconBg: {
@@ -675,7 +873,7 @@ const styles = StyleSheet.create({
         borderRadius: 40,
         alignItems: 'center',
         justifyContent: 'center',
-        marginBottom: Spacing.md,
+        marginBottom: Spacing.md
     },
     emptyIcon: { fontSize: 36 },
     emptyTitle: { fontSize: FontSizes.lg, fontWeight: '700', marginBottom: Spacing.xs },
@@ -687,26 +885,26 @@ const styles = StyleSheet.create({
         justifyContent: 'center',
         paddingVertical: Spacing.md,
         borderRadius: BorderRadius.lg,
-        gap: Spacing.xs,
+        gap: Spacing.xs
     },
     addButtonText: { color: '#fff', fontWeight: '700', fontSize: FontSizes.md },
     // Modal styles
     modalOverlay: {
         flex: 1,
         backgroundColor: 'rgba(0,0,0,0.5)',
-        justifyContent: 'flex-end',
+        justifyContent: 'flex-end'
     },
     modalContent: {
         borderTopLeftRadius: BorderRadius.xl,
         borderTopRightRadius: BorderRadius.xl,
         padding: Spacing.lg,
-        paddingBottom: Spacing.xxl,
+        paddingBottom: Spacing.xxl
     },
     modalHeader: {
         flexDirection: 'row',
         justifyContent: 'space-between',
         alignItems: 'center',
-        marginBottom: Spacing.lg,
+        marginBottom: Spacing.lg
     },
     modalTitle: { fontSize: FontSizes.xl, fontWeight: '700' },
     inputLabel: { fontSize: FontSizes.sm, marginBottom: 4, marginTop: Spacing.sm },
@@ -715,24 +913,24 @@ const styles = StyleSheet.create({
         borderRadius: BorderRadius.md,
         paddingHorizontal: Spacing.md,
         paddingVertical: Spacing.sm,
-        fontSize: FontSizes.md,
+        fontSize: FontSizes.md
     },
     vinInput: {
         fontFamily: 'monospace',
         letterSpacing: 2,
         textAlign: 'center',
-        borderWidth: 2,
+        borderWidth: 2
     },
     vinHelp: {
         fontSize: FontSizes.xs,
         textAlign: 'center',
-        marginTop: 4,
+        marginTop: 4
     },
     saveButton: { marginTop: Spacing.lg },
     saveGradient: {
         paddingVertical: Spacing.md,
         borderRadius: BorderRadius.lg,
-        alignItems: 'center',
+        alignItems: 'center'
     },
     saveButtonText: { color: '#fff', fontWeight: '700', fontSize: FontSizes.lg },
     // Selector button styles
@@ -743,30 +941,30 @@ const styles = StyleSheet.create({
         borderWidth: 1.5,
         borderRadius: BorderRadius.md,
         paddingHorizontal: Spacing.md,
-        paddingVertical: Spacing.md,
+        paddingVertical: Spacing.md
     },
     selectorText: {
         fontSize: FontSizes.md,
-        flex: 1,
+        flex: 1
     },
     disabledInput: {
-        justifyContent: 'center',
+        justifyContent: 'center'
     },
     inputText: {
-        fontSize: FontSizes.md,
+        fontSize: FontSizes.md
     },
     // Picker modal styles
     pickerOverlay: {
         flex: 1,
         backgroundColor: 'rgba(0,0,0,0.6)',
-        justifyContent: 'flex-end',
+        justifyContent: 'flex-end'
     },
     pickerContent: {
         borderTopLeftRadius: BorderRadius.xl,
         borderTopRightRadius: BorderRadius.xl,
         paddingTop: Spacing.md,
         paddingBottom: Spacing.xxl,
-        maxHeight: '70%',
+        maxHeight: '70%'
     },
     pickerHeader: {
         flexDirection: 'row',
@@ -775,11 +973,11 @@ const styles = StyleSheet.create({
         paddingHorizontal: Spacing.lg,
         paddingBottom: Spacing.md,
         borderBottomWidth: 1,
-        borderBottomColor: 'rgba(0,0,0,0.1)',
+        borderBottomColor: 'rgba(0,0,0,0.1)'
     },
     pickerTitle: {
         fontSize: FontSizes.lg,
-        fontWeight: '700',
+        fontWeight: '700'
     },
     searchInput: {
         marginHorizontal: Spacing.lg,
@@ -788,10 +986,10 @@ const styles = StyleSheet.create({
         borderRadius: BorderRadius.lg,
         paddingHorizontal: Spacing.md,
         paddingVertical: Spacing.sm,
-        fontSize: FontSizes.md,
+        fontSize: FontSizes.md
     },
     pickerList: {
-        paddingHorizontal: Spacing.md,
+        paddingHorizontal: Spacing.md
     },
     pickerItem: {
         flexDirection: 'row',
@@ -800,15 +998,15 @@ const styles = StyleSheet.create({
         paddingVertical: Spacing.md,
         paddingHorizontal: Spacing.md,
         borderRadius: BorderRadius.md,
-        marginBottom: 2,
+        marginBottom: 2
     },
     pickerItemText: {
-        fontSize: FontSizes.md,
+        fontSize: FontSizes.md
     },
     emptyPickerText: {
         textAlign: 'center',
         paddingVertical: Spacing.xl,
-        fontSize: FontSizes.sm,
+        fontSize: FontSizes.sm
     },
     yearItem: {
         flexDirection: 'row',
@@ -818,14 +1016,14 @@ const styles = StyleSheet.create({
         paddingHorizontal: Spacing.lg,
         borderRadius: BorderRadius.md,
         marginBottom: 2,
-        height: 50,
+        height: 50
     },
     yearText: {
         fontSize: FontSizes.xl,
-        fontWeight: '500',
+        fontWeight: '500'
     },
     yearTextSelected: {
         fontWeight: '700',
-        color: Colors.primary,
-    },
+        color: Colors.primary
+    }
 });

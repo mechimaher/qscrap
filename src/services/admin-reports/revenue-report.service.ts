@@ -6,9 +6,14 @@ import { Pool } from 'pg';
 import { getPeriodDates, formatCSV, getPagination } from './utils';
 
 export class RevenueReportService {
-    constructor(private pool: Pool) { }
+    constructor(private pool: Pool) {}
 
-    async getSubscriptionRenewalsReport(params: { page?: number; limit?: number; format?: string; days_ahead?: number }) {
+    async getSubscriptionRenewalsReport(params: {
+        page?: number;
+        limit?: number;
+        format?: string;
+        days_ahead?: number;
+    }) {
         const { pageNum, limitNum, offset } = getPagination(params);
         const daysAhead = Math.min(90, Math.max(7, Number(params.days_ahead || 30)));
 
@@ -20,7 +25,8 @@ export class RevenueReportService {
         `);
         const total = parseInt(countResult.rows[0].count);
 
-        const result = await this.pool.query(`
+        const result = await this.pool.query(
+            `
             SELECT 
                 g.garage_id, g.garage_name, u.phone_number, u.email,
                 sp.plan_name, gs.billing_cycle_end as expires_at,
@@ -38,7 +44,9 @@ export class RevenueReportService {
             AND gs.billing_cycle_end > NOW()
             ORDER BY gs.billing_cycle_end ASC
             LIMIT $1 OFFSET $2
-        `, [limitNum, offset]);
+        `,
+            [limitNum, offset]
+        );
 
         if (params.format === 'csv') {
             return formatCSV(result.rows, [
@@ -58,8 +66,8 @@ export class RevenueReportService {
             pagination: { current_page: pageNum, total_pages: Math.ceil(total / limitNum), total, limit: limitNum },
             summary: {
                 total_expiring: total,
-                expiring_7_days: result.rows.filter(r => r.days_until_expiry <= 7).length,
-                high_value_at_risk: result.rows.filter(r => parseFloat(r.total_revenue) > 10000).length
+                expiring_7_days: result.rows.filter((r) => r.days_until_expiry <= 7).length,
+                high_value_at_risk: result.rows.filter((r) => parseFloat(r.total_revenue) > 10000).length
             }
         };
     }
@@ -68,7 +76,8 @@ export class RevenueReportService {
         const { start, end } = getPeriodDates(params.period || '30d');
         const groupBy = params.group_by || 'day';
 
-        const summary = await this.pool.query(`
+        const summary = await this.pool.query(
+            `
             SELECT 
                 COUNT(*) as total_orders,
                 COALESCE(SUM(total_amount), 0) as gross_revenue,
@@ -78,10 +87,13 @@ export class RevenueReportService {
             FROM orders
             WHERE order_status = 'completed'
             AND created_at >= $1 AND created_at <= $2
-        `, [start, end]);
+        `,
+            [start, end]
+        );
 
         const groupFormat = groupBy === 'month' ? 'YYYY-MM' : groupBy === 'week' ? 'YYYY-WW' : 'YYYY-MM-DD';
-        const breakdown = await this.pool.query(`
+        const breakdown = await this.pool.query(
+            `
             SELECT 
                 TO_CHAR(created_at, '${groupFormat}') as period,
                 COUNT(*) as order_count,
@@ -92,9 +104,12 @@ export class RevenueReportService {
             AND created_at >= $1 AND created_at <= $2
             GROUP BY TO_CHAR(created_at, '${groupFormat}')
             ORDER BY period DESC
-        `, [start, end]);
+        `,
+            [start, end]
+        );
 
-        const topGarages = await this.pool.query(`
+        const topGarages = await this.pool.query(
+            `
             SELECT 
                 g.garage_name,
                 COUNT(*) as order_count,
@@ -106,7 +121,9 @@ export class RevenueReportService {
             GROUP BY g.garage_id, g.garage_name
             ORDER BY commission_generated DESC
             LIMIT 10
-        `, [start, end]);
+        `,
+            [start, end]
+        );
 
         if (params.format === 'csv') {
             return formatCSV(breakdown.rows, [
@@ -123,7 +140,7 @@ export class RevenueReportService {
                 gross_revenue: parseFloat(summary.rows[0].gross_revenue),
                 commission_revenue: parseFloat(summary.rows[0].commission_revenue),
                 avg_commission_per_order: parseFloat(summary.rows[0].avg_commission_per_order).toFixed(2),
-                avg_commission_rate: `${parseFloat(summary.rows[0].avg_commission_rate).toFixed(1)  }%`
+                avg_commission_rate: `${parseFloat(summary.rows[0].avg_commission_rate).toFixed(1)}%`
             },
             breakdown: breakdown.rows,
             top_garages: topGarages.rows
@@ -139,15 +156,19 @@ export class RevenueReportService {
             typeFilter = ` AND user_type = '${userType}'`;
         }
 
-        const summary = await this.pool.query(`
+        const summary = await this.pool.query(
+            `
             SELECT user_type, COUNT(*) as count
             FROM users
             WHERE created_at >= $1 AND created_at <= $2 ${typeFilter}
             GROUP BY user_type
             ORDER BY count DESC
-        `, [start, end]);
+        `,
+            [start, end]
+        );
 
-        const daily = await this.pool.query(`
+        const daily = await this.pool.query(
+            `
             SELECT 
                 TO_CHAR(created_at, 'YYYY-MM-DD') as date,
                 user_type,
@@ -156,7 +177,9 @@ export class RevenueReportService {
             WHERE created_at >= $1 AND created_at <= $2 ${typeFilter}
             GROUP BY TO_CHAR(created_at, 'YYYY-MM-DD'), user_type
             ORDER BY date DESC
-        `, [start, end]);
+        `,
+            [start, end]
+        );
 
         if (params.format === 'csv') {
             return formatCSV(daily.rows, [

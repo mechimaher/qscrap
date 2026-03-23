@@ -37,7 +37,7 @@ const BILINGUAL_LABELS = {
     scan_to_verify: { en: 'Scan to verify', ar: 'امسح للتحقق' },
     cr_number: { en: 'CR', ar: 'السجل التجاري' },
     generated_via: { en: 'Generated via QScrap Platform', ar: 'صدرت عبر منصة كيو سكراب' },
-    mobile: { en: 'Mobile', ar: 'الجوال' },
+    mobile: { en: 'Mobile', ar: 'الجوال' }
 };
 
 // ============================================
@@ -52,7 +52,8 @@ export function generateBilingualCustomerInvoiceHTML(
         const d = new Date(dateStr);
         return d.toLocaleDateString('en-GB', { day: '2-digit', month: 'short', year: 'numeric' });
     };
-    const formatMoney = (n: number) => n.toLocaleString('en-QA', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
+    const formatMoney = (n: number) =>
+        n.toLocaleString('en-QA', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
     const L = data.labels || BILINGUAL_LABELS;
     const cond = data.item?.condition || { en: 'N/A', ar: 'غير محدد' };
 
@@ -217,16 +218,13 @@ export function generateBilingualCustomerInvoiceHTML(
 // ============================================
 // GARAGE PAYOUT STATEMENT - BLACK ONLY PROFESSIONAL
 // ============================================
-export function generateGaragePayoutStatementHTML(
-    data: DocumentData,
-    qrCode: string,
-    logoBase64: string = ''
-): string {
+export function generateGaragePayoutStatementHTML(data: DocumentData, qrCode: string, logoBase64: string = ''): string {
     const formatDate = (dateStr: string) => {
         const d = new Date(dateStr);
         return d.toLocaleDateString('en-GB', { day: '2-digit', month: 'short', year: 'numeric' });
     };
-    const formatMoney = (n: number) => n.toLocaleString('en-QA', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
+    const formatMoney = (n: number) =>
+        n.toLocaleString('en-QA', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
     const L = data.labels || BILINGUAL_LABELS;
     const cond = data.item?.condition || { en: 'N/A', ar: 'غير محدد' };
 

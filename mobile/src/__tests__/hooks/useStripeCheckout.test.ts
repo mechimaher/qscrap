@@ -7,17 +7,17 @@ import * as Haptics from 'expo-haptics';
 jest.mock('../../services/api', () => ({
     api: {
         confirmDeliveryFeePayment: jest.fn(),
-        confirmFreeOrder: jest.fn(),
+        confirmFreeOrder: jest.fn()
     }
 }));
 jest.mock('@stripe/stripe-react-native', () => ({
-    useStripe: jest.fn(),
+    useStripe: jest.fn()
 }));
 jest.mock('expo-haptics', () => ({
     impactAsync: jest.fn(),
     notificationAsync: jest.fn(),
     ImpactFeedbackStyle: { Medium: 'Medium' },
-    NotificationFeedbackType: { Success: 'Success', Error: 'Error' },
+    NotificationFeedbackType: { Success: 'Success', Error: 'Error' }
 }));
 jest.mock('../../utils/logger');
 jest.mock('../../utils/errorHandler');
@@ -32,7 +32,7 @@ describe('useStripeCheckout', () => {
         jest.clearAllMocks();
         jest.useFakeTimers();
         (useStripe as jest.Mock).mockReturnValue({
-            confirmPayment: mockConfirmPayment,
+            confirmPayment: mockConfirmPayment
         });
     });
 
@@ -46,14 +46,14 @@ describe('useStripeCheckout', () => {
         orderId: 'order-123',
         navigation: mockNavigation,
         t: mockT,
-        toast: mockToast,
+        toast: mockToast
     };
 
     it('should show error if card is not complete', async () => {
         const { result } = renderHook(() =>
             useStripeCheckout({
                 ...baseParams,
-                cardComplete: false,
+                cardComplete: false
             })
         );
 
@@ -69,7 +69,7 @@ describe('useStripeCheckout', () => {
         const { result } = renderHook(() =>
             useStripeCheckout({
                 ...baseParams,
-                clientSecret: null,
+                clientSecret: null
             })
         );
 
@@ -83,7 +83,7 @@ describe('useStripeCheckout', () => {
     it('should handle successful payment confirmation', async () => {
         mockConfirmPayment.mockResolvedValue({
             paymentIntent: { status: 'succeeded', id: 'pi_123' },
-            error: null,
+            error: null
         });
         (api.confirmDeliveryFeePayment as jest.Mock).mockResolvedValue({});
 
@@ -110,7 +110,7 @@ describe('useStripeCheckout', () => {
     it('should handle Stripe error during confirmation', async () => {
         mockConfirmPayment.mockResolvedValue({
             paymentIntent: null,
-            error: { message: 'Card declined' },
+            error: { message: 'Card declined' }
         });
 
         const { result } = renderHook(() => useStripeCheckout(baseParams));

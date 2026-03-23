@@ -12,29 +12,21 @@ interface StripeCardFieldProps {
     isRTL: boolean;
 }
 
-export const StripeCardField: React.FC<StripeCardFieldProps> = ({
-    colors,
-    t,
-    setCardComplete,
-    isRTL,
-}) => {
+export const StripeCardField: React.FC<StripeCardFieldProps> = ({ colors, t, setCardComplete, isRTL }) => {
     return (
         <View style={[styles.cardSection, { backgroundColor: colors.surface }]}>
-            <Text style={[styles.sectionTitle, { color: colors.text }]}>
-                {t('payment.cardDetails')}
-            </Text>
+            <Text style={[styles.sectionTitle, { color: colors.text }]}>{t('payment.cardDetails')}</Text>
 
-            <Text style={[styles.cardInputLabel, { color: colors.textSecondary }]}>
-                {t('payment.enterCardInfo')}
-            </Text>
+            <Text style={[styles.cardInputLabel, { color: colors.textSecondary }]}>{t('payment.enterCardInfo')}</Text>
 
             <View style={styles.cardFieldWrapper}>
                 <CardField
+                    testID="card-field"
                     postalCodeEnabled={false}
                     placeholders={{
                         number: '1234 1234 1234 1234',
                         expiration: 'MM/YY',
-                        cvc: 'CVC',
+                        cvc: 'CVC'
                     }}
                     cardStyle={{
                         backgroundColor: '#FFFFFF',
@@ -44,7 +36,7 @@ export const StripeCardField: React.FC<StripeCardFieldProps> = ({
                         borderWidth: 1,
                         borderRadius: 12,
                         fontSize: 16,
-                        fontFamily: 'System',
+                        fontFamily: 'System'
                     }}
                     style={styles.cardField}
                     onCardChange={(cardDetails) => {
@@ -55,9 +47,7 @@ export const StripeCardField: React.FC<StripeCardFieldProps> = ({
 
             <View style={[styles.cardSecurityRow, { flexDirection: rtlFlexDirection(isRTL) }]}>
                 <Ionicons name="lock-closed" size={16} color="#22c55e" />
-                <Text style={[styles.securityText, { color: colors.textSecondary }]}>
-                    {t('payment.cardSecure')}
-                </Text>
+                <Text style={[styles.securityText, { color: colors.textSecondary }]}>{t('payment.cardSecure')}</Text>
             </View>
         </View>
     );
@@ -67,35 +57,35 @@ const styles = StyleSheet.create({
     sectionTitle: {
         fontSize: FontSizes.lg,
         fontWeight: '700',
-        marginBottom: Spacing.md,
+        marginBottom: Spacing.md
     },
     cardSection: {
         borderRadius: BorderRadius.xl,
         padding: Spacing.lg,
-        ...Shadows.md,
+        ...Shadows.md
     },
     cardInputLabel: {
         fontSize: FontSizes.sm,
-        marginBottom: Spacing.sm,
+        marginBottom: Spacing.sm
     },
     cardFieldWrapper: {
         backgroundColor: '#F9FAFB',
         borderRadius: BorderRadius.lg,
         padding: Spacing.sm,
-        marginBottom: Spacing.md,
+        marginBottom: Spacing.md
     },
     cardField: {
         width: '100%',
-        height: 56,
+        height: 56
     },
     cardSecurityRow: {
         flexDirection: 'row',
         alignItems: 'center',
-        marginBottom: Spacing.md,
+        marginBottom: Spacing.md
     },
     securityText: {
         fontSize: FontSizes.xs,
         marginLeft: Spacing.xs,
-        marginRight: Spacing.xs,
-    },
+        marginRight: Spacing.xs
+    }
 });

@@ -5,16 +5,7 @@
 export { api } from './api';
 
 // Type exports
-export type {
-    User,
-    AuthResponse,
-    Request,
-    Bid,
-    Order,
-    Stats,
-    Address,
-    Product
-} from './api';
+export type { User, AuthResponse, Request, Bid, Order, Stats, Address, Product } from './api';
 
 // Notifications
 export * from './notifications';

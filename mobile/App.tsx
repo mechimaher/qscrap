@@ -29,28 +29,33 @@ import OfflineBanner from './src/components/OfflineBanner';
 import { Address } from './src/services/api';
 import { BadgeCountsProvider, useBadgeCounts } from './src/hooks/useBadgeCounts';
 
-// Initialize Sentry — must be called before any React rendering
-Sentry.init({
-  dsn: 'https://0acc3f0a5f3bfffa51705b265d7ca596@o4510826572873728.ingest.de.sentry.io/4510890998825040',
-  // Performance monitoring — sample 20% of transactions in production
-  tracesSampleRate: __DEV__ ? 1.0 : 0.2,
-  // Only send errors in production builds
-  enabled: !__DEV__,
-  // Attach screenshots to error reports for visual context
-  attachScreenshot: true,
-  // Environment tag
-  environment: __DEV__ ? 'development' : 'production',
-  // Enrich errors with device context
-  enableAutoSessionTracking: true,
-  // Filter out noisy network errors that aren't real bugs
-  beforeSend(event) {
-    const message = event.exception?.values?.[0]?.value || '';
-    if (message.includes('Network request failed') || message.includes('AbortError')) {
-      return null;
-    }
-    return event;
-  },
-});
+let sentryInitialized = false;
+const initSentryWithConsent = async () => {
+  if (sentryInitialized) return;
+  try {
+    const AsyncStorage = (await import('@react-native-async-storage/async-storage')).default;
+    const consent = await AsyncStorage.getItem('qscrap_sentry_screenshots');
+    const allowScreenshots = consent === 'true';
+    Sentry.init({
+      dsn: 'https://0acc3f0a5f3bfffa51705b265d7ca596@o4510826572873728.ingest.de.sentry.io/4510890998825040',
+      tracesSampleRate: __DEV__ ? 1.0 : 0.2,
+      enabled: !__DEV__,
+      attachScreenshot: allowScreenshots,
+      environment: __DEV__ ? 'development' : 'production',
+      enableAutoSessionTracking: true,
+      beforeSend(event) {
+        const message = event.exception?.values?.[0]?.value || '';
+        if (message.includes('Network request failed') || message.includes('AbortError')) {
+          return null;
+        }
+        return event;
+      },
+    });
+    sentryInitialized = true;
+  } catch (error) {
+    // Fail silently to avoid blocking app start
+  }
+};
 
 // Import Auth screens
 import LoginScreen from './src/screens/auth/LoginScreen';
@@ -412,6 +417,10 @@ export default Sentry.wrap(function App() {
     Inter_700Bold,
     Inter_800ExtraBold,
   });
+
+  React.useEffect(() => {
+    initSentryWithConsent();
+  }, []);
 
   // Show loading screen while fonts load
   if (!fontsLoaded) {

@@ -13,9 +13,14 @@ import logger from '../../utils/logger';
 const MAX_NEGOTIATION_ROUNDS = 3;
 
 export class NegotiationService {
-    constructor(private pool: Pool) { }
+    constructor(private pool: Pool) {}
 
-    async createCounterOffer(customerId: string, bidId: string, proposedAmount: number, message?: string): Promise<any> {
+    async createCounterOffer(
+        customerId: string,
+        bidId: string,
+        proposedAmount: number,
+        message?: string
+    ): Promise<any> {
         const client = await this.pool.connect();
         try {
             await client.query('BEGIN');
@@ -31,16 +36,26 @@ export class NegotiationService {
 
             await this.checkNoPendingOffer(bidId, client);
 
-            const result = await client.query(`
+            const result = await client.query(
+                `
                 INSERT INTO counter_offers 
                 (bid_id, request_id, offered_by_type, offered_by_id, proposed_amount, message, round_number)
                 VALUES ($1, $2, 'customer', $3, $4, $5, $6)
                 RETURNING counter_offer_id
-            `, [bidId, bid.request_id, customerId, proposedAmount, message, currentRound]);
+            `,
+                [bidId, bid.request_id, customerId, proposedAmount, message, currentRound]
+            );
 
             await client.query('COMMIT');
 
-            await this.notifyCounterOffer(bid.garage_id, bidId, result.rows[0].counter_offer_id, proposedAmount, bid.bid_amount, currentRound);
+            await this.notifyCounterOffer(
+                bid.garage_id,
+                bidId,
+                result.rows[0].counter_offer_id,
+                proposedAmount,
+                bid.bid_amount,
+                currentRound
+            );
 
             return { counter_offer_id: result.rows[0].counter_offer_id, round: currentRound };
         } catch (err) {
@@ -51,7 +66,11 @@ export class NegotiationService {
         }
     }
 
-    async respondToCounterOffer(garageId: string, counterOfferId: string, response: CounterOfferResponse): Promise<any> {
+    async respondToCounterOffer(
+        garageId: string,
+        counterOfferId: string,
+        response: CounterOfferResponse
+    ): Promise<any> {
         const client = await this.pool.connect();
         try {
             await client.query('BEGIN');
@@ -80,7 +99,11 @@ export class NegotiationService {
         }
     }
 
-    async customerRespondToCounter(customerId: string, counterOfferId: string, response: CounterOfferResponse): Promise<any> {
+    async customerRespondToCounter(
+        customerId: string,
+        counterOfferId: string,
+        response: CounterOfferResponse
+    ): Promise<any> {
         const client = await this.pool.connect();
         try {
             await client.query('BEGIN');
@@ -109,16 +132,20 @@ export class NegotiationService {
     }
 
     async getNegotiationHistory(bidId: string): Promise<NegotiationHistory[]> {
-        const result = await this.pool.query(`
+        const result = await this.pool.query(
+            `
             SELECT * FROM counter_offers 
             WHERE bid_id = $1 
             ORDER BY round_number ASC, created_at ASC
-        `, [bidId]);
+        `,
+            [bidId]
+        );
         return result.rows;
     }
 
     async getPendingCounterOffers(garageId: string): Promise<any[]> {
-        const result = await this.pool.query(`
+        const result = await this.pool.query(
+            `
             SELECT co.*, 
                    COALESCE(b.original_bid_amount, b.bid_amount) as original_bid_amount,
                    (
@@ -137,7 +164,9 @@ export class NegotiationService {
             JOIN part_requests pr ON b.request_id = pr.request_id
             WHERE b.garage_id = $1 AND co.status = 'pending' AND co.offered_by_type = 'customer'
             ORDER BY co.created_at DESC
-        `, [garageId]);
+        `,
+            [garageId]
+        );
         return result.rows;
     }
 
@@ -147,13 +176,16 @@ export class NegotiationService {
             await client.query('BEGIN');
 
             // Get the last garage offer
-            const lastOffer = await client.query(`
+            const lastOffer = await client.query(
+                `
                 SELECT co.*, b.garage_id
                 FROM counter_offers co
                 JOIN bids b ON co.bid_id = b.bid_id
                 WHERE co.bid_id = $1 AND co.offered_by_type = 'garage'
                 ORDER BY co.round_number DESC LIMIT 1
-            `, [bidId]);
+            `,
+                [bidId]
+            );
 
             if (lastOffer.rows.length === 0) {
                 throw new Error('No garage offer found');
@@ -177,37 +209,53 @@ export class NegotiationService {
     }
 
     private async getBidForNegotiation(bidId: string, client: PoolClient): Promise<any> {
-        const result = await client.query(`
+        const result = await client.query(
+            `
             SELECT b.*, pr.customer_id 
             FROM bids b 
             JOIN part_requests pr ON b.request_id = pr.request_id 
             WHERE b.bid_id = $1
-            `, [bidId]);
-        if (result.rows.length === 0) { throw new Error('Bid not found'); }
+            `,
+            [bidId]
+        );
+        if (result.rows.length === 0) {
+            throw new Error('Bid not found');
+        }
         return result.rows[0];
     }
 
     private async getBidById(bidId: string, client: PoolClient): Promise<any> {
-        const result = await client.query(`
+        const result = await client.query(
+            `
             SELECT b.*, pr.customer_id 
             FROM bids b 
             JOIN part_requests pr ON b.request_id = pr.request_id 
             WHERE b.bid_id = $1
-            `, [bidId]);
-        if (result.rows.length === 0) { throw new Error('Bid not found'); }
+            `,
+            [bidId]
+        );
+        if (result.rows.length === 0) {
+            throw new Error('Bid not found');
+        }
         return result.rows[0];
     }
 
     private verifyCustomerOwnership(bid: any, customerId: string): void {
-        if (bid.customer_id !== customerId) { throw new Error('Access denied'); }
+        if (bid.customer_id !== customerId) {
+            throw new Error('Access denied');
+        }
     }
 
     private verifyGarageOwnership(offer: any, garageId: string): void {
-        if (offer.garage_id !== garageId) { throw new Error('Access denied'); }
+        if (offer.garage_id !== garageId) {
+            throw new Error('Access denied');
+        }
     }
 
     private verifyBidStatus(bid: any): void {
-        if (bid.status !== 'pending') { throw new BidNotPendingError(bid.bid_id, bid.status); }
+        if (bid.status !== 'pending') {
+            throw new BidNotPendingError(bid.bid_id, bid.status);
+        }
     }
 
     private async getCurrentRound(bidId: string, client: PoolClient): Promise<number> {
@@ -220,7 +268,9 @@ export class NegotiationService {
             'SELECT counter_offer_id FROM counter_offers WHERE bid_id = $1 AND status = $2',
             [bidId, 'pending']
         );
-        if (result.rows.length > 0) { throw new Error('Pending counter-offer exists'); }
+        if (result.rows.length > 0) {
+            throw new Error('Pending counter-offer exists');
+        }
     }
 
     private async getCounterOfferForUpdate(counterOfferId: string, client: PoolClient): Promise<any> {
@@ -228,37 +278,50 @@ export class NegotiationService {
             'SELECT co.*, b.garage_id FROM counter_offers co JOIN bids b ON co.bid_id = b.bid_id WHERE co.counter_offer_id = $1 FOR UPDATE',
             [counterOfferId]
         );
-        if (result.rows.length === 0) { throw new Error('Counter-offer not found'); }
+        if (result.rows.length === 0) {
+            throw new Error('Counter-offer not found');
+        }
         return result.rows[0];
     }
 
     private async acceptOffer(offer: any, bid: any, customerId: string, client: PoolClient): Promise<any> {
         // 1. Update counter-offer status
-        await client.query('UPDATE counter_offers SET status = $1 WHERE counter_offer_id = $2', ['accepted', offer.counter_offer_id]);
+        await client.query('UPDATE counter_offers SET status = $1 WHERE counter_offer_id = $2', [
+            'accepted',
+            offer.counter_offer_id
+        ]);
 
         // 2. Update bid - preserve original price in original_bid_amount, update bid_amount to negotiated price
-        await client.query(`
+        await client.query(
+            `
             UPDATE bids 
             SET original_bid_amount = COALESCE(original_bid_amount, bid_amount),
             bid_amount = $1,
             status = $2 
             WHERE bid_id = $3
-            `, [offer.proposed_amount, 'accepted', offer.bid_id]);
+            `,
+            [offer.proposed_amount, 'accepted', offer.bid_id]
+        );
 
         // 3. Get request details for order creation
         const reqResult = await client.query('SELECT * FROM part_requests WHERE request_id = $1', [bid.request_id]);
-        if (reqResult.rows.length === 0) { throw new Error('Request not found'); }
+        if (reqResult.rows.length === 0) {
+            throw new Error('Request not found');
+        }
         const request = reqResult.rows[0];
 
         // 4. Calculate commission
-        const garageRateResult = await client.query(`
+        const garageRateResult = await client.query(
+            `
             SELECT g.approval_status, sp.commission_rate
             FROM garages g
             LEFT JOIN garage_subscriptions gs ON g.garage_id = gs.garage_id AND gs.status IN('active', 'trial')
             LEFT JOIN subscription_plans sp ON gs.plan_id = sp.plan_id
             WHERE g.garage_id = $1
             ORDER BY gs.created_at DESC LIMIT 1
-            `, [bid.garage_id]);
+            `,
+            [bid.garage_id]
+        );
 
         let commissionRate = 0.15;
         if (garageRateResult.rows[0]?.approval_status === 'demo') {
@@ -285,21 +348,37 @@ export class NegotiationService {
         const garagePayout = partPrice - platformFee;
 
         // 6. Create order
-        const orderResult = await client.query(`
+        const orderResult = await client.query(
+            `
             INSERT INTO orders
             (request_id, bid_id, customer_id, garage_id, part_price, commission_rate,
                 platform_fee, delivery_fee, total_amount, garage_payout_amount,
                 payment_method, delivery_address, order_status)
         VALUES($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, 'pending_payment')
             RETURNING order_id, order_number
-            `, [bid.request_id, offer.bid_id, customerId, bid.garage_id, partPrice, commissionRate,
-            platformFee, deliveryFee, totalAmount, garagePayout, 'cash',
-        request.delivery_address_text || 'To be confirmed']);
+            `,
+            [
+                bid.request_id,
+                offer.bid_id,
+                customerId,
+                bid.garage_id,
+                partPrice,
+                commissionRate,
+                platformFee,
+                deliveryFee,
+                totalAmount,
+                garagePayout,
+                'cash',
+                request.delivery_address_text || 'To be confirmed'
+            ]
+        );
 
         const order = orderResult.rows[0];
 
         // 7. Update request status
-        await client.query("UPDATE part_requests SET status = 'accepted', updated_at = NOW() WHERE request_id = $1", [bid.request_id]);
+        await client.query("UPDATE part_requests SET status = 'accepted', updated_at = NOW() WHERE request_id = $1", [
+            bid.request_id
+        ]);
 
         // 8. Reject other bids
         await client.query(
@@ -308,11 +387,14 @@ export class NegotiationService {
         );
 
         // 9. Log order history
-        await client.query(`
+        await client.query(
+            `
             INSERT INTO order_status_history
             (order_id, old_status, new_status, changed_by, changed_by_type, reason)
         VALUES($1, NULL, 'pending_payment', $2, 'customer', 'Order created from accepted counter-offer - Awaiting Payment')
-        `, [order.order_id, customerId]);
+        `,
+            [order.order_id, customerId]
+        );
 
         // 10. Notify both parties about accepted counter-offer
         const { emitToUser, emitToGarage } = await import('../../utils/socketIO');
@@ -371,7 +453,10 @@ export class NegotiationService {
     private async declineOffer(offer: any, bid: any, client: PoolClient): Promise<void> {
         // Only reject the counter-offer, NOT the entire bid
         // The bid stays 'pending' so customer can still accept garage's last offer
-        await client.query('UPDATE counter_offers SET status = $1 WHERE counter_offer_id = $2', ['rejected', offer.counter_offer_id]);
+        await client.query('UPDATE counter_offers SET status = $1 WHERE counter_offer_id = $2', [
+            'rejected',
+            offer.counter_offer_id
+        ]);
 
         // NOTE: We do NOT reject the bid here - garage's previous offer is still valid
         // Customer can use "Accept Last Garage Offer" to accept it
@@ -380,11 +465,14 @@ export class NegotiationService {
         const customerId = bid.customer_id;
         if (customerId) {
             // Get garage's last offer to include in notification
-            const lastGarageOffer = await client.query(`
+            const lastGarageOffer = await client.query(
+                `
                 SELECT proposed_amount FROM counter_offers 
                 WHERE bid_id = $1 AND offered_by_type = 'garage' 
                 ORDER BY round_number DESC LIMIT 1
-            `, [offer.bid_id]);
+            `,
+                [offer.bid_id]
+            );
 
             const garageLastPrice = lastGarageOffer.rows[0]?.proposed_amount;
             const acceptMessage = garageLastPrice
@@ -435,17 +523,32 @@ export class NegotiationService {
         }
     }
 
-    private async createGarageCounter(offer: any, garageId: string, counterPrice: number, notes: string | undefined, client: PoolClient): Promise<void> {
-        await client.query('UPDATE counter_offers SET status = $1 WHERE counter_offer_id = $2', ['countered', offer.counter_offer_id]);
+    private async createGarageCounter(
+        offer: any,
+        garageId: string,
+        counterPrice: number,
+        notes: string | undefined,
+        client: PoolClient
+    ): Promise<void> {
+        await client.query('UPDATE counter_offers SET status = $1 WHERE counter_offer_id = $2', [
+            'countered',
+            offer.counter_offer_id
+        ]);
         const round = offer.round_number + 1;
-        const result = await client.query(`
+        const result = await client.query(
+            `
             INSERT INTO counter_offers(bid_id, request_id, offered_by_type, offered_by_id, proposed_amount, message, round_number)
         VALUES($1, $2, 'garage', $3, $4, $5, $6)
             RETURNING counter_offer_id
-        `, [offer.bid_id, offer.request_id, garageId, counterPrice, notes, round]);
+        `,
+            [offer.bid_id, offer.request_id, garageId, counterPrice, notes, round]
+        );
 
         // ALWAYS notify customer when garage sends counter-offer
-        const bid = await client.query('SELECT b.bid_amount, pr.customer_id FROM bids b JOIN part_requests pr ON b.request_id = pr.request_id WHERE b.bid_id = $1', [offer.bid_id]);
+        const bid = await client.query(
+            'SELECT b.bid_amount, pr.customer_id FROM bids b JOIN part_requests pr ON b.request_id = pr.request_id WHERE b.bid_id = $1',
+            [offer.bid_id]
+        );
 
         if (bid.rows.length > 0) {
             const customerId = bid.rows[0].customer_id;
@@ -524,14 +627,26 @@ export class NegotiationService {
         }
     }
 
-    private async createCustomerCounter(offer: any, customerId: string, counterPrice: number, notes: string | undefined, client: PoolClient): Promise<void> {
-        await client.query('UPDATE counter_offers SET status = $1 WHERE counter_offer_id = $2', ['countered', offer.counter_offer_id]);
+    private async createCustomerCounter(
+        offer: any,
+        customerId: string,
+        counterPrice: number,
+        notes: string | undefined,
+        client: PoolClient
+    ): Promise<void> {
+        await client.query('UPDATE counter_offers SET status = $1 WHERE counter_offer_id = $2', [
+            'countered',
+            offer.counter_offer_id
+        ]);
         const round = offer.round_number + 1;
-        const result = await client.query(`
+        const result = await client.query(
+            `
             INSERT INTO counter_offers(bid_id, request_id, offered_by_type, offered_by_id, proposed_amount, message, round_number)
         VALUES($1, $2, 'customer', $3, $4, $5, $6)
             RETURNING counter_offer_id
-        `, [offer.bid_id, offer.request_id, customerId, counterPrice, notes, round]);
+        `,
+            [offer.bid_id, offer.request_id, customerId, counterPrice, notes, round]
+        );
 
         // Get garage_id from the bid to notify them
         const bid = await client.query('SELECT garage_id, bid_amount FROM bids WHERE bid_id = $1', [offer.bid_id]);
@@ -563,7 +678,14 @@ export class NegotiationService {
         }
     }
 
-    private async notifyCounterOffer(garageId: string, bidId: string, counterOfferId: string, proposed: number, original: number, round: number): Promise<void> {
+    private async notifyCounterOffer(
+        garageId: string,
+        bidId: string,
+        counterOfferId: string,
+        proposed: number,
+        original: number,
+        round: number
+    ): Promise<void> {
         // Create database notification
         await createNotification({
             userId: garageId,

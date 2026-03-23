@@ -2,15 +2,7 @@
 // Buyer confirms receipt, captures photos, releases escrow
 
 import React, { useState } from 'react';
-import {
-    View,
-    Text,
-    StyleSheet,
-    ScrollView,
-    TouchableOpacity,
-    Alert,
-    ActivityIndicator,
-} from 'react-native';
+import { View, Text, StyleSheet, ScrollView, TouchableOpacity, Alert, ActivityIndicator } from 'react-native';
 import { Image } from 'expo-image';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { LinearGradient } from 'expo-linear-gradient';
@@ -47,18 +39,18 @@ export default function DeliveryConfirmationScreen() {
 
         const result = await ImagePicker.launchCameraAsync({
             mediaTypes: ImagePicker.MediaTypeOptions.Images,
-            quality: 0.8,
+            quality: 0.8
         });
 
         if (!result.canceled && result.assets[0]) {
             Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
-            setPhotos(prev => [...prev, result.assets[0].uri]);
+            setPhotos((prev) => [...prev, result.assets[0].uri]);
         }
     };
 
     const removePhoto = (index: number) => {
         Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
-        setPhotos(prev => prev.filter((_, i) => i !== index));
+        setPhotos((prev) => prev.filter((_, i) => i !== index));
     };
 
     const handleConfirm = async () => {
@@ -84,16 +76,12 @@ export default function DeliveryConfirmationScreen() {
     };
 
     const handleReportIssue = () => {
-        Alert.alert(
-            t('delivery.reportIssue'),
-            t('delivery.reportIssuePrompt'),
-            [
-                { text: t('delivery.wrongPart'), onPress: () => navigateDispute('Wrong part received') },
-                { text: t('delivery.damaged'), onPress: () => navigateDispute('Part arrived damaged') },
-                { text: t('delivery.notAsDescribed'), onPress: () => navigateDispute('Condition not as described') },
-                { text: t('common.cancel'), style: 'cancel' }
-            ]
-        );
+        Alert.alert(t('delivery.reportIssue'), t('delivery.reportIssuePrompt'), [
+            { text: t('delivery.wrongPart'), onPress: () => navigateDispute('Wrong part received') },
+            { text: t('delivery.damaged'), onPress: () => navigateDispute('Part arrived damaged') },
+            { text: t('delivery.notAsDescribed'), onPress: () => navigateDispute('Condition not as described') },
+            { text: t('common.cancel'), style: 'cancel' }
+        ]);
     };
 
     const navigateDispute = (reason: string) => {
@@ -105,26 +93,17 @@ export default function DeliveryConfirmationScreen() {
         return (
             <SafeAreaView style={[styles.container, { backgroundColor: colors.background }]}>
                 <View style={styles.successContainer}>
-                    <LinearGradient
-                        colors={[Colors.success, '#2d8a4e']}
-                        style={styles.successIcon}
-                    >
+                    <LinearGradient colors={[Colors.success, '#2d8a4e']} style={styles.successIcon}>
                         <Ionicons name="checkmark" size={60} color="#fff" />
                     </LinearGradient>
-                    <Text style={[styles.successTitle, { color: colors.text }]}>
-                        {t('delivery.confirmed')}
-                    </Text>
+                    <Text style={[styles.successTitle, { color: colors.text }]}>{t('delivery.confirmed')}</Text>
                     <Text style={[styles.successSubtitle, { color: colors.textSecondary }]}>
-                        {t('delivery.paymentReleased')}{'\n'}{t('delivery.thankYou')}
+                        {t('delivery.paymentReleased')}
+                        {'\n'}
+                        {t('delivery.thankYou')}
                     </Text>
-                    <TouchableOpacity
-                        onPress={() => navigation.navigate('HomeTab')}
-                        style={styles.doneButton}
-                    >
-                        <LinearGradient
-                            colors={[Colors.primary, '#6b1029']}
-                            style={styles.doneGradient}
-                        >
+                    <TouchableOpacity onPress={() => navigation.navigate('HomeTab')} style={styles.doneButton}>
+                        <LinearGradient colors={[Colors.primary, '#6b1029']} style={styles.doneGradient}>
                             <Text style={styles.doneButtonText}>{t('common.backToHome')}</Text>
                         </LinearGradient>
                     </TouchableOpacity>
@@ -138,7 +117,7 @@ export default function DeliveryConfirmationScreen() {
             {/* Header */}
             <View style={[styles.header, { borderBottomColor: colors.border, flexDirection: rtlFlexDirection(isRTL) }]}>
                 <TouchableOpacity onPress={() => navigation.goBack()} style={styles.backButton}>
-                    <Ionicons name={isRTL ? "arrow-forward" : "arrow-back"} size={24} color={colors.text} />
+                    <Ionicons name={isRTL ? 'arrow-forward' : 'arrow-back'} size={24} color={colors.text} />
                 </TouchableOpacity>
                 <Text style={[styles.headerTitle, { color: colors.text }]}>{t('delivery.confirmTitle')}</Text>
                 <View style={{ width: 40 }} />
@@ -159,13 +138,23 @@ export default function DeliveryConfirmationScreen() {
                 </View>
 
                 {/* Inspection Timer */}
-                <View style={[styles.timerCard, { backgroundColor: Colors.warning + '20', flexDirection: rtlFlexDirection(isRTL) }]}>
+                <View
+                    style={[
+                        styles.timerCard,
+                        { backgroundColor: Colors.warning + '20', flexDirection: rtlFlexDirection(isRTL) }
+                    ]}
+                >
                     <Ionicons name="time-outline" size={24} color={Colors.warning} />
                     <View style={styles.timerContent}>
                         <Text style={[styles.timerTitle, { color: Colors.warning, textAlign: rtlTextAlign(isRTL) }]}>
                             {t('delivery.inspection')}: {hoursRemaining}h {t('delivery.remaining')}
                         </Text>
-                        <Text style={[styles.timerSubtitle, { color: colors.textSecondary, textAlign: rtlTextAlign(isRTL) }]}>
+                        <Text
+                            style={[
+                                styles.timerSubtitle,
+                                { color: colors.textSecondary, textAlign: rtlTextAlign(isRTL) }
+                            ]}
+                        >
                             {t('delivery.confirmWindow')}
                         </Text>
                     </View>
@@ -176,7 +165,12 @@ export default function DeliveryConfirmationScreen() {
                     <Text style={[styles.sectionTitle, { color: colors.text, textAlign: rtlTextAlign(isRTL) }]}>
                         {t('delivery.captureCondition')}
                     </Text>
-                    <Text style={[styles.sectionSubtitle, { color: colors.textSecondary, textAlign: rtlTextAlign(isRTL) }]}>
+                    <Text
+                        style={[
+                            styles.sectionSubtitle,
+                            { color: colors.textSecondary, textAlign: rtlTextAlign(isRTL) }
+                        ]}
+                    >
                         {t('delivery.takePhotosPrompt')}
                     </Text>
 
@@ -184,10 +178,7 @@ export default function DeliveryConfirmationScreen() {
                         {photos.map((uri, index) => (
                             <View key={index} style={styles.photoWrapper}>
                                 <Image source={{ uri }} style={styles.photo} />
-                                <TouchableOpacity
-                                    style={styles.removeBtn}
-                                    onPress={() => removePhoto(index)}
-                                >
+                                <TouchableOpacity style={styles.removeBtn} onPress={() => removePhoto(index)}>
                                     <Ionicons name="close-circle" size={24} color={Colors.error} />
                                 </TouchableOpacity>
                             </View>
@@ -212,12 +203,21 @@ export default function DeliveryConfirmationScreen() {
                         {t('delivery.beforeConfirming')}
                     </Text>
                     <View style={[styles.checklist, { backgroundColor: colors.surface }]}>
-                        {[t('delivery.check1'), t('delivery.check2'), t('delivery.check3'), t('delivery.check4')].map((item, i) => (
-                            <View key={i} style={[styles.checkItem, { flexDirection: rtlFlexDirection(isRTL) }]}>
-                                <Ionicons name="checkmark-circle-outline" size={20} color={Colors.success} />
-                                <Text style={[styles.checkText, { color: colors.text, textAlign: rtlTextAlign(isRTL) }]}>{item}</Text>
-                            </View>
-                        ))}
+                        {[t('delivery.check1'), t('delivery.check2'), t('delivery.check3'), t('delivery.check4')].map(
+                            (item, i) => (
+                                <View key={i} style={[styles.checkItem, { flexDirection: rtlFlexDirection(isRTL) }]}>
+                                    <Ionicons name="checkmark-circle-outline" size={20} color={Colors.success} />
+                                    <Text
+                                        style={[
+                                            styles.checkText,
+                                            { color: colors.text, textAlign: rtlTextAlign(isRTL) }
+                                        ]}
+                                    >
+                                        {item}
+                                    </Text>
+                                </View>
+                            )
+                        )}
                     </View>
                 </View>
             </ScrollView>
@@ -252,15 +252,18 @@ export default function DeliveryConfirmationScreen() {
                     </LinearGradient>
                 </TouchableOpacity>
             </View>
-        </SafeAreaView >
+        </SafeAreaView>
     );
 }
 
 const styles = StyleSheet.create({
     container: { flex: 1 },
     header: {
-        flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between',
-        padding: Spacing.lg, borderBottomWidth: 1,
+        flexDirection: 'row',
+        alignItems: 'center',
+        justifyContent: 'space-between',
+        padding: Spacing.lg,
+        borderBottomWidth: 1
     },
     backButton: { width: 40, height: 40, justifyContent: 'center' },
     headerTitle: { fontSize: FontSizes.xl, fontWeight: '700' },
@@ -270,8 +273,12 @@ const styles = StyleSheet.create({
     partName: { fontSize: FontSizes.lg, fontWeight: '700', marginBottom: 4 },
     seller: { fontSize: FontSizes.sm },
     timerCard: {
-        flexDirection: 'row', alignItems: 'center', padding: Spacing.lg,
-        borderRadius: BorderRadius.lg, marginBottom: Spacing.lg, gap: Spacing.md,
+        flexDirection: 'row',
+        alignItems: 'center',
+        padding: Spacing.lg,
+        borderRadius: BorderRadius.lg,
+        marginBottom: Spacing.lg,
+        gap: Spacing.md
     },
     timerContent: { flex: 1 },
     timerTitle: { fontWeight: '700' },
@@ -284,8 +291,13 @@ const styles = StyleSheet.create({
     photo: { width: 100, height: 100, borderRadius: BorderRadius.md },
     removeBtn: { position: 'absolute', top: -8, right: -8, backgroundColor: '#fff', borderRadius: 12 },
     addPhoto: {
-        width: 100, height: 100, borderRadius: BorderRadius.md, borderWidth: 2, borderStyle: 'dashed',
-        alignItems: 'center', justifyContent: 'center',
+        width: 100,
+        height: 100,
+        borderRadius: BorderRadius.md,
+        borderWidth: 2,
+        borderStyle: 'dashed',
+        alignItems: 'center',
+        justifyContent: 'center'
     },
     addPhotoText: { fontSize: FontSizes.xs, marginTop: 4 },
     checklist: { padding: Spacing.lg, borderRadius: BorderRadius.lg, gap: Spacing.sm },
@@ -293,23 +305,37 @@ const styles = StyleSheet.create({
     checkText: { flex: 1 },
     footer: { padding: Spacing.lg, borderTopWidth: 1, gap: Spacing.md },
     issueButton: {
-        flexDirection: 'row', alignItems: 'center', justifyContent: 'center',
-        paddingVertical: Spacing.md, borderWidth: 1, borderRadius: BorderRadius.lg, gap: Spacing.sm,
+        flexDirection: 'row',
+        alignItems: 'center',
+        justifyContent: 'center',
+        paddingVertical: Spacing.md,
+        borderWidth: 1,
+        borderRadius: BorderRadius.lg,
+        gap: Spacing.sm
     },
     issueButtonText: { fontWeight: '600' },
     confirmButton: { width: '100%' },
     confirmGradient: {
-        flexDirection: 'row', alignItems: 'center', justifyContent: 'center',
-        paddingVertical: Spacing.lg, borderRadius: BorderRadius.lg, gap: Spacing.sm,
+        flexDirection: 'row',
+        alignItems: 'center',
+        justifyContent: 'center',
+        paddingVertical: Spacing.lg,
+        borderRadius: BorderRadius.lg,
+        gap: Spacing.sm
     },
     confirmButtonText: { color: '#fff', fontWeight: '700', fontSize: FontSizes.md },
     successContainer: { flex: 1, alignItems: 'center', justifyContent: 'center', padding: Spacing.xl },
     successIcon: {
-        width: 100, height: 100, borderRadius: 50, alignItems: 'center', justifyContent: 'center', marginBottom: Spacing.lg,
+        width: 100,
+        height: 100,
+        borderRadius: 50,
+        alignItems: 'center',
+        justifyContent: 'center',
+        marginBottom: Spacing.lg
     },
     successTitle: { fontSize: FontSizes.xxl, fontWeight: '700', marginBottom: Spacing.sm },
     successSubtitle: { fontSize: FontSizes.md, textAlign: 'center', lineHeight: 24, marginBottom: Spacing.xl },
     doneButton: { width: '100%' },
     doneGradient: { paddingVertical: Spacing.lg, borderRadius: BorderRadius.lg, alignItems: 'center' },
-    doneButtonText: { color: '#fff', fontWeight: '700', fontSize: FontSizes.md },
+    doneButtonText: { color: '#fff', fontWeight: '700', fontSize: FontSizes.md }
 });

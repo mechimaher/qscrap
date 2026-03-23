@@ -34,18 +34,9 @@ const GARAGE_APPROVAL_STATUSES: Array<NonNullable<GarageFilters['approval_status
     'all'
 ];
 
-const CREATABLE_USER_TYPES: CreateUserDto['user_type'][] = [
-    'customer',
-    'garage',
-    'driver',
-    'staff'
-];
+const CREATABLE_USER_TYPES: CreateUserDto['user_type'][] = ['customer', 'garage', 'driver', 'staff'];
 
-const SUPPLIER_TYPES: SpecializationData['supplier_type'][] = [
-    'dealer',
-    'aftermarket',
-    'general'
-];
+const SUPPLIER_TYPES: SpecializationData['supplier_type'][] = ['dealer', 'aftermarket', 'general'];
 
 interface GarageParams {
     garage_id: string;
@@ -341,12 +332,7 @@ export const grantDemoAccess = async (req: AuthRequest, res: Response) => {
         const days = toOptionalInt(body.days);
         const notes = toQueryString(body.notes);
 
-        const result = await garageApprovalService.grantDemoAccess(
-            garage_id,
-            adminId,
-            days,
-            notes
-        );
+        const result = await garageApprovalService.grantDemoAccess(garage_id, adminId, days, notes);
         res.json(result);
     } catch (error) {
         logAdminError('grantDemoAccess error:', error);
@@ -365,11 +351,7 @@ export const revokeGarageAccess = async (req: AuthRequest, res: Response) => {
         const body = req.body as unknown as RevokeGarageAccessBody;
         const reason = toQueryString(body.reason);
 
-        const garage = await garageApprovalService.revokeGarageAccess(
-            garage_id,
-            adminId,
-            reason ?? ''
-        );
+        const garage = await garageApprovalService.revokeGarageAccess(garage_id, adminId, reason ?? '');
         res.json({ message: 'Garage access revoked', garage });
     } catch (error) {
         logAdminError('revokeGarageAccess error:', error);
@@ -514,12 +496,10 @@ export const assignPlanToGarage = async (req: AuthRequest, res: Response) => {
         const months = toOptionalInt(body.months);
         const notes = toQueryString(body.notes);
 
-        const subscription = await subscriptionService.assignPlanToGarage(
-            garage_id,
-            planId,
-            adminId,
-            { months, notes }
-        );
+        const subscription = await subscriptionService.assignPlanToGarage(garage_id, planId, adminId, {
+            months,
+            notes
+        });
 
         res.json({
             message: `Plan assigned for ${months ?? 1} month(s)`,
@@ -565,12 +545,7 @@ export const extendSubscription = async (req: AuthRequest, res: Response) => {
             return res.status(400).json({ error: 'Valid months value is required' });
         }
 
-        const subscription = await subscriptionService.extendSubscription(
-            garage_id,
-            months,
-            adminId,
-            notes
-        );
+        const subscription = await subscriptionService.extendSubscription(garage_id, months, adminId, notes);
 
         res.json({
             message: `Subscription extended by ${months} month(s)`,
@@ -623,15 +598,11 @@ export const updateGarageSpecializationAdmin = async (req: AuthRequest, res: Res
             return res.status(400).json({ error: 'Valid supplier_type is required' });
         }
 
-        const garageResult: unknown = await subscriptionService.updateGarageSpecialization(
-            garage_id,
-            adminId,
-            {
-                supplier_type: supplierType,
-                specialized_brands: specializedBrands,
-                all_brands: allBrands
-            }
-        );
+        const garageResult: unknown = await subscriptionService.updateGarageSpecialization(garage_id, adminId, {
+            supplier_type: supplierType,
+            specialized_brands: specializedBrands,
+            all_brands: allBrands
+        });
         const garage = garageResult as Record<string, unknown>;
 
         res.json({ message: 'Specialization updated successfully', garage });

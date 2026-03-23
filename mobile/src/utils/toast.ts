@@ -18,7 +18,7 @@ export const toast = {
     },
     info: (title: string, message?: string) => {
         Alert.alert(title, message);
-    },
+    }
 };
 
 export default toast;

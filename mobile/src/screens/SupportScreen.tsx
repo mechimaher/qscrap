@@ -11,7 +11,7 @@ import {
     ScrollView,
     Alert,
     ActivityIndicator,
-    RefreshControl,
+    RefreshControl
 } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { useNavigation, useFocusEffect } from '@react-navigation/native';
@@ -24,7 +24,6 @@ import { rtlFlexDirection, rtlTextAlign } from '../utils/rtl';
 import { api } from '../services/api';
 import { CONTACT } from '../constants/contacts';
 import { Ionicons } from '@expo/vector-icons';
-
 
 interface SupportOption {
     id: string;
@@ -50,38 +49,43 @@ const SUPPORT_OPTIONS: SupportOption[] = [
         icon: 'chatbubble-ellipses-outline',
         titleKey: 'support.generalInquiry',
         descriptionKey: 'support.generalDesc',
-        messagePrefix: 'support.generalInquiryPrefix',
+        messagePrefix: 'support.generalInquiryPrefix'
     },
     {
         id: 'order',
         icon: 'cube-outline',
         titleKey: 'support.orderHelp',
         descriptionKey: 'support.orderHelpDesc',
-        messagePrefix: 'support.orderHelpPrefix',
+        messagePrefix: 'support.orderHelpPrefix'
     },
     {
         id: 'payment',
         icon: 'card-outline',
         titleKey: 'support.paymentIssue',
         descriptionKey: 'support.paymentDesc',
-        messagePrefix: 'support.paymentIssuePrefix',
+        messagePrefix: 'support.paymentIssuePrefix'
     },
     {
         id: 'complaint',
         icon: 'warning-outline',
         titleKey: 'support.fileComplaint',
         descriptionKey: 'support.complaintDesc',
-        messagePrefix: 'support.complaintPrefix',
-    },
+        messagePrefix: 'support.complaintPrefix'
+    }
 ];
 
 const getStatusColor = (status: string): string => {
     switch (status) {
-        case 'open': return '#f59e0b';
-        case 'in_progress': return '#3b82f6';
-        case 'resolved': return '#10b981';
-        case 'closed': return '#6b7280';
-        default: return '#6b7280';
+        case 'open':
+            return '#f59e0b';
+        case 'in_progress':
+            return '#3b82f6';
+        case 'resolved':
+            return '#10b981';
+        case 'closed':
+            return '#6b7280';
+        default:
+            return '#6b7280';
     }
 };
 
@@ -95,20 +99,23 @@ export default function SupportScreen() {
     const [refreshing, setRefreshing] = useState(false);
     const [ticketsExpanded, setTicketsExpanded] = useState(true);
 
-    const formatTimeAgo = useCallback((dateString: string): string => {
-        const date = new Date(dateString);
-        const now = new Date();
-        const diffMs = now.getTime() - date.getTime();
-        const diffMins = Math.floor(diffMs / 60000);
-        const diffHours = Math.floor(diffMins / 60);
-        const diffDays = Math.floor(diffHours / 24);
+    const formatTimeAgo = useCallback(
+        (dateString: string): string => {
+            const date = new Date(dateString);
+            const now = new Date();
+            const diffMs = now.getTime() - date.getTime();
+            const diffMins = Math.floor(diffMs / 60000);
+            const diffHours = Math.floor(diffMins / 60);
+            const diffDays = Math.floor(diffHours / 24);
 
-        if (diffMins < 1) return t('support.timeAgo.justNow');
-        if (diffMins < 60) return t('support.timeAgo.minutesAgo', { count: diffMins });
-        if (diffHours < 24) return t('support.timeAgo.hoursAgo', { count: diffHours });
-        if (diffDays < 7) return t('support.timeAgo.daysAgo', { count: diffDays });
-        return date.toLocaleDateString();
-    }, [t]);
+            if (diffMins < 1) return t('support.timeAgo.justNow');
+            if (diffMins < 60) return t('support.timeAgo.minutesAgo', { count: diffMins });
+            if (diffHours < 24) return t('support.timeAgo.hoursAgo', { count: diffHours });
+            if (diffDays < 7) return t('support.timeAgo.daysAgo', { count: diffDays });
+            return date.toLocaleDateString();
+        },
+        [t]
+    );
 
     const fetchTickets = useCallback(async (isRefresh = false) => {
         try {
@@ -159,11 +166,7 @@ export default function SupportScreen() {
             })
             .catch((err) => {
                 logError('WhatsApp open error:', err);
-                Alert.alert(
-                    t('common.error'),
-                    t('support.whatsappNotInstalled'),
-                    [{ text: t('common.ok') }]
-                );
+                Alert.alert(t('common.error'), t('support.whatsappNotInstalled'), [{ text: t('common.ok') }]);
             });
     };
 
@@ -187,7 +190,7 @@ export default function SupportScreen() {
                     {
                         backgroundColor: colors.surface,
                         borderColor: isActive ? statusColor : colors.border,
-                        borderLeftWidth: isActive ? 4 : 1,
+                        borderLeftWidth: isActive ? 4 : 1
                     }
                 ]}
                 onPress={() => openTicketWhatsApp(ticket)}
@@ -201,9 +204,7 @@ export default function SupportScreen() {
                         {ticket.subject}
                     </Text>
                     <View style={[styles.statusBadge, { backgroundColor: `${statusColor}20` }]}>
-                        <Text style={[styles.statusText, { color: statusColor }]}>
-                            {statusLabel}
-                        </Text>
+                        <Text style={[styles.statusText, { color: statusColor }]}>{statusLabel}</Text>
                     </View>
                 </View>
                 <View style={[styles.ticketMeta, { flexDirection: rtlFlexDirection(isRTL) }]}>
@@ -217,7 +218,12 @@ export default function SupportScreen() {
                     )}
                 </View>
                 <View style={[styles.ticketAction, { flexDirection: rtlFlexDirection(isRTL) }]}>
-                    <Ionicons name="logo-whatsapp" size={14} color={Colors.primary} style={{ marginRight: Spacing.xs }} />
+                    <Ionicons
+                        name="logo-whatsapp"
+                        size={14}
+                        color={Colors.primary}
+                        style={{ marginRight: Spacing.xs }}
+                    />
                     <Text style={[styles.ticketActionText, { color: Colors.primary }]}>
                         {t('support.followUpWhatsApp')}
                     </Text>
@@ -227,7 +233,7 @@ export default function SupportScreen() {
     };
 
     const renderTicketsSection = () => {
-        const activeTickets = tickets.filter(t => t.status === 'open' || t.status === 'in_progress');
+        const activeTickets = tickets.filter((t) => t.status === 'open' || t.status === 'in_progress');
         const hasActiveTickets = activeTickets.length > 0;
 
         if (loadingTickets) {
@@ -259,13 +265,18 @@ export default function SupportScreen() {
                         </View>
                     </View>
                     <Text style={[styles.expandIcon, { color: colors.textSecondary }]}>
-                        {ticketsExpanded ? '▼' : (isRTL ? '◀' : '▶')}
+                        {ticketsExpanded ? '▼' : isRTL ? '◀' : '▶'}
                     </Text>
                 </TouchableOpacity>
 
                 {ticketsExpanded && (
                     <View style={styles.ticketsList}>
-                        <Text style={[styles.ticketsHint, { color: colors.textSecondary, textAlign: rtlTextAlign(isRTL) }]}>
+                        <Text
+                            style={[
+                                styles.ticketsHint,
+                                { color: colors.textSecondary, textAlign: rtlTextAlign(isRTL) }
+                            ]}
+                        >
                             {t('support.ticketsHint')}
                         </Text>
                         {activeTickets.map(renderTicketCard)}
@@ -290,7 +301,12 @@ export default function SupportScreen() {
                     <Text style={[styles.optionTitle, { color: colors.text, textAlign: rtlTextAlign(isRTL) }]}>
                         {t(option.titleKey)}
                     </Text>
-                    <Text style={[styles.optionDescription, { color: colors.textSecondary, textAlign: rtlTextAlign(isRTL) }]}>
+                    <Text
+                        style={[
+                            styles.optionDescription,
+                            { color: colors.textSecondary, textAlign: rtlTextAlign(isRTL) }
+                        ]}
+                    >
                         {t(option.descriptionKey)}
                     </Text>
                 </View>
@@ -302,9 +318,22 @@ export default function SupportScreen() {
     return (
         <SafeAreaView style={[styles.container, { backgroundColor: colors.background }]} edges={['top']}>
             {/* Header */}
-            <View style={[styles.header, { backgroundColor: colors.surface, borderBottomColor: colors.border, flexDirection: rtlFlexDirection(isRTL) }]}>
-                <TouchableOpacity onPress={() => navigation.goBack()} style={[styles.backButton, { backgroundColor: colors.background }]}>
-                    <Ionicons name="arrow-back" size={20} color={Colors.primary} /> <Text style={styles.backText}>{t('common.back')}</Text>
+            <View
+                style={[
+                    styles.header,
+                    {
+                        backgroundColor: colors.surface,
+                        borderBottomColor: colors.border,
+                        flexDirection: rtlFlexDirection(isRTL)
+                    }
+                ]}
+            >
+                <TouchableOpacity
+                    onPress={() => navigation.goBack()}
+                    style={[styles.backButton, { backgroundColor: colors.background }]}
+                >
+                    <Ionicons name="arrow-back" size={20} color={Colors.primary} />{' '}
+                    <Text style={styles.backText}>{t('common.back')}</Text>
                 </TouchableOpacity>
                 <Text style={[styles.headerTitle, { color: colors.text }]}>{t('support.title')}</Text>
                 <View style={{ width: 60 }} />
@@ -332,14 +361,21 @@ export default function SupportScreen() {
                     >
                         <Ionicons name="logo-whatsapp" size={48} color="#fff" style={{ marginBottom: Spacing.md }} />
                         <Text style={[styles.heroTitle, { textAlign: 'center' }]}>{t('support.whatsappTitle')}</Text>
-                        <Text style={[styles.heroSubtitle, { textAlign: 'center' }]}>{t('support.whatsappSubtitle')}</Text>
+                        <Text style={[styles.heroSubtitle, { textAlign: 'center' }]}>
+                            {t('support.whatsappSubtitle')}
+                        </Text>
 
                         <TouchableOpacity
                             style={styles.mainChatButton}
                             onPress={() => openWhatsApp('support.startChatPrefix')}
                             activeOpacity={0.9}
                         >
-                            <Ionicons name="chatbubble-outline" size={20} color="#25D366" style={{ marginRight: Spacing.sm }} />
+                            <Ionicons
+                                name="chatbubble-outline"
+                                size={20}
+                                color="#25D366"
+                                style={{ marginRight: Spacing.sm }}
+                            />
                             <Text style={styles.mainChatText}>{t('support.startChat')}</Text>
                         </TouchableOpacity>
                     </LinearGradient>
@@ -358,12 +394,19 @@ export default function SupportScreen() {
 
                 {/* Business Hours Info */}
                 <View style={[styles.infoCard, { backgroundColor: colors.surface, borderColor: colors.border }]}>
-                    <Ionicons name="time-outline" size={32} color={Colors.primary} style={{ marginRight: Spacing.md }} />
+                    <Ionicons
+                        name="time-outline"
+                        size={32}
+                        color={Colors.primary}
+                        style={{ marginRight: Spacing.md }}
+                    />
                     <View style={styles.infoTextContainer}>
                         <Text style={[styles.infoTitle, { color: colors.text, textAlign: rtlTextAlign(isRTL) }]}>
                             {t('support.businessHours')}
                         </Text>
-                        <Text style={[styles.infoText, { color: colors.textSecondary, textAlign: rtlTextAlign(isRTL) }]}>
+                        <Text
+                            style={[styles.infoText, { color: colors.textSecondary, textAlign: rtlTextAlign(isRTL) }]}
+                        >
                             {t('support.hoursDetail')}
                         </Text>
                     </View>
@@ -371,12 +414,19 @@ export default function SupportScreen() {
 
                 {/* Response Time Promise */}
                 <View style={[styles.infoCard, { backgroundColor: colors.surface, borderColor: colors.border }]}>
-                    <Ionicons name="flash-outline" size={32} color={Colors.primary} style={{ marginRight: Spacing.md }} />
+                    <Ionicons
+                        name="flash-outline"
+                        size={32}
+                        color={Colors.primary}
+                        style={{ marginRight: Spacing.md }}
+                    />
                     <View style={styles.infoTextContainer}>
                         <Text style={[styles.infoTitle, { color: colors.text, textAlign: rtlTextAlign(isRTL) }]}>
                             {t('support.fastResponse')}
                         </Text>
-                        <Text style={[styles.infoText, { color: colors.textSecondary, textAlign: rtlTextAlign(isRTL) }]}>
+                        <Text
+                            style={[styles.infoText, { color: colors.textSecondary, textAlign: rtlTextAlign(isRTL) }]}
+                        >
                             {t('support.responseTime')}
                         </Text>
                     </View>
@@ -397,12 +447,12 @@ const styles = StyleSheet.create({
         padding: Spacing.lg,
         backgroundColor: '#fff',
         borderBottomWidth: 1,
-        borderBottomColor: '#F0F0F0',
+        borderBottomColor: '#F0F0F0'
     },
     backButton: {
         padding: Spacing.sm,
         backgroundColor: '#F5F5F5',
-        borderRadius: BorderRadius.md,
+        borderRadius: BorderRadius.md
     },
     backText: { color: Colors.primary, fontSize: FontSizes.md, fontWeight: '600' },
     headerTitle: { fontSize: FontSizes.xl, fontWeight: '800', color: '#1a1a1a' },
@@ -411,26 +461,26 @@ const styles = StyleSheet.create({
         margin: Spacing.lg,
         borderRadius: BorderRadius.xl,
         overflow: 'hidden',
-        ...Shadows.lg,
+        ...Shadows.lg
     },
     heroGradient: {
         padding: Spacing.xl,
-        alignItems: 'center',
+        alignItems: 'center'
     },
     heroIcon: {
         fontSize: 48,
-        marginBottom: Spacing.md,
+        marginBottom: Spacing.md
     },
     heroTitle: {
         fontSize: FontSizes.xxl,
         fontWeight: '800',
         color: '#fff',
-        marginBottom: Spacing.sm,
+        marginBottom: Spacing.sm
     },
     heroSubtitle: {
         fontSize: FontSizes.md,
         color: 'rgba(255,255,255,0.9)',
-        marginBottom: Spacing.lg,
+        marginBottom: Spacing.lg
     },
     mainChatButton: {
         flexDirection: 'row',
@@ -439,16 +489,16 @@ const styles = StyleSheet.create({
         paddingHorizontal: Spacing.xl,
         paddingVertical: Spacing.md,
         borderRadius: BorderRadius.full,
-        ...Shadows.md,
+        ...Shadows.md
     },
     mainChatIcon: {
         fontSize: 20,
-        marginRight: Spacing.sm,
+        marginRight: Spacing.sm
     },
     mainChatText: {
         fontSize: FontSizes.md,
         fontWeight: '700',
-        color: '#25D366',
+        color: '#25D366'
     },
     // Tickets Section
     ticketsSection: {
@@ -457,116 +507,116 @@ const styles = StyleSheet.create({
         borderRadius: BorderRadius.xl,
         borderWidth: 1,
         overflow: 'hidden',
-        ...Shadows.sm,
+        ...Shadows.sm
     },
     ticketsSectionHeader: {
         flexDirection: 'row',
         alignItems: 'center',
         justifyContent: 'space-between',
         padding: Spacing.lg,
-        backgroundColor: 'rgba(245, 158, 11, 0.08)',
+        backgroundColor: 'rgba(245, 158, 11, 0.08)'
     },
     ticketsSectionTitleRow: {
         flexDirection: 'row',
         alignItems: 'center',
-        gap: Spacing.sm,
+        gap: Spacing.sm
     },
     ticketsSectionIcon: {
-        fontSize: 20,
+        fontSize: 20
     },
     ticketsSectionTitle: {
         fontSize: FontSizes.md,
-        fontWeight: '700',
+        fontWeight: '700'
     },
     ticketCountBadge: {
         paddingHorizontal: Spacing.sm,
         paddingVertical: 2,
         borderRadius: BorderRadius.full,
         minWidth: 24,
-        alignItems: 'center',
+        alignItems: 'center'
     },
     ticketCountText: {
         color: '#fff',
         fontSize: FontSizes.xs,
-        fontWeight: '700',
+        fontWeight: '700'
     },
     expandIcon: {
-        fontSize: 12,
+        fontSize: 12
     },
     ticketsList: {
         padding: Spacing.md,
-        paddingTop: 0,
+        paddingTop: 0
     },
     ticketsHint: {
         fontSize: FontSizes.xs,
         marginBottom: Spacing.sm,
-        fontStyle: 'italic',
+        fontStyle: 'italic'
     },
     ticketCard: {
         borderRadius: BorderRadius.lg,
         padding: Spacing.md,
         marginBottom: Spacing.sm,
-        borderWidth: 1,
+        borderWidth: 1
     },
     ticketHeader: {
         flexDirection: 'row',
         alignItems: 'center',
         justifyContent: 'space-between',
-        marginBottom: Spacing.xs,
+        marginBottom: Spacing.xs
     },
     ticketSubject: {
         fontSize: FontSizes.md,
         fontWeight: '600',
         flex: 1,
-        marginRight: Spacing.sm,
+        marginRight: Spacing.sm
     },
     statusBadge: {
         paddingHorizontal: Spacing.sm,
         paddingVertical: 2,
-        borderRadius: BorderRadius.sm,
+        borderRadius: BorderRadius.sm
     },
     statusText: {
         fontSize: FontSizes.xs,
         fontWeight: '700',
-        textTransform: 'uppercase',
+        textTransform: 'uppercase'
     },
     ticketMeta: {
         flexDirection: 'row',
         alignItems: 'center',
-        marginBottom: Spacing.sm,
+        marginBottom: Spacing.sm
     },
     ticketTime: {
-        fontSize: FontSizes.xs,
+        fontSize: FontSizes.xs
     },
     ticketCategory: {
         fontSize: FontSizes.xs,
-        marginLeft: Spacing.xs,
+        marginLeft: Spacing.xs
     },
     ticketAction: {
         flexDirection: 'row',
         alignItems: 'center',
         paddingTop: Spacing.xs,
         borderTopWidth: 1,
-        borderTopColor: 'rgba(0,0,0,0.05)',
+        borderTopColor: 'rgba(0,0,0,0.05)'
     },
     whatsappIcon: {
         fontSize: 14,
-        marginRight: Spacing.xs,
+        marginRight: Spacing.xs
     },
     ticketActionText: {
         fontSize: FontSizes.sm,
-        fontWeight: '600',
+        fontWeight: '600'
     },
     // Existing styles
     optionsSection: {
         paddingHorizontal: Spacing.lg,
-        marginBottom: Spacing.lg,
+        marginBottom: Spacing.lg
     },
     sectionTitle: {
         fontSize: FontSizes.lg,
         fontWeight: '700',
         color: '#1a1a1a',
-        marginBottom: Spacing.md,
+        marginBottom: Spacing.md
     },
     optionCard: {
         backgroundColor: '#fff',
@@ -575,11 +625,11 @@ const styles = StyleSheet.create({
         marginBottom: Spacing.md,
         borderWidth: 1,
         borderColor: '#E8E8E8',
-        ...Shadows.sm,
+        ...Shadows.sm
     },
     optionContent: {
         flexDirection: 'row',
-        alignItems: 'center',
+        alignItems: 'center'
     },
     iconContainer: {
         width: 48,
@@ -588,27 +638,27 @@ const styles = StyleSheet.create({
         backgroundColor: '#F5F5F5',
         alignItems: 'center',
         justifyContent: 'center',
-        marginRight: Spacing.md,
+        marginRight: Spacing.md
     },
     optionIcon: {
-        fontSize: 24,
+        fontSize: 24
     },
     textContainer: {
-        flex: 1,
+        flex: 1
     },
     optionTitle: {
         fontSize: FontSizes.md,
         fontWeight: '700',
         color: '#1a1a1a',
-        marginBottom: 4,
+        marginBottom: 4
     },
     optionDescription: {
         fontSize: FontSizes.sm,
-        color: '#525252',
+        color: '#525252'
     },
     arrow: {
         fontSize: 20,
-        fontWeight: '700',
+        fontWeight: '700'
     },
     infoCard: {
         flexDirection: 'row',
@@ -619,23 +669,23 @@ const styles = StyleSheet.create({
         marginHorizontal: Spacing.lg,
         marginBottom: Spacing.md,
         borderWidth: 1,
-        borderColor: '#E8E8E8',
+        borderColor: '#E8E8E8'
     },
     infoIcon: {
         fontSize: 32,
-        marginRight: Spacing.md,
+        marginRight: Spacing.md
     },
     infoTextContainer: {
-        flex: 1,
+        flex: 1
     },
     infoTitle: {
         fontSize: FontSizes.md,
         fontWeight: '700',
         color: '#1a1a1a',
-        marginBottom: 4,
+        marginBottom: 4
     },
     infoText: {
         fontSize: FontSizes.sm,
-        color: '#525252',
-    },
+        color: '#525252'
+    }
 });

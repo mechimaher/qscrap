@@ -1,6 +1,6 @@
 /**
  * SMS Service - Simple integration for critical notifications
- * 
+ *
  * Uses Twilio for SMS delivery (Qatar-compliant)
  * Only used for critical financial actions (refunds, payments)
  */
@@ -45,11 +45,12 @@ class SMSService {
             const client = twilio(this.accountSid, this.authToken);
 
             const message = await withRetry<any>(
-                () => client.messages.create({
-                    body: options.message,
-                    from: this.fromNumber,
-                    to: options.to
-                }),
+                () =>
+                    client.messages.create({
+                        body: options.message,
+                        from: this.fromNumber,
+                        to: options.to
+                    }),
                 { label: 'twilio.sendSms' }
             );
 

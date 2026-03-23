@@ -11,31 +11,39 @@ import { View } from 'react-native';
 
 // Mock Stripe provider and CardField
 const mockSetCardComplete = jest.fn();
-jest.mock('@stripe/stripe-react-native', () => ({
-    CardField: (props: any) => (
-        <View
-            testID="card-field"
-            {...{ onChange: () => props.onCardChange?.({ complete: true }) }}
-        />
-    ),
-}));
+jest.mock('@stripe/stripe-react-native', () => {
+    const React = require('react');
+    const { View } = require('react-native');
+    return {
+        CardField: ({ onCardChange, cardStyle, style, ...rest }) => (
+            <View
+                testID="card-field"
+                onChange={onCardChange}
+                style={[style, cardStyle]}
+                cardStyle={cardStyle}
+                postalCodeEnabled={rest.postalCodeEnabled}
+                placeholders={rest.placeholders}
+            />
+        )
+    };
+});
 
 describe('StripeCardField', () => {
     const defaultProps = {
         colors: {
             text: '#1F2937',
-            textSecondary: '#6B7280',
+            textSecondary: '#6B7280'
         },
         t: (key: string) => {
             const translations: Record<string, string> = {
                 'payment.cardDetails': 'Card Details',
                 'payment.enterCardInfo': 'Enter your card information',
-                'payment.cardSecure': 'Your card information is secure',
+                'payment.cardSecure': 'Your card information is secure'
             };
             return translations[key] || key;
         },
         setCardComplete: mockSetCardComplete,
-        isRTL: false,
+        isRTL: false
     };
 
     beforeEach(() => {
@@ -88,8 +96,8 @@ describe('StripeCardField', () => {
         expect(title.props.style).toEqual(
             expect.arrayContaining([
                 expect.objectContaining({
-                    color: '#1F2937',
-                }),
+                    color: '#1F2937'
+                })
             ])
         );
     });
@@ -110,8 +118,8 @@ describe('StripeCardField', () => {
             expect.arrayContaining([
                 expect.objectContaining({
                     backgroundColor: '#FFFFFF',
-                    textColor: '#1F2937',
-                }),
+                    textColor: '#1F2937'
+                })
             ])
         );
     });
@@ -124,7 +132,7 @@ describe('StripeCardField', () => {
         expect(cardField.props.placeholders).toEqual({
             number: '1234 1234 1234 1234',
             expiration: 'MM/YY',
-            cvc: 'CVC',
+            cvc: 'CVC'
         });
     });
 

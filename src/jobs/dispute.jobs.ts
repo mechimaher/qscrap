@@ -26,7 +26,8 @@ export async function autoResolveDisputes(pool: Pool): Promise<number> {
 
         for (const dispute of result.rows) {
             // Auto-approve in favor of customer
-            await client.query(`
+            await client.query(
+                `
                 UPDATE disputes 
                 SET status = 'resolved',
                     resolution = 'auto_approved',
@@ -34,20 +35,28 @@ export async function autoResolveDisputes(pool: Pool): Promise<number> {
                     resolved_at = NOW(),
                     resolved_by = NULL
                 WHERE dispute_id = $1
-            `, [dispute.dispute_id]);
+            `,
+                [dispute.dispute_id]
+            );
 
             // Update order to refunded
-            await client.query(`
+            await client.query(
+                `
                 UPDATE orders SET order_status = 'refunded', updated_at = NOW()
                 WHERE order_id = $1
-            `, [dispute.order_id]);
+            `,
+                [dispute.order_id]
+            );
 
             // Add to order history
-            await client.query(`
+            await client.query(
+                `
                 INSERT INTO order_status_history 
                 (order_id, old_status, new_status, changed_by_type, reason)
                 VALUES ($1, 'disputed', 'refunded', 'system', 'Auto-resolved dispute - no garage response')
-            `, [dispute.order_id]);
+            `,
+                [dispute.order_id]
+            );
 
             resolvedCount++;
 

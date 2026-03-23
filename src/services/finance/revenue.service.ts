@@ -12,10 +12,7 @@ import {
     Transaction,
     TransactionDetail
 } from './types';
-import {
-    InvalidPeriodError,
-    OrderNotFoundError
-} from './errors';
+import { InvalidPeriodError, OrderNotFoundError } from './errors';
 
 const ALLOWED_PERIODS: Record<RevenuePeriod, number> = {
     '7d': 7,
@@ -24,15 +21,12 @@ const ALLOWED_PERIODS: Record<RevenuePeriod, number> = {
 };
 
 export class RevenueService {
-    constructor(private pool: Pool) { }
+    constructor(private pool: Pool) {}
 
     /**
      * Get revenue report for specified period
      */
-    async getRevenueReport(
-        period: RevenuePeriod,
-        filters?: RevenueFilters
-    ): Promise<RevenueReport> {
+    async getRevenueReport(period: RevenuePeriod, filters?: RevenueFilters): Promise<RevenueReport> {
         if (!ALLOWED_PERIODS[period]) {
             throw new InvalidPeriodError(period, Object.keys(ALLOWED_PERIODS));
         }
@@ -252,16 +246,20 @@ export class RevenueService {
             garage_payout_amount: row.garage_payout_amount,
             payment_status: row.payment_status,
             order_status: row.order_status,
-            payout: row.payout_id ? {
-                payout_id: row.payout_id,
-                net_amount: row.payout_amount,
-                payout_status: row.payout_status
-            } : undefined,
-            refund: row.refund_id ? {
-                refund_id: row.refund_id,
-                refund_amount: row.refund_amount,
-                refund_status: row.refund_status
-            } : undefined,
+            payout: row.payout_id
+                ? {
+                      payout_id: row.payout_id,
+                      net_amount: row.payout_amount,
+                      payout_status: row.payout_status
+                  }
+                : undefined,
+            refund: row.refund_id
+                ? {
+                      refund_id: row.refund_id,
+                      refund_amount: row.refund_amount,
+                      refund_status: row.refund_status
+                  }
+                : undefined,
             created_at: row.created_at
         };
     }

@@ -74,7 +74,7 @@ export const isEmpty = (obj: any): boolean => {
  * Delay execution
  */
 export const delay = (ms: number): Promise<void> => {
-    return new Promise(resolve => setTimeout(resolve, ms));
+    return new Promise((resolve) => setTimeout(resolve, ms));
 };
 
 /**
@@ -147,14 +147,17 @@ export const throttle = <T extends (...args: any[]) => any>(
  * Group array items by key
  */
 export const groupBy = <T>(array: T[], key: keyof T): Record<string, T[]> => {
-    return array.reduce((result, item) => {
-        const groupKey = String(item[key]);
-        if (!result[groupKey]) {
-            result[groupKey] = [];
-        }
-        result[groupKey].push(item);
-        return result;
-    }, {} as Record<string, T[]>);
+    return array.reduce(
+        (result, item) => {
+            const groupKey = String(item[key]);
+            if (!result[groupKey]) {
+                result[groupKey] = [];
+            }
+            result[groupKey].push(item);
+            return result;
+        },
+        {} as Record<string, T[]>
+    );
 };
 
 /**
@@ -177,7 +180,7 @@ export const sortBy = <T>(array: T[], key: keyof T, order: 'asc' | 'desc' = 'asc
 export const unique = <T>(array: T[], key?: keyof T): T[] => {
     if (key) {
         const seen = new Set();
-        return array.filter(item => {
+        return array.filter((item) => {
             const val = item[key];
             if (seen.has(val)) return false;
             seen.add(val);
@@ -212,9 +215,7 @@ export const getInitials = (name: string, maxChars: number = 2): string => {
     if (!name) return '';
 
     const parts = name.trim().split(/\s+/);
-    const initials = parts
-        .map(part => part.charAt(0).toUpperCase())
-        .join('');
+    const initials = parts.map((part) => part.charAt(0).toUpperCase()).join('');
 
     return initials.slice(0, maxChars);
 };
@@ -229,9 +230,18 @@ export const stringToColor = (str: string): string => {
     }
 
     const colors = [
-        '#6366f1', '#8b5cf6', '#ec4899', '#ef4444', '#f97316',
-        '#f59e0b', '#84cc16', '#22c55e', '#14b8a6', '#06b6d4',
-        '#3b82f6', '#6366f1',
+        '#6366f1',
+        '#8b5cf6',
+        '#ec4899',
+        '#ef4444',
+        '#f97316',
+        '#f59e0b',
+        '#84cc16',
+        '#22c55e',
+        '#14b8a6',
+        '#06b6d4',
+        '#3b82f6',
+        '#6366f1'
     ];
 
     return colors[Math.abs(hash) % colors.length];
@@ -254,10 +264,7 @@ export const devLog = (...args: any[]): void => {
 /**
  * Measure execution time
  */
-export const measureTime = async <T>(
-    label: string,
-    fn: () => Promise<T>
-): Promise<T> => {
+export const measureTime = async <T>(label: string, fn: () => Promise<T>): Promise<T> => {
     const start = Date.now();
     try {
         const result = await fn();

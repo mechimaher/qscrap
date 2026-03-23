@@ -8,7 +8,7 @@ import {
     TextInput,
     FlatList,
     Platform,
-    KeyboardAvoidingView,
+    KeyboardAvoidingView
 } from 'react-native';
 import { Colors, Spacing, BorderRadius, FontSizes, Shadows } from '../constants/theme';
 import { Ionicons } from '@expo/vector-icons';
@@ -32,7 +32,7 @@ export default function SearchableDropdown({
     value,
     onSelect,
     label,
-    disabled = false,
+    disabled = false
 }: SearchableDropdownProps) {
     const { t, isRTL } = useTranslation();
     const [visible, setVisible] = useState(false);
@@ -42,9 +42,7 @@ export default function SearchableDropdown({
     const [isCustom, setIsCustom] = useState(false);
 
     useEffect(() => {
-        setFilteredItems(
-            items.filter(i => i.toLowerCase().includes(search.toLowerCase()))
-        );
+        setFilteredItems(items.filter((i) => i.toLowerCase().includes(search.toLowerCase())));
     }, [search, items]);
 
     const handleSelect = (item: string) => {
@@ -83,15 +81,17 @@ export default function SearchableDropdown({
                 <Text style={[styles.valueText, !value && styles.placeholderText, { textAlign: rtlTextAlign(isRTL) }]}>
                     {value || placeholder}
                 </Text>
-                <Text style={[styles.arrowIcon, isRTL ? { marginRight: Spacing.sm, marginLeft: 0 } : { marginLeft: Spacing.sm }]}>▼</Text>
+                <Text
+                    style={[
+                        styles.arrowIcon,
+                        isRTL ? { marginRight: Spacing.sm, marginLeft: 0 } : { marginLeft: Spacing.sm }
+                    ]}
+                >
+                    ▼
+                </Text>
             </TouchableOpacity>
 
-            <Modal
-                visible={visible}
-                animationType="slide"
-                transparent={true}
-                onRequestClose={() => setVisible(false)}
-            >
+            <Modal visible={visible} animationType="slide" transparent={true} onRequestClose={() => setVisible(false)}>
                 <KeyboardAvoidingView
                     behavior={Platform.OS === 'ios' ? 'padding' : undefined}
                     style={styles.modalOverlay}
@@ -107,7 +107,12 @@ export default function SearchableDropdown({
                         {!isCustom ? (
                             <>
                                 <View style={[styles.searchContainer, { flexDirection: rtlFlexDirection(isRTL) }]}>
-                                    <Ionicons name="search" size={16} color="#9CA3AF" style={isRTL ? { marginLeft: Spacing.sm } : { marginRight: Spacing.sm }} />
+                                    <Ionicons
+                                        name="search"
+                                        size={16}
+                                        color="#9CA3AF"
+                                        style={isRTL ? { marginLeft: Spacing.sm } : { marginRight: Spacing.sm }}
+                                    />
                                     <TextInput
                                         style={[styles.searchInput, { textAlign: rtlTextAlign(isRTL) }]}
                                         placeholder={t('common.searchPlaceholder')}
@@ -127,24 +132,26 @@ export default function SearchableDropdown({
                                             style={[styles.item, { flexDirection: rtlFlexDirection(isRTL) }]}
                                             onPress={() => handleSelect(item)}
                                         >
-                                            <Text style={[
-                                                styles.itemText,
-                                                item === value && styles.selectedItemText,
-                                                item === t('common.other') && styles.otherItemText
-                                            ]}>
+                                            <Text
+                                                style={[
+                                                    styles.itemText,
+                                                    item === value && styles.selectedItemText,
+                                                    item === t('common.other') && styles.otherItemText
+                                                ]}
+                                            >
                                                 {item}
                                             </Text>
                                             {item === value && <Text style={styles.checkIcon}>✓</Text>}
                                         </TouchableOpacity>
                                     )}
-                                    ListEmptyComponent={
-                                        <Text style={styles.emptyText}>{t('common.noMatches')}</Text>
-                                    }
+                                    ListEmptyComponent={<Text style={styles.emptyText}>{t('common.noMatches')}</Text>}
                                 />
                             </>
                         ) : (
                             <View style={styles.customContainer}>
-                                <Text style={[styles.customLabel, { textAlign: rtlTextAlign(isRTL) }]}>{t('common.enterManually')}</Text>
+                                <Text style={[styles.customLabel, { textAlign: rtlTextAlign(isRTL) }]}>
+                                    {t('common.enterManually')}
+                                </Text>
                                 <TextInput
                                     style={[styles.customInput, { textAlign: rtlTextAlign(isRTL) }]}
                                     placeholder={t('common.typeValue', { label: label || 'value' })}
@@ -154,17 +161,11 @@ export default function SearchableDropdown({
                                     autoFocus={true}
                                 />
                                 <TouchableOpacity onPress={handleCustomSubmit}>
-                                    <LinearGradient
-                                        colors={Colors.gradients.primary}
-                                        style={styles.submitButton}
-                                    >
+                                    <LinearGradient colors={Colors.gradients.primary} style={styles.submitButton}>
                                         <Text style={styles.submitButtonText}>{t('common.confirm')}</Text>
                                     </LinearGradient>
                                 </TouchableOpacity>
-                                <TouchableOpacity
-                                    style={styles.backButton}
-                                    onPress={() => setIsCustom(false)}
-                                >
+                                <TouchableOpacity style={styles.backButton} onPress={() => setIsCustom(false)}>
                                     <Text style={styles.backButtonText}>{t('common.backToList')}</Text>
                                 </TouchableOpacity>
                             </View>
@@ -182,7 +183,7 @@ const styles = StyleSheet.create({
         fontSize: FontSizes.sm,
         color: '#525252',
         marginBottom: Spacing.xs,
-        fontWeight: '600',
+        fontWeight: '600'
     },
     selector: {
         flexDirection: 'row',
@@ -194,25 +195,25 @@ const styles = StyleSheet.create({
         borderWidth: 1,
         borderColor: '#E8E8E8',
         height: 52,
-        ...Shadows.sm,
+        ...Shadows.sm
     },
     disabled: { opacity: 0.5 },
     valueText: {
         fontSize: FontSizes.md,
         color: '#1a1a2e',
         flex: 1,
-        fontWeight: '500',
+        fontWeight: '500'
     },
     placeholderText: { color: '#9CA3AF' },
     arrowIcon: {
         fontSize: 12,
         color: '#6B7280',
-        marginLeft: Spacing.sm,
+        marginLeft: Spacing.sm
     },
     modalOverlay: {
         flex: 1,
         justifyContent: 'flex-end',
-        backgroundColor: 'rgba(0,0,0,0.7)',
+        backgroundColor: 'rgba(0,0,0,0.7)'
     },
     modalContent: {
         backgroundColor: '#FFFFFF',
@@ -221,22 +222,22 @@ const styles = StyleSheet.create({
         paddingTop: Spacing.lg,
         maxHeight: '80%',
         minHeight: 400,
-        ...Shadows.lg,
+        ...Shadows.lg
     },
     modalHeader: {
         flexDirection: 'row',
         justifyContent: 'space-between',
         alignItems: 'center',
         paddingHorizontal: Spacing.lg,
-        marginBottom: Spacing.md,
+        marginBottom: Spacing.md
     },
     modalTitle: {
         fontSize: FontSizes.xl,
         fontWeight: '700',
-        color: '#1a1a2e',
+        color: '#1a1a2e'
     },
     closeButton: {
-        padding: Spacing.sm,
+        padding: Spacing.sm
     },
     closeIcon: { fontSize: 20, color: '#525252' },
     searchContainer: {
@@ -249,13 +250,13 @@ const styles = StyleSheet.create({
         height: 48,
         marginBottom: Spacing.md,
         borderWidth: 1,
-        borderColor: '#E8E8E8',
+        borderColor: '#E8E8E8'
     },
     searchIcon: { fontSize: 16, marginRight: Spacing.sm },
     searchInput: {
         flex: 1,
         color: '#1a1a2e',
-        fontSize: FontSizes.md,
+        fontSize: FontSizes.md
     },
     list: { paddingHorizontal: Spacing.lg },
     item: {
@@ -264,64 +265,64 @@ const styles = StyleSheet.create({
         alignItems: 'center',
         paddingVertical: Spacing.md,
         borderBottomWidth: 1,
-        borderBottomColor: '#F0F0F0',
+        borderBottomColor: '#F0F0F0'
     },
     itemText: {
         fontSize: FontSizes.md,
-        color: '#1a1a2e',
+        color: '#1a1a2e'
     },
     selectedItemText: {
         color: Colors.primary,
-        fontWeight: '700',
+        fontWeight: '700'
     },
     otherItemText: {
         color: Colors.secondary,
-        fontStyle: 'italic',
+        fontStyle: 'italic'
     },
     checkIcon: {
         color: Colors.primary,
-        fontWeight: '700',
+        fontWeight: '700'
     },
     emptyText: {
         textAlign: 'center',
         color: '#525252',
-        marginTop: Spacing.xl,
+        marginTop: Spacing.xl
     },
     customContainer: {
         paddingHorizontal: Spacing.lg,
-        paddingBottom: Spacing.xxl,
+        paddingBottom: Spacing.xxl
     },
     customLabel: {
         fontSize: FontSizes.md,
         color: '#1a1a1a',
-        marginBottom: Spacing.md,
+        marginBottom: Spacing.md
     },
     customInput: {
-        backgroundColor: '#F8F9FA',  // Light background
+        backgroundColor: '#F8F9FA', // Light background
         borderRadius: BorderRadius.md,
         padding: Spacing.md,
-        color: '#1a1a1a',  // Dark text
+        color: '#1a1a1a', // Dark text
         fontSize: FontSizes.md,
         marginBottom: Spacing.lg,
         borderWidth: 1,
-        borderColor: Colors.primary,
+        borderColor: Colors.primary
     },
     submitButton: {
         padding: Spacing.md,
         borderRadius: BorderRadius.md,
-        alignItems: 'center',
+        alignItems: 'center'
     },
     submitButtonText: {
         color: '#fff',
         fontWeight: '700',
-        fontSize: FontSizes.md,
+        fontSize: FontSizes.md
     },
     backButton: {
         marginTop: Spacing.md,
         alignItems: 'center',
-        padding: Spacing.sm,
+        padding: Spacing.sm
     },
     backButtonText: {
-        color: '#525252',
-    },
+        color: '#525252'
+    }
 });

@@ -8,7 +8,7 @@ import {
     TouchableOpacity,
     ActivityIndicator,
     Animated,
-    Easing,
+    Easing
 } from 'react-native';
 import { Image } from 'expo-image';
 import { LinearGradient } from 'expo-linear-gradient';
@@ -24,12 +24,18 @@ import { Ionicons } from '@expo/vector-icons';
 // Helper function
 const getConditionLabel = (condition: string, t: any) => {
     switch (condition) {
-        case 'new': return { label: t('condition.new'), color: '#22C55E' };
-        case 'used_excellent': return { label: t('condition.used_excellent'), color: '#3B82F6' };
-        case 'used_good': return { label: t('condition.used_good'), color: '#3B82F6' };
-        case 'used_fair': return { label: t('condition.used_fair'), color: '#F59E0B' };
-        case 'refurbished': return { label: t('condition.refurbished'), color: Colors.primary };
-        default: return { label: condition, color: '#6B7280' };
+        case 'new':
+            return { label: t('condition.new'), color: '#22C55E' };
+        case 'used_excellent':
+            return { label: t('condition.used_excellent'), color: '#3B82F6' };
+        case 'used_good':
+            return { label: t('condition.used_good'), color: '#3B82F6' };
+        case 'used_fair':
+            return { label: t('condition.used_fair'), color: '#F59E0B' };
+        case 'refurbished':
+            return { label: t('condition.refurbished'), color: Colors.primary };
+        default:
+            return { label: condition, color: '#6B7280' };
     }
 };
 
@@ -44,7 +50,7 @@ const PremiumBidCard = ({
     onReject,
     onImagePress,
     isAccepting,
-    requestPartDescription,
+    requestPartDescription
 }: {
     bid: Bid;
     index: number;
@@ -70,14 +76,14 @@ const PremiumBidCard = ({
                 duration: 400,
                 delay: index * 100,
                 easing: Easing.out(Easing.back(1.1)),
-                useNativeDriver: true,
+                useNativeDriver: true
             }),
             Animated.timing(fadeAnim, {
                 toValue: 1,
                 duration: 300,
                 delay: index * 100,
-                useNativeDriver: true,
-            }),
+                useNativeDriver: true
+            })
         ]).start();
     }, [index]);
 
@@ -112,18 +118,20 @@ const PremiumBidCard = ({
     };
 
     return (
-        <Animated.View style={[
-            styles.premiumBidCard,
-            {
-                backgroundColor: colors.surface,
-                transform: [{ translateY: slideAnim }, { scale: scaleAnim }],
-                opacity: fadeAnim
-            },
-            isBestDeal && styles.bestDealCard,
-            isAccepted && styles.acceptedCard,
-            isNegotiationAgreed && !isAccepted && styles.agreedCard,
-            hasGarageCounterOffer && !isNegotiationAgreed && styles.counterOfferCard,
-        ]}>
+        <Animated.View
+            style={[
+                styles.premiumBidCard,
+                {
+                    backgroundColor: colors.surface,
+                    transform: [{ translateY: slideAnim }, { scale: scaleAnim }],
+                    opacity: fadeAnim
+                },
+                isBestDeal && styles.bestDealCard,
+                isAccepted && styles.acceptedCard,
+                isNegotiationAgreed && !isAccepted && styles.agreedCard,
+                hasGarageCounterOffer && !isNegotiationAgreed && styles.counterOfferCard
+            ]}
+        >
             {/* Best Price Badge - Enhanced */}
             {isBestDeal && !isAccepted && (
                 <View style={[styles.bestDealBadge, { alignSelf: isRTL ? 'flex-end' : 'flex-start' }]}>
@@ -163,10 +171,7 @@ const PremiumBidCard = ({
             <View style={[styles.garageProfileHeader, { flexDirection: rtlFlexDirection(isRTL) }]}>
                 <View style={styles.garagePhotoContainer}>
                     {bid.garage_photo_url ? (
-                        <Image
-                            source={{ uri: bid.garage_photo_url }}
-                            style={styles.garagePhoto}
-                        />
+                        <Image source={{ uri: bid.garage_photo_url }} style={styles.garagePhoto} />
                     ) : (
                         <View style={[styles.garagePhoto, styles.garagePhotoFallback]}>
                             <Ionicons name="storefront-outline" size={28} color="#737373" />
@@ -174,7 +179,9 @@ const PremiumBidCard = ({
                     )}
                 </View>
                 <View style={styles.garageInfoSection}>
-                    <Text style={[styles.garageName, { color: colors.text, textAlign: rtlTextAlign(isRTL) }]}>{bid.garage_name}</Text>
+                    <Text style={[styles.garageName, { color: colors.text, textAlign: rtlTextAlign(isRTL) }]}>
+                        {bid.garage_name}
+                    </Text>
                     {bid.rating_average && (
                         <View style={[styles.garageRatingRow, { flexDirection: rtlFlexDirection(isRTL) }]}>
                             <Ionicons name="star" size={14} color="#F59E0B" />
@@ -193,7 +200,9 @@ const PremiumBidCard = ({
             {/* Header: Garage Info + Price */}
             <View style={[styles.bidHeader, { flexDirection: rtlFlexDirection(isRTL) }]}>
                 <View style={styles.garageInfo}>
-                    <Text style={[styles.garageName, { color: colors.text, textAlign: rtlTextAlign(isRTL) }]}>{bid.garage_name}</Text>
+                    <Text style={[styles.garageName, { color: colors.text, textAlign: rtlTextAlign(isRTL) }]}>
+                        {bid.garage_name}
+                    </Text>
                     {bid.rating_average && (
                         <View style={[styles.ratingRow, { flexDirection: rtlFlexDirection(isRTL) }]}>
                             <Ionicons name="star" size={14} color="#F59E0B" style={{ marginRight: 4 }} />
@@ -211,20 +220,21 @@ const PremiumBidCard = ({
                 <View style={[styles.priceSection, { alignItems: isRTL ? 'flex-start' : 'flex-end' }]}>
                     {hasNegotiatedPrice ? (
                         <>
-                            <Text style={styles.originalPrice}>{originalBidAmount} {t('common.qar')}</Text>
+                            <Text style={styles.originalPrice}>
+                                {originalBidAmount} {t('common.qar')}
+                            </Text>
                             <Text style={styles.currentPriceLabel}>
                                 {isNegotiationAgreed ? t('bidCard.agreed') : t('bidCard.offered')}
                             </Text>
-                            <Text style={[
-                                styles.currentPrice,
-                                isNegotiationAgreed && { color: '#22C55E' }
-                            ]}>
+                            <Text style={[styles.currentPrice, isNegotiationAgreed && { color: '#22C55E' }]}>
                                 {displayPrice} {t('common.qar')}
                             </Text>
                         </>
                     ) : (
                         <>
-                            <Text style={styles.priceLabel}>{isAccepted ? t('bidCard.final') : t('bidCard.price')}</Text>
+                            <Text style={styles.priceLabel}>
+                                {isAccepted ? t('bidCard.final') : t('bidCard.price')}
+                            </Text>
                             <Text style={[styles.priceAmount, isBestDeal && { color: '#22C55E' }]}>
                                 {bid.bid_amount} {t('common.qar')}
                             </Text>
@@ -235,28 +245,37 @@ const PremiumBidCard = ({
 
             {/* Negotiation Summary */}
             {negotiationRounds > 0 && (
-                <View style={[styles.negotiationBox, { borderLeftWidth: isRTL ? 0 : 3, borderRightWidth: isRTL ? 3 : 0, borderRightColor: Colors.primary }]}>
+                <View
+                    style={[
+                        styles.negotiationBox,
+                        {
+                            borderLeftWidth: isRTL ? 0 : 3,
+                            borderRightWidth: isRTL ? 3 : 0,
+                            borderRightColor: Colors.primary
+                        }
+                    ]}
+                >
                     {/* Final Round Warning - Show when round 3/3 is reached */}
                     {negotiationRounds >= 3 && !isNegotiationAgreed && !isAccepted && (
                         <View style={styles.finalRoundWarning}>
-                            <Text style={styles.finalRoundWarningText}>
-                                {t('bidCard.finalRoundWarning')}
-                            </Text>
+                            <Text style={styles.finalRoundWarningText}>{t('bidCard.finalRoundWarning')}</Text>
                         </View>
                     )}
 
                     {customerCounterAmount && (
                         <View style={[styles.negotiationRow, { flexDirection: rtlFlexDirection(isRTL) }]}>
                             <Text style={styles.negotiationLabel}>{t('bidCard.youOffered')}</Text>
-                            <Text style={[
-                                styles.negotiationValue,
-                                customerCounterStatus === 'accepted' && { color: '#22C55E' },
-                                customerCounterStatus === 'countered' && { color: '#F59E0B' },
-                                customerCounterStatus === 'rejected' && {
-                                    color: '#9CA3AF',
-                                    textDecorationLine: 'line-through',
-                                },
-                            ]}>
+                            <Text
+                                style={[
+                                    styles.negotiationValue,
+                                    customerCounterStatus === 'accepted' && { color: '#22C55E' },
+                                    customerCounterStatus === 'countered' && { color: '#F59E0B' },
+                                    customerCounterStatus === 'rejected' && {
+                                        color: '#9CA3AF',
+                                        textDecorationLine: 'line-through'
+                                    }
+                                ]}
+                            >
                                 {customerCounterAmount} {t('common.qar')}
                                 {customerCounterStatus === 'countered' && ` ${t('bidCard.counteredStatus')}`}
                                 {customerCounterStatus === 'rejected' && ''}
@@ -266,25 +285,30 @@ const PremiumBidCard = ({
 
                     {/* Garage's Last Offer - Highlight when customer's is rejected */}
                     {(hasGarageCounterOffer || (customerCounterStatus === 'rejected' && lastGarageOfferAmount)) && (
-                        <View style={[
-                            styles.negotiationRow,
-                            { flexDirection: rtlFlexDirection(isRTL) },
-                            customerCounterStatus === 'rejected' && styles.garageOfferHighlight
-                        ]}>
-                            <Text style={[
-                                styles.negotiationLabel,
-                                customerCounterStatus === 'rejected' && { fontWeight: '600' }
-                            ]}>
+                        <View
+                            style={[
+                                styles.negotiationRow,
+                                { flexDirection: rtlFlexDirection(isRTL) },
+                                customerCounterStatus === 'rejected' && styles.garageOfferHighlight
+                            ]}
+                        >
+                            <Text
+                                style={[
+                                    styles.negotiationLabel,
+                                    customerCounterStatus === 'rejected' && { fontWeight: '600' }
+                                ]}
+                            >
                                 {customerCounterStatus === 'rejected'
                                     ? t('bidCard.acceptableOffer')
-                                    : t('bidCard.garageOffers')
-                                }
+                                    : t('bidCard.garageOffers')}
                             </Text>
-                            <Text style={[
-                                styles.negotiationValue,
-                                { color: customerCounterStatus === 'rejected' ? '#22C55E' : '#F59E0B' },
-                                customerCounterStatus === 'rejected' && { fontWeight: '700', fontSize: 16 }
-                            ]}>
+                            <Text
+                                style={[
+                                    styles.negotiationValue,
+                                    { color: customerCounterStatus === 'rejected' ? '#22C55E' : '#F59E0B' },
+                                    customerCounterStatus === 'rejected' && { fontWeight: '700', fontSize: 16 }
+                                ]}
+                            >
                                 {garageCounterAmount || lastGarageOfferAmount} {t('common.qar')}
                                 {customerCounterStatus === 'rejected' && ` ✓`}
                             </Text>
@@ -296,9 +320,7 @@ const PremiumBidCard = ({
             {/* Details */}
             <View style={[styles.bidDetails, { flexDirection: rtlFlexDirection(isRTL) }]}>
                 <View style={styles.detailChip}>
-                    <Text style={[styles.detailChipText, { color: conditionInfo.color }]}>
-                        {conditionInfo.label}
-                    </Text>
+                    <Text style={[styles.detailChipText, { color: conditionInfo.color }]}>{conditionInfo.label}</Text>
                 </View>
                 {bid.warranty_days > 0 && (
                     <LinearGradient
@@ -316,15 +338,19 @@ const PremiumBidCard = ({
             </View>
 
             {/* Notes */}
-            {bid.notes && (
-                <Text style={[styles.bidNotes, { textAlign: rtlTextAlign(isRTL) }]}>"{bid.notes}"</Text>
-            )}
+            {bid.notes && <Text style={[styles.bidNotes, { textAlign: rtlTextAlign(isRTL) }]}>"{bid.notes}"</Text>}
 
             {/* Bid Images */}
             {bid.image_urls && bid.image_urls.length > 0 && (
                 <View style={styles.bidImagesSection}>
-                    <Text style={[styles.bidImagesLabel, { textAlign: rtlTextAlign(isRTL) }]}>{t('bidCard.garagePartPhotos')}</Text>
-                    <ScrollView horizontal showsHorizontalScrollIndicator={false} style={{ transform: isRTL ? [{ scaleX: -1 }] : [] }}>
+                    <Text style={[styles.bidImagesLabel, { textAlign: rtlTextAlign(isRTL) }]}>
+                        {t('bidCard.garagePartPhotos')}
+                    </Text>
+                    <ScrollView
+                        horizontal
+                        showsHorizontalScrollIndicator={false}
+                        style={{ transform: isRTL ? [{ scaleX: -1 }] : [] }}
+                    >
                         <View style={{ flexDirection: 'row', transform: isRTL ? [{ scaleX: -1 }] : [] }}>
                             {bid.image_urls.map((url, idx) => {
                                 const fullUrl = url.startsWith('http') ? url : `${UPLOAD_BASE_URL}${url}`;
@@ -332,14 +358,22 @@ const PremiumBidCard = ({
                                     <TouchableOpacity
                                         key={idx}
                                         onPress={() => {
-                                            const images = bid.image_urls!.map(u =>
+                                            const images = bid.image_urls!.map((u) =>
                                                 u.startsWith('http') ? u : `${UPLOAD_BASE_URL}${u}`
                                             );
                                             onImagePress(images, idx);
                                         }}
                                         activeOpacity={0.85}
                                     >
-                                        <Image source={{ uri: fullUrl }} style={[styles.bidImage, isRTL ? { marginRight: 0, marginLeft: Spacing.sm } : { marginRight: Spacing.sm }]} />
+                                        <Image
+                                            source={{ uri: fullUrl }}
+                                            style={[
+                                                styles.bidImage,
+                                                isRTL
+                                                    ? { marginRight: 0, marginLeft: Spacing.sm }
+                                                    : { marginRight: Spacing.sm }
+                                            ]}
+                                        />
                                     </TouchableOpacity>
                                 );
                             })}
@@ -359,7 +393,11 @@ const PremiumBidCard = ({
                             {t('bidCard.photoCount', { count: bid.condition_photos.length })}
                         </Text>
                     </View>
-                    <ScrollView horizontal showsHorizontalScrollIndicator={false} style={{ transform: isRTL ? [{ scaleX: -1 }] : [] }}>
+                    <ScrollView
+                        horizontal
+                        showsHorizontalScrollIndicator={false}
+                        style={{ transform: isRTL ? [{ scaleX: -1 }] : [] }}
+                    >
                         <View style={{ flexDirection: 'row', transform: isRTL ? [{ scaleX: -1 }] : [] }}>
                             {bid.condition_photos.map((url, idx) => {
                                 const fullUrl = url.startsWith('http') ? url : `${UPLOAD_BASE_URL}${url}`;
@@ -368,13 +406,18 @@ const PremiumBidCard = ({
                                         key={idx}
                                         onPress={() => {
                                             Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
-                                            const images = bid.condition_photos!.map(u =>
+                                            const images = bid.condition_photos!.map((u) =>
                                                 u.startsWith('http') ? u : `${UPLOAD_BASE_URL}${u}`
                                             );
                                             onImagePress(images, idx);
                                         }}
                                         activeOpacity={0.85}
-                                        style={[styles.conditionPhotoWrapper, isRTL ? { marginRight: 0, marginLeft: Spacing.sm } : { marginRight: Spacing.sm }]}
+                                        style={[
+                                            styles.conditionPhotoWrapper,
+                                            isRTL
+                                                ? { marginRight: 0, marginLeft: Spacing.sm }
+                                                : { marginRight: Spacing.sm }
+                                        ]}
                                     >
                                         <Image source={{ uri: fullUrl }} style={styles.conditionPhoto} />
                                         <View style={styles.photoOverlay}>
@@ -399,10 +442,7 @@ const PremiumBidCard = ({
                             onPressOut={handlePressOut}
                             disabled={isAccepting}
                         >
-                            <LinearGradient
-                                colors={['#22c55e', '#16a34a']}
-                                style={styles.acceptGradient}
-                            >
+                            <LinearGradient colors={['#22c55e', '#16a34a']} style={styles.acceptGradient}>
                                 {isAccepting ? (
                                     <ActivityIndicator color="#fff" size="small" />
                                 ) : (
@@ -414,28 +454,19 @@ const PremiumBidCard = ({
                         </TouchableOpacity>
                     ) : (
                         <View style={[styles.acceptBtn, { opacity: 0.5 }]}>
-                            <LinearGradient
-                                colors={['#9CA3AF', '#6B7280']}
-                                style={styles.acceptGradient}
-                            >
+                            <LinearGradient colors={['#9CA3AF', '#6B7280']} style={styles.acceptGradient}>
                                 <Text style={styles.acceptBtnText}>{t('bidCard.waitingForGarage')}</Text>
                             </LinearGradient>
                         </View>
                     )}
 
                     {negotiationRounds < 3 && isCustomersTurn && (
-                        <TouchableOpacity
-                            style={styles.counterBtn}
-                            onPress={() => onCounter(bid)}
-                        >
+                        <TouchableOpacity style={styles.counterBtn} onPress={() => onCounter(bid)}>
                             <Text style={styles.counterBtnText}>↩ {t('common.counter')}</Text>
                         </TouchableOpacity>
                     )}
 
-                    <TouchableOpacity
-                        style={styles.rejectBtn}
-                        onPress={() => onReject(bid)}
-                    >
+                    <TouchableOpacity style={styles.rejectBtn} onPress={() => onReject(bid)}>
                         <Text style={styles.rejectBtnText}>✕</Text>
                     </TouchableOpacity>
                 </View>
@@ -451,7 +482,7 @@ const styles = StyleSheet.create({
         marginBottom: Spacing.md,
         borderWidth: 1,
         borderColor: '#E8E8E8',
-        ...Shadows.md,
+        ...Shadows.md
     },
     bestDealCard: { borderColor: '#22C55E', borderWidth: 2 },
     acceptedCard: { borderColor: '#22C55E', borderWidth: 2, backgroundColor: '#E8F5E9' },
@@ -463,7 +494,7 @@ const styles = StyleSheet.create({
         paddingHorizontal: Spacing.md,
         paddingVertical: 4,
         borderRadius: BorderRadius.full,
-        marginBottom: Spacing.md,
+        marginBottom: Spacing.md
     },
     bestDealText: { color: '#fff', fontSize: FontSizes.xs, fontWeight: '700' },
     acceptedBadge: {
@@ -472,7 +503,7 @@ const styles = StyleSheet.create({
         paddingHorizontal: Spacing.md,
         paddingVertical: 4,
         borderRadius: BorderRadius.full,
-        marginBottom: Spacing.md,
+        marginBottom: Spacing.md
     },
     acceptedBadgeText: { color: '#fff', fontSize: FontSizes.xs, fontWeight: '700' },
     agreedBadge: {
@@ -481,7 +512,7 @@ const styles = StyleSheet.create({
         paddingHorizontal: Spacing.md,
         paddingVertical: 4,
         borderRadius: BorderRadius.full,
-        marginBottom: Spacing.md,
+        marginBottom: Spacing.md
     },
     agreedBadgeText: { color: '#fff', fontSize: FontSizes.xs, fontWeight: '700' },
     counterBadge: {
@@ -490,7 +521,7 @@ const styles = StyleSheet.create({
         paddingHorizontal: Spacing.md,
         paddingVertical: 4,
         borderRadius: BorderRadius.full,
-        marginBottom: Spacing.md,
+        marginBottom: Spacing.md
     },
     counterBadgeText: { color: '#fff', fontSize: FontSizes.xs, fontWeight: '700' },
     supersededBadge: {
@@ -499,7 +530,7 @@ const styles = StyleSheet.create({
         paddingHorizontal: Spacing.md,
         paddingVertical: 4,
         borderRadius: BorderRadius.full,
-        marginBottom: Spacing.md,
+        marginBottom: Spacing.md
     },
     supersededBadgeText: { color: '#fff', fontSize: FontSizes.xs, fontWeight: '700' },
 
@@ -508,23 +539,23 @@ const styles = StyleSheet.create({
         flexDirection: 'row',
         alignItems: 'center',
         marginBottom: Spacing.md,
-        gap: Spacing.md,
+        gap: Spacing.md
     },
     garagePhotoContainer: {
         width: 56,
         height: 56,
         borderRadius: 28,
         overflow: 'hidden',
-        ...Shadows.sm,
+        ...Shadows.sm
     },
     garagePhoto: {
         width: '100%',
         height: '100%',
-        backgroundColor: '#F5F5F5',
+        backgroundColor: '#F5F5F5'
     },
     garagePhotoFallback: {
         justifyContent: 'center',
-        alignItems: 'center',
+        alignItems: 'center'
     },
     garagePhotoEmoji: { fontSize: 28 },
     garageInfoSection: { flex: 1 },
@@ -532,13 +563,13 @@ const styles = StyleSheet.create({
         flexDirection: 'row',
         alignItems: 'center',
         marginTop: 4,
-        gap: 4,
+        gap: 4
     },
     ratingStarSmall: { fontSize: 14 },
     ratingValueSmall: {
         fontSize: FontSizes.sm,
         fontWeight: '600',
-        color: '#F59E0B',
+        color: '#F59E0B'
     },
 
     bidHeader: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'flex-start' },
@@ -561,12 +592,12 @@ const styles = StyleSheet.create({
         padding: Spacing.sm,
         marginTop: Spacing.md,
         borderLeftWidth: 3,
-        borderLeftColor: Colors.primary,
+        borderLeftColor: Colors.primary
     },
     negotiationRow: {
         flexDirection: 'row',
         justifyContent: 'space-between',
-        marginBottom: 4,
+        marginBottom: 4
     },
     negotiationLabel: { fontSize: FontSizes.sm, color: '#525252' },
     negotiationValue: { fontSize: FontSizes.sm, fontWeight: '600' },
@@ -576,19 +607,19 @@ const styles = StyleSheet.create({
         borderRadius: BorderRadius.sm,
         marginBottom: Spacing.sm,
         borderWidth: 1,
-        borderColor: '#F59E0B',
+        borderColor: '#F59E0B'
     },
     finalRoundWarningText: {
         fontSize: FontSizes.sm,
         color: '#92400E',
         fontWeight: '600',
-        textAlign: 'center',
+        textAlign: 'center'
     },
     garageOfferHighlight: {
         backgroundColor: '#DCFCE7',
         padding: Spacing.xs,
         borderRadius: BorderRadius.sm,
-        marginTop: Spacing.xs,
+        marginTop: Spacing.xs
     },
 
     bidDetails: { flexDirection: 'row', flexWrap: 'wrap', gap: Spacing.sm, marginTop: Spacing.md },
@@ -596,14 +627,14 @@ const styles = StyleSheet.create({
         backgroundColor: '#F3F4F6',
         paddingHorizontal: Spacing.sm,
         paddingVertical: 4,
-        borderRadius: BorderRadius.md,
+        borderRadius: BorderRadius.md
     },
     detailChipText: { fontSize: FontSizes.sm, fontWeight: '600', color: '#1a1a1a' },
     bidNotes: {
         fontSize: FontSizes.sm,
         color: '#525252',
         fontStyle: 'italic',
-        marginTop: Spacing.md,
+        marginTop: Spacing.md
     },
 
     bidImagesSection: { marginTop: Spacing.md, paddingTop: Spacing.md, borderTopWidth: 1, borderTopColor: '#F0F0F0' },
@@ -615,19 +646,19 @@ const styles = StyleSheet.create({
         marginTop: Spacing.lg,
         paddingTop: Spacing.lg,
         borderTopWidth: 1,
-        borderTopColor: 'rgba(0,0,0,0.05)',
+        borderTopColor: 'rgba(0,0,0,0.05)'
     },
     conditionHeader: {
         flexDirection: 'row',
         justifyContent: 'space-between',
         alignItems: 'center',
-        marginBottom: Spacing.md,
+        marginBottom: Spacing.md
     },
     conditionTitle: { fontSize: FontSizes.md, fontWeight: '700' },
     conditionCount: {
         fontSize: FontSizes.sm,
         color: Colors.theme.textSecondary,
-        fontWeight: '600',
+        fontWeight: '600'
     },
     conditionPhotoWrapper: {
         width: 120,
@@ -635,7 +666,7 @@ const styles = StyleSheet.create({
         borderRadius: BorderRadius.lg,
         overflow: 'hidden',
         marginRight: Spacing.sm,
-        position: 'relative',
+        position: 'relative'
     },
     conditionPhoto: { width: '100%', height: '100%' },
     photoOverlay: {
@@ -647,7 +678,7 @@ const styles = StyleSheet.create({
         backgroundColor: 'rgba(0,0,0,0.1)',
         justifyContent: 'center',
         alignItems: 'center',
-        opacity: 0.6,
+        opacity: 0.6
     },
     photoOverlayIcon: { fontSize: 20 },
 
@@ -659,13 +690,13 @@ const styles = StyleSheet.create({
         paddingVertical: 6,
         borderRadius: BorderRadius.full,
         gap: 4,
-        ...Shadows.sm,
+        ...Shadows.sm
     },
     warrantyIcon: { fontSize: 14 },
     warrantyBadgeText: {
         fontSize: FontSizes.xs,
         fontWeight: '700',
-        color: '#FFFFFF',
+        color: '#FFFFFF'
     },
 
     // Actions
@@ -680,7 +711,7 @@ const styles = StyleSheet.create({
         paddingVertical: Spacing.md,
         alignItems: 'center',
         borderWidth: 1.5,
-        borderColor: Colors.primary,
+        borderColor: Colors.primary
     },
     counterBtnText: { fontSize: FontSizes.md, fontWeight: '700', color: Colors.primary },
     rejectBtn: {
@@ -689,9 +720,9 @@ const styles = StyleSheet.create({
         backgroundColor: '#FEE2E2',
         borderRadius: BorderRadius.lg,
         alignItems: 'center',
-        justifyContent: 'center',
+        justifyContent: 'center'
     },
-    rejectBtnText: { fontSize: FontSizes.lg, fontWeight: '700', color: Colors.error },
+    rejectBtnText: { fontSize: FontSizes.lg, fontWeight: '700', color: Colors.error }
 });
 
 export { getConditionLabel };

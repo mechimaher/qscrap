@@ -1,7 +1,7 @@
 /**
  * Cancellation Fraud Prevention Routes (Operations Dashboard)
  * Mounted at /api/cancellation for frontend compatibility
- * 
+ *
  * These endpoints serve the Fraud Prevention Center in the Operations Dashboard.
  */
 
@@ -74,4 +74,3 @@ router.post('/abuse-flag', updateAbuseFlag);
 router.get('/garage-penalties', getGaragePenalties);
 
 export default router;
-

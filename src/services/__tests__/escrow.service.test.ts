@@ -17,67 +17,96 @@ describe('Escrow Service', () => {
 
     beforeAll(async () => {
         // Cleanup stale test data
-        await pool.query('DELETE FROM proof_of_condition WHERE order_id IN (SELECT order_id FROM escrow_transactions WHERE order_id = $1)', [testOrderId]);
+        await pool.query(
+            'DELETE FROM proof_of_condition WHERE order_id IN (SELECT order_id FROM escrow_transactions WHERE order_id = $1)',
+            [testOrderId]
+        );
         await pool.query('DELETE FROM escrow_transactions WHERE order_id = $1', [testOrderId]);
         await pool.query('DELETE FROM orders WHERE order_id = $1', [testOrderId]);
         await pool.query('DELETE FROM garage_subscriptions WHERE garage_id = $1', [testGarageId]);
-        await pool.query('DELETE FROM part_requests WHERE request_id IN (SELECT request_id FROM orders WHERE order_id = $1)', [testOrderId]);
-        await pool.query('DELETE FROM bids WHERE request_id IN (SELECT request_id FROM orders WHERE order_id = $1)', [testOrderId]);
+        await pool.query(
+            'DELETE FROM part_requests WHERE request_id IN (SELECT request_id FROM orders WHERE order_id = $1)',
+            [testOrderId]
+        );
+        await pool.query('DELETE FROM bids WHERE request_id IN (SELECT request_id FROM orders WHERE order_id = $1)', [
+            testOrderId
+        ]);
         await pool.query('DELETE FROM garages WHERE garage_id = $1', [testGarageId]);
         await pool.query('DELETE FROM users WHERE user_id IN ($1, $2)', [testCustomerId, testGarageId]);
 
         // Create test customer
-        await pool.query(`
+        await pool.query(
+            `
             INSERT INTO users (user_id, full_name, phone_number, user_type, password_hash)
             VALUES ($1, 'Test Customer Escrow', '+97430000011', 'customer', '$2b$10$dummyhashfortesting123')
             ON CONFLICT (user_id) DO NOTHING
-        `, [testCustomerId]);
+        `,
+            [testCustomerId]
+        );
 
         // Create test garage user
-        await pool.query(`
+        await pool.query(
+            `
             INSERT INTO users (user_id, full_name, phone_number, user_type, password_hash)
             VALUES ($1, 'Test Garage Escrow', '+97430000012', 'garage', '$2b$10$dummyhashfortesting123')
             ON CONFLICT (user_id) DO NOTHING
-        `, [testGarageId]);
+        `,
+            [testGarageId]
+        );
 
         // Create test garage
-        await pool.query(`
+        await pool.query(
+            `
             INSERT INTO garages (garage_id, garage_name, approval_status, location_lat, location_lng)
             VALUES ($1, 'Test Garage LLC', 'approved', 25.276987, 51.520008)
             ON CONFLICT (garage_id) DO NOTHING
-        `, [testGarageId]);
+        `,
+            [testGarageId]
+        );
 
         // Create garage subscription
         await pool.query('DELETE FROM garage_subscriptions WHERE garage_id = $1', [testGarageId]);
-        await pool.query(`
+        await pool.query(
+            `
             INSERT INTO garage_subscriptions (garage_id, plan_id, status, billing_cycle_start, billing_cycle_end)
             VALUES ($1, (SELECT plan_id FROM subscription_plans WHERE plan_code = 'starter' LIMIT 1), 'active', NOW(), NOW() + INTERVAL '30 days')
-        `, [testGarageId]);
+        `,
+            [testGarageId]
+        );
 
         // Create part request
-        const requestResult = await pool.query(`
+        const requestResult = await pool.query(
+            `
             INSERT INTO part_requests (request_id, customer_id, car_make, car_model, car_year, part_description, status)
             VALUES (gen_random_uuid(), $1, 'Toyota', 'Camry', 2022, 'Test Part', 'active')
             RETURNING request_id
-        `, [testCustomerId]);
+        `,
+            [testCustomerId]
+        );
 
         const testRequestId = requestResult.rows[0].request_id;
 
         // Create bid
-        const bidResult = await pool.query(`
+        const bidResult = await pool.query(
+            `
             INSERT INTO bids (bid_id, request_id, garage_id, bid_amount, status, part_condition)
             VALUES (gen_random_uuid(), $1, $2, 150.00, 'accepted', 'new')
             RETURNING bid_id
-        `, [testRequestId, testGarageId]);
+        `,
+            [testRequestId, testGarageId]
+        );
 
         const testBidId = bidResult.rows[0].bid_id;
 
         // Create order
-        await pool.query(`
+        await pool.query(
+            `
             INSERT INTO orders (order_id, bid_id, customer_id, garage_id, request_id, total_amount, part_price, commission_rate, platform_fee, delivery_fee, order_status, payment_status, deposit_status, garage_payout_amount)
             VALUES ($1, $2, $3, $4, $5, 170.00, 150.00, 0.05, 8.50, 20.00, 'confirmed', 'paid', 'paid', 141.50)
             ON CONFLICT (order_id) DO NOTHING
-        `, [testOrderId, testBidId, testCustomerId, testGarageId, testRequestId]);
+        `,
+            [testOrderId, testBidId, testCustomerId, testGarageId, testRequestId]
+        );
 
         // Initialize escrow service
         escrowService = new EscrowService(pool);
@@ -85,11 +114,17 @@ describe('Escrow Service', () => {
 
     afterAll(async () => {
         // Cleanup in reverse order - delete orders first since they reference garages
-        await pool.query('DELETE FROM proof_of_condition WHERE escrow_id IN (SELECT escrow_id FROM escrow_transactions WHERE order_id = $1)', [testOrderId]);
+        await pool.query(
+            'DELETE FROM proof_of_condition WHERE escrow_id IN (SELECT escrow_id FROM escrow_transactions WHERE order_id = $1)',
+            [testOrderId]
+        );
         await pool.query('DELETE FROM escrow_transactions WHERE order_id = $1', [testOrderId]);
         await pool.query('DELETE FROM orders WHERE order_id = $1', [testOrderId]);
         await pool.query('DELETE FROM garage_subscriptions WHERE garage_id = $1', [testGarageId]);
-        await pool.query('DELETE FROM bids WHERE request_id IN (SELECT request_id FROM part_requests WHERE customer_id = $1)', [testCustomerId]);
+        await pool.query(
+            'DELETE FROM bids WHERE request_id IN (SELECT request_id FROM part_requests WHERE customer_id = $1)',
+            [testCustomerId]
+        );
         await pool.query('DELETE FROM part_requests WHERE customer_id = $1', [testCustomerId]);
         await pool.query('DELETE FROM garages WHERE garage_id = $1', [testGarageId]);
         await pool.query('DELETE FROM users WHERE user_id IN ($1, $2)', [testCustomerId, testGarageId]);
@@ -101,7 +136,7 @@ describe('Escrow Service', () => {
                 orderId: testOrderId,
                 customerId: testCustomerId,
                 sellerId: testGarageId,
-                amount: 100.00
+                amount: 100.0
             });
 
             testEscrowId = result.escrow_id;
@@ -122,13 +157,13 @@ describe('Escrow Service', () => {
                 orderId: testOrderId,
                 customerId: testCustomerId,
                 sellerId: testGarageId,
-                amount: 100.00,
+                amount: 100.0,
                 inspectionWindowHours: 168 // 7 days
             });
 
             expect(result.inspection_window_hours).toBe(168);
             expect(result.inspection_expires_at).toBeDefined();
-            
+
             // Verify expires_at is approximately 7 days from now
             const now = new Date();
             const expected = new Date(now.getTime() + 168 * 60 * 60 * 1000);
@@ -141,7 +176,7 @@ describe('Escrow Service', () => {
                 orderId: testOrderId,
                 customerId: testCustomerId,
                 sellerId: testGarageId,
-                amount: 200.00,
+                amount: 200.0,
                 platformFeePercent: 10 // 10% instead of default 15%
             });
 
@@ -177,7 +212,7 @@ describe('Escrow Service', () => {
                 orderId: testOrderId,
                 customerId: testCustomerId,
                 sellerId: testGarageId,
-                amount: 100.00
+                amount: 100.0
             });
             confirmEscrowId = result.escrow_id;
         });
@@ -195,9 +230,7 @@ describe('Escrow Service', () => {
             await escrowService.buyerConfirm(confirmEscrowId!, testCustomerId);
 
             // Second confirmation should fail
-            await expect(
-                escrowService.buyerConfirm(confirmEscrowId!, testCustomerId)
-            ).rejects.toThrow();
+            await expect(escrowService.buyerConfirm(confirmEscrowId!, testCustomerId)).rejects.toThrow();
         });
     });
 
@@ -209,17 +242,13 @@ describe('Escrow Service', () => {
                 orderId: testOrderId,
                 customerId: testCustomerId,
                 sellerId: testGarageId,
-                amount: 100.00
+                amount: 100.0
             });
             disputeEscrowId = result.escrow_id;
         });
 
         it('should raise dispute and update status', async () => {
-            const result = await escrowService.raiseDispute(
-                disputeEscrowId!,
-                testCustomerId,
-                'Part not as described'
-            );
+            const result = await escrowService.raiseDispute(disputeEscrowId!, testCustomerId, 'Part not as described');
 
             expect(result.status).toBe('disputed');
             expect(result.dispute_raised_at).toBeDefined();
@@ -242,7 +271,7 @@ describe('Escrow Service', () => {
                 orderId: testOrderId,
                 customerId: testCustomerId,
                 sellerId: testGarageId,
-                amount: 100.00
+                amount: 100.0
             });
             resolveEscrowId = result.escrow_id;
 
@@ -268,7 +297,7 @@ describe('Escrow Service', () => {
                 orderId: testOrderId,
                 customerId: testCustomerId,
                 sellerId: testGarageId,
-                amount: 100.00
+                amount: 100.0
             });
 
             await escrowService.raiseDispute(newResult.escrow_id, testCustomerId, 'Test');
@@ -289,7 +318,7 @@ describe('Escrow Service', () => {
                 orderId: testOrderId,
                 customerId: testCustomerId,
                 sellerId: testGarageId,
-                amount: 100.00
+                amount: 100.0
             });
 
             await escrowService.raiseDispute(newResult.escrow_id, testCustomerId, 'Test');
@@ -314,7 +343,7 @@ describe('Escrow Service', () => {
                 orderId: testOrderId,
                 customerId: testCustomerId,
                 sellerId: testGarageId,
-                amount: 100.00
+                amount: 100.0
             });
             proofEscrowId = result.escrow_id;
         });
@@ -327,7 +356,7 @@ describe('Escrow Service', () => {
                 imageUrls: ['https://example.com/photo1.jpg', 'https://example.com/photo2.jpg'],
                 capturedBy: testGarageId,
                 locationLat: 25.2854,
-                locationLng: 51.5310,
+                locationLng: 51.531,
                 notes: 'Delivered in good condition'
             });
 
@@ -336,7 +365,7 @@ describe('Escrow Service', () => {
             expect(proof.capture_type).toBe('delivery_handoff');
             expect(proof.image_urls).toHaveLength(2);
             expect(parseFloat(proof.location_lat as unknown as string)).toBe(25.2854);
-            expect(parseFloat(proof.location_lng as unknown as string)).toBe(51.5310);
+            expect(parseFloat(proof.location_lng as unknown as string)).toBe(51.531);
         });
 
         it('should retrieve proofs for escrow', async () => {

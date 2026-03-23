@@ -69,7 +69,8 @@ export const getReturnRequests = async (req: Request, res: Response): Promise<vo
         const pool = (global as any).pool;
         const status = req.query.status || 'pending';
 
-        const result = await pool.query(`
+        const result = await pool.query(
+            `
             SELECT 
                 rr.return_id,
                 rr.order_id,
@@ -90,7 +91,9 @@ export const getReturnRequests = async (req: Request, res: Response): Promise<vo
             WHERE rr.status = $1
             ORDER BY rr.created_at DESC
             LIMIT 50
-        `, [status]);
+        `,
+            [status]
+        );
 
         res.json({ return_requests: result.rows });
     } catch (error) {
@@ -213,10 +216,10 @@ export const updateAbuseFlag = async (req: Request, res: Response): Promise<void
             return;
         }
 
-        await pool.query(
-            `UPDATE customers SET fraud_flag = $1, updated_at = NOW() WHERE customer_id = $2`,
-            [fraud_flag, customer_id]
-        );
+        await pool.query(`UPDATE customers SET fraud_flag = $1, updated_at = NOW() WHERE customer_id = $2`, [
+            fraud_flag,
+            customer_id
+        ]);
 
         // Audit log
         await pool.query(

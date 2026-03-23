@@ -47,10 +47,9 @@ export class PasswordResetService {
             const email = data.email.toLowerCase().trim();
 
             // Check if user exists (but don't reveal this to client)
-            const userResult = await pool.query(
-                'SELECT user_id FROM users WHERE email = $1 AND email IS NOT NULL',
-                [email]
-            );
+            const userResult = await pool.query('SELECT user_id FROM users WHERE email = $1 AND email IS NOT NULL', [
+                email
+            ]);
 
             // SECURITY: Always respond with success to prevent email enumeration
             // Even if email doesn't exist, we say we sent instructions
@@ -73,12 +72,7 @@ export class PasswordResetService {
             }
 
             // Generate OTP via OTP service
-            const otpResult = await otpService.createOTP(
-                email,
-                'password_reset',
-                data.ip_address,
-                data.user_agent
-            );
+            const otpResult = await otpService.createOTP(email, 'password_reset', data.ip_address, data.user_agent);
 
             if (!otpResult.success || !otpResult.otp) {
                 logger.error('Failed to create password reset OTP', { email, error: otpResult.error });
@@ -114,11 +108,7 @@ export class PasswordResetService {
             const email = data.email.toLowerCase().trim();
 
             // Verify OTP via OTP service
-            const verifyResult = await otpService.verifyOTP(
-                email,
-                data.otp,
-                'password_reset'
-            );
+            const verifyResult = await otpService.verifyOTP(email, data.otp, 'password_reset');
 
             if (!verifyResult.success) {
                 logger.warn('Password reset OTP verification failed', {
@@ -183,16 +173,15 @@ export class PasswordResetService {
             const passwordHash = await bcrypt.hash(data.newPassword, BCRYPT_ROUNDS);
 
             // Update user password
-            await client.query(
-                'UPDATE users SET password_hash = $1, updated_at = NOW() WHERE email = $2',
-                [passwordHash, email]
-            );
+            await client.query('UPDATE users SET password_hash = $1, updated_at = NOW() WHERE email = $2', [
+                passwordHash,
+                email
+            ]);
 
             // Mark reset token as used
-            await client.query(
-                'UPDATE password_reset_tokens SET used = true, used_at = NOW() WHERE token_id = $1',
-                [tokenResult.rows[0].token_id]
-            );
+            await client.query('UPDATE password_reset_tokens SET used = true, used_at = NOW() WHERE token_id = $1', [
+                tokenResult.rows[0].token_id
+            ]);
 
             // Invalidate all refresh tokens (force re-login)
             await client.query(
@@ -233,10 +222,9 @@ export class PasswordResetService {
             const normalizedEmail = email.toLowerCase().trim();
 
             // Check if user exists
-            const userResult = await pool.query(
-                'SELECT user_id FROM users WHERE email = $1 AND email IS NOT NULL',
-                [normalizedEmail]
-            );
+            const userResult = await pool.query('SELECT user_id FROM users WHERE email = $1 AND email IS NOT NULL', [
+                normalizedEmail
+            ]);
 
             // Always return success to prevent enumeration
             if (userResult.rows.length === 0) {

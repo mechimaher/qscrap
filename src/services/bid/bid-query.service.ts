@@ -5,7 +5,7 @@
 import { Pool } from 'pg';
 
 export class BidQueryService {
-    constructor(private pool: Pool) { }
+    constructor(private pool: Pool) {}
 
     /**
      * Get all bids for a garage with filtering and pagination
@@ -52,10 +52,7 @@ export class BidQueryService {
             [...params, limitNum, offset]
         );
 
-        const countResult = await this.pool.query(
-            `SELECT COUNT(*) FROM bids b ${whereClause}`,
-            params
-        );
+        const countResult = await this.pool.query(`SELECT COUNT(*) FROM bids b ${whereClause}`, params);
 
         return {
             bids: result.rows,

@@ -101,4 +101,3 @@ router.post('/goodwill-credit', authenticate, authorizeOperations, grantGoodwill
 router.get('/order-details/:order_id', authenticate, authorizeOperations, getOrderDetailsForSupport);
 
 export default router;
-

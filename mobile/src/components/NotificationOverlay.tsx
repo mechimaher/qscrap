@@ -1,14 +1,6 @@
 // QScrap Notifications Component - Visual + Haptic + Sound Alerts
 import React, { useEffect, useRef, useState } from 'react';
-import {
-    View,
-    Text,
-    StyleSheet,
-    Animated,
-    TouchableOpacity,
-    Dimensions,
-    Vibration,
-} from 'react-native';
+import { View, Text, StyleSheet, Animated, TouchableOpacity, Dimensions, Vibration } from 'react-native';
 import * as Haptics from 'expo-haptics';
 import { useNavigation } from '@react-navigation/native';
 import { NativeStackNavigationProp } from '@react-navigation/native-stack';
@@ -46,10 +38,10 @@ export default function NotificationOverlay() {
     useEffect(() => {
         if (newBids.length > 0 && !currentBid) {
             // Find the first bid that hasn't been shown yet
-            const unseenBid = newBids.find(bid => !shownBidIds.has(bid.bid_id));
+            const unseenBid = newBids.find((bid) => !shownBidIds.has(bid.bid_id));
             if (unseenBid) {
                 // Mark as shown before displaying
-                setShownBidIds(prev => new Set([...prev, unseenBid.bid_id]));
+                setShownBidIds((prev) => new Set([...prev, unseenBid.bid_id]));
                 showNotification(unseenBid);
             }
         }
@@ -76,7 +68,7 @@ export default function NotificationOverlay() {
             toValue: 50,
             tension: 100,
             friction: 8,
-            useNativeDriver: true,
+            useNativeDriver: true
         }).start();
 
         // Shake animation - attention grabbing
@@ -87,7 +79,7 @@ export default function NotificationOverlay() {
                 Animated.timing(shakeAnim, { toValue: 6, duration: 80, useNativeDriver: true }),
                 Animated.timing(shakeAnim, { toValue: -6, duration: 80, useNativeDriver: true }),
                 Animated.timing(shakeAnim, { toValue: 0, duration: 80, useNativeDriver: true }),
-                Animated.delay(500),
+                Animated.delay(500)
             ]),
             { iterations: 3 }
         );
@@ -96,7 +88,7 @@ export default function NotificationOverlay() {
         const pulseSequence = Animated.loop(
             Animated.sequence([
                 Animated.timing(pulseAnim, { toValue: 1.05, duration: 400, useNativeDriver: true }),
-                Animated.timing(pulseAnim, { toValue: 1, duration: 400, useNativeDriver: true }),
+                Animated.timing(pulseAnim, { toValue: 1, duration: 400, useNativeDriver: true })
             ]),
             { iterations: 5 }
         );
@@ -105,7 +97,7 @@ export default function NotificationOverlay() {
         const glowSequence = Animated.loop(
             Animated.sequence([
                 Animated.timing(glowAnim, { toValue: 1, duration: 400, useNativeDriver: false }),
-                Animated.timing(glowAnim, { toValue: 0.3, duration: 400, useNativeDriver: false }),
+                Animated.timing(glowAnim, { toValue: 0.3, duration: 400, useNativeDriver: false })
             ]),
             { iterations: 8 }
         );
@@ -126,7 +118,7 @@ export default function NotificationOverlay() {
         Animated.timing(slideAnim, {
             toValue: -150,
             duration: 300,
-            useNativeDriver: true,
+            useNativeDriver: true
         }).start(() => {
             setCurrentBid(null);
             shakeAnim.setValue(0);
@@ -158,7 +150,7 @@ export default function NotificationOverlay() {
 
     const glowOpacity = glowAnim.interpolate({
         inputRange: [0, 1],
-        outputRange: [0.3, 1],
+        outputRange: [0.3, 1]
     });
 
     return (
@@ -166,21 +158,13 @@ export default function NotificationOverlay() {
             style={[
                 styles.container,
                 {
-                    transform: [
-                        { translateY: slideAnim },
-                        { translateX: shakeAnim },
-                        { scale: pulseAnim },
-                    ],
-                },
+                    transform: [{ translateY: slideAnim }, { translateX: shakeAnim }, { scale: pulseAnim }]
+                }
             ]}
         >
             <Animated.View style={[styles.glowBorder, { opacity: glowOpacity }]} />
 
-            <TouchableOpacity
-                style={styles.notification}
-                onPress={handlePress}
-                activeOpacity={0.9}
-            >
+            <TouchableOpacity style={styles.notification} onPress={handlePress} activeOpacity={0.9}>
                 {/* Animated Icon */}
                 <View style={styles.iconContainer}>
                     <Ionicons name="cash-outline" size={30} color={Colors.primary} />
@@ -191,7 +175,9 @@ export default function NotificationOverlay() {
                     <Text style={styles.title}>{t('notifications.newBidReceived')}</Text>
                     <Text style={styles.garageName}>{currentBid.garage_name}</Text>
                     <View style={styles.priceRow}>
-                        <Text style={styles.price}>{currentBid.bid_amount} {t('common.currency')}</Text>
+                        <Text style={styles.price}>
+                            {currentBid.bid_amount} {t('common.currency')}
+                        </Text>
                         {currentBid.warranty_days > 0 && (
                             <Text style={styles.warranty}>
                                 • {t('notifications.warrantyDays', { days: currentBid.warranty_days })}
@@ -219,7 +205,7 @@ const styles = StyleSheet.create({
         left: Spacing.md,
         right: Spacing.md,
         zIndex: 9999,
-        alignItems: 'center',
+        alignItems: 'center'
     },
     glowBorder: {
         position: 'absolute',
@@ -233,7 +219,7 @@ const styles = StyleSheet.create({
         shadowOffset: { width: 0, height: 0 },
         shadowOpacity: 1,
         shadowRadius: 25,
-        elevation: 25,
+        elevation: 25
     },
     notification: {
         flexDirection: 'row',
@@ -244,7 +230,7 @@ const styles = StyleSheet.create({
         borderWidth: 3,
         borderColor: Colors.primary,
         width: width - Spacing.md * 2,
-        ...Shadows.lg,
+        ...Shadows.lg
     },
     iconContainer: {
         width: 55,
@@ -253,39 +239,39 @@ const styles = StyleSheet.create({
         backgroundColor: Colors.primary + '30',
         justifyContent: 'center',
         alignItems: 'center',
-        marginRight: Spacing.md,
+        marginRight: Spacing.md
     },
     icon: {
-        fontSize: 30,
+        fontSize: 30
     },
     content: {
-        flex: 1,
+        flex: 1
     },
     title: {
         fontSize: FontSizes.sm,
         fontWeight: '700',
         color: Colors.primary,
-        marginBottom: 2,
+        marginBottom: 2
     },
     garageName: {
         fontSize: FontSizes.lg,
         fontWeight: '700',
-        color: '#1a1a1a',
+        color: '#1a1a1a'
     },
     priceRow: {
         flexDirection: 'row',
         alignItems: 'center',
-        marginTop: Spacing.xs,
+        marginTop: Spacing.xs
     },
     price: {
         fontSize: FontSizes.xxl,
         fontWeight: '800',
-        color: Colors.primary,
+        color: Colors.primary
     },
     warranty: {
         fontSize: FontSizes.sm,
         color: '#525252',
-        marginLeft: Spacing.sm,
+        marginLeft: Spacing.sm
     },
     dismissButton: {
         width: 32,
@@ -293,17 +279,17 @@ const styles = StyleSheet.create({
         borderRadius: 16,
         backgroundColor: Colors.dark.border,
         justifyContent: 'center',
-        alignItems: 'center',
+        alignItems: 'center'
     },
     dismissText: {
         color: '#737373',
         fontSize: 16,
-        fontWeight: '700',
+        fontWeight: '700'
     },
     tapHint: {
         fontSize: FontSizes.sm,
         color: Colors.primary,
         marginTop: Spacing.sm,
-        fontWeight: '600',
-    },
+        fontWeight: '600'
+    }
 });

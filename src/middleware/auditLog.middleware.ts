@@ -5,7 +5,7 @@ import logger from '../utils/logger';
 
 /**
  * Audit Logging Middleware
- * 
+ *
  * Logs all state-changing operations (POST, PUT, PATCH, DELETE)
  * to an audit_logs table for compliance and debugging.
  */
@@ -37,29 +37,33 @@ const parseResourceFromPath = (path: string): { type: string; id: string | null 
 // Store audit log in database
 export const logAuditEntry = async (entry: AuditLogEntry): Promise<void> => {
     try {
-        await pool.query(`
+        await pool.query(
+            `
             INSERT INTO audit_logs (
                 user_id, user_type, action, resource_type, resource_id,
                 method, path, ip_address, user_agent, request_body,
                 response_status, duration_ms, created_at
             ) VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, NOW())
-        `, [
-            entry.user_id,
-            entry.user_type,
-            entry.action,
-            entry.resource_type,
-            entry.resource_id,
-            entry.method,
-            entry.path,
-            entry.ip_address,
-            entry.user_agent?.substring(0, 500),
-            JSON.stringify(sanitizeRequestBody(entry.request_body)),
-            entry.response_status,
-            entry.duration_ms
-        ]);
+        `,
+            [
+                entry.user_id,
+                entry.user_type,
+                entry.action,
+                entry.resource_type,
+                entry.resource_id,
+                entry.method,
+                entry.path,
+                entry.ip_address,
+                entry.user_agent?.substring(0, 500),
+                JSON.stringify(sanitizeRequestBody(entry.request_body)),
+                entry.response_status,
+                entry.duration_ms
+            ]
+        );
     } catch (err: any) {
         // Don't let audit logging failures break the request
-        if (err.code !== '42P01') { // Ignore "table doesn't exist" error
+        if (err.code !== '42P01') {
+            // Ignore "table doesn't exist" error
             logger.error('Audit log failed', { error: err.message });
         }
     }
@@ -67,7 +71,9 @@ export const logAuditEntry = async (entry: AuditLogEntry): Promise<void> => {
 
 // Remove sensitive fields from request body before logging
 const sanitizeRequestBody = (body: any): any => {
-    if (!body || typeof body !== 'object') {return body;}
+    if (!body || typeof body !== 'object') {
+        return body;
+    }
 
     const sensitiveFields = ['password', 'password_hash', 'token', 'secret', 'credit_card'];
     const sanitized = { ...body };
@@ -87,11 +93,21 @@ const determineAction = (method: string, path: string): string => {
 
     switch (method) {
         case 'POST':
-            if (path.includes('/login')) {return 'user_login';}
-            if (path.includes('/register')) {return 'user_register';}
-            if (path.includes('/cancel')) {return 'cancel';}
-            if (path.includes('/accept')) {return 'accept';}
-            if (path.includes('/reject')) {return 'reject';}
+            if (path.includes('/login')) {
+                return 'user_login';
+            }
+            if (path.includes('/register')) {
+                return 'user_register';
+            }
+            if (path.includes('/cancel')) {
+                return 'cancel';
+            }
+            if (path.includes('/accept')) {
+                return 'accept';
+            }
+            if (path.includes('/reject')) {
+                return 'reject';
+            }
             return `create_${resource.type}`;
         case 'PUT':
         case 'PATCH':
@@ -105,7 +121,7 @@ const determineAction = (method: string, path: string): string => {
 
 /**
  * Audit Logging Middleware
- * 
+ *
  * Captures request details and logs after response is sent.
  * Only logs state-changing operations (POST, PUT, PATCH, DELETE).
  */
@@ -142,7 +158,7 @@ export const auditLog = (req: AuthRequest, res: Response, next: NextFunction) =>
         };
 
         // Log asynchronously to not block the response
-        logAuditEntry(entry).catch(() => { });
+        logAuditEntry(entry).catch(() => {});
     });
 
     next();
@@ -150,7 +166,7 @@ export const auditLog = (req: AuthRequest, res: Response, next: NextFunction) =>
 
 /**
  * SQL to create audit_logs table (run once):
- * 
+ *
  * CREATE TABLE IF NOT EXISTS audit_logs (
  *     log_id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
  *     user_id UUID,
@@ -167,7 +183,7 @@ export const auditLog = (req: AuthRequest, res: Response, next: NextFunction) =>
  *     duration_ms INTEGER,
  *     created_at TIMESTAMPTZ DEFAULT NOW()
  * );
- * 
+ *
  * CREATE INDEX idx_audit_logs_user ON audit_logs(user_id);
  * CREATE INDEX idx_audit_logs_action ON audit_logs(action);
  * CREATE INDEX idx_audit_logs_created ON audit_logs(created_at);

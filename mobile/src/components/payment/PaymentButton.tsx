@@ -29,7 +29,7 @@ export const PaymentButton: React.FC<PaymentButtonProps> = ({
     platformPayLabel,
     payNowAmount,
     t,
-    colors,
+    colors
 }) => {
     return (
         <View style={[styles.footer, { backgroundColor: colors.surface }]}>
@@ -42,6 +42,7 @@ export const PaymentButton: React.FC<PaymentButtonProps> = ({
                     disabled={isLoading}
                 >
                     <LinearGradient
+                        testID="payment-gradient"
                         colors={['#FFD700', '#FFA500']}
                         style={styles.payGradient}
                     >
@@ -80,13 +81,15 @@ export const PaymentButton: React.FC<PaymentButtonProps> = ({
                         style={[styles.payButton, (!cardComplete || isLoading) && styles.payButtonDisabled]}
                         onPress={handlePayment}
                         disabled={!cardComplete || isLoading}
+                        accessibilityState={{ disabled: !cardComplete || isLoading }}
                     >
                         <LinearGradient
+                            testID="payment-gradient"
                             colors={cardComplete ? ['#22c55e', '#16a34a'] : ['#9ca3af', '#6b7280']}
                             style={styles.payGradient}
                         >
                             {isLoading ? (
-                                <ActivityIndicator color="#fff" />
+                                <ActivityIndicator testID="activity-indicator" color="#fff" />
                             ) : (
                                 <Text style={styles.payButtonText}>
                                     {t('payment.pay').replace('{{amount}}', payNowAmount.toFixed(2))}
@@ -101,8 +104,8 @@ export const PaymentButton: React.FC<PaymentButtonProps> = ({
                 {freeOrder
                     ? t('payment.loyaltyAtWork')
                     : platformPayReady
-                        ? t('payment.securedByStripePlatform')
-                        : t('payment.securedByStripe')}
+                      ? t('payment.securedByStripePlatform')
+                      : t('payment.securedByStripe')}
             </Text>
         </View>
     );
@@ -117,34 +120,34 @@ const styles = StyleSheet.create({
         padding: Spacing.lg,
         paddingBottom: Spacing.xl,
         borderTopWidth: 1,
-        borderTopColor: '#E5E5E5',
+        borderTopColor: '#E5E5E5'
     },
     payButton: {
         borderRadius: BorderRadius.lg,
-        overflow: 'hidden',
+        overflow: 'hidden'
     },
     payButtonDisabled: {
-        opacity: 0.7,
+        opacity: 0.7
     },
     payGradient: {
         paddingVertical: Spacing.lg,
         alignItems: 'center',
-        justifyContent: 'center',
+        justifyContent: 'center'
     },
     payButtonText: {
         color: '#fff',
         fontSize: FontSizes.lg,
-        fontWeight: '800',
+        fontWeight: '800'
     },
     platformPayButton: {
         height: 52,
         width: '100%',
-        justifyContent: 'center',
+        justifyContent: 'center'
     },
     secureText: {
         textAlign: 'center',
         marginTop: Spacing.sm,
         fontSize: FontSizes.sm,
-        color: '#6B7280',
-    },
+        color: '#6B7280'
+    }
 });

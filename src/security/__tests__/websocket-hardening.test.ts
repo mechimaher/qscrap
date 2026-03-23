@@ -2,14 +2,11 @@ import fs from 'fs';
 import path from 'path';
 
 describe('WebSocket hardening regression guards', () => {
-    const serverSource = fs.readFileSync(
-        path.resolve(__dirname, '../../server.ts'),
-        'utf8'
-    );
+    const serverSource = fs.readFileSync(path.resolve(__dirname, '../../server.ts'), 'utf8');
 
     it('keeps mandatory Socket.IO auth middleware enabled', () => {
-        expect(serverSource).toContain("io.use((socket, next) =>");
-        expect(serverSource).toContain("Authentication error: Token required");
+        expect(serverSource).toContain('io.use((socket, next) =>');
+        expect(serverSource).toContain('Authentication error: Token required');
     });
 
     it('does not allow client-driven join_* room handlers', () => {

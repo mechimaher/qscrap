@@ -1,6 +1,6 @@
 /**
  * QScrap Structured Logger
- * 
+ *
  * Production-ready logging with log levels and structured output.
  * Replaces console.log throughout the codebase.
  */
@@ -31,8 +31,8 @@ class Logger {
 
     constructor() {
         this.nodeId = process.env.NODE_ID || `node-${process.pid}`;
-        this.minLevel = (process.env.LOG_LEVEL as LogLevel) ||
-            (process.env.NODE_ENV === 'production' ? 'info' : 'debug');
+        this.minLevel =
+            (process.env.LOG_LEVEL as LogLevel) || (process.env.NODE_ENV === 'production' ? 'info' : 'debug');
     }
 
     private shouldLog(level: LogLevel): boolean {
@@ -51,7 +51,9 @@ class Logger {
     }
 
     private log(level: LogLevel, message: string, context?: LogContext): void {
-        if (!this.shouldLog(level)) {return;}
+        if (!this.shouldLog(level)) {
+            return;
+        }
 
         const entry: LogEntry = {
             timestamp: new Date().toISOString(),

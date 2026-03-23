@@ -35,26 +35,50 @@ export const LoyaltyDiscountCard: React.FC<LoyaltyDiscountCardProps> = ({
     payNowAmount,
     discountAmount,
     isRTL,
-    t,
+    t
 }) => {
     if (!loyaltyData || loyaltyData.discountPercentage <= 0) {
         return null;
     }
 
     return (
-        <View style={[
-            styles.vvipLoyaltyCard,
-            freeOrder && { borderColor: '#22C55E', borderWidth: 2 }
-        ]}>
+        <View
+            testID="loyalty-card"
+            style={[styles.vvipLoyaltyCard, freeOrder && { borderColor: '#22C55E', borderWidth: 2 }]}
+        >
             <View style={[styles.vvipLoyaltyRow, { flexDirection: rtlFlexDirection(isRTL) }]}>
                 <View style={styles.vvipLoyaltyLeft}>
-                    <Ionicons name={loyaltyData.tier === 'platinum' ? 'diamond' : loyaltyData.tier === 'gold' ? 'trophy' : 'medal'} size={28} color={loyaltyData.tier === 'platinum' ? '#E5E7EB' : loyaltyData.tier === 'gold' ? '#FFD700' : '#C0C0C0'} />
+                    <Ionicons
+                        name={
+                            loyaltyData.tier === 'platinum'
+                                ? 'diamond'
+                                : loyaltyData.tier === 'gold'
+                                  ? 'trophy'
+                                  : 'medal'
+                        }
+                        size={28}
+                        color={
+                            loyaltyData.tier === 'platinum'
+                                ? '#E5E7EB'
+                                : loyaltyData.tier === 'gold'
+                                  ? '#FFD700'
+                                  : '#C0C0C0'
+                        }
+                    />
                     <View>
                         <Text style={styles.vvipLoyaltyTier}>
                             {loyaltyData.tier.toUpperCase()} • {loyaltyData.discountPercentage}% {t('payment.off')}
                         </Text>
                         <Text style={styles.vvipLoyaltySavings}>
-                            {applyDiscount ? t('payment.save').replace('{{amount}}', (paymentType === 'full' ? calculateDiscount.discountOnTotal : calculateDiscount.discountOnPart).toString()) : t('payment.tapToApply')}
+                            {applyDiscount
+                                ? t('payment.save').replace(
+                                      '{{amount}}',
+                                      (paymentType === 'full'
+                                          ? calculateDiscount.discountOnTotal
+                                          : calculateDiscount.discountOnPart
+                                      ).toString()
+                                  )
+                                : t('payment.tapToApply')}
                         </Text>
                     </View>
                 </View>
@@ -71,29 +95,28 @@ export const LoyaltyDiscountCard: React.FC<LoyaltyDiscountCardProps> = ({
             </View>
 
             {freeOrder && (
-                <LinearGradient
-                    colors={['#22C55E', '#16A34A']}
-                    style={styles.vvipFreeOrderBanner}
-                >
+                <LinearGradient colors={['#22C55E', '#16A34A']} style={styles.vvipFreeOrderBanner}>
                     <Text style={styles.vvipFreeOrderText}>{t('payment.freeOrderBanner')}</Text>
                 </LinearGradient>
             )}
 
-            {applyDiscount && (paymentType === 'full' ? calculateDiscount.discountOnTotal : calculateDiscount.discountOnPart) > 0 && !freeOrder && (
-                <View style={styles.vvipDiscountSummary}>
-                    <Text style={styles.vvipDiscountLabel}>
-                        {paymentType === 'full' ? t('payment.youPay') : t('payment.codAmount')}
-                    </Text>
-                    <View style={{ alignItems: 'flex-end' }}>
-                        <Text style={styles.vvipDiscountOld}>
-                            {(paymentType === 'full' ? totalAmount : partPrice).toFixed(0)} {t('common.currency')}
+            {applyDiscount &&
+                (paymentType === 'full' ? calculateDiscount.discountOnTotal : calculateDiscount.discountOnPart) > 0 &&
+                !freeOrder && (
+                    <View style={styles.vvipDiscountSummary}>
+                        <Text style={styles.vvipDiscountLabel}>
+                            {paymentType === 'full' ? t('payment.youPay') : t('payment.codAmount')}
                         </Text>
-                        <Text style={styles.vvipDiscountNew}>
-                            {(paymentType === 'full' ? payNowAmount : codAmount).toFixed(0)} {t('common.currency')}
-                        </Text>
+                        <View style={{ alignItems: 'flex-end' }}>
+                            <Text style={styles.vvipDiscountOld}>
+                                {(paymentType === 'full' ? totalAmount : partPrice).toFixed(0)} {t('common.currency')}
+                            </Text>
+                            <Text style={styles.vvipDiscountNew}>
+                                {(paymentType === 'full' ? payNowAmount : codAmount).toFixed(0)} {t('common.currency')}
+                            </Text>
+                        </View>
                     </View>
-                </View>
-            )}
+                )}
         </View>
     );
 };
@@ -103,38 +126,38 @@ const styles = StyleSheet.create({
         backgroundColor: '#1F2937',
         borderRadius: BorderRadius.lg,
         padding: Spacing.md,
-        marginBottom: Spacing.md,
+        marginBottom: Spacing.md
     },
     vvipLoyaltyRow: {
         flexDirection: 'row',
         alignItems: 'center',
-        justifyContent: 'space-between',
+        justifyContent: 'space-between'
     },
     vvipLoyaltyLeft: {
         flexDirection: 'row',
         alignItems: 'center',
-        gap: Spacing.sm,
+        gap: Spacing.sm
     },
     vvipLoyaltyTier: {
         fontSize: FontSizes.md,
         fontWeight: '700',
-        color: '#fff',
+        color: '#fff'
     },
     vvipLoyaltySavings: {
         fontSize: FontSizes.sm,
         color: '#22C55E',
-        marginTop: 2,
+        marginTop: 2
     },
     vvipFreeOrderBanner: {
         marginTop: Spacing.md,
         padding: Spacing.sm,
         borderRadius: BorderRadius.md,
-        alignItems: 'center',
+        alignItems: 'center'
     },
     vvipFreeOrderText: {
         color: '#fff',
         fontWeight: '700',
-        fontSize: FontSizes.md,
+        fontSize: FontSizes.md
     },
     vvipDiscountSummary: {
         marginTop: Spacing.md,
@@ -143,20 +166,20 @@ const styles = StyleSheet.create({
         borderTopColor: '#374151',
         flexDirection: 'row',
         justifyContent: 'space-between',
-        alignItems: 'center',
+        alignItems: 'center'
     },
     vvipDiscountLabel: {
         fontSize: FontSizes.md,
-        color: '#9CA3AF',
+        color: '#9CA3AF'
     },
     vvipDiscountOld: {
         fontSize: FontSizes.sm,
         color: '#9CA3AF',
-        textDecorationLine: 'line-through',
+        textDecorationLine: 'line-through'
     },
     vvipDiscountNew: {
         fontSize: FontSizes.lg,
         fontWeight: '700',
-        color: '#22C55E',
-    },
+        color: '#22C55E'
+    }
 });

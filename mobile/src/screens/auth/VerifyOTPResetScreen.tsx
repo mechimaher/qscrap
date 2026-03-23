@@ -12,7 +12,7 @@ import {
     Platform,
     ScrollView,
     ActivityIndicator,
-    Alert,
+    Alert
 } from 'react-native';
 import { LinearGradient } from 'expo-linear-gradient';
 import { Ionicons } from '@expo/vector-icons';
@@ -51,7 +51,7 @@ export default function VerifyOTPResetScreen() {
     useEffect(() => {
         // Countdown timer
         const interval = setInterval(() => {
-            setTimer(prev => {
+            setTimer((prev) => {
                 if (prev <= 1) {
                     clearInterval(interval);
                     return 0;
@@ -82,7 +82,7 @@ export default function VerifyOTPResetScreen() {
         }
 
         // Auto-submit when all 6 digits entered
-        if (newOTP.every(digit => digit !== '')) {
+        if (newOTP.every((digit) => digit !== '')) {
             handleVerify(newOTP.join(''));
         }
     };
@@ -101,7 +101,7 @@ export default function VerifyOTPResetScreen() {
             // Verify OTP
             await api.verifyPasswordResetOTP({
                 email,
-                otp: otpCode,
+                otp: otpCode
             });
 
             setIsVerifying(false);
@@ -113,11 +113,9 @@ export default function VerifyOTPResetScreen() {
             setIsVerifying(false);
             Haptics.notificationAsync(Haptics.NotificationFeedbackType.Error);
 
-            Alert.alert(
-                t('auth.verificationFailed'),
-                error.message || t('auth.invalidCode'),
-                [{ text: t('common.ok') }]
-            );
+            Alert.alert(t('auth.verificationFailed'), error.message || t('auth.invalidCode'), [
+                { text: t('common.ok') }
+            ]);
 
             // Clear OTP
             setOtp(['', '', '', '', '', '']);
@@ -137,11 +135,7 @@ export default function VerifyOTPResetScreen() {
             setIsResending(false);
             Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success);
 
-            Alert.alert(
-                t('auth.codeSent'),
-                t('auth.codeSentMsg'),
-                [{ text: t('common.ok') }]
-            );
+            Alert.alert(t('auth.codeSent'), t('auth.codeSentMsg'), [{ text: t('common.ok') }]);
 
             // Reset timer
             setTimer(300);
@@ -150,11 +144,7 @@ export default function VerifyOTPResetScreen() {
         } catch (error: any) {
             setIsResending(false);
             Haptics.notificationAsync(Haptics.NotificationFeedbackType.Error);
-            Alert.alert(
-                t('common.error'),
-                error.message || t('auth.resendFailed'),
-                [{ text: t('common.ok') }]
-            );
+            Alert.alert(t('common.error'), error.message || t('auth.resendFailed'), [{ text: t('common.ok') }]);
         }
     };
 
@@ -179,10 +169,7 @@ export default function VerifyOTPResetScreen() {
             start={{ x: 0, y: 0 }}
             end={{ x: 1, y: 1 }}
         >
-            <KeyboardAvoidingView
-                behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
-                style={styles.keyboardView}
-            >
+            <KeyboardAvoidingView behavior={Platform.OS === 'ios' ? 'padding' : 'height'} style={styles.keyboardView}>
                 <ScrollView
                     contentContainerStyle={styles.scrollContent}
                     keyboardShouldPersistTaps="handled"
@@ -190,10 +177,7 @@ export default function VerifyOTPResetScreen() {
                 >
                     {/* Header */}
                     <View style={styles.header}>
-                        <TouchableOpacity
-                            onPress={() => navigation.goBack()}
-                            style={styles.backButton}
-                        >
+                        <TouchableOpacity onPress={() => navigation.goBack()} style={styles.backButton}>
                             <Ionicons name="arrow-back" size={20} color="#fff" />
                         </TouchableOpacity>
                     </View>
@@ -204,9 +188,7 @@ export default function VerifyOTPResetScreen() {
                             <Ionicons name="mail" size={48} color="#fff" />
                         </View>
                         <Text style={styles.title}>{t('auth.verifyOTP')}</Text>
-                        <Text style={styles.subtitle}>
-                            {t('auth.otpSentTo', { email: maskEmail(email) })}
-                        </Text>
+                        <Text style={styles.subtitle}>{t('auth.otpSentTo', { email: maskEmail(email) })}</Text>
                     </View>
 
                     {/* OTP Input */}
@@ -214,14 +196,13 @@ export default function VerifyOTPResetScreen() {
                         {otp.map((digit, index) => (
                             <TextInput
                                 key={index}
-                                ref={ref => { inputRefs.current[index] = ref; }}
-                                style={[
-                                    styles.otpInput,
-                                    digit ? styles.otpInputFilled : null
-                                ]}
+                                ref={(ref) => {
+                                    inputRefs.current[index] = ref;
+                                }}
+                                style={[styles.otpInput, digit ? styles.otpInputFilled : null]}
                                 value={digit}
-                                onChangeText={val => handleOTPChange(val, index)}
-                                onKeyPress={e => handleKeyPress(e, index)}
+                                onChangeText={(val) => handleOTPChange(val, index)}
+                                onKeyPress={(e) => handleKeyPress(e, index)}
                                 keyboardType="number-pad"
                                 maxLength={1}
                                 selectTextOnFocus
@@ -233,7 +214,9 @@ export default function VerifyOTPResetScreen() {
                     {/* Timer */}
                     <Text style={[styles.timer, timer === 0 && styles.timerExpired]}>
                         {timer > 0 ? (
-                            <>{t('auth.codeExpiresIn')} {formatTime(timer)}</>
+                            <>
+                                {t('auth.codeExpiresIn')} {formatTime(timer)}
+                            </>
                         ) : (
                             <>{t('auth.codeExpired')}</>
                         )}
@@ -265,9 +248,7 @@ export default function VerifyOTPResetScreen() {
                     {/* Security Notice */}
                     <View style={styles.securityNotice}>
                         <Ionicons name="shield-checkmark" size={16} color="rgba(255,255,255,0.7)" />
-                        <Text style={styles.securityNoticeText}>
-                            {t('auth.otpSecure')}
-                        </Text>
+                        <Text style={styles.securityNoticeText}>{t('auth.otpSecure')}</Text>
                     </View>
                 </ScrollView>
             </KeyboardAvoidingView>
@@ -277,18 +258,18 @@ export default function VerifyOTPResetScreen() {
 
 const styles = StyleSheet.create({
     container: {
-        flex: 1,
+        flex: 1
     },
     keyboardView: {
-        flex: 1,
+        flex: 1
     },
     scrollContent: {
         flexGrow: 1,
-        padding: Spacing.lg,
+        padding: Spacing.lg
     },
     header: {
         marginTop: Spacing.lg,
-        marginBottom: Spacing.xl,
+        marginBottom: Spacing.xl
     },
     backButton: {
         width: 44,
@@ -296,11 +277,11 @@ const styles = StyleSheet.create({
         borderRadius: 22,
         backgroundColor: 'rgba(255,255,255,0.15)',
         justifyContent: 'center',
-        alignItems: 'center',
+        alignItems: 'center'
     },
     iconSection: {
         alignItems: 'center',
-        marginBottom: Spacing.xl,
+        marginBottom: Spacing.xl
     },
     iconContainer: {
         width: 80,
@@ -309,26 +290,26 @@ const styles = StyleSheet.create({
         backgroundColor: 'rgba(255,255,255,0.15)',
         justifyContent: 'center',
         alignItems: 'center',
-        marginBottom: Spacing.lg,
+        marginBottom: Spacing.lg
     },
     title: {
         fontSize: FontSizes.xxl + 4,
         fontWeight: '800',
         color: '#fff',
         textAlign: 'center',
-        marginBottom: Spacing.sm,
+        marginBottom: Spacing.sm
     },
     subtitle: {
         fontSize: FontSizes.md,
         color: 'rgba(255,255,255,0.7)',
         textAlign: 'center',
-        lineHeight: 22,
+        lineHeight: 22
     },
     otpContainer: {
         flexDirection: 'row',
         justifyContent: 'center',
         marginBottom: Spacing.lg,
-        gap: Spacing.sm,
+        gap: Spacing.sm
     },
     otpInput: {
         width: 50,
@@ -341,33 +322,33 @@ const styles = StyleSheet.create({
         color: '#1a1a1a',
         borderWidth: 2,
         borderColor: '#E8E8E8',
-        ...Shadows.md,
+        ...Shadows.md
     },
     otpInputFilled: {
         borderColor: Colors.primary,
-        backgroundColor: '#fff',
+        backgroundColor: '#fff'
     },
     timer: {
         fontSize: FontSizes.sm,
         color: 'rgba(255,255,255,0.7)',
         marginBottom: Spacing.xl,
-        textAlign: 'center',
+        textAlign: 'center'
     },
     timerExpired: {
         color: '#FF6B6B',
-        fontWeight: '700',
+        fontWeight: '700'
     },
     verifyingContainer: {
         flexDirection: 'row',
         alignItems: 'center',
         justifyContent: 'center',
         marginBottom: Spacing.md,
-        gap: Spacing.sm,
+        gap: Spacing.sm
     },
     verifyingText: {
         color: 'rgba(255,255,255,0.9)',
         fontSize: FontSizes.md,
-        fontWeight: '600',
+        fontWeight: '600'
     },
     resendButton: {
         backgroundColor: 'rgba(255,255,255,0.2)',
@@ -377,16 +358,16 @@ const styles = StyleSheet.create({
         borderWidth: 1,
         borderColor: 'rgba(255,255,255,0.3)',
         marginBottom: Spacing.lg,
-        alignItems: 'center',
+        alignItems: 'center'
     },
     resendButtonDisabled: {
-        opacity: 0.5,
+        opacity: 0.5
     },
     resendText: {
         color: '#fff',
         fontSize: FontSizes.md,
         fontWeight: '700',
-        textAlign: 'center',
+        textAlign: 'center'
     },
     securityNotice: {
         flexDirection: 'row',
@@ -394,13 +375,13 @@ const styles = StyleSheet.create({
         justifyContent: 'center',
         backgroundColor: 'rgba(255,255,255,0.1)',
         borderRadius: BorderRadius.lg,
-        padding: Spacing.md,
+        padding: Spacing.md
     },
     securityNoticeText: {
         color: 'rgba(255,255,255,0.7)',
         fontSize: FontSizes.sm,
         marginLeft: Spacing.sm,
         textAlign: 'center',
-        flex: 1,
-    },
+        flex: 1
+    }
 });

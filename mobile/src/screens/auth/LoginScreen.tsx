@@ -13,7 +13,7 @@ import {
     Dimensions,
     Animated,
     Linking,
-    Alert,
+    Alert
 } from 'react-native';
 import { Image } from 'expo-image';
 import { LinearGradient } from 'expo-linear-gradient';
@@ -56,20 +56,20 @@ export default function LoginScreen() {
                 Animated.timing(floatAnim, {
                     toValue: -8,
                     duration: 1500,
-                    useNativeDriver: true,
+                    useNativeDriver: true
                 }),
                 Animated.timing(floatAnim, {
                     toValue: 0,
                     duration: 1500,
-                    useNativeDriver: true,
-                }),
+                    useNativeDriver: true
+                })
             ])
         ).start();
 
         // Entrance fade
         Animated.parallel([
             Animated.timing(fadeAnim, { toValue: 1, duration: 800, useNativeDriver: true }),
-            Animated.spring(slideAnim, { toValue: 0, tension: 50, friction: 8, useNativeDriver: true }),
+            Animated.spring(slideAnim, { toValue: 0, tension: 50, friction: 8, useNativeDriver: true })
         ]).start();
 
         // Gold shimmer effect
@@ -77,7 +77,7 @@ export default function LoginScreen() {
             Animated.timing(goldShimmerAnim, {
                 toValue: 1,
                 duration: 3000,
-                useNativeDriver: true,
+                useNativeDriver: true
             })
         ).start();
     }, []);
@@ -101,7 +101,7 @@ export default function LoginScreen() {
             Haptics.notificationAsync(Haptics.NotificationFeedbackType.Error);
         } else {
             Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success);
-            
+
             // Prompt to enable biometric login (only if not already enabled)
             const isBiometricEnabled = await api.isBiometricEnabled();
             if (!isBiometricEnabled) {
@@ -112,15 +112,15 @@ export default function LoginScreen() {
                         [
                             {
                                 text: t('common.notNow'),
-                                style: 'cancel',
+                                style: 'cancel'
                             },
                             {
                                 text: t('common.enable'),
                                 onPress: async () => {
                                     await api.saveBiometricCredentials(phone, password);
                                     Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success);
-                                },
-                            },
+                                }
+                            }
                         ]
                     );
                 }, 500);
@@ -141,26 +141,22 @@ export default function LoginScreen() {
             start={{ x: 0, y: 0 }}
             end={{ x: 1, y: 1 }}
         >
-            <KeyboardAvoidingView
-                behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
-                style={styles.keyboardView}
-            >
+            <KeyboardAvoidingView behavior={Platform.OS === 'ios' ? 'padding' : 'height'} style={styles.keyboardView}>
                 <ScrollView
                     contentContainerStyle={styles.scrollContent}
                     keyboardShouldPersistTaps="handled"
                     showsVerticalScrollIndicator={false}
                 >
                     {/* Logo Section with Premium Animation */}
-                    <Animated.View style={[
-                        styles.logoSection,
-                        { opacity: fadeAnim, transform: [{ translateY: slideAnim }] }
-                    ]}>
+                    <Animated.View
+                        style={[styles.logoSection, { opacity: fadeAnim, transform: [{ translateY: slideAnim }] }]}
+                    >
                         <Animated.View
                             style={[
                                 styles.logoContainer,
                                 {
                                     transform: [{ translateY: floatAnim }],
-                                    shadowColor: '#D4AF37',
+                                    shadowColor: '#D4AF37'
                                 }
                             ]}
                         >
@@ -192,33 +188,57 @@ export default function LoginScreen() {
                             style={styles.goldTopAccent}
                         />
                         <Text style={[styles.welcomeText, { color: colors.text }]}>{t('auth.welcomeBack')}</Text>
-                        <Text style={[styles.subtitleText, { color: colors.textSecondary }]}>{t('auth.signInContinue')}</Text>
+                        <Text style={[styles.subtitleText, { color: colors.textSecondary }]}>
+                            {t('auth.signInContinue')}
+                        </Text>
 
                         {error ? (
-                            <View style={[
-                                styles.errorContainer,
-                                {
-                                    backgroundColor: colors.error + '15',
-                                    borderColor: colors.error,
-                                    flexDirection: rtlFlexDirection(isRTL)
-                                }
-                            ]}>
-                                <Ionicons name="alert-circle" size={16} color={colors.error} style={[isRTL && { marginRight: 0, marginLeft: Spacing.sm }, !isRTL && { marginRight: Spacing.sm }]} />
-                                <Text style={[styles.errorText, { color: colors.error, textAlign: rtlTextAlign(isRTL) }]}>{error}</Text>
+                            <View
+                                style={[
+                                    styles.errorContainer,
+                                    {
+                                        backgroundColor: colors.error + '15',
+                                        borderColor: colors.error,
+                                        flexDirection: rtlFlexDirection(isRTL)
+                                    }
+                                ]}
+                            >
+                                <Ionicons
+                                    name="alert-circle"
+                                    size={16}
+                                    color={colors.error}
+                                    style={[
+                                        isRTL && { marginRight: 0, marginLeft: Spacing.sm },
+                                        !isRTL && { marginRight: Spacing.sm }
+                                    ]}
+                                />
+                                <Text
+                                    style={[styles.errorText, { color: colors.error, textAlign: rtlTextAlign(isRTL) }]}
+                                >
+                                    {error}
+                                </Text>
                             </View>
                         ) : null}
 
                         <View style={styles.inputContainer}>
-                            <Text style={[styles.inputLabel, { color: colors.textSecondary, textAlign: rtlTextAlign(isRTL) }]}>
+                            <Text
+                                style={[
+                                    styles.inputLabel,
+                                    { color: colors.textSecondary, textAlign: rtlTextAlign(isRTL) }
+                                ]}
+                            >
                                 {t('auth.phone')}
                             </Text>
                             <TextInput
-                                style={[styles.input, {
-                                    backgroundColor: colors.surfaceSecondary,
-                                    color: colors.text,
-                                    borderColor: colors.border,
-                                    textAlign: rtlTextAlign(isRTL)
-                                }]}
+                                style={[
+                                    styles.input,
+                                    {
+                                        backgroundColor: colors.surfaceSecondary,
+                                        color: colors.text,
+                                        borderColor: colors.border,
+                                        textAlign: rtlTextAlign(isRTL)
+                                    }
+                                ]}
                                 placeholder={t('auth.phonePlaceholder')}
                                 placeholderTextColor={colors.textMuted}
                                 value={phone}
@@ -231,16 +251,24 @@ export default function LoginScreen() {
                         </View>
 
                         <View style={styles.inputContainer}>
-                            <Text style={[styles.inputLabel, { color: colors.textSecondary, textAlign: rtlTextAlign(isRTL) }]}>
+                            <Text
+                                style={[
+                                    styles.inputLabel,
+                                    { color: colors.textSecondary, textAlign: rtlTextAlign(isRTL) }
+                                ]}
+                            >
                                 {t('auth.password')}
                             </Text>
                             <TextInput
-                                style={[styles.input, {
-                                    backgroundColor: colors.surfaceSecondary,
-                                    color: colors.text,
-                                    borderColor: colors.border,
-                                    textAlign: rtlTextAlign(isRTL)
-                                }]}
+                                style={[
+                                    styles.input,
+                                    {
+                                        backgroundColor: colors.surfaceSecondary,
+                                        color: colors.text,
+                                        borderColor: colors.border,
+                                        textAlign: rtlTextAlign(isRTL)
+                                    }
+                                ]}
                                 placeholder={t('auth.passwordPlaceholder')}
                                 placeholderTextColor={colors.textMuted}
                                 value={password}
@@ -257,7 +285,9 @@ export default function LoginScreen() {
                             accessibilityLabel={t('auth.forgotPassword')}
                             onPress={handleForgotPassword}
                         >
-                            <Text style={[styles.forgotPasswordText, { color: colors.primary }]}>{t('auth.forgotPassword')}</Text>
+                            <Text style={[styles.forgotPasswordText, { color: colors.primary }]}>
+                                {t('auth.forgotPassword')}
+                            </Text>
                         </TouchableOpacity>
 
                         {/* Biometric Login - Premium Quick Access */}
@@ -296,8 +326,14 @@ export default function LoginScreen() {
                     {/* Register Section */}
                     <View style={[styles.registerSection, { flexDirection: rtlFlexDirection(isRTL) }]}>
                         <Text style={styles.registerText}>{t('auth.noAccount')}</Text>
-                        <TouchableOpacity onPress={() => navigation.navigate('Register')} accessibilityRole="button" accessibilityLabel={t('auth.createAccount')}>
-                            <Text style={[styles.registerLink, isRTL ? { marginRight: Spacing.xs, marginLeft: 0 } : {}]}>
+                        <TouchableOpacity
+                            onPress={() => navigation.navigate('Register')}
+                            accessibilityRole="button"
+                            accessibilityLabel={t('auth.createAccount')}
+                        >
+                            <Text
+                                style={[styles.registerLink, isRTL ? { marginRight: Spacing.xs, marginLeft: 0 } : {}]}
+                            >
                                 {t('auth.createAccount')}
                             </Text>
                         </TouchableOpacity>
@@ -306,9 +342,8 @@ export default function LoginScreen() {
                     {/* Footer */}
                     <View style={styles.footer}>
                         <Text style={styles.footerText}>
-                            {t('auth.agreeTerms')}{' '}
-                            <Text style={styles.footerLink}>{t('auth.terms')}</Text> {t('auth.and')}{' '}
-                            <Text style={styles.footerLink}>{t('auth.privacyPolicy')}</Text>
+                            {t('auth.agreeTerms')} <Text style={styles.footerLink}>{t('auth.terms')}</Text>{' '}
+                            {t('auth.and')} <Text style={styles.footerLink}>{t('auth.privacyPolicy')}</Text>
                         </Text>
                     </View>
                 </ScrollView>
@@ -319,19 +354,19 @@ export default function LoginScreen() {
 
 const styles = StyleSheet.create({
     container: {
-        flex: 1,
+        flex: 1
     },
     keyboardView: {
-        flex: 1,
+        flex: 1
     },
     scrollContent: {
         flexGrow: 1,
         justifyContent: 'center',
-        padding: Spacing.lg,
+        padding: Spacing.lg
     },
     logoSection: {
         alignItems: 'center',
-        marginBottom: Spacing.xl,
+        marginBottom: Spacing.xl
     },
     logoContainer: {
         width: 100,
@@ -341,36 +376,36 @@ const styles = StyleSheet.create({
         shadowOffset: { width: 0, height: 8 },
         shadowOpacity: 0.5,
         shadowRadius: 24,
-        elevation: 12,
+        elevation: 12
     },
     logo: {
         width: 100,
         height: 100,
         borderRadius: 24,
-        overflow: 'hidden',
+        overflow: 'hidden'
     },
     tagline: {
         fontSize: FontSizes.md,
         color: 'rgba(255, 255, 255, 0.9)',
         fontWeight: '600',
-        marginHorizontal: Spacing.sm,
+        marginHorizontal: Spacing.sm
     },
     taglineContainer: {
         flexDirection: 'row',
         alignItems: 'center',
-        marginTop: Spacing.sm,
+        marginTop: Spacing.sm
     },
     taglineSubtext: {
         fontSize: FontSizes.sm,
         color: 'rgba(212, 175, 55, 0.9)',
         marginTop: Spacing.xs,
-        fontWeight: '500',
+        fontWeight: '500'
     },
     goldLine: {
         width: 30,
         height: 2,
         backgroundColor: '#D4AF37',
-        borderRadius: 1,
+        borderRadius: 1
     },
     goldRing: {
         position: 'absolute',
@@ -380,7 +415,7 @@ const styles = StyleSheet.create({
         bottom: -4,
         borderRadius: 28,
         borderWidth: 3,
-        borderColor: '#D4AF37',
+        borderColor: '#D4AF37'
     },
     goldTopAccent: {
         position: 'absolute',
@@ -389,25 +424,25 @@ const styles = StyleSheet.create({
         right: 0,
         height: 4,
         borderTopLeftRadius: BorderRadius.xl,
-        borderTopRightRadius: BorderRadius.xl,
+        borderTopRightRadius: BorderRadius.xl
     },
     formCard: {
         borderRadius: BorderRadius.xl,
         padding: Spacing.xl,
         paddingTop: Spacing.xl + 4,
         overflow: 'hidden',
-        ...Shadows.lg,
+        ...Shadows.lg
     },
     welcomeText: {
         fontSize: FontSizes.xxl,
         fontWeight: '800',
         textAlign: 'center',
-        letterSpacing: -0.5,
+        letterSpacing: -0.5
     },
     subtitleText: {
         fontSize: FontSizes.md,
         textAlign: 'center',
-        marginBottom: Spacing.lg,
+        marginBottom: Spacing.lg
     },
     errorContainer: {
         flexDirection: 'row',
@@ -415,87 +450,87 @@ const styles = StyleSheet.create({
         borderRadius: BorderRadius.lg,
         padding: Spacing.md,
         marginBottom: Spacing.md,
-        borderWidth: 1,
+        borderWidth: 1
     },
     errorIcon: {
         fontSize: 16,
-        marginRight: Spacing.sm,
+        marginRight: Spacing.sm
     },
     errorText: {
         fontSize: FontSizes.sm,
-        flex: 1,
+        flex: 1
     },
     inputContainer: {
-        marginBottom: Spacing.md,
+        marginBottom: Spacing.md
     },
     inputLabel: {
         fontSize: FontSizes.sm,
         fontWeight: '600',
-        marginBottom: Spacing.xs,
+        marginBottom: Spacing.xs
     },
     input: {
         borderRadius: BorderRadius.lg,
         padding: Spacing.md,
         fontSize: FontSizes.lg,
-        borderWidth: 1.5,
+        borderWidth: 1.5
     },
     forgotPassword: {
         alignSelf: 'flex-end',
-        marginBottom: Spacing.md,
+        marginBottom: Spacing.md
     },
     forgotPasswordText: {
         fontSize: FontSizes.sm,
-        fontWeight: '600',
+        fontWeight: '600'
     },
     biometricContainer: {
         marginBottom: Spacing.md,
-        marginTop: Spacing.sm,
+        marginTop: Spacing.sm
     },
     loginButton: {
         borderRadius: BorderRadius.xl,
         overflow: 'hidden',
-        ...Shadows.md,
+        ...Shadows.md
     },
     loginButtonDisabled: {
-        opacity: 0.7,
+        opacity: 0.7
     },
     loginButtonGradient: {
         paddingVertical: Spacing.md + 4,
-        alignItems: 'center',
+        alignItems: 'center'
     },
     loginButtonText: {
         fontSize: FontSizes.lg,
         fontWeight: '800',
-        color: '#fff',
+        color: '#fff'
     },
     registerSection: {
         flexDirection: 'row',
         justifyContent: 'center',
         alignItems: 'center',
-        marginTop: Spacing.xl,
+        marginTop: Spacing.xl
     },
     registerText: {
         fontSize: FontSizes.md,
-        color: 'rgba(255, 255, 255, 0.8)',
+        color: 'rgba(255, 255, 255, 0.8)'
     },
     registerLink: {
         fontSize: FontSizes.md,
         fontWeight: '700',
         color: '#fff',
-        marginLeft: Spacing.xs,
+        marginLeft: Spacing.xs
     },
     footer: {
         marginTop: Spacing.xl,
-        alignItems: 'center',
+        alignItems: 'center'
     },
     footerText: {
         fontSize: FontSizes.xs,
         color: 'rgba(255, 255, 255, 0.6)',
         textAlign: 'center',
-        lineHeight: 18,
+        lineHeight: 18
     },
     footerLink: {
         color: '#fff',
-        fontWeight: '600',
-    },
+        fontWeight: '600'
+    }
 });

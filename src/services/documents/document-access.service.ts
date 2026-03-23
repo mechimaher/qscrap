@@ -8,15 +8,18 @@ import { DocumentRecord } from './types';
 import { DocumentNotFoundError, DocumentAccessDeniedError } from './errors';
 
 export class DocumentAccessService {
-    constructor(private pool: Pool) { }
+    constructor(private pool: Pool) {}
 
     /**
      * Download document (returns document data for PDF generation)
      */
     async downloadDocument(documentId: string, userId: string, userType: string): Promise<DocumentRecord> {
-        const result = await this.pool.query(`
+        const result = await this.pool.query(
+            `
             SELECT * FROM documents WHERE document_id = $1
-        `, [documentId]);
+        `,
+            [documentId]
+        );
 
         if (result.rows.length === 0) {
             throw new DocumentNotFoundError(documentId);
@@ -33,10 +36,13 @@ export class DocumentAccessService {
         }
 
         // Update download status
-        await this.pool.query(`
+        await this.pool.query(
+            `
             UPDATE documents SET downloaded_at = CURRENT_TIMESTAMP, status = 'downloaded'
             WHERE document_id = $1
-        `, [documentId]);
+        `,
+            [documentId]
+        );
 
         return doc;
     }
@@ -51,17 +57,20 @@ export class DocumentAccessService {
         userType?: string,
         req?: Request
     ): Promise<void> {
-        await this.pool.query(`
+        await this.pool.query(
+            `
             INSERT INTO document_access_log (
                 document_id, action, actor_id, actor_type, ip_address, user_agent
             ) VALUES ($1, $2, $3, $4, $5, $6)
-        `, [
-            documentId,
-            action,
-            userId || null,
-            userType || 'public',
-            req?.ip || null,
-            req?.headers['user-agent'] || null
-        ]);
+        `,
+            [
+                documentId,
+                action,
+                userId || null,
+                userType || 'public',
+                req?.ip || null,
+                req?.headers['user-agent'] || null
+            ]
+        );
     }
 }

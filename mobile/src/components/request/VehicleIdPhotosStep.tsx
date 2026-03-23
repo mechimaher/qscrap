@@ -15,7 +15,7 @@ export default function VehicleIdPhotosStep({
     carRearImage,
     handlePickCarRearImage,
     handleTakeCarRearPhoto,
-    setCarRearImage,
+    setCarRearImage
 }: any) {
     return (
         <View style={[styles.section, { backgroundColor: colors.surface }]}>
@@ -27,13 +27,23 @@ export default function VehicleIdPhotosStep({
                     <Text style={[styles.sectionTitle, { color: colors.text, textAlign: rtlTextAlign(isRTL) }]}>
                         {t('newRequest.vehicleIdPhotos')}
                     </Text>
-                    <Text style={[styles.sectionSubtitle, { color: colors.textSecondary, textAlign: rtlTextAlign(isRTL) }]}>
+                    <Text
+                        style={[
+                            styles.sectionSubtitle,
+                            { color: colors.textSecondary, textAlign: rtlTextAlign(isRTL) }
+                        ]}
+                    >
                         {t('newRequest.helpGaragesIdentify')}
                     </Text>
                 </View>
             </View>
 
-            <Text style={[styles.photoLabel, { color: colors.textSecondary, marginBottom: 8, textAlign: rtlTextAlign(isRTL) }]}>
+            <Text
+                style={[
+                    styles.photoLabel,
+                    { color: colors.textSecondary, marginBottom: 8, textAlign: rtlTextAlign(isRTL) }
+                ]}
+            >
                 {t('newRequest.frontView')}
             </Text>
             <PhotoUploadSection
@@ -45,7 +55,12 @@ export default function VehicleIdPhotosStep({
                 fullWidth
             />
 
-            <Text style={[styles.photoLabel, { color: colors.textSecondary, marginBottom: 8, textAlign: rtlTextAlign(isRTL) }]}>
+            <Text
+                style={[
+                    styles.photoLabel,
+                    { color: colors.textSecondary, marginBottom: 8, textAlign: rtlTextAlign(isRTL) }
+                ]}
+            >
                 {t('newRequest.rearView')}
             </Text>
             <PhotoUploadSection
@@ -64,23 +79,23 @@ const styles = StyleSheet.create({
     section: {
         borderRadius: BorderRadius.lg,
         padding: Spacing.lg,
-        marginBottom: Spacing.md,
+        marginBottom: Spacing.md
     },
     sectionHeader: {
         flexDirection: 'row',
         alignItems: 'center',
         marginBottom: Spacing.lg,
-        gap: Spacing.md,
+        gap: Spacing.md
     },
     stepBadge: {
         width: 36,
         height: 36,
         borderRadius: 18,
         alignItems: 'center',
-        justifyContent: 'center',
+        justifyContent: 'center'
     },
     stepNumber: { fontSize: FontSizes.md, fontWeight: '800' },
     sectionTitle: { fontSize: FontSizes.lg, fontWeight: '700' },
     sectionSubtitle: { fontSize: FontSizes.sm, marginTop: 2 },
-    photoLabel: { fontSize: FontSizes.sm, fontWeight: '600', marginBottom: 8 },
+    photoLabel: { fontSize: FontSizes.sm, fontWeight: '600', marginBottom: 8 }
 });

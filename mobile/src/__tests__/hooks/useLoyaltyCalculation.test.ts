@@ -13,7 +13,7 @@ describe('useLoyaltyCalculation', () => {
     it('should calculate no discount when applyDiscount is false', () => {
         // Mock the loyalty response
         (useLoyalty as jest.Mock).mockReturnValue({
-            loyalty: { points: 1000, tier: 'Gold', discountPercentage: 10 },
+            loyalty: { points: 1000, tier: 'Gold', discountPercentage: 10 }
         });
 
         const { result } = renderHook(() =>
@@ -21,7 +21,7 @@ describe('useLoyaltyCalculation', () => {
                 partPrice: 100,
                 deliveryFee: 20,
                 paymentType: 'full',
-                applyDiscount: false, // Testing false branch
+                applyDiscount: false // Testing false branch
             })
         );
 
@@ -34,7 +34,7 @@ describe('useLoyaltyCalculation', () => {
 
     it('should calculate 10% discount when applyDiscount is true on full payment type', () => {
         (useLoyalty as jest.Mock).mockReturnValue({
-            loyalty: { points: 1000, tier: 'Gold', discountPercentage: 10 },
+            loyalty: { points: 1000, tier: 'Gold', discountPercentage: 10 }
         });
 
         const { result } = renderHook(() =>
@@ -42,7 +42,7 @@ describe('useLoyaltyCalculation', () => {
                 partPrice: 100,
                 deliveryFee: 20,
                 paymentType: 'full',
-                applyDiscount: true,
+                applyDiscount: true
             })
         );
 
@@ -58,7 +58,7 @@ describe('useLoyaltyCalculation', () => {
 
     it('should calculate 100% discount when VIP tier applies to full payment type', () => {
         (useLoyalty as jest.Mock).mockReturnValue({
-            loyalty: { points: 5000, tier: 'Platinum', discountPercentage: 100 },
+            loyalty: { points: 5000, tier: 'Platinum', discountPercentage: 100 }
         });
 
         const { result } = renderHook(() =>
@@ -66,7 +66,7 @@ describe('useLoyaltyCalculation', () => {
                 partPrice: 100,
                 deliveryFee: 20,
                 paymentType: 'full',
-                applyDiscount: true,
+                applyDiscount: true
             })
         );
 
@@ -82,7 +82,7 @@ describe('useLoyaltyCalculation', () => {
 
     it('should calculate properly for delivery_only payment type', () => {
         (useLoyalty as jest.Mock).mockReturnValue({
-            loyalty: { points: 1000, tier: 'Silver', discountPercentage: 10 },
+            loyalty: { points: 1000, tier: 'Silver', discountPercentage: 10 }
         });
 
         const { result } = renderHook(() =>
@@ -90,7 +90,7 @@ describe('useLoyaltyCalculation', () => {
                 partPrice: 100,
                 deliveryFee: 20,
                 paymentType: 'delivery_only',
-                applyDiscount: true,
+                applyDiscount: true
             })
         );
 
@@ -107,7 +107,7 @@ describe('useLoyaltyCalculation', () => {
 
     it('should handle null loyalty data correctly', () => {
         (useLoyalty as jest.Mock).mockReturnValue({
-            loyalty: null,
+            loyalty: null
         });
 
         const { result } = renderHook(() =>
@@ -115,7 +115,7 @@ describe('useLoyaltyCalculation', () => {
                 partPrice: 200,
                 deliveryFee: 50,
                 paymentType: 'full',
-                applyDiscount: true,
+                applyDiscount: true
             })
         );
 

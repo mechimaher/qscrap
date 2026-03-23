@@ -24,14 +24,17 @@ export async function expireOldRequests(pool: Pool): Promise<number> {
             logger.jobComplete('expireOldRequests', { count: expiredCount });
 
             // Expire pending bids on these requests
-            const requestIds = result.rows.map(r => r.request_id);
-            await client.query(`
+            const requestIds = result.rows.map((r) => r.request_id);
+            await client.query(
+                `
                 UPDATE bids SET status = 'expired', updated_at = NOW()
                 WHERE request_id = ANY($1) AND status = 'pending'
-            `, [requestIds]);
+            `,
+                [requestIds]
+            );
 
             // Notify customers
-            result.rows.forEach(row => {
+            result.rows.forEach((row) => {
                 emitToUser(row.customer_id, 'request_expired', {
                     request_id: row.request_id,
                     notification: 'Your part request has expired. Create a new one to continue.'

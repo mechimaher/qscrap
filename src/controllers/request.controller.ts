@@ -57,7 +57,7 @@ export const getActiveRequests = async (req: AuthRequest, res: Response) => {
     const limit = parseInt(req.query.limit as string) || 20;
     const urgency = req.query.urgency as string;
     const condition = req.query.condition as string;
-    const sortBy = req.query.sort as string || 'newest';
+    const sortBy = (req.query.sort as string) || 'newest';
     const showAll = req.query.showAll === 'true';
 
     try {

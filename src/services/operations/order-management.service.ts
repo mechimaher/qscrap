@@ -8,7 +8,7 @@ import { OrderNotFoundError, InvalidStatusTransitionError } from './errors';
 import logger from '../../utils/logger';
 
 export class OrderManagementService {
-    constructor(private pool: Pool) { }
+    constructor(private pool: Pool) {}
 
     /**
      * Get orders with filters and pagination
@@ -39,7 +39,7 @@ export class OrderManagementService {
             if (status === 'cancelled') {
                 query += ` AND o.order_status LIKE 'cancelled%'`;
             } else if (status.includes(',')) {
-                const statuses = status.split(',').map(s => s.trim());
+                const statuses = status.split(',').map((s) => s.trim());
                 query += ` AND o.order_status IN (${statuses.map((_, i) => `$${paramIndex + i}`).join(', ')})`;
                 params.push(...statuses);
                 paramIndex += statuses.length;
@@ -88,7 +88,7 @@ export class OrderManagementService {
             if (status === 'cancelled') {
                 countQuery += ` AND o.order_status LIKE 'cancelled%'`;
             } else if (status.includes(',')) {
-                const statuses = status.split(',').map(s => s.trim());
+                const statuses = status.split(',').map((s) => s.trim());
                 countQuery += ` AND o.order_status IN (${statuses.map((_, i) => `$${countParamIndex + i}`).join(', ')})`;
                 countParams.push(...statuses);
                 countParamIndex += statuses.length;
@@ -137,7 +137,8 @@ export class OrderManagementService {
      * Get order details with full history
      */
     async getOrderDetails(orderId: string): Promise<any> {
-        const orderResult = await this.pool.query(`
+        const orderResult = await this.pool.query(
+            `
             SELECT o.*, 
                    pr.car_make, pr.car_model, pr.car_year, pr.part_description, pr.part_category, pr.part_subcategory, pr.vin_number, pr.image_urls as request_images,
                    u.full_name as customer_name, u.phone_number as customer_phone, u.email as customer_email,
@@ -150,24 +151,32 @@ export class OrderManagementService {
             JOIN users gu ON g.garage_id = gu.user_id
             LEFT JOIN bids b ON o.bid_id = b.bid_id
             WHERE o.order_id = $1
-        `, [orderId]);
+        `,
+            [orderId]
+        );
 
         if (orderResult.rows.length === 0) {
             throw new OrderNotFoundError(orderId);
         }
 
         // Get status history
-        const historyResult = await this.pool.query(`
+        const historyResult = await this.pool.query(
+            `
             SELECT history_id, order_id, old_status, new_status as status, changed_by, reason, created_at as changed_at
             FROM order_status_history
             WHERE order_id = $1
             ORDER BY created_at ASC
-        `, [orderId]);
+        `,
+            [orderId]
+        );
 
         // Get dispute if exists
-        const disputeResult = await this.pool.query(`
+        const disputeResult = await this.pool.query(
+            `
             SELECT * FROM disputes WHERE order_id = $1
-        `, [orderId]);
+        `,
+            [orderId]
+        );
 
         return {
             order: orderResult.rows[0],
@@ -315,17 +324,13 @@ export class OrderManagementService {
 
             // STRICT: Only allow collection from ready_for_pickup status
             if (order.order_status !== 'ready_for_pickup') {
-                throw new InvalidStatusTransitionError(
-                    order.order_status,
-                    'collected'
-                );
+                throw new InvalidStatusTransitionError(order.order_status, 'collected');
             }
 
             // Update order status
-            await client.query(
-                `UPDATE orders SET order_status = 'collected', updated_at = NOW() WHERE order_id = $1`,
-                [orderId]
-            );
+            await client.query(`UPDATE orders SET order_status = 'collected', updated_at = NOW() WHERE order_id = $1`, [
+                orderId
+            ]);
 
             // Record in history
             await client.query(
@@ -388,10 +393,10 @@ export class OrderManagementService {
                             if (currentStatus === 'ready_for_pickup') {
                                 newStatus = 'collected';
                             } else {
-                                errors.push({ 
-                                    order_id: orderId, 
+                                errors.push({
+                                    order_id: orderId,
                                     order_number: orderNumber,
-                                    error: `Invalid status transition: ${currentStatus} → collected` 
+                                    error: `Invalid status transition: ${currentStatus} → collected`
                                 });
                                 continue;
                             }
@@ -401,10 +406,10 @@ export class OrderManagementService {
                             if (currentStatus === 'in_transit') {
                                 newStatus = 'delivered';
                             } else {
-                                errors.push({ 
-                                    order_id: orderId, 
+                                errors.push({
+                                    order_id: orderId,
                                     order_number: orderNumber,
-                                    error: `Invalid status transition: ${currentStatus} → delivered` 
+                                    error: `Invalid status transition: ${currentStatus} → delivered`
                                 });
                                 continue;
                             }
@@ -445,9 +450,9 @@ export class OrderManagementService {
                         successCount++;
                     }
                 } catch (err) {
-                    errors.push({ 
-                        order_id: orderId, 
-                        error: err instanceof Error ? err.message : 'Unknown error' 
+                    errors.push({
+                        order_id: orderId,
+                        error: err instanceof Error ? err.message : 'Unknown error'
                     });
                 }
             }

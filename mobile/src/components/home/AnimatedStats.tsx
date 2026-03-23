@@ -45,16 +45,8 @@ const AnimatedStats = ({
     onRequestsPress: () => void;
     onOrdersPress: () => void;
 }) => {
-    const slideAnims = useRef([
-        new Animated.Value(40),
-        new Animated.Value(40),
-        new Animated.Value(40),
-    ]).current;
-    const fadeAnims = useRef([
-        new Animated.Value(0),
-        new Animated.Value(0),
-        new Animated.Value(0),
-    ]).current;
+    const slideAnims = useRef([new Animated.Value(40), new Animated.Value(40), new Animated.Value(40)]).current;
+    const fadeAnims = useRef([new Animated.Value(0), new Animated.Value(0), new Animated.Value(0)]).current;
     const { colors } = useTheme();
     const { t, isRTL } = useTranslation();
 
@@ -65,7 +57,7 @@ const AnimatedStats = ({
                 duration: 500,
                 delay: 400 + index * 100,
                 easing: Easing.out(Easing.back(1.1)),
-                useNativeDriver: true,
+                useNativeDriver: true
             }).start();
         });
 
@@ -74,7 +66,7 @@ const AnimatedStats = ({
                 toValue: 1,
                 duration: 400,
                 delay: 400 + index * 100,
-                useNativeDriver: true,
+                useNativeDriver: true
             }).start();
         });
     }, []);
@@ -104,15 +96,20 @@ const AnimatedStats = ({
         };
 
         return (
-            <Animated.View style={[
-                styles.statCardWrapper,
-                {
-                    opacity: fadeAnims[index],
-                    transform: [{ translateY: slideAnims[index] }, { scale: scaleAnim }],
-                }
-            ]}>
+            <Animated.View
+                style={[
+                    styles.statCardWrapper,
+                    {
+                        opacity: fadeAnims[index],
+                        transform: [{ translateY: slideAnims[index] }, { scale: scaleAnim }]
+                    }
+                ]}
+            >
                 <TouchableOpacity
-                    onPress={() => { Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light); onPress(); }}
+                    onPress={() => {
+                        Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
+                        onPress();
+                    }}
                     onPressIn={handlePressIn}
                     onPressOut={handlePressOut}
                     activeOpacity={1}
@@ -131,7 +128,9 @@ const AnimatedStats = ({
 
     return (
         <View style={styles.statsSection}>
-            <Text style={[styles.sectionTitle, { color: colors.text, textAlign: rtlTextAlign(isRTL) }]}>{t('home.yourActivity')}</Text>
+            <Text style={[styles.sectionTitle, { color: colors.text, textAlign: rtlTextAlign(isRTL) }]}>
+                {t('home.yourActivity')}
+            </Text>
             <View style={[styles.statsRow, { flexDirection: rtlFlexDirection(isRTL) }]}>
                 <StatCard
                     index={0}
@@ -150,27 +149,42 @@ const AnimatedStats = ({
                     onPress={onOrdersPress}
                 />
             </View>
-            <Animated.View style={[
-                styles.statCardWide,
-                {
-                    opacity: fadeAnims[2],
-                    transform: [{ translateY: slideAnims[2] }],
-                }
-            ]}>
+            <Animated.View
+                style={[
+                    styles.statCardWide,
+                    {
+                        opacity: fadeAnims[2],
+                        transform: [{ translateY: slideAnims[2] }]
+                    }
+                ]}
+            >
                 <TouchableOpacity onPress={onOrdersPress} activeOpacity={0.9}>
                     <LinearGradient
                         colors={['rgba(138,21,56,0.08)', 'rgba(138,21,56,0.15)']}
                         style={[styles.statCardWideInner, { flexDirection: rtlFlexDirection(isRTL) }]}
                     >
                         <View style={[styles.wideCardLeft, { flexDirection: rtlFlexDirection(isRTL) }]}>
-                            <Ionicons name="cube" size={28} color={Colors.primary} style={isRTL ? { marginLeft: Spacing.sm, marginRight: 0 } : { marginRight: Spacing.sm, marginLeft: 0 }} />
+                            <Ionicons
+                                name="cube"
+                                size={28}
+                                color={Colors.primary}
+                                style={
+                                    isRTL
+                                        ? { marginLeft: Spacing.sm, marginRight: 0 }
+                                        : { marginRight: Spacing.sm, marginLeft: 0 }
+                                }
+                            />
                             <View style={{ alignItems: isRTL ? 'flex-end' : 'flex-start' }}>
                                 <AnimatedNumber value={stats?.total_orders || 0} delay={700} />
-                                <Text style={[styles.wideCardLabel, { color: colors.textSecondary }]}>{t('home.totalOrders')}</Text>
+                                <Text style={[styles.wideCardLabel, { color: colors.textSecondary }]}>
+                                    {t('home.totalOrders')}
+                                </Text>
                             </View>
                         </View>
                         <View style={[styles.wideCardBadge, { backgroundColor: colors.primary + '20' }]}>
-                            <Text style={[styles.wideCardBadgeText, { color: colors.primary }]}>{t('common.viewAll')} {isRTL ? '←' : '→'}</Text>
+                            <Text style={[styles.wideCardBadgeText, { color: colors.primary }]}>
+                                {t('common.viewAll')} {isRTL ? '←' : '→'}
+                            </Text>
                         </View>
                     </LinearGradient>
                 </TouchableOpacity>
@@ -185,12 +199,12 @@ const styles = StyleSheet.create({
         fontSize: FontSizes.md,
         fontWeight: '600',
         fontFamily: FontFamily.semibold,
-        marginBottom: Spacing.sm,
+        marginBottom: Spacing.sm
     },
     statsRow: {
         flexDirection: 'row',
         justifyContent: 'space-between',
-        marginBottom: Spacing.sm,
+        marginBottom: Spacing.sm
     },
     statCardWrapper: { width: cardWidth },
     statCardInner: {
@@ -198,7 +212,7 @@ const styles = StyleSheet.create({
         alignItems: 'center',
         minHeight: 72,
         justifyContent: 'center',
-        borderRadius: BorderRadius.md,
+        borderRadius: BorderRadius.md
     },
     statEmoji: { fontSize: 20, marginBottom: 2 },
     statValue: { fontSize: 24, fontWeight: '700', fontFamily: FontFamily.bold },
@@ -207,13 +221,13 @@ const styles = StyleSheet.create({
         borderRadius: BorderRadius.md,
         overflow: 'hidden',
         borderWidth: 1,
-        borderColor: Colors.primary,
+        borderColor: Colors.primary
     },
     statCardWideInner: {
         padding: Spacing.sm,
         flexDirection: 'row',
         justifyContent: 'space-between',
-        alignItems: 'center',
+        alignItems: 'center'
     },
     wideCardLeft: { flexDirection: 'row', alignItems: 'center' },
     wideCardEmoji: { fontSize: 28, marginRight: Spacing.sm },
@@ -222,9 +236,9 @@ const styles = StyleSheet.create({
         backgroundColor: Colors.primary + '15',
         paddingHorizontal: Spacing.sm,
         paddingVertical: 3,
-        borderRadius: BorderRadius.full,
+        borderRadius: BorderRadius.full
     },
-    wideCardBadgeText: { fontSize: 10, color: Colors.primary, fontWeight: '600' },
+    wideCardBadgeText: { fontSize: 10, color: Colors.primary, fontWeight: '600' }
 });
 
 export default AnimatedStats;

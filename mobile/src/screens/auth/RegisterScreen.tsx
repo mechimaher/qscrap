@@ -9,7 +9,7 @@ import {
     KeyboardAvoidingView,
     Platform,
     ScrollView,
-    ActivityIndicator,
+    ActivityIndicator
 } from 'react-native';
 import { Image } from 'expo-image';
 import { LinearGradient } from 'expo-linear-gradient';
@@ -107,10 +107,7 @@ export default function RegisterScreen() {
             start={{ x: 0, y: 0 }}
             end={{ x: 1, y: 1 }}
         >
-            <KeyboardAvoidingView
-                behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
-                style={styles.keyboardView}
-            >
+            <KeyboardAvoidingView behavior={Platform.OS === 'ios' ? 'padding' : 'height'} style={styles.keyboardView}>
                 <ScrollView
                     contentContainerStyle={styles.scrollContent}
                     keyboardShouldPersistTaps="handled"
@@ -119,7 +116,8 @@ export default function RegisterScreen() {
                     {/* Header */}
                     <View style={[styles.header, { alignItems: isRTL ? 'flex-end' : 'flex-start' }]}>
                         <TouchableOpacity onPress={() => navigation.goBack()} style={styles.backButton}>
-                            <Ionicons name={isRTL ? "arrow-forward" : "arrow-back"} size={20} color={Colors.primary} /> <Text style={styles.backText}>{t('common.back')}</Text>
+                            <Ionicons name={isRTL ? 'arrow-forward' : 'arrow-back'} size={20} color={Colors.primary} />{' '}
+                            <Text style={styles.backText}>{t('common.back')}</Text>
                         </TouchableOpacity>
                     </View>
 
@@ -132,20 +130,32 @@ export default function RegisterScreen() {
                             transition={200}
                         />
                         <Text style={[styles.titleText, { textAlign: 'center' }]}>{t('auth.joinQScrap')}</Text>
-                        <Text style={[styles.subtitleText, { textAlign: 'center' }]}>{t('auth.createAccountInSeconds')}</Text>
+                        <Text style={[styles.subtitleText, { textAlign: 'center' }]}>
+                            {t('auth.createAccountInSeconds')}
+                        </Text>
                     </View>
 
                     {/* Form Card */}
                     <View style={styles.formCard}>
                         {error ? (
                             <View style={[styles.errorContainer, { flexDirection: rtlFlexDirection(isRTL) }]}>
-                                <Ionicons name="alert-circle" size={16} color="#EF4444" style={[isRTL && { marginRight: 0, marginLeft: Spacing.sm }, !isRTL && { marginRight: Spacing.sm }]} />
+                                <Ionicons
+                                    name="alert-circle"
+                                    size={16}
+                                    color="#EF4444"
+                                    style={[
+                                        isRTL && { marginRight: 0, marginLeft: Spacing.sm },
+                                        !isRTL && { marginRight: Spacing.sm }
+                                    ]}
+                                />
                                 <Text style={[styles.errorText, { textAlign: rtlTextAlign(isRTL) }]}>{error}</Text>
                             </View>
                         ) : null}
 
                         <View style={styles.inputContainer}>
-                            <Text style={[styles.inputLabel, { textAlign: rtlTextAlign(isRTL) }]}>{t('auth.fullName')}</Text>
+                            <Text style={[styles.inputLabel, { textAlign: rtlTextAlign(isRTL) }]}>
+                                {t('auth.fullName')}
+                            </Text>
                             <TextInput
                                 style={[styles.input, { textAlign: rtlTextAlign(isRTL) }]}
                                 placeholder={t('auth.enterFullName')}
@@ -157,7 +167,9 @@ export default function RegisterScreen() {
                         </View>
 
                         <View style={styles.inputContainer}>
-                            <Text style={[styles.inputLabel, { textAlign: rtlTextAlign(isRTL) }]}>{t('auth.emailAddress')}</Text>
+                            <Text style={[styles.inputLabel, { textAlign: rtlTextAlign(isRTL) }]}>
+                                {t('auth.emailAddress')}
+                            </Text>
                             <TextInput
                                 style={[styles.input, { textAlign: rtlTextAlign(isRTL) }]}
                                 placeholder={t('auth.emailPlaceholder')}
@@ -171,7 +183,9 @@ export default function RegisterScreen() {
                         </View>
 
                         <View style={styles.inputContainer}>
-                            <Text style={[styles.inputLabel, { textAlign: rtlTextAlign(isRTL) }]}>{t('auth.phoneNumber')}</Text>
+                            <Text style={[styles.inputLabel, { textAlign: rtlTextAlign(isRTL) }]}>
+                                {t('auth.phoneNumber')}
+                            </Text>
                             <TextInput
                                 style={[styles.input, { textAlign: rtlTextAlign(isRTL) }]}
                                 placeholder={t('auth.phonePlaceholder')}
@@ -183,7 +197,9 @@ export default function RegisterScreen() {
                         </View>
 
                         <View style={styles.inputContainer}>
-                            <Text style={[styles.inputLabel, { textAlign: rtlTextAlign(isRTL) }]}>{t('auth.password')}</Text>
+                            <Text style={[styles.inputLabel, { textAlign: rtlTextAlign(isRTL) }]}>
+                                {t('auth.password')}
+                            </Text>
                             <TextInput
                                 style={[styles.input, { textAlign: rtlTextAlign(isRTL) }]}
                                 placeholder={t('auth.minCharacters', { count: 6 })}
@@ -195,7 +211,9 @@ export default function RegisterScreen() {
                         </View>
 
                         <View style={styles.inputContainer}>
-                            <Text style={[styles.inputLabel, { textAlign: rtlTextAlign(isRTL) }]}>{t('auth.confirmPassword')}</Text>
+                            <Text style={[styles.inputLabel, { textAlign: rtlTextAlign(isRTL) }]}>
+                                {t('auth.confirmPassword')}
+                            </Text>
                             <TextInput
                                 style={[styles.input, { textAlign: rtlTextAlign(isRTL) }]}
                                 placeholder={t('auth.repeatPassword')}
@@ -247,48 +265,50 @@ export default function RegisterScreen() {
                     <View style={[styles.loginSection, { flexDirection: rtlFlexDirection(isRTL) }]}>
                         <Text style={styles.loginText}>{t('auth.alreadyHaveAccount')}</Text>
                         <TouchableOpacity onPress={() => navigation.navigate('Login')}>
-                            <Text style={[styles.loginLink, isRTL && { marginLeft: 0, marginRight: Spacing.xs }]}>{t('auth.signIn')}</Text>
+                            <Text style={[styles.loginLink, isRTL && { marginLeft: 0, marginRight: Spacing.xs }]}>
+                                {t('auth.signIn')}
+                            </Text>
                         </TouchableOpacity>
                     </View>
                 </ScrollView>
             </KeyboardAvoidingView>
-        </ LinearGradient>
+        </LinearGradient>
     );
 }
 
 const styles = StyleSheet.create({
     container: {
-        flex: 1,
+        flex: 1
     },
     keyboardView: { flex: 1 },
     scrollContent: {
         flexGrow: 1,
-        padding: Spacing.lg,
+        padding: Spacing.lg
     },
     header: {
         marginTop: Spacing.lg,
-        marginBottom: Spacing.md,
+        marginBottom: Spacing.md
     },
     backButton: {
         padding: Spacing.sm,
         backgroundColor: 'rgba(255, 255, 255, 0.15)',
         borderRadius: BorderRadius.md,
-        alignSelf: 'flex-start',
+        alignSelf: 'flex-start'
     },
     backText: {
         color: '#ffffff',
         fontSize: FontSizes.md,
-        fontWeight: '600',
+        fontWeight: '600'
     },
     titleSection: {
         alignItems: 'center',
-        marginBottom: Spacing.lg,
+        marginBottom: Spacing.lg
     },
     logo: {
         width: 80,
         height: 80,
         borderRadius: 20,
-        marginBottom: Spacing.md,
+        marginBottom: Spacing.md
     },
     titleText: {
         fontSize: FontSizes.xxl + 4,
@@ -297,18 +317,18 @@ const styles = StyleSheet.create({
         letterSpacing: -0.5,
         textShadowColor: 'rgba(138, 21, 56, 0.6)',
         textShadowOffset: { width: 0, height: 2 },
-        textShadowRadius: 10,
+        textShadowRadius: 10
     },
     subtitleText: {
         fontSize: FontSizes.md,
         color: 'rgba(255, 255, 255, 0.8)',
-        marginTop: Spacing.xs,
+        marginTop: Spacing.xs
     },
     formCard: {
         backgroundColor: 'rgba(255, 255, 255, 0.95)',
         borderRadius: BorderRadius.xl,
         padding: Spacing.xl,
-        ...Shadows.lg,
+        ...Shadows.lg
     },
     errorContainer: {
         flexDirection: 'row',
@@ -318,25 +338,25 @@ const styles = StyleSheet.create({
         padding: Spacing.md,
         marginBottom: Spacing.md,
         borderWidth: 1,
-        borderColor: '#EF4444',
+        borderColor: '#EF4444'
     },
     errorIcon: {
         fontSize: 16,
-        marginRight: Spacing.sm,
+        marginRight: Spacing.sm
     },
     errorText: {
         color: '#EF4444',
         fontSize: FontSizes.sm,
-        flex: 1,
+        flex: 1
     },
     inputContainer: {
-        marginBottom: Spacing.md,
+        marginBottom: Spacing.md
     },
     inputLabel: {
         fontSize: FontSizes.sm,
         fontWeight: '600',
         color: '#525252',
-        marginBottom: Spacing.xs,
+        marginBottom: Spacing.xs
     },
     input: {
         backgroundColor: '#F8F9FA',
@@ -345,23 +365,23 @@ const styles = StyleSheet.create({
         fontSize: FontSizes.md,
         color: '#1a1a1a',
         borderWidth: 1.5,
-        borderColor: '#E8E8E8',
+        borderColor: '#E8E8E8'
     },
     registerButton: {
         marginTop: Spacing.md,
         borderRadius: BorderRadius.xl,
         overflow: 'hidden',
-        ...Shadows.md,
+        ...Shadows.md
     },
     registerButtonDisabled: { opacity: 0.7 },
     registerButtonGradient: {
         paddingVertical: Spacing.md + 4,
-        alignItems: 'center',
+        alignItems: 'center'
     },
     registerButtonText: {
         fontSize: FontSizes.lg,
         fontWeight: '800',
-        color: '#fff',
+        color: '#fff'
     },
     benefits: {
         flexDirection: 'row',
@@ -369,35 +389,35 @@ const styles = StyleSheet.create({
         marginTop: Spacing.lg,
         paddingTop: Spacing.lg,
         borderTopWidth: 1,
-        borderTopColor: '#F0F0F0',
+        borderTopColor: '#F0F0F0'
     },
     benefitItem: {
-        alignItems: 'center',
+        alignItems: 'center'
     },
     benefitIcon: {
         fontSize: 16,
         color: '#22C55E',
         fontWeight: '700',
-        marginBottom: 4,
+        marginBottom: 4
     },
     benefitText: {
         fontSize: FontSizes.xs,
-        color: '#525252',
+        color: '#525252'
     },
     loginSection: {
         flexDirection: 'row',
         justifyContent: 'center',
         alignItems: 'center',
-        marginTop: Spacing.xl,
+        marginTop: Spacing.xl
     },
     loginText: {
         fontSize: FontSizes.md,
-        color: 'rgba(255, 255, 255, 0.8)',
+        color: 'rgba(255, 255, 255, 0.8)'
     },
     loginLink: {
         fontSize: FontSizes.md,
         fontWeight: '700',
         color: '#ffffff',
-        marginLeft: Spacing.xs,
-    },
+        marginLeft: Spacing.xs
+    }
 });

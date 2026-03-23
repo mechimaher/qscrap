@@ -6,47 +6,47 @@ export const FeatureFlags = {
     // ========================================
     // MVP CORE (Always Enabled)
     // ========================================
-    USED_PARTS_MARKETPLACE: true,  // Core business
-    VIN_SCANNER: true,             // Just implemented
-    PAYMENT_SYSTEM: true,          // Enterprise-ready
-    DELIVERY_TRACKING: true,       // Essential for trust
-    CHAT: true,                    // Customer support
-    NOTIFICATIONS: true,           // Engagement
+    USED_PARTS_MARKETPLACE: true, // Core business
+    VIN_SCANNER: true, // Just implemented
+    PAYMENT_SYSTEM: true, // Enterprise-ready
+    DELIVERY_TRACKING: true, // Essential for trust
+    CHAT: true, // Customer support
+    NOTIFICATIONS: true, // Engagement
 
     // ========================================
     // HIDDEN FOR MVP (Enable Post-Launch)
     // ========================================
-    NEW_PARTS: false,              // New parts marketplace - Phase 3
-    REPAIR_MARKETPLACE: false,     // Repair services - Phase 3
+    NEW_PARTS: false, // New parts marketplace - Phase 3
+    REPAIR_MARKETPLACE: false, // Repair services - Phase 3
 
     // ========================================
     // ESCROW & TRUST (MVP Priority)
     // ========================================
-    ESCROW_PAYMENTS: true,         // Hold funds until confirmation
-    BUYER_PROTECTION: true,        // 48-hour inspection window
-    SELLER_VERIFICATION: true,     // Verified seller badges
-    PROOF_OF_CONDITION: true,      // Photo/video at pickup/delivery
+    ESCROW_PAYMENTS: true, // Hold funds until confirmation
+    BUYER_PROTECTION: true, // 48-hour inspection window
+    SELLER_VERIFICATION: true, // Verified seller badges
+    PROOF_OF_CONDITION: true, // Photo/video at pickup/delivery
 
     // ========================================
     // DELIVERY OPTIONS
     // ========================================
-    PICKUP_FROM_GARAGE: true,      // Buyer collects
-    PLATFORM_DELIVERY: true,       // Platform arranges delivery
-    WHITE_GLOVE_DELIVERY: false,   // Premium inspection - Phase 2
+    PICKUP_FROM_GARAGE: true, // Buyer collects
+    PLATFORM_DELIVERY: true, // Platform arranges delivery
+    WHITE_GLOVE_DELIVERY: false, // Premium inspection - Phase 2
 
     // ========================================
     // B2B FEATURES (Enable for Fleet Accounts)
     // ========================================
-    B2B_INVOICING: false,          // Invoice toggle in checkout
-    B2B_PO_MANAGEMENT: false,      // Purchase order upload
-    FLEET_MANAGEMENT: false,       // Multi-vehicle management
+    B2B_INVOICING: false, // Invoice toggle in checkout
+    B2B_PO_MANAGEMENT: false, // Purchase order upload
+    FLEET_MANAGEMENT: false, // Multi-vehicle management
 
     // ========================================
     // ADVANCED FEATURES (Phase 3+)
     // ========================================
-    THREE_D_VIEWER: false,         // 3D part visualization
-    AR_PREVIEW: false,             // Augmented reality
-    ADVANCED_ANALYTICS: false,     // Business intelligence
+    THREE_D_VIEWER: false, // 3D part visualization
+    AR_PREVIEW: false, // Augmented reality
+    ADVANCED_ANALYTICS: false // Business intelligence
 };
 
 // Helper function to check feature availability
@@ -94,7 +94,7 @@ export const FeatureFlagDescriptions: Record<keyof typeof FeatureFlags, string> 
     FLEET_MANAGEMENT: 'Multi-vehicle management for fleet accounts',
     THREE_D_VIEWER: '3D visualization of parts',
     AR_PREVIEW: 'Augmented reality part preview',
-    ADVANCED_ANALYTICS: 'Business intelligence and reporting',
+    ADVANCED_ANALYTICS: 'Business intelligence and reporting'
 };
 
 export default FeatureFlags;

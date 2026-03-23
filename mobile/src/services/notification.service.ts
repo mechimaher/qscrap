@@ -1,7 +1,22 @@
-import { apiClient } from "./apiClient";
-import { API_ENDPOINTS, API_BASE_URL } from "../config/api";
-import { log, warn, error } from "../utils/logger";
-import { User, AuthResponse, Request, Bid, Order, Stats, Address, Product, Notification, SupportTicket, Vehicle, LoyaltyTransaction, PaymentMethod, UrgentAction } from "./types";
+import { apiClient } from './apiClient';
+import { API_ENDPOINTS, API_BASE_URL } from '../config/api';
+import { log, warn, error } from '../utils/logger';
+import {
+    User,
+    AuthResponse,
+    Request,
+    Bid,
+    Order,
+    Stats,
+    Address,
+    Product,
+    Notification,
+    SupportTicket,
+    Vehicle,
+    LoyaltyTransaction,
+    PaymentMethod,
+    UrgentAction
+} from './types';
 
 export class NotificationService {
     async getNotifications(): Promise<{ notifications: Notification[] }> {
@@ -32,10 +47,14 @@ export class NotificationService {
         });
     }
 
-    async registerPushToken(token: string, platform: 'ios' | 'android'): Promise<{ success: boolean }> {
+    async registerPushToken(
+        token: string,
+        platform: 'ios' | 'android',
+        deviceId?: string
+    ): Promise<{ success: boolean }> {
         return apiClient.request(API_ENDPOINTS.NOTIFICATIONS_REGISTER, {
             method: 'POST',
-            body: JSON.stringify({ token, platform, device_id: 'unknown' })
+            body: JSON.stringify({ token, platform, device_id: deviceId || 'unknown' })
         });
     }
 }

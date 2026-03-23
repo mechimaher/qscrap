@@ -1,10 +1,10 @@
 /**
  * Orphan Cleanup Job (HR-02)
  * Automatically cancels stuck orders in pending_payment state
- * 
+ *
  * Runs: Every hour
  * Target: Orders in pending_payment > 2 hours old
- * 
+ *
  * Source: Cancellation Audit Jan 30, 2026 - HR-02 fix
  */
 

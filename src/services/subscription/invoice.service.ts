@@ -39,7 +39,8 @@ export class InvoiceService {
         }
 
         // Fetch invoice details
-        const result = await this.pool.query(`
+        const result = await this.pool.query(
+            `
             SELECT 
                 si.*,
                 g.garage_name, g.cr_number, g.address,
@@ -48,7 +49,9 @@ export class InvoiceService {
             JOIN garages g ON si.garage_id = g.garage_id
             JOIN users u ON si.garage_id = u.user_id
             WHERE si.invoice_id = $1
-        `, [invoiceId]);
+        `,
+            [invoiceId]
+        );
 
         if (result.rows.length === 0) {
             throw new Error('Invoice not found');
@@ -103,7 +106,9 @@ export class InvoiceService {
         doc.text(`CR: ${invoice.cr_number || 'N/A'}`);
         doc.text(`Email: ${invoice.email}`);
         doc.text(`Phone: ${invoice.phone_number}`);
-        if (invoice.address) {doc.text(`Address: ${invoice.address}`);}
+        if (invoice.address) {
+            doc.text(`Address: ${invoice.address}`);
+        }
         doc.moveDown();
 
         // Divider
@@ -155,7 +160,9 @@ export class InvoiceService {
             doc.font('Helvetica-Bold').fillColor('green');
             doc.text('✓ PAID', { align: 'center' });
             doc.fillColor('black').font('Helvetica');
-            doc.text(`Payment Method: ${invoice.payment_method === 'card' ? 'Credit Card' : 'Bank Transfer'}`, { align: 'center' });
+            doc.text(`Payment Method: ${invoice.payment_method === 'card' ? 'Credit Card' : 'Bank Transfer'}`, {
+                align: 'center'
+            });
             if (invoice.paid_at) {
                 doc.text(`Payment Date: ${new Date(invoice.paid_at).toLocaleDateString('en-QA')}`, { align: 'center' });
             }
@@ -183,10 +190,10 @@ export class InvoiceService {
         });
 
         // Update invoice record with PDF path
-        await this.pool.query(
-            'UPDATE subscription_invoices SET pdf_path = $1 WHERE invoice_id = $2',
-            [filepath, invoiceId]
-        );
+        await this.pool.query('UPDATE subscription_invoices SET pdf_path = $1 WHERE invoice_id = $2', [
+            filepath,
+            invoiceId
+        ]);
 
         logger.info('Invoice PDF generated', { filepath });
 
@@ -213,7 +220,8 @@ export class InvoiceService {
      * Get invoices for a garage
      */
     async getGarageInvoices(garageId: string) {
-        const result = await this.pool.query(`
+        const result = await this.pool.query(
+            `
             SELECT 
                 invoice_id, invoice_number, amount, currency, status,
                 plan_name, payment_method, issued_at, paid_at
@@ -221,7 +229,9 @@ export class InvoiceService {
             WHERE garage_id = $1
             ORDER BY issued_at DESC
             LIMIT 24
-        `, [garageId]);
+        `,
+            [garageId]
+        );
 
         return result.rows;
     }
@@ -265,25 +275,28 @@ export class InvoiceService {
         const seqResult = await this.pool.query("SELECT nextval('invoice_number_seq')");
         const invoiceNumber = `${prefix}-${String(seqResult.rows[0].nextval).padStart(4, '0')}`;
 
-        const result = await this.pool.query(`
+        const result = await this.pool.query(
+            `
             INSERT INTO subscription_invoices 
             (invoice_number, garage_id, subscription_id, request_id, amount, plan_name, plan_name_ar, payment_method, payment_intent_id, bank_reference, status, paid_at)
             VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12)
             RETURNING invoice_id, invoice_number
-        `, [
-            invoiceNumber,
-            params.garage_id,
-            params.subscription_id,
-            params.request_id,
-            params.amount,
-            params.plan_name,
-            params.plan_name_ar,
-            params.payment_method,
-            params.payment_intent_id,
-            params.bank_reference,
-            params.status || 'paid',
-            params.status === 'paid' ? new Date() : null
-        ]);
+        `,
+            [
+                invoiceNumber,
+                params.garage_id,
+                params.subscription_id,
+                params.request_id,
+                params.amount,
+                params.plan_name,
+                params.plan_name_ar,
+                params.payment_method,
+                params.payment_intent_id,
+                params.bank_reference,
+                params.status || 'paid',
+                params.status === 'paid' ? new Date() : null
+            ]
+        );
 
         const invoiceId = result.rows[0].invoice_id;
 

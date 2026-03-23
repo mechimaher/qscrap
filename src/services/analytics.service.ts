@@ -60,7 +60,8 @@ export class AnalyticsService {
         try {
             // Get summary statistics using direct SQL (avoids stored function dependency)
             const daysBack = this.getPeriodDays(period);
-            const summaryResult = await pool.query(`
+            const summaryResult = await pool.query(
+                `
                 SELECT 
                     COALESCE((SELECT COUNT(*) FROM orders WHERE garage_id = $1 AND created_at >= NOW() - INTERVAL '${daysBack} days'), 0)::integer as total_orders,
                     COALESCE((SELECT SUM(garage_payout_amount) FROM orders WHERE garage_id = $1 AND order_status = 'completed' AND created_at >= NOW() - INTERVAL '${daysBack} days'), 0) as total_revenue,
@@ -68,7 +69,9 @@ export class AnalyticsService {
                     COALESCE((SELECT ROUND(COUNT(*) FILTER (WHERE status = 'accepted')::numeric * 100 / NULLIF(COUNT(*), 0), 1) FROM bids WHERE garage_id = $1 AND created_at >= NOW() - INTERVAL '${daysBack} days'), 0) as win_rate,
                     COALESCE((SELECT ROUND(AVG(overall_rating)::numeric, 1) FROM order_reviews WHERE garage_id = $1), 0) as avg_rating,
                     COALESCE((SELECT COUNT(DISTINCT customer_id) FROM orders WHERE garage_id = $1 AND created_at >= NOW() - INTERVAL '${daysBack} days'), 0)::integer as unique_customers
-            `, [garageId]);
+            `,
+                [garageId]
+            );
 
             const summary: AnalyticsSummary = summaryResult.rows[0] || {
                 total_orders: 0,
@@ -154,11 +157,7 @@ export class AnalyticsService {
     /**
      * Get sales trend data for charts
      */
-    static async getSalesTrend(
-        garageId: string,
-        startDate?: string,
-        endDate?: string
-    ): Promise<DailyAnalytics[]> {
+    static async getSalesTrend(garageId: string, startDate?: string, endDate?: string): Promise<DailyAnalytics[]> {
         try {
             const query = `
                 SELECT 
@@ -177,8 +176,12 @@ export class AnalyticsService {
             `;
 
             const params = [garageId];
-            if (startDate) {params.push(startDate);}
-            if (endDate) {params.push(endDate);}
+            if (startDate) {
+                params.push(startDate);
+            }
+            if (endDate) {
+                params.push(endDate);
+            }
 
             const result = await pool.query(query, params);
             return result.rows;
@@ -191,10 +194,7 @@ export class AnalyticsService {
     /**
      * Get popular parts analysis
      */
-    static async getPopularParts(
-        garageId: string,
-        limit: number = 20
-    ): Promise<PopularPart[]> {
+    static async getPopularParts(garageId: string, limit: number = 20): Promise<PopularPart[]> {
         try {
             const result = await pool.query(
                 `SELECT 
@@ -257,7 +257,8 @@ export class AnalyticsService {
     ): Promise<AnalyticsSummary> {
         try {
             const daysBack = this.getPeriodDays(period);
-            const result = await pool.query(`
+            const result = await pool.query(
+                `
                 SELECT 
                     COALESCE((SELECT COUNT(*) FROM orders WHERE garage_id = $1 AND created_at >= NOW() - INTERVAL '${daysBack} days'), 0)::integer as total_orders,
                     COALESCE((SELECT SUM(garage_payout_amount) FROM orders WHERE garage_id = $1 AND order_status = 'completed' AND created_at >= NOW() - INTERVAL '${daysBack} days'), 0) as total_revenue,
@@ -265,16 +266,20 @@ export class AnalyticsService {
                     COALESCE((SELECT ROUND(COUNT(*) FILTER (WHERE status = 'accepted')::numeric * 100 / NULLIF(COUNT(*), 0), 1) FROM bids WHERE garage_id = $1 AND created_at >= NOW() - INTERVAL '${daysBack} days'), 0) as win_rate,
                     COALESCE((SELECT ROUND(AVG(overall_rating)::numeric, 1) FROM order_reviews WHERE garage_id = $1), 0) as avg_rating,
                     COALESCE((SELECT COUNT(DISTINCT customer_id) FROM orders WHERE garage_id = $1 AND created_at >= NOW() - INTERVAL '${daysBack} days'), 0)::integer as unique_customers
-            `, [garageId]);
+            `,
+                [garageId]
+            );
 
-            return result.rows[0] || {
-                total_orders: 0,
-                total_revenue: '0',
-                total_bids: 0,
-                win_rate: '0',
-                avg_rating: '0',
-                unique_customers: 0
-            };
+            return (
+                result.rows[0] || {
+                    total_orders: 0,
+                    total_revenue: '0',
+                    total_bids: 0,
+                    win_rate: '0',
+                    avg_rating: '0',
+                    unique_customers: 0
+                }
+            );
         } catch (error) {
             logger.error('Error fetching summary', { error: (error as Error).message });
             throw new Error('Failed to fetch summary');
@@ -334,18 +339,9 @@ export class AnalyticsService {
 
             // Calculate percentage changes
             const changes = {
-                orders: this.calculateChange(
-                    current.total_orders,
-                    previous.total_orders
-                ),
-                revenue: this.calculateChange(
-                    parseFloat(current.total_revenue),
-                    parseFloat(previous.total_revenue)
-                ),
-                rating: this.calculateChange(
-                    parseFloat(current.avg_rating),
-                    parseFloat(previous.avg_rating)
-                )
+                orders: this.calculateChange(current.total_orders, previous.total_orders),
+                revenue: this.calculateChange(parseFloat(current.total_revenue), parseFloat(previous.total_revenue)),
+                rating: this.calculateChange(parseFloat(current.avg_rating), parseFloat(previous.avg_rating))
             };
 
             return { current, previous, changes };
@@ -358,16 +354,23 @@ export class AnalyticsService {
     // Helper methods
     private static getPeriodDays(period: string): number {
         switch (period) {
-            case 'today': return 1;
-            case 'week': return 7;
-            case 'month': return 30;
-            case 'year': return 365;
-            default: return 30;
+            case 'today':
+                return 1;
+            case 'week':
+                return 7;
+            case 'month':
+                return 30;
+            case 'year':
+                return 365;
+            default:
+                return 30;
         }
     }
 
     private static calculateChange(current: number, previous: number): number {
-        if (previous === 0) {return current > 0 ? 100 : 0;}
+        if (previous === 0) {
+            return current > 0 ? 100 : 0;
+        }
         return Math.round(((current - previous) / previous) * 100);
     }
 }

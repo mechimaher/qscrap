@@ -52,7 +52,8 @@ describe('Bid Service', () => {
 
         it('should submit bid successfully', async () => {
             const mockClient = {
-                query: jest.fn()
+                query: jest
+                    .fn()
                     .mockResolvedValueOnce({ rows: [] }) // BEGIN
                     .mockResolvedValueOnce({ rows: [{ status: 'active', customer_id: 'customer-123' }] }) // Request check
                     .mockResolvedValueOnce({ rows: [] }) // Duplicate bid check
@@ -79,22 +80,19 @@ describe('Bid Service', () => {
                 reason: 'Suspicious bidding pattern detected'
             });
 
-            await expect(bidService.submitBid(mockBidParams))
-                .rejects.toThrow('Suspicious bidding pattern detected');
+            await expect(bidService.submitBid(mockBidParams)).rejects.toThrow('Suspicious bidding pattern detected');
         });
 
         it('should reject bid with invalid amount', async () => {
             const invalidParams = { ...mockBidParams, bidAmount: -50 };
 
-            await expect(bidService.submitBid(invalidParams))
-                .rejects.toThrow('Bid amount must be greater than zero');
+            await expect(bidService.submitBid(invalidParams)).rejects.toThrow('Bid amount must be greater than zero');
         });
 
         it('should reject bid with invalid part condition', async () => {
             const invalidParams = { ...mockBidParams, partCondition: 'invalid' };
 
-            await expect(bidService.submitBid(invalidParams))
-                .rejects.toThrow('Part condition is required');
+            await expect(bidService.submitBid(invalidParams)).rejects.toThrow('Part condition is required');
         });
 
         it('should accept valid part conditions', async () => {
@@ -102,7 +100,8 @@ describe('Bid Service', () => {
 
             for (const condition of validConditions) {
                 const mockClient = {
-                    query: jest.fn()
+                    query: jest
+                        .fn()
                         .mockResolvedValueOnce({ rows: [] }) // BEGIN
                         .mockResolvedValueOnce({ rows: [{ status: 'active', customer_id: 'customer-123' }] })
                         .mockResolvedValueOnce({ rows: [] }) // Duplicate check
@@ -129,7 +128,8 @@ describe('Bid Service', () => {
             };
 
             const mockClient = {
-                query: jest.fn()
+                query: jest
+                    .fn()
                     .mockResolvedValueOnce({ rows: [] }) // BEGIN
                     .mockResolvedValueOnce({ rows: [{ status: 'active', customer_id: 'customer-123' }] })
                     .mockResolvedValueOnce({ rows: [] }) // Duplicate check
@@ -156,7 +156,8 @@ describe('Bid Service', () => {
             };
 
             const mockClient = {
-                query: jest.fn()
+                query: jest
+                    .fn()
                     .mockResolvedValueOnce({ rows: [] }) // BEGIN
                     .mockResolvedValueOnce({ rows: [{ status: 'active', customer_id: 'customer-123' }] })
                     .mockResolvedValueOnce({ rows: [] }) // Duplicate check
@@ -176,8 +177,7 @@ describe('Bid Service', () => {
         it('should handle database connection errors', async () => {
             mockPool.connect.mockRejectedValue(new Error('Database connection failed'));
 
-            await expect(bidService.submitBid(mockBidParams))
-                .rejects.toThrow('Database connection failed');
+            await expect(bidService.submitBid(mockBidParams)).rejects.toThrow('Database connection failed');
         });
 
         it('should release database connection on error', async () => {
@@ -187,8 +187,7 @@ describe('Bid Service', () => {
             };
             mockPool.connect.mockResolvedValue(mockClient as any);
 
-            await expect(bidService.submitBid(mockBidParams))
-                .rejects.toThrow('Query failed');
+            await expect(bidService.submitBid(mockBidParams)).rejects.toThrow('Query failed');
             expect(mockClient.release).toHaveBeenCalled();
         });
     });

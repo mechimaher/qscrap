@@ -86,7 +86,6 @@ async function sendDeliveryReminders() {
                 total: sent24h + sent40h
             });
         }
-
     } catch (error) {
         logger.error('[DELIVERY-REMINDERS] Error sending reminders', error as any);
     }

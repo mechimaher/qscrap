@@ -20,10 +20,7 @@ export function withErrorBoundary<P extends object>(
 
     const ComponentWithErrorBoundary: React.FC<P> = (props) => {
         return (
-            <ScreenErrorBoundary
-                screenName={options.screenName || displayName}
-                onRetry={options.onRetry}
-            >
+            <ScreenErrorBoundary screenName={options.screenName || displayName} onRetry={options.onRetry}>
                 <WrappedComponent {...props} />
             </ScreenErrorBoundary>
         );

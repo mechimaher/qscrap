@@ -55,10 +55,7 @@ export class SubscriptionService {
      */
     static async getGarageSubscription(garageId: string): Promise<SubscriptionDetails | null> {
         try {
-            const result = await pool.query(
-                'SELECT * FROM get_subscription_details($1)',
-                [garageId]
-            );
+            const result = await pool.query('SELECT * FROM get_subscription_details($1)', [garageId]);
 
             return result.rows[0] || null;
         } catch (error) {
@@ -70,15 +67,9 @@ export class SubscriptionService {
     /**
      * Check feature access
      */
-    static async checkFeatureAccess(
-        garageId: string,
-        feature: string
-    ): Promise<boolean> {
+    static async checkFeatureAccess(garageId: string, feature: string): Promise<boolean> {
         try {
-            const result = await pool.query(
-                'SELECT check_feature_access($1, $2) as has_access',
-                [garageId, feature]
-            );
+            const result = await pool.query('SELECT check_feature_access($1, $2) as has_access', [garageId, feature]);
 
             return result.rows[0]?.has_access || false;
         } catch (error) {
@@ -101,10 +92,12 @@ export class SubscriptionService {
         price: string;
     }> {
         try {
-            const result = await pool.query(
-                'SELECT * FROM change_subscription($1, $2, $3, $4)',
-                [garageId, newPlan, billingCycle, changedBy]
-            );
+            const result = await pool.query('SELECT * FROM change_subscription($1, $2, $3, $4)', [
+                garageId,
+                newPlan,
+                billingCycle,
+                changedBy
+            ]);
 
             return result.rows[0];
         } catch (error) {
@@ -144,9 +137,7 @@ export class SubscriptionService {
      */
     static async getRevenueStats(): Promise<any[]> {
         try {
-            const result = await pool.query(
-                'SELECT * FROM subscription_revenue_stats'
-            );
+            const result = await pool.query('SELECT * FROM subscription_revenue_stats');
 
             return result.rows;
         } catch (error) {
@@ -197,7 +188,10 @@ export class SubscriptionService {
     /**
      * Cancel subscription
      */
-    static async cancelSubscription(garageId: string, cancelledBy: string): Promise<{ success: boolean; message: string }> {
+    static async cancelSubscription(
+        garageId: string,
+        cancelledBy: string
+    ): Promise<{ success: boolean; message: string }> {
         try {
             const client = await pool.connect();
             try {

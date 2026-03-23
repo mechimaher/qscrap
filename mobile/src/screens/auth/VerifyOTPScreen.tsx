@@ -9,7 +9,7 @@ import {
     KeyboardAvoidingView,
     Platform,
     ActivityIndicator,
-    Alert,
+    Alert
 } from 'react-native';
 import { LinearGradient } from 'expo-linear-gradient';
 import * as Haptics from 'expo-haptics';
@@ -44,7 +44,7 @@ export default function VerifyOTPScreen() {
     useEffect(() => {
         // Countdown timer
         const interval = setInterval(() => {
-            setTimer(prev => {
+            setTimer((prev) => {
                 if (prev <= 1) {
                     clearInterval(interval);
                     return 0;
@@ -75,7 +75,7 @@ export default function VerifyOTPScreen() {
         }
 
         // Auto-submit when all 6 digits entered
-        if (newOTP.every(digit => digit !== '')) {
+        if (newOTP.every((digit) => digit !== '')) {
             handleVerify(newOTP.join(''));
         }
     };
@@ -105,18 +105,14 @@ export default function VerifyOTPScreen() {
             // Refresh user state to trigger navigation to home
             await refreshUser();
 
-            Alert.alert(
-                t('auth.registrationSuccess'),
-                t('auth.accountCreated'),
-                [
-                    {
-                        text: t('auth.getStarted'),
-                        onPress: () => {
-                            // Navigation is now automatic via AuthContext
-                        }
+            Alert.alert(t('auth.registrationSuccess'), t('auth.accountCreated'), [
+                {
+                    text: t('auth.getStarted'),
+                    onPress: () => {
+                        // Navigation is now automatic via AuthContext
                     }
-                ]
-            );
+                }
+            ]);
         } catch (error: any) {
             setIsVerifying(false);
             Haptics.notificationAsync(Haptics.NotificationFeedbackType.Error);
@@ -167,14 +163,11 @@ export default function VerifyOTPScreen() {
             start={{ x: 0, y: 0 }}
             end={{ x: 1, y: 1 }}
         >
-            <KeyboardAvoidingView
-                behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
-                style={styles.keyboardView}
-            >
+            <KeyboardAvoidingView behavior={Platform.OS === 'ios' ? 'padding' : 'height'} style={styles.keyboardView}>
                 {/* Header */}
                 <View style={[styles.header, { alignItems: isRTL ? 'flex-end' : 'flex-start' }]}>
                     <TouchableOpacity onPress={() => navigation.goBack()} style={styles.backButton}>
-                        <Ionicons name={isRTL ? "arrow-forward" : "arrow-back"} size={20} color={Colors.theme.text} />
+                        <Ionicons name={isRTL ? 'arrow-forward' : 'arrow-back'} size={20} color={Colors.theme.text} />
                         <Text style={styles.backText}>{t('common.back')}</Text>
                     </TouchableOpacity>
                 </View>
@@ -184,7 +177,8 @@ export default function VerifyOTPScreen() {
                     <Ionicons name="mail-outline" size={64} color="#fff" style={{ marginBottom: Spacing.md }} />
                     <Text style={styles.title}>{t('auth.emailVerification')}</Text>
                     <Text style={styles.subtitle}>
-                        {t('auth.enterCodeSentTo')}{'\n'}
+                        {t('auth.enterCodeSentTo')}
+                        {'\n'}
                         <Text style={styles.email}>{email}</Text>
                     </Text>
 
@@ -193,14 +187,13 @@ export default function VerifyOTPScreen() {
                         {otp.map((digit, index) => (
                             <TextInput
                                 key={index}
-                                ref={ref => { inputRefs.current[index] = ref; }}
-                                style={[
-                                    styles.otpInput,
-                                    digit ? styles.otpInputFilled : null
-                                ]}
+                                ref={(ref) => {
+                                    inputRefs.current[index] = ref;
+                                }}
+                                style={[styles.otpInput, digit ? styles.otpInputFilled : null]}
                                 value={digit}
-                                onChangeText={val => handleOTPChange(val, index)}
-                                onKeyPress={e => handleKeyPress(e, index)}
+                                onChangeText={(val) => handleOTPChange(val, index)}
+                                onKeyPress={(e) => handleKeyPress(e, index)}
                                 keyboardType="number-pad"
                                 maxLength={1}
                                 selectTextOnFocus
@@ -212,7 +205,9 @@ export default function VerifyOTPScreen() {
                     {/* Timer */}
                     <Text style={[styles.timer, timer === 0 && styles.timerExpired]}>
                         {timer > 0 ? (
-                            <>{t('auth.codeExpiresIn')} {formatTime(timer)}</>
+                            <>
+                                {t('auth.codeExpiresIn')} {formatTime(timer)}
+                            </>
                         ) : (
                             <>{t('auth.codeExpired')}</>
                         )}
@@ -258,15 +253,15 @@ export default function VerifyOTPScreen() {
 
 const styles = StyleSheet.create({
     container: {
-        flex: 1,
+        flex: 1
     },
     keyboardView: {
-        flex: 1,
+        flex: 1
     },
     header: {
         paddingHorizontal: Spacing.lg,
         paddingTop: Spacing.xxl,
-        paddingBottom: Spacing.md,
+        paddingBottom: Spacing.md
     },
     backButton: {
         flexDirection: 'row',
@@ -274,40 +269,40 @@ const styles = StyleSheet.create({
         padding: Spacing.sm,
         backgroundColor: 'rgba(255, 255, 255, 0.15)',
         borderRadius: BorderRadius.md,
-        gap: Spacing.xs,
+        gap: Spacing.xs
     },
     backText: {
         color: '#ffffff',
         fontSize: FontSizes.md,
-        fontWeight: '600',
+        fontWeight: '600'
     },
     content: {
         flex: 1,
         paddingHorizontal: Spacing.xl,
         alignItems: 'center',
-        justifyContent: 'center',
+        justifyContent: 'center'
     },
     title: {
         fontSize: FontSizes.xxl + 4,
         fontWeight: '800',
         color: '#ffffff',
         textAlign: 'center',
-        marginBottom: Spacing.sm,
+        marginBottom: Spacing.sm
     },
     subtitle: {
         fontSize: FontSizes.md,
         color: 'rgba(255, 255, 255, 0.8)',
         textAlign: 'center',
-        marginBottom: Spacing.xxl,
+        marginBottom: Spacing.xxl
     },
     email: {
         fontWeight: '700',
-        color: Colors.secondary,
+        color: Colors.secondary
     },
     otpContainer: {
         justifyContent: 'center',
         marginBottom: Spacing.lg,
-        gap: Spacing.sm,
+        gap: Spacing.sm
     },
     otpInput: {
         width: 50,
@@ -320,31 +315,31 @@ const styles = StyleSheet.create({
         color: '#1a1a1a',
         borderWidth: 2,
         borderColor: '#E8E8E8',
-        ...Shadows.md,
+        ...Shadows.md
     },
     otpInputFilled: {
         borderColor: Colors.primary,
-        backgroundColor: '#fff',
+        backgroundColor: '#fff'
     },
     timer: {
         fontSize: FontSizes.sm,
         color: 'rgba(255, 255, 255, 0.7)',
         marginBottom: Spacing.xl,
-        textAlign: 'center',
+        textAlign: 'center'
     },
     timerExpired: {
         color: '#FF6B6B',
-        fontWeight: '700',
+        fontWeight: '700'
     },
     verifyingContainer: {
         alignItems: 'center',
         marginBottom: Spacing.md,
-        gap: Spacing.sm,
+        gap: Spacing.sm
     },
     verifyingText: {
         color: 'rgba(255, 255, 255, 0.9)',
         fontSize: FontSizes.md,
-        fontWeight: '600',
+        fontWeight: '600'
     },
     resendButton: {
         backgroundColor: 'rgba(255, 255, 255, 0.2)',
@@ -353,25 +348,25 @@ const styles = StyleSheet.create({
         borderRadius: BorderRadius.xl,
         borderWidth: 1,
         borderColor: 'rgba(255, 255, 255, 0.3)',
-        marginBottom: Spacing.md,
+        marginBottom: Spacing.md
     },
     resendButtonDisabled: {
-        opacity: 0.5,
+        opacity: 0.5
     },
     resendText: {
         color: '#fff',
         fontSize: FontSizes.md,
         fontWeight: '700',
-        textAlign: 'center',
+        textAlign: 'center'
     },
     helpButton: {
         paddingVertical: Spacing.sm,
-        paddingHorizontal: Spacing.md,
+        paddingHorizontal: Spacing.md
     },
     helpText: {
         color: 'rgba(255, 255, 255, 0.6)',
         fontSize: FontSizes.sm,
         textDecorationLine: 'underline',
-        textAlign: 'center',
-    },
+        textAlign: 'center'
+    }
 });

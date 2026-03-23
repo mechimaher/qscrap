@@ -4,35 +4,21 @@
  */
 
 import { Pool, PoolClient } from 'pg';
-import {
-    GarageFilters,
-    PaginatedGarages,
-    Garage,
-    DemoResult
-} from './types';
-import {
-    GarageNotFoundError,
-    GarageAlreadyProcessedError,
-    InvalidApprovalStatusError
-} from './errors';
+import { GarageFilters, PaginatedGarages, Garage, DemoResult } from './types';
+import { GarageNotFoundError, GarageAlreadyProcessedError, InvalidApprovalStatusError } from './errors';
 import { emailService } from '../email.service';
 import logger from '../../utils/logger';
 
 const DEMO_PERIOD_DAYS = 30;
 
 export class GarageApprovalService {
-    constructor(private pool: Pool) { }
+    constructor(private pool: Pool) {}
 
     /**
      * Get garages with filters and pagination
      */
     async getPendingGarages(filters: GarageFilters): Promise<PaginatedGarages> {
-        const {
-            approval_status = 'pending',
-            search,
-            page = 1,
-            limit = 12
-        } = filters;
+        const { approval_status = 'pending', search, page = 1, limit = 12 } = filters;
 
         const pageNum = Math.max(1, page);
         const limitNum = Math.min(50, Math.max(1, limit));
@@ -63,7 +49,8 @@ export class GarageApprovalService {
         const total = parseInt(countResult.rows[0].count);
 
         // Get paginated results
-        const result = await this.pool.query(`
+        const result = await this.pool.query(
+            `
             SELECT 
                 g.*,
                 u.phone_number,
@@ -82,7 +69,9 @@ export class GarageApprovalService {
             ${whereClause}
             ORDER BY g.created_at DESC
             LIMIT $${paramIndex++} OFFSET $${paramIndex}
-        `, [...params, limitNum, offset]);
+        `,
+            [...params, limitNum, offset]
+        );
 
         return {
             garages: result.rows,
@@ -123,7 +112,8 @@ export class GarageApprovalService {
         );
         const total = parseInt(countResult.rows[0].count);
 
-        const result = await this.pool.query(`
+        const result = await this.pool.query(
+            `
             SELECT 
                 g.*,
                 u.phone_number,
@@ -153,7 +143,9 @@ export class GarageApprovalService {
             ${whereClause}
             ORDER BY g.created_at DESC
             LIMIT $${paramIndex++} OFFSET $${paramIndex}
-        `, [...params, limit, offset]);
+        `,
+            [...params, limit, offset]
+        );
 
         return {
             garages: result.rows,
@@ -174,7 +166,8 @@ export class GarageApprovalService {
         try {
             await client.query('BEGIN');
 
-            const garageResult = await client.query(`
+            const garageResult = await client.query(
+                `
                 UPDATE garages SET
                     approval_status = 'approved',
                     approval_date = NOW(),
@@ -183,21 +176,26 @@ export class GarageApprovalService {
                     updated_at = NOW()
                 WHERE garage_id = $3
                 RETURNING *
-            `, [adminId, notes || 'Approved by admin', garageId]);
+            `,
+                [adminId, notes || 'Approved by admin', garageId]
+            );
 
             if (garageResult.rows.length === 0) {
                 throw new GarageNotFoundError(garageId);
             }
 
             // Activate user account and clear any suspension
-            await client.query(`
+            await client.query(
+                `
                 UPDATE users SET 
                     is_active = true, 
                     is_suspended = false, 
                     suspension_reason = NULL,
                     updated_at = NOW()
                 WHERE user_id = $1
-            `, [garageId]);
+            `,
+                [garageId]
+            );
 
             // Log action
             await this.logAdminAction(client, adminId, 'approve_garage', garageId, {
@@ -211,21 +209,21 @@ export class GarageApprovalService {
             const garage = garageResult.rows[0];
             try {
                 // Fetch user email and phone
-                const userResult = await this.pool.query(`
+                const userResult = await this.pool.query(
+                    `
                     SELECT email, phone_number FROM users WHERE user_id = $1
-                `, [garageId]);
+                `,
+                    [garageId]
+                );
 
                 if (userResult.rows.length > 0 && userResult.rows[0].email) {
                     const { email, phone_number } = userResult.rows[0];
-                    const planName = garage.current_plan_code === 'free' ? 'Pay-Per-Sale (Free)' :
-                        garage.current_plan_code || 'Pay-Per-Sale (Free)';
+                    const planName =
+                        garage.current_plan_code === 'free'
+                            ? 'Pay-Per-Sale (Free)'
+                            : garage.current_plan_code || 'Pay-Per-Sale (Free)';
 
-                    await emailService.sendGarageApprovalEmail(
-                        email,
-                        garage.garage_name,
-                        phone_number,
-                        planName
-                    );
+                    await emailService.sendGarageApprovalEmail(email, garage.garage_name, phone_number, planName);
                     logger.info('Welcome email sent', { email });
                 }
             } catch (emailErr: any) {
@@ -254,24 +252,30 @@ export class GarageApprovalService {
         try {
             await client.query('BEGIN');
 
-            const result = await client.query(`
+            const result = await client.query(
+                `
                 UPDATE garages SET
                     approval_status = 'rejected',
                     rejection_reason = $1,
                     updated_at = NOW()
                 WHERE garage_id = $2
                 RETURNING *
-            `, [reason, garageId]);
+            `,
+                [reason, garageId]
+            );
 
             if (result.rows.length === 0) {
                 throw new GarageNotFoundError(garageId);
             }
 
             // Deactivate user
-            await client.query(`
+            await client.query(
+                `
                 UPDATE users SET is_active = false, updated_at = NOW()
                 WHERE user_id = $1
-            `, [garageId]);
+            `,
+                [garageId]
+            );
 
             // Log action
             await this.logAdminAction(client, adminId, 'reject_garage', garageId, {
@@ -306,14 +310,17 @@ export class GarageApprovalService {
             expiryDate.setDate(expiryDate.getDate() + days);
 
             // Cancel any active paid subscriptions
-            await client.query(`
+            await client.query(
+                `
                 UPDATE garage_subscriptions 
                 SET status = 'cancelled', 
                     cancelled_at = NOW(),
                     cancellation_reason = 'Downgraded to demo by admin',
                     updated_at = NOW()
                 WHERE garage_id = $1 AND status IN ('active', 'trial')
-            `, [garageId]);
+            `,
+                [garageId]
+            );
 
             // Get the free (demo) plan
             const freePlan = await client.query(`
@@ -322,7 +329,8 @@ export class GarageApprovalService {
             const planId = freePlan.rows[0]?.plan_id;
 
             // Update garage to demo with plan code
-            const result = await client.query(`
+            const result = await client.query(
+                `
                 UPDATE garages SET
                     approval_status = 'demo',
                     current_plan_code = 'free',
@@ -332,7 +340,9 @@ export class GarageApprovalService {
                     updated_at = NOW()
                 WHERE garage_id = $4
                 RETURNING *
-            `, [expiryDate, adminId, notes || `Demo access for ${days} days`, garageId]);
+            `,
+                [expiryDate, adminId, notes || `Demo access for ${days} days`, garageId]
+            );
 
             if (result.rows.length === 0) {
                 throw new GarageNotFoundError(garageId);
@@ -340,7 +350,8 @@ export class GarageApprovalService {
 
             // Create subscription record with the free plan
             if (planId) {
-                await client.query(`
+                await client.query(
+                    `
                     INSERT INTO garage_subscriptions (garage_id, plan_id, status, billing_cycle_start, billing_cycle_end, next_billing_date)
                     VALUES ($1, $2, 'trial', NOW(), $3, $3)
                     ON CONFLICT (garage_id) DO UPDATE SET 
@@ -349,18 +360,23 @@ export class GarageApprovalService {
                         billing_cycle_start = NOW(),
                         billing_cycle_end = EXCLUDED.billing_cycle_end,
                         updated_at = NOW()
-                `, [garageId, planId, expiryDate]);
+                `,
+                    [garageId, planId, expiryDate]
+                );
             }
 
             // Activate user and clear any suspension
-            await client.query(`
+            await client.query(
+                `
                 UPDATE users SET 
                     is_active = true, 
                     is_suspended = false, 
                     suspension_reason = NULL,
                     updated_at = NOW()
                 WHERE user_id = $1
-            `, [garageId]);
+            `,
+                [garageId]
+            );
 
             // Log action
             await this.logAdminAction(client, adminId, 'grant_demo', garageId, {
@@ -374,9 +390,12 @@ export class GarageApprovalService {
             // Send welcome email (after commit, non-blocking)
             const garage = result.rows[0];
             try {
-                const userResult = await this.pool.query(`
+                const userResult = await this.pool.query(
+                    `
                     SELECT email, phone_number FROM users WHERE user_id = $1
-                `, [garageId]);
+                `,
+                    [garageId]
+                );
 
                 if (userResult.rows.length > 0 && userResult.rows[0].email) {
                     const { email, phone_number } = userResult.rows[0];
@@ -414,32 +433,37 @@ export class GarageApprovalService {
             await client.query('BEGIN');
 
             // Get current status for audit
-            const currentStatus = await client.query(
-                'SELECT approval_status FROM garages WHERE garage_id = $1',
-                [garageId]
-            );
+            const currentStatus = await client.query('SELECT approval_status FROM garages WHERE garage_id = $1', [
+                garageId
+            ]);
 
-            const result = await client.query(`
+            const result = await client.query(
+                `
                 UPDATE garages SET
                     approval_status = 'pending',
                     rejection_reason = $1,
                     updated_at = NOW()
                 WHERE garage_id = $2
                 RETURNING *
-            `, [reason || 'Access revoked by admin', garageId]);
+            `,
+                [reason || 'Access revoked by admin', garageId]
+            );
 
             if (result.rows.length === 0) {
                 throw new GarageNotFoundError(garageId);
             }
 
             // Suspend user
-            await client.query(`
+            await client.query(
+                `
                 UPDATE users SET
                     is_suspended = true,
                     suspension_reason = $1,
                     updated_at = NOW()
                 WHERE user_id = $2
-            `, [reason || 'Access revoked', garageId]);
+            `,
+                [reason || 'Access revoked', garageId]
+            );
 
             // Log action
             await this.logAdminAction(client, adminId, 'revoke_access', garageId, {
@@ -468,9 +492,12 @@ export class GarageApprovalService {
         targetId: string,
         data: any
     ): Promise<void> {
-        await client.query(`
+        await client.query(
+            `
             INSERT INTO admin_audit_log (admin_id, action_type, target_type, target_id, new_value)
             VALUES ($1, $2, 'garage', $3, $4)
-        `, [adminId, actionType, targetId, JSON.stringify(data)]);
+        `,
+            [adminId, actionType, targetId, JSON.stringify(data)]
+        );
     }
 }

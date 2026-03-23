@@ -4,11 +4,7 @@
  */
 
 import { Request, Response, NextFunction } from 'express';
-import {
-    securityMiddleware,
-    additionalSecurityHeaders,
-    sanitizeRequest
-} from '../security.middleware';
+import { securityMiddleware, additionalSecurityHeaders, sanitizeRequest } from '../security.middleware';
 
 describe('Security Middleware', () => {
     let mockRequest: Partial<Request>;
@@ -49,7 +45,10 @@ describe('Security Middleware', () => {
         it('should set cache control headers', () => {
             additionalSecurityHeaders(mockRequest as Request, mockResponse as Response, mockNext);
 
-            expect(mockResponse.setHeader).toHaveBeenCalledWith('Cache-Control', 'no-store, no-cache, must-revalidate, proxy-revalidate');
+            expect(mockResponse.setHeader).toHaveBeenCalledWith(
+                'Cache-Control',
+                'no-store, no-cache, must-revalidate, proxy-revalidate'
+            );
             expect(mockResponse.setHeader).toHaveBeenCalledWith('Pragma', 'no-cache');
             expect(mockResponse.setHeader).toHaveBeenCalledWith('Expires', '0');
         });
@@ -146,10 +145,7 @@ describe('Security Middleware', () => {
 
         it('should sanitize arrays of objects', () => {
             mockRequest.body = {
-                items: [
-                    { name: '<script>xss()</script>' },
-                    { name: 'safe-item' }
-                ]
+                items: [{ name: '<script>xss()</script>' }, { name: 'safe-item' }]
             };
 
             sanitizeRequest(mockRequest as Request, mockResponse as Response, mockNext);

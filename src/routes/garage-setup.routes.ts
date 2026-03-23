@@ -37,10 +37,7 @@ router.get('/setup', async (req: Request, res: Response) => {
         // Verify JWT token
         let decoded: SetupTokenPayload;
         try {
-            decoded = jwt.verify(
-                token,
-                process.env.JWT_SECRET || 'qscrap-secret-key-2026'
-            ) as SetupTokenPayload;
+            decoded = jwt.verify(token, process.env.JWT_SECRET || 'qscrap-secret-key-2026') as SetupTokenPayload;
         } catch (jwtErr: any) {
             if (jwtErr.name === 'TokenExpiredError') {
                 return res.status(401).json({
@@ -63,14 +60,17 @@ router.get('/setup', async (req: Request, res: Response) => {
 
         // Verify token hash exists and not used
         const tokenHash = crypto.createHash('sha256').update(token).digest('hex');
-        const tokenCheck = await pool.query(`
+        const tokenCheck = await pool.query(
+            `
             SELECT * FROM password_reset_tokens 
             WHERE user_id = $1 
                 AND token_hash = $2 
                 AND token_type = 'garage_setup'
                 AND expires_at > NOW()
                 AND used_at IS NULL
-        `, [decoded.garage_id, tokenHash]);
+        `,
+            [decoded.garage_id, tokenHash]
+        );
 
         if (tokenCheck.rows.length === 0) {
             return res.status(401).json({
@@ -80,12 +80,15 @@ router.get('/setup', async (req: Request, res: Response) => {
         }
 
         // Get garage details
-        const garageResult = await pool.query(`
+        const garageResult = await pool.query(
+            `
             SELECT g.garage_id, g.garage_name, u.email, u.full_name
             FROM garages g
             JOIN users u ON g.garage_id = u.user_id
             WHERE g.garage_id = $1
-        `, [decoded.garage_id]);
+        `,
+            [decoded.garage_id]
+        );
 
         if (garageResult.rows.length === 0) {
             return res.status(404).json({
@@ -104,7 +107,6 @@ router.get('/setup', async (req: Request, res: Response) => {
                 email: garage.email
             }
         });
-
     } catch (error) {
         logger.error('Garage setup validation error', { error });
         return res.status(500).json({
@@ -142,10 +144,7 @@ router.post('/setup', async (req: Request, res: Response) => {
         // Verify JWT token
         let decoded: SetupTokenPayload;
         try {
-            decoded = jwt.verify(
-                token,
-                process.env.JWT_SECRET || 'qscrap-secret-key-2026'
-            ) as SetupTokenPayload;
+            decoded = jwt.verify(token, process.env.JWT_SECRET || 'qscrap-secret-key-2026') as SetupTokenPayload;
         } catch (jwtErr: any) {
             if (jwtErr.name === 'TokenExpiredError') {
                 return res.status(401).json({
@@ -170,7 +169,8 @@ router.post('/setup', async (req: Request, res: Response) => {
 
         // Verify token hash exists and not used
         const tokenHash = crypto.createHash('sha256').update(token).digest('hex');
-        const tokenCheck = await client.query(`
+        const tokenCheck = await client.query(
+            `
             SELECT * FROM password_reset_tokens 
             WHERE user_id = $1 
                 AND token_hash = $2 
@@ -178,7 +178,9 @@ router.post('/setup', async (req: Request, res: Response) => {
                 AND expires_at > NOW()
                 AND used_at IS NULL
             FOR UPDATE
-        `, [decoded.garage_id, tokenHash]);
+        `,
+            [decoded.garage_id, tokenHash]
+        );
 
         if (tokenCheck.rows.length === 0) {
             await client.query('ROLLBACK');
@@ -192,19 +194,25 @@ router.post('/setup', async (req: Request, res: Response) => {
         const passwordHash = await bcrypt.hash(password, BCRYPT_ROUNDS);
 
         // Update user password
-        await client.query(`
+        await client.query(
+            `
             UPDATE users SET
                 password_hash = $1,
                 is_active = true,
                 updated_at = NOW()
             WHERE user_id = $2
-        `, [passwordHash, decoded.garage_id]);
+        `,
+            [passwordHash, decoded.garage_id]
+        );
 
         // Mark token as used
-        await client.query(`
+        await client.query(
+            `
             UPDATE password_reset_tokens SET used_at = NOW()
             WHERE user_id = $1 AND token_hash = $2
-        `, [decoded.garage_id, tokenHash]);
+        `,
+            [decoded.garage_id, tokenHash]
+        );
 
         await client.query('COMMIT');
 
@@ -215,7 +223,6 @@ router.post('/setup', async (req: Request, res: Response) => {
             message: 'Account activated successfully! You can now log in.',
             redirectUrl: '/login.html'
         });
-
     } catch (error) {
         await client.query('ROLLBACK');
         logger.error('Garage setup error', { error });

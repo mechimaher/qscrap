@@ -10,7 +10,7 @@ import logger from '../../utils/logger';
 import { getIO } from '../../utils/socketIO';
 
 export class DisputeService {
-    constructor(private pool: Pool) { }
+    constructor(private pool: Pool) {}
 
     /**
      * Get disputes with filters and pagination
@@ -70,7 +70,8 @@ export class DisputeService {
      * Get dispute details with payout status for cross-system visibility
      */
     async getDisputeDetails(disputeId: string): Promise<any> {
-        const disputeResult = await this.pool.query(`
+        const disputeResult = await this.pool.query(
+            `
             SELECT d.*,
                    o.order_number, o.order_status, o.total_amount as order_amount,
                    o.created_at as order_created,
@@ -87,7 +88,9 @@ export class DisputeService {
             JOIN users gu ON g.garage_id = gu.user_id
             LEFT JOIN garage_payouts gp ON o.order_id = gp.order_id
             WHERE d.dispute_id = $1
-        `, [disputeId]);
+        `,
+            [disputeId]
+        );
 
         if (disputeResult.rows.length === 0) {
             throw new DisputeNotFoundError(disputeId);
@@ -96,23 +99,28 @@ export class DisputeService {
         const dispute = disputeResult.rows[0];
 
         // Get order status history
-        const historyResult = await this.pool.query(`
+        const historyResult = await this.pool.query(
+            `
             SELECT new_status as status, created_at as changed_at, reason
             FROM order_status_history
             WHERE order_id = $1
             ORDER BY created_at ASC
-        `, [dispute.order_id]);
+        `,
+            [dispute.order_id]
+        );
 
         return {
             dispute,
             order_history: historyResult.rows,
-            payout: dispute.payout_id ? {
-                payout_id: dispute.payout_id,
-                status: dispute.payout_status,
-                amount: dispute.payout_amount,
-                sent_at: dispute.payout_sent_at,
-                held_reason: dispute.payout_held_reason
-            } : null
+            payout: dispute.payout_id
+                ? {
+                      payout_id: dispute.payout_id,
+                      status: dispute.payout_status,
+                      amount: dispute.payout_amount,
+                      sent_at: dispute.payout_sent_at,
+                      held_reason: dispute.payout_held_reason
+                  }
+                : null
         };
     }
 
@@ -123,7 +131,13 @@ export class DisputeService {
         disputeId: string,
         resolution: DisputeResolution,
         staffId: string
-    ): Promise<{ message: string; resolution: string; refund_amount: number | null; return_assignment: any; payout_action: any }> {
+    ): Promise<{
+        message: string;
+        resolution: string;
+        refund_amount: number | null;
+        return_assignment: any;
+        payout_action: any;
+    }> {
         const client = await this.pool.connect();
         try {
             await client.query('BEGIN');
@@ -162,16 +176,21 @@ export class DisputeService {
 
             // Update order status
             const newOrderStatus = resolution.resolution === 'refund_approved' ? 'refunded' : 'completed';
-            await client.query(
-                `UPDATE orders SET order_status = $1, updated_at = NOW() WHERE order_id = $2`,
-                [newOrderStatus, dispute.order_id]
-            );
+            await client.query(`UPDATE orders SET order_status = $1, updated_at = NOW() WHERE order_id = $2`, [
+                newOrderStatus,
+                dispute.order_id
+            ]);
 
             // Record in status history
             await client.query(
                 `INSERT INTO order_status_history (order_id, old_status, new_status, changed_by, changed_by_type, reason)
                  VALUES ($1, 'disputed', $2, $3, 'operations', $4)`,
-                [dispute.order_id, newOrderStatus, staffId, resolution.notes || `Dispute resolved: ${resolution.resolution}`]
+                [
+                    dispute.order_id,
+                    newOrderStatus,
+                    staffId,
+                    resolution.notes || `Dispute resolved: ${resolution.resolution}`
+                ]
             );
 
             // If refund approved, create return-to-garage assignment
@@ -179,34 +198,41 @@ export class DisputeService {
             let payoutAction = null;
 
             if (resolution.resolution === 'refund_approved') {
-                const returnResult = await client.query(`
+                const returnResult = await client.query(
+                    `
                     INSERT INTO delivery_assignments 
                     (order_id, driver_id, assignment_type, pickup_address, delivery_address, return_reason, status)
                     VALUES ($1, NULL, 'return_to_garage', $2, $3, $4, 'assigned')
                     RETURNING assignment_id, order_id, assignment_type, status
-                `, [
-                    dispute.order_id,
-                    dispute.customer_address || 'Customer Location',
-                    dispute.garage_address || 'Garage Address',
-                    `Customer refused: ${resolution.notes || dispute.description || 'No reason provided'}`
-                ]);
+                `,
+                    [
+                        dispute.order_id,
+                        dispute.customer_address || 'Customer Location',
+                        dispute.garage_address || 'Garage Address',
+                        `Customer refused: ${resolution.notes || dispute.description || 'No reason provided'}`
+                    ]
+                );
                 returnAssignment = returnResult.rows[0];
 
                 // Create refund record
-                await client.query(`
+                await client.query(
+                    `
                     INSERT INTO refunds (order_id, customer_id, amount, reason, status, processed_by)
                     VALUES ($1, $2, $3, $4, 'approved', $5)
                     ON CONFLICT DO NOTHING
-                `, [
-                    dispute.order_id,
-                    dispute.customer_id,
-                    finalRefundAmount,
-                    resolution.notes || 'Customer refused delivery',
-                    staffId
-                ]);
+                `,
+                    [
+                        dispute.order_id,
+                        dispute.customer_id,
+                        finalRefundAmount,
+                        resolution.notes || 'Customer refused delivery',
+                        staffId
+                    ]
+                );
 
                 // CRITICAL: Handle payout - cancel if pending/held, or create reversal if already confirmed
-                const cancelledPayout = await client.query(`
+                const cancelledPayout = await client.query(
+                    `
                     UPDATE garage_payouts 
                     SET payout_status = 'cancelled',
                         cancellation_reason = 'Order refunded - dispute approved by operations',
@@ -215,33 +241,45 @@ export class DisputeService {
                     WHERE order_id = $1 
                     AND payout_status IN ('pending', 'held', 'processing', 'awaiting_confirmation')
                     RETURNING payout_id, net_amount
-                `, [dispute.order_id]);
+                `,
+                    [dispute.order_id]
+                );
 
                 if (cancelledPayout.rows.length > 0) {
                     payoutAction = { action: 'cancelled', payout_id: cancelledPayout.rows[0].payout_id };
                 } else {
                     // Check if payout was already confirmed - need to create reversal
-                    const confirmedPayout = await client.query(`
+                    const confirmedPayout = await client.query(
+                        `
                         SELECT payout_id, net_amount FROM garage_payouts 
                         WHERE order_id = $1 AND payout_status = 'confirmed'
-                    `, [dispute.order_id]);
+                    `,
+                        [dispute.order_id]
+                    );
 
                     if (confirmedPayout.rows.length > 0) {
                         const payout = confirmedPayout.rows[0];
-                        const reversalResult = await client.query(`
+                        const reversalResult = await client.query(
+                            `
                             INSERT INTO payout_reversals (garage_id, original_payout_id, order_id, amount, reason, status)
                             VALUES ($1, $2, $3, $4, $5, 'pending')
                             RETURNING reversal_id
-                        `, [
-                            dispute.garage_id,
-                            payout.payout_id,
-                            dispute.order_id,
-                            finalRefundAmount,
-                            `Refund approved after payout confirmed - Dispute: ${resolution.notes || dispute.description}`
-                        ]);
+                        `,
+                            [
+                                dispute.garage_id,
+                                payout.payout_id,
+                                dispute.order_id,
+                                finalRefundAmount,
+                                `Refund approved after payout confirmed - Dispute: ${resolution.notes || dispute.description}`
+                            ]
+                        );
 
                         const reversalId = reversalResult.rows[0].reversal_id;
-                        payoutAction = { action: 'reversal_created', payout_id: payout.payout_id, reversal_amount: finalRefundAmount };
+                        payoutAction = {
+                            action: 'reversal_created',
+                            payout_id: payout.payout_id,
+                            reversal_amount: finalRefundAmount
+                        };
 
                         // Notify garage about pending deduction
                         try {
@@ -270,7 +308,8 @@ export class DisputeService {
                 }
             } else {
                 // Dispute rejected - release held payout back to pending
-                const releasedPayout = await client.query(`
+                const releasedPayout = await client.query(
+                    `
                     UPDATE garage_payouts 
                     SET payout_status = 'pending',
                         held_reason = NULL,
@@ -279,7 +318,9 @@ export class DisputeService {
                         updated_at = NOW()
                     WHERE order_id = $1 AND payout_status = 'held'
                     RETURNING payout_id
-                `, [dispute.order_id]);
+                `,
+                    [dispute.order_id]
+                );
 
                 if (releasedPayout.rows.length > 0) {
                     payoutAction = { action: 'released', payout_id: releasedPayout.rows[0].payout_id };

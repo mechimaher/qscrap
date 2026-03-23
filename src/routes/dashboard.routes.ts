@@ -14,14 +14,8 @@ import {
     deleteNotification,
     clearAllNotifications
 } from '../controllers/dashboard.controller';
-import {
-    getCustomerUrgentActions,
-    getCustomerContextualData
-} from '../controllers/dashboard-urgent.controller';
-import {
-    getCustomerActivity,
-    getGarageBadgeCounts
-} from '../controllers/dashboard-activity.controller';
+import { getCustomerUrgentActions, getCustomerContextualData } from '../controllers/dashboard-urgent.controller';
+import { getCustomerActivity, getGarageBadgeCounts } from '../controllers/dashboard-activity.controller';
 import { authenticate, requireRole } from '../middleware/auth.middleware';
 import logger from '../utils/logger';
 
@@ -47,7 +41,6 @@ router.get('/customer/stats', authenticate, requireRole('customer'), getCustomer
 
 // Customer: Get unified activity feed (Parts Orders only - Quick Services purged Jan 19)
 router.get('/customer/activity', authenticate, requireRole('customer'), getCustomerActivity);
-
 
 // Customer: Get urgent actions (priority-based)
 router.get('/customer/urgent-actions', authenticate, requireRole('customer'), getCustomerUrgentActions);
@@ -80,7 +73,9 @@ router.get('/garage/badge-counts', authenticate, requireRole('garage'), getGarag
 router.get('/garage/my-payout-statement', authenticate, requireRole('garage'), async (req, res) => {
     try {
         const garageId = (req as any).user?.userId;
-        if (!garageId) { return res.status(403).json({ error: 'Garage not found' }); }
+        if (!garageId) {
+            return res.status(403).json({ error: 'Garage not found' });
+        }
 
         const from_date = req.query.from_date as string;
         const to_date = req.query.to_date as string;
@@ -137,8 +132,10 @@ router.get('/garage/my-payout-statement', authenticate, requireRole('garage'), a
                 const pdfBuffer = await docService.generatePDF(html);
 
                 res.setHeader('Content-Type', 'application/pdf');
-                res.setHeader('Content-Disposition',
-                    `attachment; filename="invoice-${statementData.statement_number}.pdf"`);
+                res.setHeader(
+                    'Content-Disposition',
+                    `attachment; filename="invoice-${statementData.statement_number}.pdf"`
+                );
                 return res.send(pdfBuffer);
             } catch (pdfErr) {
                 logger.warn('PDF generation failed, falling back to HTML', { error: pdfErr });

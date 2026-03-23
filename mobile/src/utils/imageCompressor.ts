@@ -18,7 +18,7 @@ export interface CompressionOptions {
 const DEFAULT_OPTIONS: CompressionOptions = {
     maxWidth: 1920,
     quality: 0.7,
-    format: 'jpeg',
+    format: 'jpeg'
 };
 
 /**
@@ -26,15 +26,12 @@ const DEFAULT_OPTIONS: CompressionOptions = {
  * @param uri - Local image URI to compress
  * @param options - Compression options (optional)
  * @returns Compressed image URI
- * 
+ *
  * @example
  * const compressed = await compressImage('file://...');
  * formData.append('image', { uri: compressed });
  */
-export const compressImage = async (
-    uri: string,
-    options: CompressionOptions = {}
-): Promise<string> => {
+export const compressImage = async (uri: string, options: CompressionOptions = {}): Promise<string> => {
     try {
         const config = { ...DEFAULT_OPTIONS, ...options };
 
@@ -45,26 +42,22 @@ export const compressImage = async (
             actions.push({
                 resize: {
                     width: config.maxWidth,
-                    height: config.maxHeight,
-                },
+                    height: config.maxHeight
+                }
             });
         }
 
         // Add compression action - NOTE: compress action may not be supported in all versions
         // Using resize with quality parameter instead
-        const result = await ImageManipulator.manipulateAsync(
-            uri,
-            actions,
-            {
-                compress: config.quality ?? 0.7,
-            }
-        );
+        const result = await ImageManipulator.manipulateAsync(uri, actions, {
+            compress: config.quality ?? 0.7
+        });
 
         log('[ImageCompressor] Compressed:', {
             original: uri,
             compressed: result.uri,
             width: result.width,
-            height: result.height,
+            height: result.height
         });
 
         return result.uri;
@@ -81,14 +74,9 @@ export const compressImage = async (
  * @param options - Compression options
  * @returns Array of compressed image URIs
  */
-export const compressImages = async (
-    uris: string[],
-    options: CompressionOptions = {}
-): Promise<string[]> => {
+export const compressImages = async (uris: string[], options: CompressionOptions = {}): Promise<string[]> => {
     try {
-        return await Promise.all(
-            uris.map(uri => compressImage(uri, options))
-        );
+        return await Promise.all(uris.map((uri) => compressImage(uri, options)));
     } catch (error) {
         logError('[ImageCompressor] Batch compression error:', error);
         return uris; // Return originals on error

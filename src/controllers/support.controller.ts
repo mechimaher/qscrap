@@ -154,8 +154,7 @@ const requireAgent = (req: AuthRequest): AuthUser => {
     return user;
 };
 
-const isAgentAccessError = (error: unknown): error is AgentAccessError =>
-    error instanceof AgentAccessError;
+const isAgentAccessError = (error: unknown): error is AgentAccessError => error instanceof AgentAccessError;
 
 const toQueryString = (value: unknown): string | undefined => {
     if (typeof value === 'string') {
@@ -228,7 +227,7 @@ export const createTicket = async (req: AuthRequest, res: Response) => {
             return res.status(400).json({ error: 'subject and message are required' });
         }
 
-        const result = await supportService.createTicket(user.userId, {
+        const result = (await supportService.createTicket(user.userId, {
             subject: body.subject,
             message: body.message,
             priority: body.priority,
@@ -236,7 +235,7 @@ export const createTicket = async (req: AuthRequest, res: Response) => {
             subcategory: body.subcategory,
             order_id: body.order_id,
             attachments: toStringArray(body.attachments)
-        }) as unknown as CreateTicketResult;
+        })) as unknown as CreateTicketResult;
 
         await createNotification({
             userId: 'operations',
@@ -286,12 +285,16 @@ export const getTicketMessages = async (req: AuthRequest, res: Response) => {
         const params = req.params as unknown as { ticketId: string };
         const { ticketId } = params;
 
-        const access = await supportService.verifyTicketAccess(ticketId, user.userId, user.userType) as TicketAccessResult;
+        const access = (await supportService.verifyTicketAccess(
+            ticketId,
+            user.userId,
+            user.userType
+        )) as TicketAccessResult;
         if (!access.hasAccess) {
             return res.status(403).json({ error: 'Access denied' });
         }
 
-        const messages = await supportService.getTicketMessages(ticketId, user.userType) as unknown as JsonRecord[];
+        const messages = (await supportService.getTicketMessages(ticketId, user.userType)) as unknown as JsonRecord[];
         res.json(messages);
     } catch (err) {
         logError('getTicketMessages error', err);
@@ -315,7 +318,11 @@ export const sendMessage = async (req: AuthRequest, res: Response) => {
             return res.status(400).json({ error: 'message_text is required' });
         }
 
-        const access = await supportService.verifyTicketAccess(ticketId, user.userId, user.userType) as TicketAccessResult;
+        const access = (await supportService.verifyTicketAccess(
+            ticketId,
+            user.userId,
+            user.userType
+        )) as TicketAccessResult;
         if (!access.hasAccess) {
             return res.status(403).json({ error: 'Access denied' });
         }
@@ -323,15 +330,20 @@ export const sendMessage = async (req: AuthRequest, res: Response) => {
         const senderType = user.userType === 'customer' ? 'customer' : 'admin';
         const attachments = toStringArray(body.attachments);
 
-        const message = is_internal && senderType === 'admin'
-            ? await supportService.addInternalNote(ticketId, user.userId, message_text.trim()) as unknown as JsonRecord
-            : await supportService.sendMessage(
-                ticketId,
-                user.userId,
-                senderType,
-                message_text.trim(),
-                attachments
-            ) as unknown as JsonRecord;
+        const message =
+            is_internal && senderType === 'admin'
+                ? ((await supportService.addInternalNote(
+                      ticketId,
+                      user.userId,
+                      message_text.trim()
+                  )) as unknown as JsonRecord)
+                : ((await supportService.sendMessage(
+                      ticketId,
+                      user.userId,
+                      senderType,
+                      message_text.trim(),
+                      attachments
+                  )) as unknown as JsonRecord);
 
         getIO()?.to(`ticket_${ticketId}`).emit('new_message', message);
 
@@ -363,7 +375,7 @@ export const updateTicketStatus = async (req: AuthRequest, res: Response) => {
             return res.status(400).json({ error: 'status is required' });
         }
 
-        const ticket = await supportService.updateTicketStatus(params.ticketId, body.status) as unknown as JsonRecord;
+        const ticket = (await supportService.updateTicketStatus(params.ticketId, body.status)) as unknown as JsonRecord;
         getIO()?.to(`ticket_${params.ticketId}`).emit('ticket_updated', { status: body.status });
         res.json(ticket);
     } catch (err) {
@@ -391,11 +403,10 @@ export const getMyEscalations = async (req: AuthRequest, res: Response) => {
         const agent = requireAgent(req);
         const status = toQueryString(req.query.status) || 'all';
 
-        const queryParams = status !== 'all'
-            ? [agent.userId, status]
-            : [agent.userId];
+        const queryParams = status !== 'all' ? [agent.userId, status] : [agent.userId];
 
-        const result = await pool.query<EscalationRow>(`
+        const result = await pool.query<EscalationRow>(
+            `
             SELECT e.escalation_id, e.order_id, e.ticket_id, e.priority, e.reason,
                    e.status, e.created_at, e.resolved_at, e.resolution_notes, e.resolution_action,
                    o.order_number,
@@ -413,7 +424,9 @@ export const getMyEscalations = async (req: AuthRequest, res: Response) => {
             ${status !== 'all' ? 'AND e.status = $2' : ''}
             ORDER BY e.created_at DESC
             LIMIT 50
-        `, queryParams);
+        `,
+            queryParams
+        );
 
         res.json({
             escalations: result.rows,
@@ -457,12 +470,16 @@ export const getTicketDetail = async (req: AuthRequest, res: Response) => {
         const params = req.params as unknown as { ticketId: string };
         const { ticketId } = params;
 
-        const access = await supportService.verifyTicketAccess(ticketId, user.userId, user.userType) as TicketAccessResult;
+        const access = (await supportService.verifyTicketAccess(
+            ticketId,
+            user.userId,
+            user.userType
+        )) as TicketAccessResult;
         if (!access.hasAccess) {
             return res.status(403).json({ error: 'Access denied' });
         }
 
-        const detail = await supportService.getTicketDetail(ticketId) as unknown as {
+        const detail = (await supportService.getTicketDetail(ticketId)) as unknown as {
             ticket: JsonRecord;
             messages: JsonRecord[];
         } | null;
@@ -481,7 +498,7 @@ export const getTicketDetail = async (req: AuthRequest, res: Response) => {
 export const getSLAStats = async (req: AuthRequest, res: Response) => {
     try {
         requireAgent(req);
-        const stats = await supportService.getSLAStats() as unknown as JsonRecord;
+        const stats = (await supportService.getSLAStats()) as unknown as JsonRecord;
         res.json(stats);
     } catch (err) {
         return respondAgentError(res, err);
@@ -498,7 +515,7 @@ export const assignTicket = async (req: AuthRequest, res: Response) => {
             return res.status(400).json({ error: 'assignee_id is required' });
         }
 
-        const ticket = await supportService.assignTicket(params.ticketId, body.assignee_id) as unknown as JsonRecord;
+        const ticket = (await supportService.assignTicket(params.ticketId, body.assignee_id)) as unknown as JsonRecord;
         getIO()?.to(`ticket_${params.ticketId}`).emit('ticket_assigned', { assigned_to: body.assignee_id });
         res.json(ticket);
     } catch (err) {
@@ -519,17 +536,19 @@ export const reopenTicket = async (req: AuthRequest, res: Response) => {
 
         const params = req.params as unknown as { ticketId: string };
         const body = req.body as unknown as ReopenTicketBody;
-        const result = await supportService.reopenTicket(
+        const result = (await supportService.reopenTicket(
             params.ticketId,
             user.userId,
             body.message
-        ) as unknown as ReopenTicketResult;
+        )) as unknown as ReopenTicketResult;
 
         if (!result.success) {
             return res.status(400).json({ error: result.error ?? 'Failed to reopen ticket' });
         }
 
-        getIO()?.to('operations').emit('ticket_reopened', result.ticket ?? null);
+        getIO()
+            ?.to('operations')
+            .emit('ticket_reopened', result.ticket ?? null);
         res.json(result);
     } catch (err) {
         logError('reopenTicket error', err);
@@ -552,7 +571,7 @@ export const getCustomer360 = async (req: AuthRequest, res: Response) => {
             return res.status(400).json({ error: 'Search query required' });
         }
 
-        const result = await supportService.getCustomer360(query) as unknown as JsonRecord | null;
+        const result = (await supportService.getCustomer360(query)) as unknown as JsonRecord | null;
         if (!result) {
             return res.status(404).json({ error: 'Customer not found' });
         }
@@ -572,11 +591,11 @@ export const addCustomerNote = async (req: AuthRequest, res: Response) => {
             return res.status(400).json({ error: 'Missing required fields' });
         }
 
-        const note = await supportService.addCustomerNote(
+        const note = (await supportService.addCustomerNote(
             body.customer_id,
             agent.userId,
             body.note_text
-        ) as unknown as JsonRecord;
+        )) as unknown as JsonRecord;
 
         res.status(201).json(note);
     } catch (err) {
@@ -601,36 +620,36 @@ export const executeQuickAction = async (req: AuthRequest, res: Response) => {
                 if (!order_id) {
                     return res.status(400).json({ error: 'order_id required for refund' });
                 }
-                result = await supportActionsService.executeFullRefund({
+                result = (await supportActionsService.executeFullRefund({
                     orderId: order_id,
                     customerId: customer_id,
                     agentId: agent.userId,
                     reason: notes || 'Quick action from resolution center'
-                }) as unknown as SupportActionResult;
+                })) as unknown as SupportActionResult;
                 break;
 
             case 'cancel_order':
                 if (!order_id) {
                     return res.status(400).json({ error: 'order_id required for cancel' });
                 }
-                result = await supportActionsService.executeCancelOrder({
+                result = (await supportActionsService.executeCancelOrder({
                     orderId: order_id,
                     customerId: customer_id,
                     agentId: agent.userId,
                     reason: notes || 'Quick action from resolution center'
-                }) as unknown as SupportActionResult;
+                })) as unknown as SupportActionResult;
                 break;
 
             case 'reassign_driver':
                 if (!order_id) {
                     return res.status(400).json({ error: 'order_id required for reassign' });
                 }
-                result = await supportActionsService.executeReassignDriver({
+                result = (await supportActionsService.executeReassignDriver({
                     orderId: order_id,
                     customerId: customer_id,
                     agentId: agent.userId,
                     reason: notes || 'Quick action from resolution center'
-                }) as unknown as SupportActionResult;
+                })) as unknown as SupportActionResult;
                 break;
 
             case 'escalate_to_ops': {
@@ -640,25 +659,25 @@ export const executeQuickAction = async (req: AuthRequest, res: Response) => {
 
                 const priority = toEscalationPriority(action_details?.priority);
 
-                result = await supportActionsService.executeEscalateToOps({
+                result = (await supportActionsService.executeEscalateToOps({
                     orderId: order_id,
                     customerId: customer_id,
                     agentId: agent.userId,
                     reason: notes || 'Quick action from resolution center',
                     priority
-                }) as unknown as SupportActionResult;
+                })) as unknown as SupportActionResult;
                 break;
             }
 
             default:
-                result = await supportService.executeQuickAction({
+                result = (await supportService.executeQuickAction({
                     orderId: order_id,
                     customerId: customer_id,
                     agentId: agent.userId,
                     actionType: action_type,
                     actionDetails: action_details,
                     notes
-                }) as unknown as SupportActionResult;
+                })) as unknown as SupportActionResult;
         }
 
         if (!result.success) {
@@ -687,10 +706,10 @@ export const executeQuickAction = async (req: AuthRequest, res: Response) => {
 export const getResolutionLogs = async (req: AuthRequest, res: Response) => {
     try {
         requireAgent(req);
-        const logs = await supportService.getResolutionLogs({
+        const logs = (await supportService.getResolutionLogs({
             orderId: toQueryString(req.query.order_id),
             customerId: toQueryString(req.query.customer_id)
-        }) as unknown as JsonRecord[];
+        })) as unknown as JsonRecord[];
 
         res.json({ logs });
     } catch (err) {
@@ -709,7 +728,7 @@ export const createTicketForCustomer = async (req: AuthRequest, res: Response) =
             return res.status(400).json({ error: 'Missing required fields' });
         }
 
-        const result = await supportService.createTicket(customer_id, {
+        const result = (await supportService.createTicket(customer_id, {
             subject,
             message,
             order_id,
@@ -717,7 +736,7 @@ export const createTicketForCustomer = async (req: AuthRequest, res: Response) =
             subcategory,
             priority,
             requester_type: 'customer'
-        }) as unknown as CreateTicketResult;
+        })) as unknown as CreateTicketResult;
 
         getIO()?.to('operations').emit('new_ticket', result);
         res.status(201).json(result);
@@ -730,9 +749,9 @@ export const createTicketForCustomer = async (req: AuthRequest, res: Response) =
 export const getCannedResponses = async (req: AuthRequest, res: Response) => {
     try {
         requireAgent(req);
-        const responses = await supportService.getCannedResponses(
+        const responses = (await supportService.getCannedResponses(
             toQueryString(req.query.category)
-        ) as unknown as JsonRecord[];
+        )) as unknown as JsonRecord[];
 
         res.json(responses);
     } catch (err) {
@@ -752,7 +771,7 @@ export const grantGoodwillCredit = async (req: AuthRequest, res: Response) => {
             return res.status(400).json({ error: 'Missing required fields' });
         }
 
-        const result = await supportService.grantGoodwillCredit({
+        const result = (await supportService.grantGoodwillCredit({
             customerId: body.customer_id,
             amount,
             reason: body.reason,
@@ -760,7 +779,7 @@ export const grantGoodwillCredit = async (req: AuthRequest, res: Response) => {
             ticketId: body.ticket_id,
             orderId: body.order_id,
             expiresInDays
-        }) as unknown as JsonRecord;
+        })) as unknown as JsonRecord;
 
         getIO()?.to(`user_${body.customer_id}`).emit('goodwill_credit', result);
         res.json(result);
@@ -784,7 +803,8 @@ export const getOrderDetailsForSupport = async (req: AuthRequest, res: Response)
             return res.status(400).json({ error: 'order_id required' });
         }
 
-        const orderResult = await pool.query<JsonRecord>(`
+        const orderResult = await pool.query<JsonRecord>(
+            `
             SELECT 
                 o.*,
                 o.pod_photo_url,
@@ -819,38 +839,52 @@ export const getOrderDetailsForSupport = async (req: AuthRequest, res: Response)
             LEFT JOIN order_reviews r ON o.order_id = r.order_id
             LEFT JOIN cancellation_requests cr ON o.order_id = cr.order_id
             WHERE o.order_id = $1
-        `, [order_id]);
+        `,
+            [order_id]
+        );
 
         if (orderResult.rows.length === 0) {
             return res.status(404).json({ error: 'Order not found' });
         }
 
-        const historyResult = await pool.query<JsonRecord>(`
+        const historyResult = await pool.query<JsonRecord>(
+            `
             SELECT new_status as status, old_status, reason as notes, created_at, changed_by
             FROM order_status_history
             WHERE order_id = $1
             ORDER BY created_at ASC
-        `, [order_id]);
+        `,
+            [order_id]
+        );
 
-        const payoutResult = await pool.query<JsonRecord>(`
+        const payoutResult = await pool.query<JsonRecord>(
+            `
             SELECT payout_id, payout_status, gross_amount, commission_amount, net_amount,
                    created_at, sent_at, confirmed_at, notes
             FROM garage_payouts
             WHERE order_id = $1
-        `, [order_id]);
+        `,
+            [order_id]
+        );
 
-        const refundResult = await pool.query<JsonRecord>(`
+        const refundResult = await pool.query<JsonRecord>(
+            `
             SELECT refund_id, refund_amount, refund_status, refund_reason, original_amount, fee_retained, created_at
             FROM refunds
             WHERE order_id = $1
-        `, [order_id]);
+        `,
+            [order_id]
+        );
 
-        const ticketsResult = await pool.query<JsonRecord>(`
+        const ticketsResult = await pool.query<JsonRecord>(
+            `
             SELECT ticket_id, subject, status, priority, created_at
             FROM support_tickets
             WHERE order_id = $1
             ORDER BY created_at DESC
-        `, [order_id]);
+        `,
+            [order_id]
+        );
 
         res.json({
             success: true,

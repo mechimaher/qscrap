@@ -3,11 +3,11 @@ import { useState, useEffect, useCallback, useRef } from 'react';
 /**
  * Hook to debounce a value.
  * Useful for search inputs and form fields.
- * 
+ *
  * @example
  * const [search, setSearch] = useState('');
  * const debouncedSearch = useDebounce(search, 300);
- * 
+ *
  * useEffect(() => {
  *   if (debouncedSearch) {
  *     performSearch(debouncedSearch);
@@ -33,16 +33,13 @@ export const useDebounce = <T>(value: T, delay: number): T => {
 /**
  * Hook to create a debounced callback function.
  * Useful for event handlers that shouldn't fire too frequently.
- * 
+ *
  * @example
  * const handleSearch = useDebouncedCallback((query: string) => {
  *   api.search(query);
  * }, 300);
  */
-export const useDebouncedCallback = <T extends (...args: any[]) => any>(
-    callback: T,
-    delay: number
-): T => {
+export const useDebouncedCallback = <T extends (...args: any[]) => any>(callback: T, delay: number): T => {
     const timeoutRef = useRef<NodeJS.Timeout | null>(null);
     const callbackRef = useRef<T>(callback);
 

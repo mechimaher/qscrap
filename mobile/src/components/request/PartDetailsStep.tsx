@@ -31,12 +31,25 @@ export default function PartDetailsStep({
     return (
         <View style={[styles.section, { backgroundColor: colors.surface }]}>
             <View style={[styles.sectionHeader, { flexDirection: rtlFlexDirection(isRTL) }]}>
-                <View style={[styles.stepBadge, { backgroundColor: '#F59E0B15' }, isRTL && { marginRight: 0, marginLeft: Spacing.md }]}>
+                <View
+                    style={[
+                        styles.stepBadge,
+                        { backgroundColor: '#F59E0B15' },
+                        isRTL && { marginRight: 0, marginLeft: Spacing.md }
+                    ]}
+                >
                     <Text style={[styles.stepNumber, { color: '#F59E0B' }]}>2</Text>
                 </View>
                 <View style={{ flex: 1 }}>
-                    <Text style={[styles.sectionTitle, { color: colors.text, textAlign: rtlTextAlign(isRTL) }]}>{t('newRequest.partDetails')}</Text>
-                    <Text style={[styles.sectionSubtitle, { color: colors.textSecondary, textAlign: rtlTextAlign(isRTL) }]}>
+                    <Text style={[styles.sectionTitle, { color: colors.text, textAlign: rtlTextAlign(isRTL) }]}>
+                        {t('newRequest.partDetails')}
+                    </Text>
+                    <Text
+                        style={[
+                            styles.sectionSubtitle,
+                            { color: colors.textSecondary, textAlign: rtlTextAlign(isRTL) }
+                        ]}
+                    >
                         {t('newRequest.whatDoYouNeed')}
                     </Text>
                 </View>
@@ -72,7 +85,7 @@ export default function PartDetailsStep({
                             color: colors.text,
                             borderColor: colors.border,
                             textAlign: rtlTextAlign(isRTL)
-                        },
+                        }
                     ]}
                     placeholder={t('newRequest.descriptionPlaceholder')}
                     placeholderTextColor={colors.textMuted}
@@ -82,9 +95,7 @@ export default function PartDetailsStep({
                     numberOfLines={4}
                     textAlignVertical="top"
                 />
-                <Text style={[styles.charCount, { color: colors.textMuted }]}>
-                    {partDescription.length}/500
-                </Text>
+                <Text style={[styles.charCount, { color: colors.textMuted }]}>{partDescription.length}/500</Text>
             </View>
 
             <PartSpecsCard
@@ -106,20 +117,20 @@ const styles = StyleSheet.create({
     section: {
         borderRadius: BorderRadius.lg,
         padding: Spacing.lg,
-        marginBottom: Spacing.md,
+        marginBottom: Spacing.md
     },
     sectionHeader: {
         flexDirection: 'row',
         alignItems: 'center',
         marginBottom: Spacing.lg,
-        gap: Spacing.md,
+        gap: Spacing.md
     },
     stepBadge: {
         width: 36,
         height: 36,
         borderRadius: 18,
         alignItems: 'center',
-        justifyContent: 'center',
+        justifyContent: 'center'
     },
     stepNumber: { fontSize: FontSizes.md, fontWeight: '800' },
     sectionTitle: { fontSize: FontSizes.lg, fontWeight: '700' },
@@ -128,7 +139,7 @@ const styles = StyleSheet.create({
     label: {
         fontSize: FontSizes.sm,
         fontWeight: '600',
-        marginBottom: Spacing.xs,
+        marginBottom: Spacing.xs
     },
     textArea: {
         borderWidth: 1,
@@ -136,11 +147,11 @@ const styles = StyleSheet.create({
         paddingHorizontal: Spacing.md,
         paddingVertical: Spacing.sm,
         fontSize: FontSizes.md,
-        minHeight: 120,
+        minHeight: 120
     },
     charCount: {
         fontSize: FontSizes.xs,
         marginTop: Spacing.xs,
-        textAlign: 'right',
-    },
+        textAlign: 'right'
+    }
 });

@@ -17,14 +17,14 @@ export const useOffline = (): OfflineState => {
 
     useEffect(() => {
         // Subscribe to network state updates
-        const unsubscribe = NetInfo.addEventListener(state => {
+        const unsubscribe = NetInfo.addEventListener((state) => {
             const offline = !state.isConnected || !state.isInternetReachable;
             setIsOffline(offline);
             setConnectionType(state.type);
         });
 
         // Get initial state
-        NetInfo.fetch().then(state => {
+        NetInfo.fetch().then((state) => {
             const offline = !state.isConnected || !state.isInternetReachable;
             setIsOffline(offline);
             setConnectionType(state.type);
@@ -36,7 +36,7 @@ export const useOffline = (): OfflineState => {
     return {
         isOffline,
         isOnline: !isOffline,
-        connectionType,
+        connectionType
     };
 };
 

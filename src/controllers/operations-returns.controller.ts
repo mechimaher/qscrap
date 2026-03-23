@@ -53,13 +53,16 @@ export const assignReturnDriver = async (req: AuthRequest, res: Response): Promi
             await client.query('BEGIN');
 
             // Get return assignment details
-            const returnResult = await client.query(`
+            const returnResult = await client.query(
+                `
                 SELECT da.order_id, da.assignment_id, o.order_number, g.garage_name, g.address as garage_address
                 FROM delivery_assignments da
                 JOIN orders o ON da.order_id = o.order_id
                 JOIN garages g ON o.garage_id = g.garage_id
                 WHERE da.assignment_id = $1 AND da.assignment_type = 'return_to_garage'
-            `, [return_id]);
+            `,
+                [return_id]
+            );
 
             if (returnResult.rows.length === 0) {
                 res.status(404).json({ error: 'Return assignment not found' });
@@ -69,7 +72,8 @@ export const assignReturnDriver = async (req: AuthRequest, res: Response): Promi
             const returnAssignment = returnResult.rows[0];
 
             // Update delivery assignment with driver
-            await client.query(`
+            await client.query(
+                `
                 UPDATE delivery_assignments
                 SET driver_id = $1,
                     status = 'assigned',
@@ -77,7 +81,9 @@ export const assignReturnDriver = async (req: AuthRequest, res: Response): Promi
                     delivery_address = $3,
                     updated_at = NOW()
                 WHERE assignment_id = $4
-            `, [driver_id, returnAssignment.garage_address, returnAssignment.garage_address, return_id]);
+            `,
+                [driver_id, returnAssignment.garage_address, returnAssignment.garage_address, return_id]
+            );
 
             // Notify driver via socket
             try {

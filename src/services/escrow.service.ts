@@ -42,7 +42,7 @@ export interface ProofOfCondition {
 }
 
 export class EscrowService {
-    constructor(private pool: Pool) { }
+    constructor(private pool: Pool) {}
 
     /**
      * Create escrow for an order
@@ -71,14 +71,27 @@ export class EscrowService {
         const inspectionExpiresAt = new Date(Date.now() + inspectionWindowHours * 60 * 60 * 1000);
 
         try {
-            const result = await this.pool.query(`
+            const result = await this.pool.query(
+                `
                 INSERT INTO escrow_transactions (
                     order_id, customer_id, seller_id, amount, platform_fee,
                     seller_payout, delivery_fee, inspection_window_hours, inspection_expires_at
                 )
                 VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9)
                 RETURNING *
-            `, [orderId, customerId, sellerId, amount, platformFee, sellerPayout, deliveryFee, inspectionWindowHours, inspectionExpiresAt]);
+            `,
+                [
+                    orderId,
+                    customerId,
+                    sellerId,
+                    amount,
+                    platformFee,
+                    sellerPayout,
+                    deliveryFee,
+                    inspectionWindowHours,
+                    inspectionExpiresAt
+                ]
+            );
 
             logger.info('[Escrow] Created escrow', {
                 escrow_id: result.rows[0].escrow_id,
@@ -92,7 +105,9 @@ export class EscrowService {
             // If unique constraint exists and we hit duplicate, return existing
             if (err.code === '23505') {
                 const existing = await this.getEscrowByOrder(orderId);
-                if (existing) return existing;
+                if (existing) {
+                    return existing;
+                }
             }
             throw err;
         }
@@ -102,10 +117,7 @@ export class EscrowService {
      * Get escrow by order ID
      */
     async getEscrowByOrder(orderId: string): Promise<EscrowTransaction | null> {
-        const result = await this.pool.query(
-            'SELECT * FROM escrow_transactions WHERE order_id = $1',
-            [orderId]
-        );
+        const result = await this.pool.query('SELECT * FROM escrow_transactions WHERE order_id = $1', [orderId]);
         return result.rows[0] || null;
     }
 
@@ -113,7 +125,8 @@ export class EscrowService {
      * Buyer confirms receipt and satisfaction
      */
     async buyerConfirm(escrowId: string, userId: string): Promise<EscrowTransaction> {
-        const result = await this.pool.query(`
+        const result = await this.pool.query(
+            `
             UPDATE escrow_transactions
             SET 
                 status = 'released',
@@ -124,7 +137,9 @@ export class EscrowService {
                 updated_at = NOW()
             WHERE escrow_id = $1 AND status = 'held'
             RETURNING *
-        `, [escrowId, userId]);
+        `,
+            [escrowId, userId]
+        );
 
         if (result.rows.length === 0) {
             throw new Error('Escrow not found or not in held status');
@@ -156,7 +171,8 @@ export class EscrowService {
      */
     async raiseDispute(escrowId: string, userId: string, reason: string, note?: string): Promise<EscrowTransaction> {
         const reasonText = note ? `${reason} — ${note}` : reason;
-        const result = await this.pool.query(`
+        const result = await this.pool.query(
+            `
             UPDATE escrow_transactions
             SET 
                 status = 'disputed',
@@ -165,7 +181,9 @@ export class EscrowService {
                 updated_at = NOW()
             WHERE escrow_id = $1 AND status = 'held' AND customer_id = $3
             RETURNING *
-        `, [escrowId, reasonText, userId]);
+        `,
+            [escrowId, reasonText, userId]
+        );
 
         if (result.rows.length === 0) {
             throw new Error('Escrow not found, not in held status, or user not authorized');
@@ -192,10 +210,7 @@ export class EscrowService {
         let status: string;
         let sellerAmount: number | null = null;
 
-        const escrow = await this.pool.query(
-            'SELECT * FROM escrow_transactions WHERE escrow_id = $1',
-            [escrowId]
-        );
+        const escrow = await this.pool.query('SELECT * FROM escrow_transactions WHERE escrow_id = $1', [escrowId]);
 
         if (escrow.rows.length === 0) {
             throw new Error('Escrow not found');
@@ -216,7 +231,8 @@ export class EscrowService {
                 throw new Error('Invalid resolution type');
         }
 
-        const result = await this.pool.query(`
+        const result = await this.pool.query(
+            `
             UPDATE escrow_transactions
             SET 
                 status = $2,
@@ -227,7 +243,9 @@ export class EscrowService {
                 updated_at = NOW()
             WHERE escrow_id = $1
             RETURNING *
-        `, [escrowId, status, notes, adminId]);
+        `,
+            [escrowId, status, notes, adminId]
+        );
 
         logger.info('[Escrow] Dispute resolved', {
             escrow_id: escrowId,
@@ -252,24 +270,27 @@ export class EscrowService {
         locationLng?: number;
         notes?: string;
     }): Promise<ProofOfCondition> {
-        const result = await this.pool.query(`
+        const result = await this.pool.query(
+            `
             INSERT INTO proof_of_condition (
                 escrow_id, order_id, capture_type, image_urls, video_url,
                 captured_by, location_lat, location_lng, notes
             )
             VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9)
             RETURNING *
-        `, [
-            params.escrowId,
-            params.orderId,
-            params.captureType,
-            params.imageUrls,
-            params.videoUrl,
-            params.capturedBy,
-            params.locationLat,
-            params.locationLng,
-            params.notes
-        ]);
+        `,
+            [
+                params.escrowId,
+                params.orderId,
+                params.captureType,
+                params.imageUrls,
+                params.videoUrl,
+                params.capturedBy,
+                params.locationLat,
+                params.locationLng,
+                params.notes
+            ]
+        );
 
         logger.info('[Escrow] Proof of condition captured', {
             proof_id: result.rows[0].proof_id,
@@ -309,13 +330,16 @@ export class EscrowService {
      * Get pending escrows for customer (for dashboard)
      */
     async getPendingEscrowsForCustomer(customerId: string): Promise<EscrowTransaction[]> {
-        const result = await this.pool.query(`
+        const result = await this.pool.query(
+            `
             SELECT e.*, o.order_number, o.total_amount
             FROM escrow_transactions e
             JOIN orders o ON e.order_id = o.order_id
             WHERE e.customer_id = $1 AND e.status = 'held'
             ORDER BY e.created_at DESC
-        `, [customerId]);
+        `,
+            [customerId]
+        );
         return result.rows;
     }
 

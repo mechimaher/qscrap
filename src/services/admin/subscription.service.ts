@@ -5,13 +5,7 @@
 
 import { Pool, PoolClient } from 'pg';
 import bcrypt from 'bcrypt';
-import {
-    SubscriptionRequest,
-    Plan,
-    Subscription,
-    AssignPlanParams,
-    SpecializationData
-} from './types';
+import { SubscriptionRequest, Plan, Subscription, AssignPlanParams, SpecializationData } from './types';
 import {
     PlanNotFoundError,
     SubscriptionNotFoundError,
@@ -22,13 +16,14 @@ import {
 import logger from '../../utils/logger';
 
 export class SubscriptionManagementService {
-    constructor(private pool: Pool) { }
+    constructor(private pool: Pool) {}
 
     /**
      * Get subscription change requests
      */
     async getSubscriptionRequests(status: string = 'pending'): Promise<SubscriptionRequest[]> {
-        const result = await this.pool.query(`
+        const result = await this.pool.query(
+            `
             SELECT scr.*, 
                    g.garage_name, u.phone_number, u.email,
                    fp.plan_name as from_plan_name,
@@ -41,7 +36,9 @@ export class SubscriptionManagementService {
             JOIN subscription_plans tp ON scr.to_plan_id = tp.plan_id
             WHERE scr.status = $1
             ORDER BY scr.created_at ASC
-        `, [status]);
+        `,
+            [status]
+        );
 
         return result.rows;
     }
@@ -56,13 +53,16 @@ export class SubscriptionManagementService {
             await client.query('BEGIN');
 
             // Fetch request with payment status
-            const reqQuery = await client.query(`
+            const reqQuery = await client.query(
+                `
                 SELECT scr.*, tp.monthly_fee, tp.plan_name as target_plan_name
                 FROM subscription_change_requests scr
                 JOIN subscription_plans tp ON scr.to_plan_id = tp.plan_id
                 WHERE scr.request_id = $1 AND scr.status = 'pending' 
                 FOR UPDATE
-            `, [requestId]);
+            `,
+                [requestId]
+            );
 
             if (reqQuery.rows.length === 0) {
                 throw new RequestAlreadyProcessedError(requestId, 'processed or not found');
@@ -78,25 +78,31 @@ export class SubscriptionManagementService {
             if (isPaidPlan && paymentStatus !== 'paid') {
                 throw new Error(
                     `Cannot approve: Payment not verified. ` +
-                    `Target plan "${subReq.target_plan_name}" requires ${subReq.monthly_fee} QAR. ` +
-                    `Current payment status: ${paymentStatus || 'unpaid'}. ` +
-                    `Garage must pay first, or use "Verify Bank Payment" if payment was made via bank transfer.`
+                        `Target plan "${subReq.target_plan_name}" requires ${subReq.monthly_fee} QAR. ` +
+                        `Current payment status: ${paymentStatus || 'unpaid'}. ` +
+                        `Garage must pay first, or use "Verify Bank Payment" if payment was made via bank transfer.`
                 );
             }
 
             // Update subscription
-            await client.query(`
+            await client.query(
+                `
                 UPDATE garage_subscriptions 
                 SET plan_id = $1, next_plan_id = NULL, updated_at = NOW()
                 WHERE garage_id = $2 AND status IN ('active', 'trial')
-            `, [subReq.to_plan_id, subReq.garage_id]);
+            `,
+                [subReq.to_plan_id, subReq.garage_id]
+            );
 
             // Mark request approved
-            await client.query(`
+            await client.query(
+                `
                 UPDATE subscription_change_requests
                 SET status = 'approved', processed_by = $1, updated_at = NOW()
                 WHERE request_id = $2
-            `, [adminId, requestId]);
+            `,
+                [adminId, requestId]
+            );
 
             // Log action
             await this.logAdminAction(client, adminId, 'approve_sub_change', subReq.garage_id, {
@@ -119,24 +125,23 @@ export class SubscriptionManagementService {
      * Verify bank payment for subscription upgrade request
      * Admin calls this after confirming bank transfer was received
      */
-    async verifyBankPayment(
-        requestId: string,
-        adminId: string,
-        bankReference: string
-    ): Promise<void> {
+    async verifyBankPayment(requestId: string, adminId: string, bankReference: string): Promise<void> {
         const client = await this.pool.connect();
         try {
             await client.query('BEGIN');
 
             // Fetch request
-            const reqQuery = await client.query(`
+            const reqQuery = await client.query(
+                `
                 SELECT scr.*, tp.monthly_fee, tp.plan_name as target_plan_name, g.garage_name
                 FROM subscription_change_requests scr
                 JOIN subscription_plans tp ON scr.to_plan_id = tp.plan_id
                 JOIN garages g ON scr.garage_id = g.garage_id
                 WHERE scr.request_id = $1 AND scr.status = 'pending'
                 FOR UPDATE
-            `, [requestId]);
+            `,
+                [requestId]
+            );
 
             if (reqQuery.rows.length === 0) {
                 throw new Error('Request not found or already processed');
@@ -145,14 +150,17 @@ export class SubscriptionManagementService {
             const subReq = reqQuery.rows[0];
 
             // Update payment status to paid
-            await client.query(`
+            await client.query(
+                `
                 UPDATE subscription_change_requests
                 SET payment_status = 'paid',
                     bank_reference = $1,
                     paid_at = NOW(),
                     updated_at = NOW()
                 WHERE request_id = $2
-            `, [bankReference, requestId]);
+            `,
+                [bankReference, requestId]
+            );
 
             // Log action
             await this.logAdminAction(client, adminId, 'verify_bank_payment', subReq.garage_id, {
@@ -165,7 +173,11 @@ export class SubscriptionManagementService {
 
             await client.query('COMMIT');
 
-            logger.info('Bank payment verified', { garageName: subReq.garage_name, monthlyFee: subReq.monthly_fee, bankReference });
+            logger.info('Bank payment verified', {
+                garageName: subReq.garage_name,
+                monthlyFee: subReq.monthly_fee,
+                bankReference
+            });
         } catch (err) {
             await client.query('ROLLBACK');
             throw err;
@@ -178,11 +190,14 @@ export class SubscriptionManagementService {
      * Reject subscription change request
      */
     async rejectSubscriptionRequest(requestId: string, adminId: string, reason?: string): Promise<void> {
-        await this.pool.query(`
+        await this.pool.query(
+            `
             UPDATE subscription_change_requests
             SET status = 'rejected', admin_notes = $1, processed_by = $2, updated_at = NOW()
             WHERE request_id = $3
-        `, [reason || 'Rejected by admin', adminId, requestId]);
+        `,
+            [reason || 'Rejected by admin', adminId, requestId]
+        );
     }
 
     /**
@@ -217,10 +232,7 @@ export class SubscriptionManagementService {
             await client.query('BEGIN');
 
             // Verify plan exists
-            const planCheck = await client.query(
-                'SELECT * FROM subscription_plans WHERE plan_id = $1',
-                [planId]
-            );
+            const planCheck = await client.query('SELECT * FROM subscription_plans WHERE plan_id = $1', [planId]);
 
             if (planCheck.rows.length === 0) {
                 throw new PlanNotFoundError(parseInt(planId));
@@ -229,14 +241,18 @@ export class SubscriptionManagementService {
             const plan = planCheck.rows[0];
 
             // Cancel existing subscriptions
-            await client.query(`
+            await client.query(
+                `
                 UPDATE garage_subscriptions 
                 SET status = 'cancelled', updated_at = NOW()
                 WHERE garage_id = $1 AND status IN ('active', 'trial')
-            `, [garageId]);
+            `,
+                [garageId]
+            );
 
             // Promote garage to approved
-            await client.query(`
+            await client.query(
+                `
                 UPDATE garages SET
                     approval_status = 'approved',
                     demo_expires_at = NULL,
@@ -244,28 +260,36 @@ export class SubscriptionManagementService {
                     approval_date = NOW(),
                     updated_at = NOW()
                 WHERE garage_id = $2
-            `, [adminId, garageId]);
+            `,
+                [adminId, garageId]
+            );
 
             // Activate user
-            await client.query(`
+            await client.query(
+                `
                 UPDATE users SET
                     is_active = true,
                     is_suspended = false,
                     updated_at = NOW()
                 WHERE user_id = $1
-            `, [garageId]);
+            `,
+                [garageId]
+            );
 
             // Create subscription
             const startDate = new Date();
             const endDate = new Date();
             endDate.setMonth(endDate.getMonth() + months);
 
-            const subResult = await client.query(`
+            const subResult = await client.query(
+                `
                 INSERT INTO garage_subscriptions 
                 (garage_id, plan_id, status, billing_cycle_start, billing_cycle_end, is_admin_granted, admin_notes)
                 VALUES ($1, $2, 'active', $3, $4, true, $5)
                 RETURNING *
-            `, [garageId, planId, startDate, endDate, notes || 'Granted by admin']);
+            `,
+                [garageId, planId, startDate, endDate, notes || 'Granted by admin']
+            );
 
             // Log action
             await this.logAdminAction(client, adminId, 'assign_plan', garageId, {
@@ -293,25 +317,31 @@ export class SubscriptionManagementService {
         try {
             await client.query('BEGIN');
 
-            const currentSub = await client.query(`
+            const currentSub = await client.query(
+                `
                 SELECT gs.*, sp.plan_name 
                 FROM garage_subscriptions gs
                 JOIN subscription_plans sp ON gs.plan_id = sp.plan_id
                 WHERE gs.garage_id = $1 AND gs.status IN ('active', 'trial')
-            `, [garageId]);
+            `,
+                [garageId]
+            );
 
             if (currentSub.rows.length === 0) {
                 throw new SubscriptionNotFoundError(garageId);
             }
 
-            await client.query(`
+            await client.query(
+                `
                 UPDATE garage_subscriptions
                 SET status = 'cancelled',
                     cancelled_at = NOW(),
                     cancellation_reason = $1,
                     updated_at = NOW()
                 WHERE garage_id = $2 AND status IN ('active', 'trial')
-            `, [reason || 'Cancelled by admin', garageId]);
+            `,
+                [reason || 'Cancelled by admin', garageId]
+            );
 
             // Log action
             await this.logAdminAction(client, adminId, 'revoke_subscription', garageId, {
@@ -331,24 +361,22 @@ export class SubscriptionManagementService {
     /**
      * Extend subscription billing cycle
      */
-    async extendSubscription(
-        garageId: string,
-        months: number,
-        adminId: string,
-        notes?: string
-    ): Promise<Subscription> {
+    async extendSubscription(garageId: string, months: number, adminId: string, notes?: string): Promise<Subscription> {
         const client = await this.pool.connect();
         try {
             await client.query('BEGIN');
 
-            const result = await client.query(`
+            const result = await client.query(
+                `
                 UPDATE garage_subscriptions
                 SET billing_cycle_end = billing_cycle_end + INTERVAL '${months} months',
                     admin_notes = COALESCE($1, admin_notes),
                     updated_at = NOW()
                 WHERE garage_id = $2 AND status IN ('active', 'trial')
                 RETURNING *
-            `, [notes, garageId]);
+            `,
+                [notes, garageId]
+            );
 
             if (result.rows.length === 0) {
                 throw new SubscriptionNotFoundError(garageId);
@@ -374,12 +402,7 @@ export class SubscriptionManagementService {
     /**
      * Override commission rate for specific garage
      */
-    async overrideCommission(
-        garageId: string,
-        commissionRate: number,
-        adminId: string,
-        reason: string
-    ): Promise<void> {
+    async overrideCommission(garageId: string, commissionRate: number, adminId: string, reason: string): Promise<void> {
         if (commissionRate < 0 || commissionRate > 100) {
             throw new InvalidCommissionRateError(commissionRate);
         }
@@ -389,20 +412,20 @@ export class SubscriptionManagementService {
             await client.query('BEGIN');
 
             // Get current rate for audit
-            const current = await client.query(
-                'SELECT commission_rate FROM garages WHERE garage_id = $1',
-                [garageId]
-            );
+            const current = await client.query('SELECT commission_rate FROM garages WHERE garage_id = $1', [garageId]);
 
             if (current.rows.length === 0) {
                 throw new GarageNotFoundError(garageId);
             }
 
-            await client.query(`
+            await client.query(
+                `
                 UPDATE garages
                 SET commission_rate = $1, updated_at = NOW()
                 WHERE garage_id = $2
-            `, [commissionRate, garageId]);
+            `,
+                [commissionRate, garageId]
+            );
 
             // Log action
             await this.logAdminAction(client, adminId, 'override_commission', garageId, {
@@ -423,18 +446,15 @@ export class SubscriptionManagementService {
     /**
      * Update garage specialization (supplier type & brands)
      */
-    async updateGarageSpecialization(
-        garageId: string,
-        adminId: string,
-        data: SpecializationData
-    ): Promise<any> {
+    async updateGarageSpecialization(garageId: string, adminId: string, data: SpecializationData): Promise<any> {
         const { supplier_type, specialized_brands, all_brands } = data;
 
         const client = await this.pool.connect();
         try {
             await client.query('BEGIN');
 
-            const result = await client.query(`
+            const result = await client.query(
+                `
                 UPDATE garages
                 SET supplier_type = $1,
                     specialized_brands = $2,
@@ -442,7 +462,9 @@ export class SubscriptionManagementService {
                     updated_at = NOW()
                 WHERE garage_id = $4
                 RETURNING *
-            `, [supplier_type, specialized_brands || null, all_brands || false, garageId]);
+            `,
+                [supplier_type, specialized_brands || null, all_brands || false, garageId]
+            );
 
             if (result.rows.length === 0) {
                 throw new GarageNotFoundError(garageId);
@@ -475,9 +497,12 @@ export class SubscriptionManagementService {
         targetId: string,
         data: any
     ): Promise<void> {
-        await client.query(`
+        await client.query(
+            `
             INSERT INTO admin_audit_log (admin_id, action_type, target_type, target_id, new_value)
             VALUES ($1, $2, 'garage', $3, $4)
-        `, [adminId, actionType, targetId, JSON.stringify(data)]);
+        `,
+            [adminId, actionType, targetId, JSON.stringify(data)]
+        );
     }
 }

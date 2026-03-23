@@ -32,7 +32,7 @@ function PhotoUploadSection({
     onPickImage,
     onTakePhoto,
     onRemoveImage,
-    fullWidth = false,
+    fullWidth = false
 }: PhotoUploadSectionProps) {
     const { t, isRTL } = useTranslation();
     const { colors } = useTheme();
@@ -42,9 +42,10 @@ function PhotoUploadSection({
         return (
             <>
                 {images.length > 0 ? (
-                    <View style={{ marginBottom: 16 }}>
-                        <Image source={{ uri: images[0] }} style={styles.fullWidthImage} />
+                    <View style={{ marginBottom: 16 }} testID="full-image-preview">
+                        <Image source={{ uri: images[0] }} style={styles.fullWidthImage} testID="image-preview" />
                         <TouchableOpacity
+                            testID="remove-image-0"
                             onPress={() => onRemoveImage(0)}
                             style={[styles.removePhotoButton, { top: 8, right: 8 }]}
                         >
@@ -55,17 +56,27 @@ function PhotoUploadSection({
                     <View style={{ flexDirection: 'row', gap: 12, marginBottom: 16 }}>
                         <TouchableOpacity
                             onPress={onPickImage}
-                            style={[styles.addPhotoButton, { flex: 1, backgroundColor: colors.background, borderColor: colors.border }]}
+                            style={[
+                                styles.addPhotoButton,
+                                { flex: 1, backgroundColor: colors.background, borderColor: colors.border }
+                            ]}
                         >
                             <Ionicons name="images-outline" size={24} color="#737373" style={{ marginBottom: 4 }} />
-                            <Text style={[styles.addPhotoText, { color: colors.textSecondary }]}>{t('common.gallery')}</Text>
+                            <Text style={[styles.addPhotoText, { color: colors.textSecondary }]}>
+                                {t('common.gallery')}
+                            </Text>
                         </TouchableOpacity>
                         <TouchableOpacity
                             onPress={onTakePhoto}
-                            style={[styles.addPhotoButton, { flex: 1, backgroundColor: colors.background, borderColor: colors.border }]}
+                            style={[
+                                styles.addPhotoButton,
+                                { flex: 1, backgroundColor: colors.background, borderColor: colors.border }
+                            ]}
                         >
                             <Ionicons name="camera-outline" size={24} color="#737373" style={{ marginBottom: 4 }} />
-                            <Text style={[styles.addPhotoText, { color: colors.textSecondary }]}>{t('common.camera')}</Text>
+                            <Text style={[styles.addPhotoText, { color: colors.textSecondary }]}>
+                                {t('common.camera')}
+                            </Text>
                         </TouchableOpacity>
                     </View>
                 )}
@@ -77,9 +88,10 @@ function PhotoUploadSection({
     return (
         <View style={[styles.photoGrid, { flexDirection: rtlFlexDirection(isRTL) }]}>
             {images.map((uri, index) => (
-                <View key={index} style={styles.photoWrapper}>
-                    <Image source={{ uri }} style={styles.photo} />
+                <View key={index} style={styles.photoWrapper} testID={`image-preview-${index}`}>
+                    <Image source={{ uri }} style={styles.photo} testID="image-preview" />
                     <TouchableOpacity
+                        testID={`remove-image-${index}`}
                         onPress={() => onRemoveImage(index)}
                         style={styles.removePhotoButton}
                     >
@@ -94,9 +106,7 @@ function PhotoUploadSection({
                     style={[styles.addPhotoButton, { backgroundColor: colors.background, borderColor: colors.border }]}
                 >
                     <Ionicons name="images-outline" size={24} color="#737373" style={{ marginBottom: 4 }} />
-                    <Text style={[styles.addPhotoText, { color: colors.textSecondary }]}>
-                        {t('common.gallery')}
-                    </Text>
+                    <Text style={[styles.addPhotoText, { color: colors.textSecondary }]}>{t('common.gallery')}</Text>
                 </TouchableOpacity>
             )}
 
@@ -106,9 +116,7 @@ function PhotoUploadSection({
                     style={[styles.addPhotoButton, { backgroundColor: colors.background, borderColor: colors.border }]}
                 >
                     <Ionicons name="camera-outline" size={24} color="#737373" style={{ marginBottom: 4 }} />
-                    <Text style={[styles.addPhotoText, { color: colors.textSecondary }]}>
-                        {t('common.camera')}
-                    </Text>
+                    <Text style={[styles.addPhotoText, { color: colors.textSecondary }]}>{t('common.camera')}</Text>
                 </TouchableOpacity>
             )}
         </View>
@@ -120,17 +128,17 @@ export default memo(PhotoUploadSection);
 const styles = StyleSheet.create({
     photoGrid: {
         flexWrap: 'wrap',
-        gap: Spacing.sm,
+        gap: Spacing.sm
     },
     photoWrapper: {
         width: 100,
         height: 100,
         borderRadius: BorderRadius.lg,
-        overflow: 'hidden',
+        overflow: 'hidden'
     },
     photo: {
         width: '100%',
-        height: '100%',
+        height: '100%'
     },
     removePhotoButton: {
         position: 'absolute',
@@ -141,12 +149,12 @@ const styles = StyleSheet.create({
         borderRadius: 12,
         backgroundColor: 'rgba(0,0,0,0.6)',
         alignItems: 'center',
-        justifyContent: 'center',
+        justifyContent: 'center'
     },
     removePhotoIcon: {
         color: '#fff',
         fontSize: 12,
-        fontWeight: '700',
+        fontWeight: '700'
     },
     addPhotoButton: {
         width: 100,
@@ -155,19 +163,19 @@ const styles = StyleSheet.create({
         borderWidth: 2,
         borderStyle: 'dashed',
         alignItems: 'center',
-        justifyContent: 'center',
+        justifyContent: 'center'
     },
     addPhotoIcon: {
         fontSize: 24,
-        marginBottom: 4,
+        marginBottom: 4
     },
     addPhotoText: {
         fontSize: FontSizes.xs,
-        fontWeight: '500',
+        fontWeight: '500'
     },
     fullWidthImage: {
         width: '100%',
         height: 200,
-        borderRadius: 12,
-    },
+        borderRadius: 12
+    }
 });

@@ -28,7 +28,7 @@ try {
 }
 
 export class DocumentGenerationService {
-    constructor(private pool: Pool) { }
+    constructor(private pool: Pool) {}
 
     /**
      * Generate invoice (customer or garage statement)
@@ -38,7 +38,8 @@ export class DocumentGenerationService {
 
         try {
             // Get order details
-            const orderResult = await this.pool.query(`
+            const orderResult = await this.pool.query(
+                `
                 SELECT 
                     o.*,
                     u.full_name as customer_name,
@@ -65,7 +66,9 @@ export class DocumentGenerationService {
                 JOIN bids b ON o.bid_id = b.bid_id
                 JOIN part_requests r ON b.request_id = r.request_id
                 WHERE o.order_id = $1
-            `, [orderId]);
+            `,
+                [orderId]
+            );
 
             if (orderResult.rows.length === 0) {
                 throw new DocumentGenerationError('Order not found');
@@ -82,13 +85,16 @@ export class DocumentGenerationService {
             }
 
             // Check if invoice already exists
-            const existingDoc = await this.pool.query(`
+            const existingDoc = await this.pool.query(
+                `
                 SELECT * FROM documents 
                 WHERE order_id = $1 
                   AND document_type = 'invoice'
                   AND document_data->>'invoice_type' = $2
                   AND status != 'voided'
-            `, [orderId, invoiceType]);
+            `,
+                [orderId, invoiceType]
+            );
 
             if (existingDoc.rows.length > 0) {
                 return {
@@ -111,7 +117,8 @@ export class DocumentGenerationService {
             const digitalSignature = this.generateDigitalSignature(docNumber, orderId, invoiceType, order.total_amount);
 
             // Insert document record
-            const insertResult = await this.pool.query(`
+            const insertResult = await this.pool.query(
+                `
                 INSERT INTO documents (
                     document_type, document_number, order_id, customer_id, garage_id,
                     document_data, verification_code, verification_url,
@@ -119,12 +126,25 @@ export class DocumentGenerationService {
                     status, created_by, created_by_type, ip_address
                 ) VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13, $14, $15)
                 RETURNING *
-            `, [
-                'invoice', docNumber, orderId, order.customer_id, order.garage_id,
-                JSON.stringify(documentData), verifyCode, `https://qscrap.qa/verify/${verifyCode}`,
-                qrCodeData, digitalSignature, new Date(),
-                'generated', userId, userType, ipAddress
-            ]);
+            `,
+                [
+                    'invoice',
+                    docNumber,
+                    orderId,
+                    order.customer_id,
+                    order.garage_id,
+                    JSON.stringify(documentData),
+                    verifyCode,
+                    `https://qscrap.qa/verify/${verifyCode}`,
+                    qrCodeData,
+                    digitalSignature,
+                    new Date(),
+                    'generated',
+                    userId,
+                    userType,
+                    ipAddress
+                ]
+            );
 
             return {
                 document: { ...insertResult.rows[0], document_data: documentData },
@@ -151,11 +171,11 @@ export class DocumentGenerationService {
         const deliveryFee = parseFloat(order.delivery_fee || 0);
         const totalAmount = parseFloat(order.total_amount);
         const commissionRate = parseFloat(order.commission_rate || 0.15);
-        const netPayout = parseFloat(order.garage_payout_amount || (partPrice - platformFee));
+        const netPayout = parseFloat(order.garage_payout_amount || partPrice - platformFee);
 
         // Use part_category from database, fallback to generic text
         // IMPORTANT: Never show customer's raw part_description in invoice (could be long/messy)
-        let displayPartName = 'Car Spare Part';  // Generic fallback
+        let displayPartName = 'Car Spare Part'; // Generic fallback
         let category = 'Car Spare Part';
         const subcategory = '';
 
@@ -178,18 +198,18 @@ export class DocumentGenerationService {
                     phone: order.garage_phone,
                     address: order.garage_address || 'Qatar',
                     cr_number: order.garage_cr_number || 'N/A',
-                    trade_license: order.trade_license_number || null,
+                    trade_license: order.trade_license_number || null
                 },
 
                 platform: {
                     name: COMPANY_INFO.brand.en,
-                    name_ar: COMPANY_INFO.brand.ar,
+                    name_ar: COMPANY_INFO.brand.ar
                 },
 
                 customer_ref: {
                     name: order.customer_name,
                     phone: order.customer_phone,
-                    order_number: order.order_number,
+                    order_number: order.order_number
                 },
 
                 item: {
@@ -199,7 +219,7 @@ export class DocumentGenerationService {
                     part_name: displayPartName,
                     part_number: order.part_number || 'N/A',
                     condition: formatConditionBilingual(order.part_condition),
-                    warranty_days: warrantyDays,
+                    warranty_days: warrantyDays
                 },
 
                 pricing: {
@@ -207,29 +227,30 @@ export class DocumentGenerationService {
                     commission_rate: commissionRate,
                     commission_rate_percent: `${Math.round(commissionRate * 100)}%`,
                     platform_fee: platformFee,
-                    net_payout: netPayout,
+                    net_payout: netPayout
                 },
 
                 verification: {
                     code: verifyCode,
-                    url: `https://qscrap.qa/verify/${verifyCode}`,
+                    url: `https://qscrap.qa/verify/${verifyCode}`
                 },
 
                 payment: {
                     method: order.payment_method || 'Cash',
-                    status: order.payment_status || 'Completed',
+                    status: order.payment_status || 'Completed'
                 },
 
                 // Company support info for Qatar commercial compliance
-                company: COMPANY_INFO,
+                company: COMPANY_INFO
             };
         } else {
             // Customer invoice (B2C)
             // CRITICAL: Must include loyalty discount for Qatar Ministry of Commerce compliance
             const loyaltyDiscount = parseFloat(order.loyalty_discount || 0);
-            const loyaltyDiscountPercent = loyaltyDiscount > 0 && partPrice > 0
-                ? Math.round((loyaltyDiscount / (totalAmount + loyaltyDiscount)) * 100)
-                : 0;
+            const loyaltyDiscountPercent =
+                loyaltyDiscount > 0 && partPrice > 0
+                    ? Math.round((loyaltyDiscount / (totalAmount + loyaltyDiscount)) * 100)
+                    : 0;
 
             return {
                 invoice_type: 'customer',
@@ -243,13 +264,13 @@ export class DocumentGenerationService {
                     phone: order.garage_phone,
                     address: order.garage_address || 'Qatar',
                     cr_number: order.garage_cr_number || 'N/A',
-                    trade_license: order.trade_license_number || null,
+                    trade_license: order.trade_license_number || null
                 },
 
                 buyer: {
                     name: order.customer_name,
                     phone: order.customer_phone,
-                    address: order.delivery_address || 'N/A',
+                    address: order.delivery_address || 'N/A'
                 },
 
                 item: {
@@ -260,7 +281,7 @@ export class DocumentGenerationService {
                     part_number: order.part_number || 'N/A',
                     condition: formatConditionBilingual(order.part_condition),
                     warranty_days: warrantyDays,
-                    warranty_expiry: warrantyExpiry.toISOString(),
+                    warranty_expiry: warrantyExpiry.toISOString()
                 },
 
                 pricing: {
@@ -270,21 +291,21 @@ export class DocumentGenerationService {
                     loyalty_discount_percent: loyaltyDiscountPercent > 0 ? loyaltyDiscountPercent : undefined,
                     vat_rate: 0,
                     vat_amount: 0,
-                    total: totalAmount,
+                    total: totalAmount
                 },
 
                 verification: {
                     code: verifyCode,
-                    url: `https://qscrap.qa/verify/${verifyCode}`,
+                    url: `https://qscrap.qa/verify/${verifyCode}`
                 },
 
                 payment: {
                     method: order.payment_method || 'Cash',
-                    status: order.payment_status || 'Paid',
+                    status: order.payment_status || 'Paid'
                 },
 
                 // Company support info for Qatar commercial compliance
-                company: COMPANY_INFO,
+                company: COMPANY_INFO
             };
         }
     }
@@ -302,12 +323,7 @@ export class DocumentGenerationService {
             const browser = await puppeteer.launch({
                 headless: 'new',
                 executablePath: process.env.PUPPETEER_EXECUTABLE_PATH || undefined,
-                args: [
-                    '--no-sandbox',
-                    '--disable-setuid-sandbox',
-                    '--disable-dev-shm-usage',
-                    '--disable-gpu'
-                ]
+                args: ['--no-sandbox', '--disable-setuid-sandbox', '--disable-dev-shm-usage', '--disable-gpu']
             });
             const page = await browser.newPage();
             await page.setContent(html, { waitUntil: 'networkidle0' });
@@ -354,10 +370,7 @@ export class DocumentGenerationService {
      * Generate document number using database function
      */
     private async generateDocumentNumber(type: string): Promise<string> {
-        const result = await this.pool.query(
-            `SELECT generate_document_number($1) as doc_number`,
-            [type]
-        );
+        const result = await this.pool.query(`SELECT generate_document_number($1) as doc_number`, [type]);
         return result.rows[0].doc_number;
     }
 
@@ -365,9 +378,7 @@ export class DocumentGenerationService {
      * Generate verification code using database function
      */
     private async generateVerificationCode(): Promise<string> {
-        const result = await this.pool.query(
-            `SELECT generate_verification_code() as verify_code`
-        );
+        const result = await this.pool.query(`SELECT generate_verification_code() as verify_code`);
         return result.rows[0].verify_code;
     }
 

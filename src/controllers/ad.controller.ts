@@ -60,7 +60,9 @@ const isCampaignStatus = (value: string): value is 'active' | 'paused' | 'comple
  */
 export const createCampaign = async (req: CreateCampaignRequest, res: Response) => {
     const garageId = getUserId(req);
-    if (!garageId) {return res.status(401).json({ error: 'Unauthorized' });}
+    if (!garageId) {
+        return res.status(401).json({ error: 'Unauthorized' });
+    }
 
     const {
         campaign_name,
@@ -112,7 +114,9 @@ export const createCampaign = async (req: CreateCampaignRequest, res: Response) 
  */
 export const getMyCampaigns = async (req: BasicAuthRequest, res: Response) => {
     const garageId = getUserId(req);
-    if (!garageId) {return res.status(401).json({ error: 'Unauthorized' });}
+    if (!garageId) {
+        return res.status(401).json({ error: 'Unauthorized' });
+    }
 
     try {
         const campaigns = await AdService.getGarageCampaigns(garageId);
@@ -134,10 +138,12 @@ export const getMyCampaigns = async (req: BasicAuthRequest, res: Response) => {
  */
 export const getCampaignPerformance = async (req: CampaignParamRequest, res: Response) => {
     const { id } = req.params;
-    if (!id) {return res.status(400).json({ error: 'Campaign ID is required' });}
+    if (!id) {
+        return res.status(400).json({ error: 'Campaign ID is required' });
+    }
 
     try {
-        const performance = await AdService.getCampaignPerformance(id) as unknown as Record<string, unknown> | null;
+        const performance = (await AdService.getCampaignPerformance(id)) as unknown as Record<string, unknown> | null;
 
         if (!performance) {
             return res.status(404).json({ error: 'Campaign not found' });
@@ -202,7 +208,9 @@ export const getAdPricing = async (req: BasicAuthRequest, res: Response) => {
  */
 export const reviewCampaign = async (req: ReviewCampaignRequest, res: Response) => {
     const adminId = getUserId(req);
-    if (!adminId) {return res.status(401).json({ error: 'Unauthorized' });}
+    if (!adminId) {
+        return res.status(401).json({ error: 'Unauthorized' });
+    }
 
     const { campaign_id, approved } = req.body;
 

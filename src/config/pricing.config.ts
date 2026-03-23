@@ -1,7 +1,7 @@
 /**
  * QSCRAP System Configuration
  * From Expert Review: "Make pricing database-driven so you can change without deployments"
- * 
+ *
  * This file centralizes all "magic numbers" that were scattered in the codebase.
  * Values can be overridden via environment variables or database config table.
  */
@@ -10,31 +10,31 @@ import logger from '../utils/logger';
 
 export interface PricingConfig {
     // Platform Commission
-    PLATFORM_COMMISSION_RATE: number;        // 0.10 = 10%
+    PLATFORM_COMMISSION_RATE: number; // 0.10 = 10%
 
     // Delivery Fee Tiers (by zone)
-    DELIVERY_FEE_ZONE_1: number;             // Doha Central
-    DELIVERY_FEE_ZONE_2: number;             // Greater Doha  
-    DELIVERY_FEE_ZONE_3: number;             // Industrial/Airport
-    DELIVERY_FEE_ZONE_4: number;             // Outer Areas
+    DELIVERY_FEE_ZONE_1: number; // Doha Central
+    DELIVERY_FEE_ZONE_2: number; // Greater Doha
+    DELIVERY_FEE_ZONE_3: number; // Industrial/Airport
+    DELIVERY_FEE_ZONE_4: number; // Outer Areas
 
     // Loyalty Program
-    LOYALTY_POINTS_PER_QAR: number;          // Points earned per QAR spent
-    LOYALTY_TIER_SILVER_THRESHOLD: number;   // Points for Silver
-    LOYALTY_TIER_GOLD_THRESHOLD: number;     // Points for Gold
+    LOYALTY_POINTS_PER_QAR: number; // Points earned per QAR spent
+    LOYALTY_TIER_SILVER_THRESHOLD: number; // Points for Silver
+    LOYALTY_TIER_GOLD_THRESHOLD: number; // Points for Gold
     LOYALTY_TIER_PLATINUM_THRESHOLD: number; // Points for Platinum
 
     // Payout Settings
-    PAYOUT_AUTO_CONFIRM_DAYS: number;        // Auto-confirm after N days
-    PAYOUT_REMINDER_DAYS: number;            // Send reminder after N days
+    PAYOUT_AUTO_CONFIRM_DAYS: number; // Auto-confirm after N days
+    PAYOUT_REMINDER_DAYS: number; // Send reminder after N days
 
     // Request Settings
-    REQUEST_EXPIRY_HOURS: number;            // Request expires after N hours
-    BID_WINDOW_HOURS: number;                // Bidding window duration
+    REQUEST_EXPIRY_HOURS: number; // Request expires after N hours
+    BID_WINDOW_HOURS: number; // Bidding window duration
 
     // Driver Settings
-    DRIVER_COMMISSION_RATE: number;          // Driver's share of delivery fee
-    DRIVER_MIN_PAYOUT: number;               // Minimum wallet withdrawal
+    DRIVER_COMMISSION_RATE: number; // Driver's share of delivery fee
+    DRIVER_MIN_PAYOUT: number; // Minimum wallet withdrawal
 }
 
 // Default configuration - can be overridden by database or env vars
@@ -64,7 +64,7 @@ const defaultConfig: PricingConfig = {
 
     // Driver Economics
     DRIVER_COMMISSION_RATE: parseFloat(process.env.DRIVER_COMMISSION_RATE || '0.75'), // 75% to driver
-    DRIVER_MIN_PAYOUT: parseFloat(process.env.DRIVER_MIN_PAYOUT || '50'), // 50 QAR minimum
+    DRIVER_MIN_PAYOUT: parseFloat(process.env.DRIVER_MIN_PAYOUT || '50') // 50 QAR minimum
 };
 
 // Export frozen config to prevent accidental mutation

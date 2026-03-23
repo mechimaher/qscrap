@@ -60,8 +60,7 @@ const toQueryString = (value: unknown): string | undefined => {
     return undefined;
 };
 
-const isRecord = (value: unknown): value is JsonRecord =>
-    typeof value === 'object' && value !== null;
+const isRecord = (value: unknown): value is JsonRecord => typeof value === 'object' && value !== null;
 
 const asString = (value: unknown): string | null => (typeof value === 'string' ? value : null);
 
@@ -141,11 +140,9 @@ const toOrderAccessRecord = (value: unknown): OrderAccessRecord | null => {
     };
 };
 
-const getAssignmentParams = (req: AuthRequest): AssignmentParams =>
-    req.params as unknown as AssignmentParams;
+const getAssignmentParams = (req: AuthRequest): AssignmentParams => req.params as unknown as AssignmentParams;
 
-const getOrderParams = (req: AuthRequest): OrderParams =>
-    req.params as unknown as OrderParams;
+const getOrderParams = (req: AuthRequest): OrderParams => req.params as unknown as OrderParams;
 
 const logChatError = (context: string, error: unknown): void => {
     logger.error(context, { error: getErrorMessage(error) });
@@ -159,15 +156,13 @@ export const getChatMessages = async (req: AuthRequest, res: Response) => {
 
     try {
         const { assignment_id: assignmentId } = getAssignmentParams(req);
-        const assignment = toAssignmentAccessRecord(
-            await chatService.verifyAccess(assignmentId, userId) as unknown
-        );
+        const assignment = toAssignmentAccessRecord((await chatService.verifyAccess(assignmentId, userId)) as unknown);
 
         if (!assignment) {
             return res.status(403).json({ error: 'Access denied to this chat' });
         }
 
-        const messages = toRecordArray(await chatService.getMessages(assignmentId) as unknown);
+        const messages = toRecordArray((await chatService.getMessages(assignmentId)) as unknown);
         const readSenderType: ChatParticipant = assignment.customer_id === userId ? 'driver' : 'customer';
         await chatService.markAsRead(assignmentId, readSenderType);
 
@@ -196,9 +191,7 @@ export const sendChatMessage = async (req: AuthRequest, res: Response) => {
 
     try {
         const { assignment_id: assignmentId } = getAssignmentParams(req);
-        const assignment = toAssignmentAccessRecord(
-            await chatService.verifyAccess(assignmentId, userId) as unknown
-        );
+        const assignment = toAssignmentAccessRecord((await chatService.verifyAccess(assignmentId, userId)) as unknown);
 
         if (!assignment) {
             return res.status(403).json({ error: 'Access denied to this chat' });
@@ -219,23 +212,19 @@ export const sendChatMessage = async (req: AuthRequest, res: Response) => {
         const recipientId = senderType === 'customer' ? assignment.driver_user_id : assignment.customer_id;
 
         const newMessage = toRecord(
-            await chatService.sendMessage(
-                assignmentId,
-                assignment.order_id,
-                senderType,
-                userId,
-                message
-            ) as unknown
+            (await chatService.sendMessage(assignmentId, assignment.order_id, senderType, userId, message)) as unknown
         );
 
         if (!newMessage) {
             return res.status(500).json({ error: 'Failed to create chat message' });
         }
 
-        getIO()?.to(`chat_${assignmentId}`).emit('chat_message', {
-            assignment_id: assignmentId,
-            ...newMessage
-        });
+        getIO()
+            ?.to(`chat_${assignmentId}`)
+            .emit('chat_message', {
+                assignment_id: assignmentId,
+                ...newMessage
+            });
 
         if (recipientId) {
             try {
@@ -282,18 +271,17 @@ export const getOrderChatMessages = async (req: AuthRequest, res: Response) => {
 
     try {
         const { order_id: orderId } = getOrderParams(req);
-        const assignment = toOrderAccessRecord(
-            await chatService.verifyOrderAccess(orderId, userId) as unknown
-        );
+        const assignment = toOrderAccessRecord((await chatService.verifyOrderAccess(orderId, userId)) as unknown);
 
         if (!assignment) {
             return res.status(403).json({ error: 'Access denied to this order chat' });
         }
 
         const messages = toRecordArray(
-            await chatService.getOrderMessages(orderId, assignment.driver_name ?? undefined) as unknown
+            (await chatService.getOrderMessages(orderId, assignment.driver_name ?? undefined)) as unknown
         );
-        const canChat = Boolean(assignment.assignment_id) &&
+        const canChat =
+            Boolean(assignment.assignment_id) &&
             Boolean(assignment.status) &&
             isActiveChatStatus(assignment.status as string);
 
@@ -322,9 +310,7 @@ export const sendOrderChatMessage = async (req: AuthRequest, res: Response) => {
     }
 
     try {
-        const assignment = toOrderAccessRecord(
-            await chatService.verifyOrderAccess(orderId, userId) as unknown
-        );
+        const assignment = toOrderAccessRecord((await chatService.verifyOrderAccess(orderId, userId)) as unknown);
 
         if (!assignment) {
             return res.status(403).json({ error: 'Access denied to this order chat' });
@@ -338,13 +324,7 @@ export const sendOrderChatMessage = async (req: AuthRequest, res: Response) => {
         const recipientId = senderType === 'customer' ? assignment.driver_user_id : assignment.customer_id;
 
         const newMessage = toRecord(
-            await chatService.sendMessage(
-                assignment.assignment_id,
-                orderId,
-                senderType,
-                userId,
-                message
-            ) as unknown
+            (await chatService.sendMessage(assignment.assignment_id, orderId, senderType, userId, message)) as unknown
         );
 
         if (!newMessage) {
@@ -368,9 +348,7 @@ export const sendOrderChatMessage = async (req: AuthRequest, res: Response) => {
 
             if (recipientId) {
                 try {
-                    const senderName = senderType === 'customer'
-                        ? 'Customer'
-                        : (assignment.driver_name ?? 'Driver');
+                    const senderName = senderType === 'customer' ? 'Customer' : (assignment.driver_name ?? 'Driver');
                     await pushService.sendChatNotification(
                         recipientId,
                         senderName,

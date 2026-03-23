@@ -4,16 +4,13 @@
  */
 
 import { CancellationService } from '../cancellation/cancellation.service';
-import {
-    CANCELLATION_FEES,
-    STATUS_TO_STAGE
-} from '../cancellation/cancellation.constants';
+import { CANCELLATION_FEES, STATUS_TO_STAGE } from '../cancellation/cancellation.constants';
 import { Pool } from 'pg';
 
 // Mock the pool
 const mockPool = {
     query: jest.fn(),
-    connect: jest.fn(),
+    connect: jest.fn()
 } as unknown as Pool;
 
 describe('CancellationService', () => {
@@ -31,7 +28,7 @@ describe('CancellationService', () => {
                 order_status: 'pending_payment',
                 total_amount: 100,
                 part_price: 80,
-                delivery_fee: 20,
+                delivery_fee: 20
             };
 
             (mockPool.query as jest.Mock).mockResolvedValueOnce({
@@ -53,7 +50,7 @@ describe('CancellationService', () => {
                 order_status: 'confirmed',
                 total_amount: 100,
                 part_price: 80,
-                delivery_fee: 20,
+                delivery_fee: 20
             };
 
             (mockPool.query as jest.Mock)
@@ -75,7 +72,7 @@ describe('CancellationService', () => {
                 order_status: 'preparing',
                 total_amount: 100,
                 part_price: 80,
-                delivery_fee: 20,
+                delivery_fee: 20
             };
 
             (mockPool.query as jest.Mock)
@@ -97,7 +94,7 @@ describe('CancellationService', () => {
                 order_status: 'in_transit',
                 total_amount: 100,
                 part_price: 80,
-                delivery_fee: 20,
+                delivery_fee: 20
             };
 
             (mockPool.query as jest.Mock)
@@ -123,7 +120,7 @@ describe('CancellationService', () => {
                 order_status: 'delivered',
                 total_amount: 100,
                 part_price: 80,
-                delivery_fee: 20,
+                delivery_fee: 20
             };
 
             (mockPool.query as jest.Mock).mockResolvedValueOnce({
@@ -144,7 +141,7 @@ describe('CancellationService', () => {
                 order_status: 'cancelled_by_customer',
                 total_amount: 100,
                 part_price: 80,
-                delivery_fee: 20,
+                delivery_fee: 20
             };
 
             (mockPool.query as jest.Mock).mockResolvedValueOnce({
@@ -188,7 +185,7 @@ describe('CancellationService', () => {
                 order_status: 'preparing',
                 total_amount: 100,
                 part_price: 80,
-                delivery_fee: 20,
+                delivery_fee: 20
             };
 
             (mockPool.query as jest.Mock)
@@ -207,8 +204,8 @@ describe('CANCELLATION_FEES Constants', () => {
     it('should have correct values per BRAIN spec', () => {
         expect(CANCELLATION_FEES.BEFORE_PAYMENT).toBe(0);
         expect(CANCELLATION_FEES.AFTER_PAYMENT).toBe(0.05);
-        expect(CANCELLATION_FEES.DURING_PREPARATION).toBe(0.10);
-        expect(CANCELLATION_FEES.IN_DELIVERY).toBe(0.10);
-        expect(CANCELLATION_FEES.AFTER_DELIVERY).toBe(0.20);
+        expect(CANCELLATION_FEES.DURING_PREPARATION).toBe(0.1);
+        expect(CANCELLATION_FEES.IN_DELIVERY).toBe(0.1);
+        expect(CANCELLATION_FEES.AFTER_DELIVERY).toBe(0.2);
     });
 });

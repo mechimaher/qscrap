@@ -12,7 +12,7 @@ import {
     Modal,
     TextInput,
     Animated,
-    Dimensions,
+    Dimensions
 } from 'react-native';
 import { Image } from 'expo-image';
 import { SafeAreaView } from 'react-native-safe-area-context';
@@ -49,13 +49,12 @@ const SkeletonLoading = () => {
     const shimmerAnim = useRef(new Animated.Value(0)).current;
 
     useEffect(() => {
-        Animated.loop(
-            Animated.timing(shimmerAnim, { toValue: 1, duration: 1200, useNativeDriver: true })
-        ).start();
+        Animated.loop(Animated.timing(shimmerAnim, { toValue: 1, duration: 1200, useNativeDriver: true })).start();
     }, []);
 
     const shimmerTranslate = shimmerAnim.interpolate({
-        inputRange: [0, 1], outputRange: [-width, width],
+        inputRange: [0, 1],
+        outputRange: [-width, width]
     });
 
     const SkeletonBox = ({ style }: { style: any }) => (
@@ -108,22 +107,25 @@ export default function OrderDetailScreen() {
     const [disputeReason, setDisputeReason] = useState<'defective' | 'wrong_part' | 'damaged' | 'missing'>('defective');
     const [disputeNote, setDisputeNote] = useState('');
 
-    const loadDeliveryOtp = useCallback(async (silent = true) => {
-        setIsOtpLoading(true);
-        try {
-            const otpResponse = await api.getDeliveryOtp(orderId);
-            if (otpResponse?.otp_code) {
-                setDeliveryOtp(otpResponse.otp_code);
-                setOtpExpiresAt(otpResponse.expires_at || null);
+    const loadDeliveryOtp = useCallback(
+        async (silent = true) => {
+            setIsOtpLoading(true);
+            try {
+                const otpResponse = await api.getDeliveryOtp(orderId);
+                if (otpResponse?.otp_code) {
+                    setDeliveryOtp(otpResponse.otp_code);
+                    setOtpExpiresAt(otpResponse.expires_at || null);
+                }
+            } catch (error) {
+                if (!silent) {
+                    handleApiError(error, toast, { useAlert: true, customMessage: t('order.otpLoadFailed') });
+                }
+            } finally {
+                setIsOtpLoading(false);
             }
-        } catch (error) {
-            if (!silent) {
-                handleApiError(error, toast, { useAlert: true, customMessage: t('order.otpLoadFailed') });
-            }
-        } finally {
-            setIsOtpLoading(false);
-        }
-    }, [orderId, toast, t]);
+        },
+        [orderId, toast, t]
+    );
 
     const loadEscrowStatus = useCallback(async () => {
         try {
@@ -154,7 +156,11 @@ export default function OrderDetailScreen() {
         }
     }, [orderId, loadDeliveryOtp, loadEscrowStatus, t, toast]);
 
-    useFocusEffect(useCallback(() => { loadOrderDetails(); }, [loadOrderDetails]));
+    useFocusEffect(
+        useCallback(() => {
+            loadOrderDetails();
+        }, [loadOrderDetails])
+    );
 
     useEffect(() => {
         const relevantUpdate = orderUpdates.find((u: any) => u.order_id === orderId);
@@ -178,8 +184,8 @@ export default function OrderDetailScreen() {
                     } finally {
                         setIsConfirming(false);
                     }
-                },
-            },
+                }
+            }
         ]);
     };
 
@@ -191,7 +197,7 @@ export default function OrderDetailScreen() {
                 part_quality_rating: partQualityRating,
                 communication_rating: communicationRating,
                 delivery_rating: deliveryRating,
-                review_text: reviewText.trim() || undefined,
+                review_text: reviewText.trim() || undefined
             });
             Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success);
             setShowReviewModal(false);
@@ -210,44 +216,36 @@ export default function OrderDetailScreen() {
 
         // Determine fee based on status (BRAIN v3.0)
         const isConfirmedStatus = order.order_status === 'confirmed';
-        const feeMessage = isConfirmedStatus
-            ? t('cancel.feeConfirmed')
-            : t('cancel.feePreparing');
+        const feeMessage = isConfirmedStatus ? t('cancel.feeConfirmed') : t('cancel.feePreparing');
 
-        Alert.alert(
-            t('cancel.confirmTitle'),
-            feeMessage,
-            [
-                { text: t('common.no'), style: 'cancel' },
-                {
-                    text: t('common.yes'),
-                    style: 'destructive',
-                    onPress: async () => {
-                        setIsCancelling(true);
-                        Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Heavy);
-                        try {
-                            await api.request(`/cancellations/orders/${orderId}/cancel/customer`, {
-                                method: 'POST',
-                                body: JSON.stringify({
-                                    reason_code: 'changed_mind',
-                                    reason_text: t('cancel.customerCancelledReason')
-                                })
-                            });
-                            Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success);
-                            Alert.alert(
-                                t('cancel.success'),
-                                t('cancel.successMessage'),
-                                [{ text: t('common.ok'), onPress: () => navigation.goBack() }]
-                            );
-                        } catch (error: any) {
-                            handleApiError(error, toast, { useAlert: true });
-                        } finally {
-                            setIsCancelling(false);
-                        }
+        Alert.alert(t('cancel.confirmTitle'), feeMessage, [
+            { text: t('common.no'), style: 'cancel' },
+            {
+                text: t('common.yes'),
+                style: 'destructive',
+                onPress: async () => {
+                    setIsCancelling(true);
+                    Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Heavy);
+                    try {
+                        await api.request(`/cancellations/orders/${orderId}/cancel/customer`, {
+                            method: 'POST',
+                            body: JSON.stringify({
+                                reason_code: 'changed_mind',
+                                reason_text: t('cancel.customerCancelledReason')
+                            })
+                        });
+                        Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success);
+                        Alert.alert(t('cancel.success'), t('cancel.successMessage'), [
+                            { text: t('common.ok'), onPress: () => navigation.goBack() }
+                        ]);
+                    } catch (error: any) {
+                        handleApiError(error, toast, { useAlert: true });
+                    } finally {
+                        setIsCancelling(false);
                     }
                 }
-            ]
-        );
+            }
+        ]);
     };
 
     const handleCallDriver = () => {
@@ -262,14 +260,14 @@ export default function OrderDetailScreen() {
             // Step 1: Generate or retrieve the invoice document
             let documentId = null;
             try {
-                const invoiceResponse = await api.request(`/documents/invoice/${order.order_id}`, {
-                    method: 'POST',
-                }) as any;
+                const invoiceResponse = (await api.request(`/documents/invoice/${order.order_id}`, {
+                    method: 'POST'
+                })) as any;
                 documentId = invoiceResponse.document?.document_id || invoiceResponse.document_id;
             } catch (err: any) {
                 // If invoice already exists, fetch existing documents
                 if (err.message?.includes('already exists') || err.message?.includes('409')) {
-                    const docsResponse = await api.request(`/documents/order/${order.order_id}`) as any;
+                    const docsResponse = (await api.request(`/documents/order/${order.order_id}`)) as any;
                     documentId = docsResponse.documents?.find((d: any) => d.document_type === 'invoice')?.document_id;
                 } else {
                     throw err;
@@ -303,7 +301,7 @@ export default function OrderDetailScreen() {
         navigation.navigate('Tracking', {
             orderId: order.order_id,
             orderNumber: order.order_number,
-            deliveryAddress: order.delivery_address,
+            deliveryAddress: order.delivery_address
         });
     };
 
@@ -345,8 +343,13 @@ export default function OrderDetailScreen() {
         setIsFreezingEscrow(true);
         Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Heavy);
         try {
-            await api.raiseEscrowDispute(escrowStatus.escrow_id, disputeReason, undefined, disputeNote.trim() || undefined);
-            setEscrowStatus((prev: any) => prev ? { ...prev, status: 'disputed' } : prev);
+            await api.raiseEscrowDispute(
+                escrowStatus.escrow_id,
+                disputeReason,
+                undefined,
+                disputeNote.trim() || undefined
+            );
+            setEscrowStatus((prev: any) => (prev ? { ...prev, status: 'disputed' } : prev));
             Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success);
             Alert.alert(t('order.escrowFrozenTitle'), t('order.escrowFrozenBody'));
             setShowEscrowModal(false);
@@ -358,12 +361,26 @@ export default function OrderDetailScreen() {
     };
 
     // Star rating component
-    const StarRating = ({ rating, onRatingChange, label }: { rating: number; onRatingChange: (r: number) => void; label: string }) => (
+    const StarRating = ({
+        rating,
+        onRatingChange,
+        label
+    }: {
+        rating: number;
+        onRatingChange: (r: number) => void;
+        label: string;
+    }) => (
         <View style={styles.ratingRow}>
             <Text style={[styles.ratingLabel, { color: colors.textSecondary }]}>{label}</Text>
             <View style={styles.starsContainer}>
                 {[1, 2, 3, 4, 5].map((star) => (
-                    <TouchableOpacity key={star} onPress={() => { onRatingChange(star); Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light); }}>
+                    <TouchableOpacity
+                        key={star}
+                        onPress={() => {
+                            onRatingChange(star);
+                            Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
+                        }}
+                    >
                         <Text style={[styles.star, { color: star <= rating ? '#FFD700' : colors.border }]}>★</Text>
                     </TouchableOpacity>
                 ))}
@@ -374,9 +391,12 @@ export default function OrderDetailScreen() {
     if (isLoading) {
         return (
             <SafeAreaView style={[styles.container, { backgroundColor: colors.background }]} edges={['top']}>
-                <View style={[styles.header, { backgroundColor: colors.surface, flexDirection: rtlFlexDirection(isRTL) }]}>
+                <View
+                    style={[styles.header, { backgroundColor: colors.surface, flexDirection: rtlFlexDirection(isRTL) }]}
+                >
                     <TouchableOpacity onPress={() => navigation.goBack()} style={styles.backButton}>
-                        <Ionicons name="arrow-back" size={20} color={Colors.primary} /> <Text style={styles.backText}>{t('common.back')}</Text>
+                        <Ionicons name="arrow-back" size={20} color={Colors.primary} />{' '}
+                        <Text style={styles.backText}>{t('common.back')}</Text>
                     </TouchableOpacity>
                     <Text style={[styles.headerTitle, { color: colors.text }]}>{t('order.details')}</Text>
                     <View style={{ width: 60 }} />
@@ -401,8 +421,12 @@ export default function OrderDetailScreen() {
         <SafeAreaView style={[styles.container, { backgroundColor: colors.background }]} edges={['top']}>
             {/* Header */}
             <View style={[styles.header, { backgroundColor: colors.surface, flexDirection: rtlFlexDirection(isRTL) }]}>
-                <TouchableOpacity onPress={() => navigation.goBack()} style={[styles.backButton, { backgroundColor: colors.background }]}>
-                    <Ionicons name="arrow-back" size={20} color={Colors.primary} /> <Text style={styles.backText}>{t('common.back')}</Text>
+                <TouchableOpacity
+                    onPress={() => navigation.goBack()}
+                    style={[styles.backButton, { backgroundColor: colors.background }]}
+                >
+                    <Ionicons name="arrow-back" size={20} color={Colors.primary} />{' '}
+                    <Text style={styles.backText}>{t('common.back')}</Text>
                 </TouchableOpacity>
                 <Text style={[styles.headerTitle, { color: colors.text }]}>{t('order.details')}</Text>
                 <View style={{ width: 60 }} />
@@ -432,8 +456,18 @@ export default function OrderDetailScreen() {
 
                 {/* Sanitization Promise */}
                 <View style={[styles.sanitizationCard, { backgroundColor: colors.surfaceSecondary }]}>
-                    <Ionicons name="sparkles-outline" size={18} color={Colors.success} style={{ marginRight: Spacing.sm }} />
-                    <Text style={[styles.sanitizationText, { color: colors.textSecondary, textAlign: rtlTextAlign(isRTL) }]}>
+                    <Ionicons
+                        name="sparkles-outline"
+                        size={18}
+                        color={Colors.success}
+                        style={{ marginRight: Spacing.sm }}
+                    />
+                    <Text
+                        style={[
+                            styles.sanitizationText,
+                            { color: colors.textSecondary, textAlign: rtlTextAlign(isRTL) }
+                        ]}
+                    >
                         {t('order.sanitizationPromise')}
                     </Text>
                 </View>
@@ -442,7 +476,9 @@ export default function OrderDetailScreen() {
                 {(deliveryOtp || isOtpLoading) && (
                     <View style={[styles.otpCard, { backgroundColor: colors.surface }]}>
                         <View style={[styles.otpHeader, { flexDirection: rtlFlexDirection(isRTL) }]}>
-                            <Text style={[styles.sectionTitle, { marginBottom: 0, color: colors.text }]}>{t('order.deliveryOtpTitle')}</Text>
+                            <Text style={[styles.sectionTitle, { marginBottom: 0, color: colors.text }]}>
+                                {t('order.deliveryOtpTitle')}
+                            </Text>
                             {getOtpExpiryLabel() && (
                                 <Text style={[styles.otpExpiry, { color: colors.textSecondary }]}>
                                     {getOtpExpiryLabel()}
@@ -454,7 +490,12 @@ export default function OrderDetailScreen() {
                         ) : (
                             <>
                                 <Text style={styles.otpCode}>{deliveryOtp}</Text>
-                                <Text style={[styles.otpHint, { color: colors.textSecondary, textAlign: rtlTextAlign(isRTL) }]}>
+                                <Text
+                                    style={[
+                                        styles.otpHint,
+                                        { color: colors.textSecondary, textAlign: rtlTextAlign(isRTL) }
+                                    ]}
+                                >
                                     {t('order.otpInstruction')}
                                 </Text>
                                 <View style={[styles.otpActions, { flexDirection: rtlFlexDirection(isRTL) }]}>
@@ -467,14 +508,18 @@ export default function OrderDetailScreen() {
                                         }}
                                     >
                                         <Ionicons name="copy-outline" size={18} color={Colors.primary} />
-                                        <Text style={[styles.otpActionText, { color: Colors.primary }]}>{t('tracking.copyOtp')}</Text>
+                                        <Text style={[styles.otpActionText, { color: Colors.primary }]}>
+                                            {t('tracking.copyOtp')}
+                                        </Text>
                                     </TouchableOpacity>
                                     <TouchableOpacity
                                         style={styles.otpActionButton}
                                         onPress={() => loadDeliveryOtp(false)}
                                     >
                                         <Ionicons name="refresh" size={18} color={Colors.primary} />
-                                        <Text style={[styles.otpActionText, { color: Colors.primary }]}>{t('tracking.refreshOtp')}</Text>
+                                        <Text style={[styles.otpActionText, { color: Colors.primary }]}>
+                                            {t('tracking.refreshOtp')}
+                                        </Text>
                                     </TouchableOpacity>
                                 </View>
                             </>
@@ -486,38 +531,75 @@ export default function OrderDetailScreen() {
                 <View style={[styles.detailsCard, { backgroundColor: colors.surface }]}>
                     {/* Premium Order Summary Header */}
                     <View style={[styles.summaryHeader, { justifyContent: isRTL ? 'flex-end' : 'flex-start' }]}>
-                        {!isRTL && <Ionicons name="clipboard-outline" size={24} color={colors.text} style={{ marginRight: Spacing.sm }} />}
-                        <Text style={[styles.sectionTitle, { color: colors.text, textAlign: rtlTextAlign(isRTL), marginBottom: 0 }]}>{t('common.orderSummary')}</Text>
-                        {isRTL && <Ionicons name="clipboard-outline" size={24} color={colors.text} style={{ marginLeft: Spacing.sm }} />}
+                        {!isRTL && (
+                            <Ionicons
+                                name="clipboard-outline"
+                                size={24}
+                                color={colors.text}
+                                style={{ marginRight: Spacing.sm }}
+                            />
+                        )}
+                        <Text
+                            style={[
+                                styles.sectionTitle,
+                                { color: colors.text, textAlign: rtlTextAlign(isRTL), marginBottom: 0 }
+                            ]}
+                        >
+                            {t('common.orderSummary')}
+                        </Text>
+                        {isRTL && (
+                            <Ionicons
+                                name="clipboard-outline"
+                                size={24}
+                                color={colors.text}
+                                style={{ marginLeft: Spacing.sm }}
+                            />
+                        )}
                     </View>
                     <View style={[styles.summaryDivider, { backgroundColor: colors.border }]} />
 
                     <View style={[styles.detailRow, { flexDirection: rtlFlexDirection(isRTL) }]}>
                         <Text style={[styles.detailValue, { color: colors.text, textAlign: rtlTextAlign(isRTL) }]}>
-                            {t('common.garage')}  <Text style={{ fontWeight: '700' }}>{order.garage_name}</Text>
+                            {t('common.garage')} <Text style={{ fontWeight: '700' }}>{order.garage_name}</Text>
                         </Text>
                     </View>
                     <View style={[styles.detailRow, { flexDirection: rtlFlexDirection(isRTL) }]}>
                         <Text style={[styles.detailValue, { color: colors.text, textAlign: rtlTextAlign(isRTL) }]}>
-                            {t('common.vehicle')}  <Text style={{ fontWeight: '700' }}>{order.car_make} {order.car_model} ({order.car_year})</Text>
+                            {t('common.vehicle')}{' '}
+                            <Text style={{ fontWeight: '700' }}>
+                                {order.car_make} {order.car_model} ({order.car_year})
+                            </Text>
                         </Text>
                     </View>
                     <View style={[styles.detailRow, { flexDirection: rtlFlexDirection(isRTL) }]}>
                         <Text style={[styles.detailValue, { color: colors.text, textAlign: rtlTextAlign(isRTL) }]}>
-                            {t('common.type')}  <Text style={{ fontWeight: '700' }}>{order.part_category || t('common.part')}</Text>
+                            {t('common.type')}{' '}
+                            <Text style={{ fontWeight: '700' }}>{order.part_category || t('common.part')}</Text>
                         </Text>
                     </View>
                     {order.part_subcategory && (
                         <View style={[styles.detailRow, { flexDirection: rtlFlexDirection(isRTL) }]}>
                             <Text style={[styles.detailValue, { color: colors.text, textAlign: rtlTextAlign(isRTL) }]}>
-                                {t('common.part')}  <Text style={{ fontWeight: '700' }}>{order.part_subcategory}</Text>
+                                {t('common.part')} <Text style={{ fontWeight: '700' }}>{order.part_subcategory}</Text>
                             </Text>
                         </View>
                     )}
                     {order.part_description && (
                         <View style={[styles.detailRow, { flexDirection: rtlFlexDirection(isRTL) }]}>
-                            <Text style={[styles.detailValue, { color: colors.textSecondary, fontStyle: 'italic', fontSize: 13, textAlign: rtlTextAlign(isRTL) }]} numberOfLines={3}>
-                                {t('order.customerNotes')}  <Text style={{ fontWeight: '700' }}>{order.part_description}</Text>
+                            <Text
+                                style={[
+                                    styles.detailValue,
+                                    {
+                                        color: colors.textSecondary,
+                                        fontStyle: 'italic',
+                                        fontSize: 13,
+                                        textAlign: rtlTextAlign(isRTL)
+                                    }
+                                ]}
+                                numberOfLines={3}
+                            >
+                                {t('order.customerNotes')}{' '}
+                                <Text style={{ fontWeight: '700' }}>{order.part_description}</Text>
                             </Text>
                         </View>
                     )}
@@ -556,15 +638,27 @@ export default function OrderDetailScreen() {
                     <View style={styles.divider} />
 
                     <View style={[styles.detailRow, { flexDirection: rtlFlexDirection(isRTL) }]}>
-                        <Text style={[styles.totalLabel, { textAlign: rtlTextAlign(isRTL) }]}>
-                            {t('common.total')}
+                        <Text style={[styles.totalLabel, { textAlign: rtlTextAlign(isRTL) }]}>{t('common.total')}</Text>
+                        <Text
+                            style={[styles.totalValue, { color: statusConfig.color, textAlign: rtlTextAlign(isRTL) }]}
+                        >
+                            {order.total_amount} {t('common.currency')}
                         </Text>
-                        <Text style={[styles.totalValue, { color: statusConfig.color, textAlign: rtlTextAlign(isRTL) }]}>{order.total_amount} {t('common.currency')}</Text>
                     </View>
 
                     <View style={[styles.detailRow, { flexDirection: rtlFlexDirection(isRTL) }]}>
-                        <Ionicons name="images-outline" size={18} color={Colors.primary} style={{ marginRight: Spacing.xs }} />
-                        <Text style={[styles.detailValue, { color: colors.textSecondary, textAlign: rtlTextAlign(isRTL), flex: 1 }]}>
+                        <Ionicons
+                            name="images-outline"
+                            size={18}
+                            color={Colors.primary}
+                            style={{ marginRight: Spacing.xs }}
+                        />
+                        <Text
+                            style={[
+                                styles.detailValue,
+                                { color: colors.textSecondary, textAlign: rtlTextAlign(isRTL), flex: 1 }
+                            ]}
+                        >
                             {t('order.visualGuarantee')}
                         </Text>
                     </View>
@@ -581,7 +675,12 @@ export default function OrderDetailScreen() {
                                         <ActivityIndicator color="#fff" size="small" />
                                     ) : (
                                         <>
-                                            <Ionicons name="document-text" size={20} color="#fff" style={{ marginRight: Spacing.sm }} />
+                                            <Ionicons
+                                                name="document-text"
+                                                size={20}
+                                                color="#fff"
+                                                style={{ marginRight: Spacing.sm }}
+                                            />
                                             <Text style={styles.invoiceText}>{t('order.downloadInvoice')}</Text>
                                         </>
                                     )}
@@ -599,7 +698,7 @@ export default function OrderDetailScreen() {
                                             carYear: order.car_year,
                                             partDescription: order.part_description || '',
                                             partCategory: order.part_category || '',
-                                            partSubCategory: order.part_subcategory || '',
+                                            partSubCategory: order.part_subcategory || ''
                                         }
                                     });
                                 }}
@@ -610,7 +709,12 @@ export default function OrderDetailScreen() {
                                     end={{ x: 1, y: 0 }}
                                     style={styles.reorderGradient}
                                 >
-                                    <Ionicons name="refresh" size={20} color="#fff" style={{ marginRight: Spacing.sm }} />
+                                    <Ionicons
+                                        name="refresh"
+                                        size={20}
+                                        color="#fff"
+                                        style={{ marginRight: Spacing.sm }}
+                                    />
                                     <Text style={styles.reorderText}>{t('order.orderAgain')}</Text>
                                 </LinearGradient>
                             </TouchableOpacity>
@@ -621,17 +725,26 @@ export default function OrderDetailScreen() {
                 {/* Delivery Address */}
                 {order.delivery_address && order.delivery_address !== 'Location selected' && (
                     <View style={[styles.addressCard, { backgroundColor: colors.surface }]}>
-                        <Text style={[styles.sectionTitle, { color: colors.text, textAlign: rtlTextAlign(isRTL) }]}>{t('common.deliveryAddress')}</Text>
+                        <Text style={[styles.sectionTitle, { color: colors.text, textAlign: rtlTextAlign(isRTL) }]}>
+                            {t('common.deliveryAddress')}
+                        </Text>
                         <View style={[styles.addressRow, { flexDirection: rtlFlexDirection(isRTL) }]}>
-                            <Ionicons name="location" size={20} color={colors.textSecondary} style={{ marginRight: Spacing.sm }} />
-                            <Text style={[styles.addressText, { color: colors.text, textAlign: rtlTextAlign(isRTL) }]}>{order.delivery_address}</Text>
+                            <Ionicons
+                                name="location"
+                                size={20}
+                                color={colors.textSecondary}
+                                style={{ marginRight: Spacing.sm }}
+                            />
+                            <Text style={[styles.addressText, { color: colors.text, textAlign: rtlTextAlign(isRTL) }]}>
+                                {order.delivery_address}
+                            </Text>
                         </View>
                     </View>
                 )}
 
-
                 {/* Proof of Delivery Image */}
-                {order.pod_photo_url && (order.order_status === 'delivered' || order.order_status === 'completed') &&
+                {order.pod_photo_url &&
+                    (order.order_status === 'delivered' || order.order_status === 'completed') &&
                     !order.pod_photo_url.startsWith('file://') && (
                         <View style={[styles.addressCard, { backgroundColor: colors.surface }]}>
                             <Text style={[styles.sectionTitle, { color: colors.text, textAlign: rtlTextAlign(isRTL) }]}>
@@ -661,7 +774,12 @@ export default function OrderDetailScreen() {
                                 <ActivityIndicator color="#fff" />
                             ) : (
                                 <>
-                                    <Ionicons name="checkmark-circle" size={20} color="#fff" style={{ marginRight: Spacing.sm }} />
+                                    <Ionicons
+                                        name="checkmark-circle"
+                                        size={20}
+                                        color="#fff"
+                                        style={{ marginRight: Spacing.sm }}
+                                    />
                                     <Text style={styles.confirmText}>{t('order.confirmReceived')}</Text>
                                 </>
                             )}
@@ -671,19 +789,21 @@ export default function OrderDetailScreen() {
 
                 {/* Escrow shield + Report Issue */}
                 {escrowStatus?.status === 'held' && (
-                        <View style={[styles.escrowCard, { backgroundColor: colors.surface }]}>
-                            <View style={{ flex: 1 }}>
-                                <Text style={[styles.escrowTitle, { color: colors.text }]}>{t('order.escrowShield')}</Text>
-                                <Text style={[styles.escrowSubtitle, { color: colors.textSecondary }]}>{getEscrowCountdown() || t('order.escrowExpiresFallback')}</Text>
-                            </View>
-                            <TouchableOpacity
-                                style={[styles.freezeButton, isFreezingEscrow && { opacity: 0.7 }]}
-                                onPress={() => setShowEscrowModal(true)}
-                                disabled={isFreezingEscrow}
-                            >
-                                {isFreezingEscrow ? (
-                                    <ActivityIndicator color="#fff" />
-                                ) : (
+                    <View style={[styles.escrowCard, { backgroundColor: colors.surface }]}>
+                        <View style={{ flex: 1 }}>
+                            <Text style={[styles.escrowTitle, { color: colors.text }]}>{t('order.escrowShield')}</Text>
+                            <Text style={[styles.escrowSubtitle, { color: colors.textSecondary }]}>
+                                {getEscrowCountdown() || t('order.escrowExpiresFallback')}
+                            </Text>
+                        </View>
+                        <TouchableOpacity
+                            style={[styles.freezeButton, isFreezingEscrow && { opacity: 0.7 }]}
+                            onPress={() => setShowEscrowModal(true)}
+                            disabled={isFreezingEscrow}
+                        >
+                            {isFreezingEscrow ? (
+                                <ActivityIndicator color="#fff" />
+                            ) : (
                                 <Text style={styles.freezeButtonText}>{t('order.freezeFunds')}</Text>
                             )}
                         </TouchableOpacity>
@@ -692,10 +812,13 @@ export default function OrderDetailScreen() {
 
                 {escrowStatus?.status === 'disputed' && (
                     <View style={[styles.escrowCard, { backgroundColor: colors.surface }]}>
-                        <Ionicons name="shield-checkmark" size={20} color={Colors.success} style={{ marginRight: Spacing.sm }} />
-                        <Text style={[styles.escrowSubtitle, { color: colors.text }]}>
-                            {t('order.escrowFrozen')}
-                        </Text>
+                        <Ionicons
+                            name="shield-checkmark"
+                            size={20}
+                            color={Colors.success}
+                            style={{ marginRight: Spacing.sm }}
+                        />
+                        <Text style={[styles.escrowSubtitle, { color: colors.text }]}>{t('order.escrowFrozen')}</Text>
                     </View>
                 )}
 
@@ -711,7 +834,7 @@ export default function OrderDetailScreen() {
                                 partPrice: order.part_price,
                                 deliveryFee: order.delivery_fee,
                                 partDescription: order.part_description || t('common.part'),
-                                orderId: order.order_id, // Pass existing order ID to resume payment
+                                orderId: order.order_id // Pass existing order ID to resume payment
                             });
                         }}
                     >
@@ -743,7 +866,13 @@ export default function OrderDetailScreen() {
                 {/* Order Date */}
                 <View style={styles.metaInfo}>
                     <Text style={styles.metaText}>
-                        {t('order.orderedAt', { date: new Date(order.created_at).toLocaleDateString(), time: new Date(order.created_at).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }) })}
+                        {t('order.orderedAt', {
+                            date: new Date(order.created_at).toLocaleDateString(),
+                            time: new Date(order.created_at).toLocaleTimeString([], {
+                                hour: '2-digit',
+                                minute: '2-digit'
+                            })
+                        })}
                     </Text>
                 </View>
 
@@ -751,7 +880,12 @@ export default function OrderDetailScreen() {
             </ScrollView>
 
             {/* Escrow Dispute Modal */}
-            <Modal visible={showEscrowModal} transparent animationType="slide" onRequestClose={() => setShowEscrowModal(false)}>
+            <Modal
+                visible={showEscrowModal}
+                transparent
+                animationType="slide"
+                onRequestClose={() => setShowEscrowModal(false)}
+            >
                 <View style={styles.modalOverlay}>
                     <View style={[styles.modalContent, { backgroundColor: colors.surface }]}>
                         <Text style={[styles.modalTitle, { color: colors.text }]}>{t('order.freezeFunds')}</Text>
@@ -763,7 +897,7 @@ export default function OrderDetailScreen() {
                             { key: 'defective', label: t('order.reasonDefective') },
                             { key: 'wrong_part', label: t('order.reasonWrongPart') },
                             { key: 'damaged', label: t('order.reasonDamaged') },
-                            { key: 'missing', label: t('order.reasonMissing') },
+                            { key: 'missing', label: t('order.reasonMissing') }
                         ].map((item) => (
                             <TouchableOpacity
                                 key={item.key}
@@ -782,9 +916,14 @@ export default function OrderDetailScreen() {
                             </TouchableOpacity>
                         ))}
 
-                        <Text style={[styles.reviewInputLabel, { color: colors.textSecondary }]}>{t('order.reasonNote')}</Text>
+                        <Text style={[styles.reviewInputLabel, { color: colors.textSecondary }]}>
+                            {t('order.reasonNote')}
+                        </Text>
                         <TextInput
-                            style={[styles.reviewInput, { backgroundColor: colors.background, color: colors.text, borderColor: colors.border }]}
+                            style={[
+                                styles.reviewInput,
+                                { backgroundColor: colors.background, color: colors.text, borderColor: colors.border }
+                            ]}
                             placeholder={t('order.reasonNotePlaceholder')}
                             placeholderTextColor={colors.textMuted}
                             value={disputeNote}
@@ -794,8 +933,13 @@ export default function OrderDetailScreen() {
                         />
 
                         <View style={[styles.modalButtons, { flexDirection: rtlFlexDirection(isRTL) }]}>
-                            <TouchableOpacity style={[styles.skipButton, { borderColor: colors.border }]} onPress={() => setShowEscrowModal(false)}>
-                                <Text style={[styles.skipButtonText, { color: colors.textSecondary }]}>{t('common.cancel')}</Text>
+                            <TouchableOpacity
+                                style={[styles.skipButton, { borderColor: colors.border }]}
+                                onPress={() => setShowEscrowModal(false)}
+                            >
+                                <Text style={[styles.skipButtonText, { color: colors.textSecondary }]}>
+                                    {t('common.cancel')}
+                                </Text>
                             </TouchableOpacity>
                             <TouchableOpacity
                                 style={[styles.submitButton, isFreezingEscrow && { opacity: 0.7 }]}
@@ -816,23 +960,61 @@ export default function OrderDetailScreen() {
             </Modal>
 
             {/* Review Modal */}
-            <Modal visible={showReviewModal} transparent animationType="slide" onRequestClose={() => setShowReviewModal(false)}>
+            <Modal
+                visible={showReviewModal}
+                transparent
+                animationType="slide"
+                onRequestClose={() => setShowReviewModal(false)}
+            >
                 <View style={styles.modalOverlay}>
                     <View style={[styles.modalContent, { backgroundColor: colors.surface }]}>
-                        <Text style={[styles.modalTitle, { color: colors.text, textAlign: 'center' }]}>{t('review.title')}</Text>
+                        <Text style={[styles.modalTitle, { color: colors.text, textAlign: 'center' }]}>
+                            {t('review.title')}
+                        </Text>
                         <Text style={[styles.modalSubtitle, { color: colors.textSecondary, textAlign: 'center' }]}>
                             {t('review.howWasExp', { garage: order?.garage_name })}
                         </Text>
 
                         <ScrollView style={styles.ratingsScroll} showsVerticalScrollIndicator={false}>
-                            <StarRating rating={overallRating} onRatingChange={setOverallRating} label={t('review.overall')} />
-                            <StarRating rating={partQualityRating} onRatingChange={setPartQualityRating} label={t('review.quality')} />
-                            <StarRating rating={communicationRating} onRatingChange={setCommunicationRating} label={t('review.communication')} />
-                            <StarRating rating={deliveryRating} onRatingChange={setDeliveryRating} label={t('review.delivery')} />
+                            <StarRating
+                                rating={overallRating}
+                                onRatingChange={setOverallRating}
+                                label={t('review.overall')}
+                            />
+                            <StarRating
+                                rating={partQualityRating}
+                                onRatingChange={setPartQualityRating}
+                                label={t('review.quality')}
+                            />
+                            <StarRating
+                                rating={communicationRating}
+                                onRatingChange={setCommunicationRating}
+                                label={t('review.communication')}
+                            />
+                            <StarRating
+                                rating={deliveryRating}
+                                onRatingChange={setDeliveryRating}
+                                label={t('review.delivery')}
+                            />
 
-                            <Text style={[styles.reviewInputLabel, { color: colors.textSecondary, textAlign: rtlTextAlign(isRTL) }]}>{t('review.writeReview')}</Text>
+                            <Text
+                                style={[
+                                    styles.reviewInputLabel,
+                                    { color: colors.textSecondary, textAlign: rtlTextAlign(isRTL) }
+                                ]}
+                            >
+                                {t('review.writeReview')}
+                            </Text>
                             <TextInput
-                                style={[styles.reviewInput, { backgroundColor: colors.background, color: colors.text, borderColor: colors.border, textAlign: rtlTextAlign(isRTL) }]}
+                                style={[
+                                    styles.reviewInput,
+                                    {
+                                        backgroundColor: colors.background,
+                                        color: colors.text,
+                                        borderColor: colors.border,
+                                        textAlign: rtlTextAlign(isRTL)
+                                    }
+                                ]}
                                 placeholder={t('review.placeholder')}
                                 placeholderTextColor={colors.textMuted}
                                 value={reviewText}
@@ -844,8 +1026,13 @@ export default function OrderDetailScreen() {
                         </ScrollView>
 
                         <View style={[styles.modalButtons, { flexDirection: rtlFlexDirection(isRTL) }]}>
-                            <TouchableOpacity style={[styles.skipButton, { borderColor: colors.border }]} onPress={() => setShowReviewModal(false)}>
-                                <Text style={[styles.skipButtonText, { color: colors.textSecondary }]}>{t('common.skip')}</Text>
+                            <TouchableOpacity
+                                style={[styles.skipButton, { borderColor: colors.border }]}
+                                onPress={() => setShowReviewModal(false)}
+                            >
+                                <Text style={[styles.skipButtonText, { color: colors.textSecondary }]}>
+                                    {t('common.skip')}
+                                </Text>
                             </TouchableOpacity>
                             <TouchableOpacity
                                 style={[styles.submitButton, isSubmittingReview && { opacity: 0.7 }]}
@@ -879,7 +1066,7 @@ const styles = StyleSheet.create({
         justifyContent: 'space-between',
         padding: Spacing.lg,
         borderBottomWidth: 1,
-        borderBottomColor: Colors.light.borderLight,
+        borderBottomColor: Colors.light.borderLight
     },
     backButton: { padding: Spacing.sm, borderRadius: BorderRadius.md },
     backText: { color: Colors.primary, fontSize: FontSizes.md, fontWeight: '600' },
@@ -891,8 +1078,19 @@ const styles = StyleSheet.create({
     sectionTitle: { fontSize: FontSizes.lg, fontWeight: '700', marginBottom: Spacing.lg },
 
     // Track button
-    trackButton: { marginHorizontal: Spacing.lg, marginBottom: Spacing.lg, borderRadius: BorderRadius.xl, overflow: 'hidden', ...Shadows.md },
-    trackGradient: { flexDirection: 'row', alignItems: 'center', justifyContent: 'center', paddingVertical: Spacing.lg },
+    trackButton: {
+        marginHorizontal: Spacing.lg,
+        marginBottom: Spacing.lg,
+        borderRadius: BorderRadius.xl,
+        overflow: 'hidden',
+        ...Shadows.md
+    },
+    trackGradient: {
+        flexDirection: 'row',
+        alignItems: 'center',
+        justifyContent: 'center',
+        paddingVertical: Spacing.lg
+    },
     trackIcon: { fontSize: 24, marginRight: Spacing.sm },
     trackText: { fontSize: FontSizes.lg, fontWeight: '800', color: '#fff' },
 
@@ -910,15 +1108,21 @@ const styles = StyleSheet.create({
     summaryHeader: {
         flexDirection: 'row',
         alignItems: 'center',
-        marginBottom: Spacing.md,
+        marginBottom: Spacing.md
     },
     summaryIcon: { fontSize: 24 },
     summaryDivider: {
         height: 1,
         backgroundColor: Colors.light.border,
-        marginBottom: Spacing.lg,
+        marginBottom: Spacing.lg
     },
-    detailRow: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', marginBottom: Spacing.md, paddingVertical: Spacing.sm },
+    detailRow: {
+        flexDirection: 'row',
+        justifyContent: 'space-between',
+        alignItems: 'center',
+        marginBottom: Spacing.md,
+        paddingVertical: Spacing.sm
+    },
     detailLabel: { fontSize: FontSizes.md, color: Colors.light.textMuted, fontWeight: '500' },
     detailValue: { fontSize: FontSizes.md, fontWeight: '700', color: Colors.light.text, textAlign: 'right' },
     divider: { height: 1, backgroundColor: Colors.light.borderLight, marginVertical: Spacing.md },
@@ -933,7 +1137,7 @@ const styles = StyleSheet.create({
         borderColor: Colors.light.borderLight,
         flexDirection: 'row',
         alignItems: 'center',
-        ...Shadows.sm,
+        ...Shadows.sm
     },
     sanitizationText: { fontSize: FontSizes.sm, flex: 1 },
     otpCard: {
@@ -947,32 +1151,71 @@ const styles = StyleSheet.create({
     },
     otpHeader: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center' },
     otpExpiry: { fontSize: FontSizes.sm },
-    otpCode: { fontSize: FontSizes.xxxl, fontWeight: '800', letterSpacing: 4, marginVertical: Spacing.xs, color: Colors.light.text },
+    otpCode: {
+        fontSize: FontSizes.xxxl,
+        fontWeight: '800',
+        letterSpacing: 4,
+        marginVertical: Spacing.xs,
+        color: Colors.light.text
+    },
     otpHint: { fontSize: FontSizes.sm, marginBottom: Spacing.sm },
     otpActions: { flexDirection: 'row', gap: Spacing.lg, marginTop: Spacing.xs },
     otpActionButton: { flexDirection: 'row', alignItems: 'center', gap: Spacing.xs },
     otpActionText: { fontSize: FontSizes.sm, fontWeight: '700' },
     invoiceButton: { marginTop: Spacing.lg, borderRadius: BorderRadius.xl, overflow: 'hidden', ...Shadows.md },
-    invoiceGradient: { flexDirection: 'row', alignItems: 'center', justifyContent: 'center', paddingVertical: Spacing.md },
+    invoiceGradient: {
+        flexDirection: 'row',
+        alignItems: 'center',
+        justifyContent: 'center',
+        paddingVertical: Spacing.md
+    },
     invoiceIcon: { fontSize: 20, marginRight: Spacing.sm },
     invoiceText: { fontSize: FontSizes.md, fontWeight: '700', color: '#fff' },
     reorderButton: { marginTop: Spacing.md, borderRadius: BorderRadius.xl, overflow: 'hidden', ...Shadows.md },
-    reorderGradient: { flexDirection: 'row', alignItems: 'center', justifyContent: 'center', paddingVertical: Spacing.md },
+    reorderGradient: {
+        flexDirection: 'row',
+        alignItems: 'center',
+        justifyContent: 'center',
+        paddingVertical: Spacing.md
+    },
     reorderIcon: { fontSize: 20, marginRight: Spacing.sm },
     reorderText: { fontSize: FontSizes.md, fontWeight: '700', color: '#fff' },
 
     // Address
-    addressCard: { marginHorizontal: Spacing.lg, marginBottom: Spacing.lg, borderRadius: BorderRadius.xl, padding: Spacing.lg, ...Shadows.sm },
+    addressCard: {
+        marginHorizontal: Spacing.lg,
+        marginBottom: Spacing.lg,
+        borderRadius: BorderRadius.xl,
+        padding: Spacing.lg,
+        ...Shadows.sm
+    },
     addressRow: { flexDirection: 'row', alignItems: 'flex-start' },
     addressIcon: { fontSize: 20, marginRight: Spacing.sm },
     addressText: { fontSize: FontSizes.md, flex: 1, lineHeight: 22 },
 
     // Continue Payment
-    continuePaymentButton: { marginHorizontal: Spacing.lg, marginBottom: Spacing.lg, borderRadius: BorderRadius.xl, overflow: 'hidden', ...Shadows.md },
+    continuePaymentButton: {
+        marginHorizontal: Spacing.lg,
+        marginBottom: Spacing.lg,
+        borderRadius: BorderRadius.xl,
+        overflow: 'hidden',
+        ...Shadows.md
+    },
 
     // Confirm
-    confirmButton: { marginHorizontal: Spacing.lg, marginBottom: Spacing.lg, borderRadius: BorderRadius.xl, overflow: 'hidden', ...Shadows.md },
-    confirmGradient: { flexDirection: 'row', paddingVertical: Spacing.lg, alignItems: 'center', justifyContent: 'center' },
+    confirmButton: {
+        marginHorizontal: Spacing.lg,
+        marginBottom: Spacing.lg,
+        borderRadius: BorderRadius.xl,
+        overflow: 'hidden',
+        ...Shadows.md
+    },
+    confirmGradient: {
+        flexDirection: 'row',
+        paddingVertical: Spacing.lg,
+        alignItems: 'center',
+        justifyContent: 'center'
+    },
     confirmIcon: { fontSize: 20, marginRight: Spacing.sm },
     confirmText: { fontSize: FontSizes.lg, fontWeight: '800', color: '#fff' },
     escrowCard: {
@@ -984,7 +1227,7 @@ const styles = StyleSheet.create({
         borderColor: Colors.light.borderLight,
         flexDirection: 'row',
         alignItems: 'center',
-        ...Shadows.sm,
+        ...Shadows.sm
     },
     escrowTitle: { fontSize: FontSizes.md, fontWeight: '700' },
     escrowSubtitle: { fontSize: FontSizes.sm, color: Colors.light.textSecondary },
@@ -992,7 +1235,7 @@ const styles = StyleSheet.create({
         backgroundColor: Colors.error,
         paddingVertical: Spacing.sm,
         paddingHorizontal: Spacing.md,
-        borderRadius: BorderRadius.lg,
+        borderRadius: BorderRadius.lg
     },
     freezeButtonText: { color: '#fff', fontWeight: '800' },
 
@@ -1002,23 +1245,48 @@ const styles = StyleSheet.create({
     // Skeleton
     skeletonContainer: { padding: Spacing.lg },
     skeletonBox: { backgroundColor: '#E8E8E8', borderRadius: BorderRadius.xl, overflow: 'hidden' },
-    skeletonShimmer: { position: 'absolute', top: 0, left: 0, right: 0, bottom: 0, backgroundColor: 'rgba(255,255,255,0.4)' },
+    skeletonShimmer: {
+        position: 'absolute',
+        top: 0,
+        left: 0,
+        right: 0,
+        bottom: 0,
+        backgroundColor: 'rgba(255,255,255,0.4)'
+    },
     skeletonHero: { height: 200, marginBottom: Spacing.lg },
     skeletonTimeline: { height: 250, marginBottom: Spacing.lg },
     skeletonDetails: { height: 180 },
 
     // Modal
     modalOverlay: { flex: 1, backgroundColor: 'rgba(0, 0, 0, 0.5)', justifyContent: 'flex-end' },
-    modalContent: { borderTopLeftRadius: BorderRadius.xl * 1.5, borderTopRightRadius: BorderRadius.xl * 1.5, padding: Spacing.xl, maxHeight: '85%' },
+    modalContent: {
+        borderTopLeftRadius: BorderRadius.xl * 1.5,
+        borderTopRightRadius: BorderRadius.xl * 1.5,
+        padding: Spacing.xl,
+        maxHeight: '85%'
+    },
     modalTitle: { fontSize: FontSizes.xxl, fontWeight: '800', textAlign: 'center', marginBottom: Spacing.xs },
     modalSubtitle: { fontSize: FontSizes.md, textAlign: 'center', marginBottom: Spacing.lg },
     ratingsScroll: { maxHeight: 350 },
-    ratingRow: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', paddingVertical: Spacing.md, borderBottomWidth: 1, borderBottomColor: '#F0F0F0' },
+    ratingRow: {
+        flexDirection: 'row',
+        justifyContent: 'space-between',
+        alignItems: 'center',
+        paddingVertical: Spacing.md,
+        borderBottomWidth: 1,
+        borderBottomColor: '#F0F0F0'
+    },
     ratingLabel: { fontSize: FontSizes.md, fontWeight: '600' },
     starsContainer: { flexDirection: 'row', gap: Spacing.xs },
     star: { fontSize: 28, marginHorizontal: 2 },
     reviewInputLabel: { fontSize: FontSizes.sm, fontWeight: '600', marginTop: Spacing.lg, marginBottom: Spacing.sm },
-    reviewInput: { borderWidth: 1, borderRadius: BorderRadius.lg, padding: Spacing.md, fontSize: FontSizes.md, minHeight: 100 },
+    reviewInput: {
+        borderWidth: 1,
+        borderRadius: BorderRadius.lg,
+        padding: Spacing.md,
+        fontSize: FontSizes.md,
+        minHeight: 100
+    },
     reasonRow: {
         flexDirection: 'row',
         alignItems: 'center',
@@ -1027,11 +1295,17 @@ const styles = StyleSheet.create({
         paddingHorizontal: Spacing.md,
         borderWidth: 1,
         borderRadius: BorderRadius.lg,
-        marginTop: Spacing.sm,
+        marginTop: Spacing.sm
     },
     reasonText: { fontSize: FontSizes.md, fontWeight: '600', flex: 1 },
     modalButtons: { flexDirection: 'row', gap: Spacing.md, marginTop: Spacing.lg },
-    skipButton: { flex: 1, paddingVertical: Spacing.md, borderRadius: BorderRadius.xl, borderWidth: 1, alignItems: 'center' },
+    skipButton: {
+        flex: 1,
+        paddingVertical: Spacing.md,
+        borderRadius: BorderRadius.xl,
+        borderWidth: 1,
+        alignItems: 'center'
+    },
     skipButtonText: { fontSize: FontSizes.md, fontWeight: '600' },
     submitButton: { flex: 2, borderRadius: BorderRadius.xl, overflow: 'hidden' },
     submitGradient: { paddingVertical: Spacing.md, alignItems: 'center', justifyContent: 'center' },
@@ -1051,5 +1325,5 @@ const styles = StyleSheet.create({
         justifyContent: 'center'
     },
     cancelOrderIcon: { fontSize: 18, color: '#EF4444', marginRight: Spacing.sm, fontWeight: '700' },
-    cancelOrderText: { fontSize: FontSizes.md, fontWeight: '700', color: '#EF4444' },
+    cancelOrderText: { fontSize: FontSizes.md, fontWeight: '700', color: '#EF4444' }
 });

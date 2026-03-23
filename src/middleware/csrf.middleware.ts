@@ -4,7 +4,7 @@ import logger from '../utils/logger';
 
 /**
  * Double-Submit Cookie CSRF Protection
- * 
+ *
  * This middleware implements CSRF protection by:
  * 1. Setting a random CSRF token in a signed/secure cookie if not present.
  * 2. Checking that the 'X-CSRF-Token' header matches the value in the cookie
@@ -59,8 +59,18 @@ export const validateCsrfToken = (req: Request, res: Response, next: NextFunctio
 
     // Skip for public routes (Login, Register, Public Config)
     // Note: req.path is the path AFTER the mount point (e.g., '/auth/login' not '/api/auth/login')
-    const publicRoutes = ['/auth/login', '/auth/register', '/auth/register/garage', '/auth/refresh', '/auth/register-with-email', '/auth/verify-email-otp', '/auth/resend-otp', '/v1/config/public', '/config/public'];
-    if (publicRoutes.some(route => req.path.startsWith(route))) {
+    const publicRoutes = [
+        '/auth/login',
+        '/auth/register',
+        '/auth/register/garage',
+        '/auth/refresh',
+        '/auth/register-with-email',
+        '/auth/verify-email-otp',
+        '/auth/resend-otp',
+        '/v1/config/public',
+        '/config/public'
+    ];
+    if (publicRoutes.some((route) => req.path.startsWith(route))) {
         return next();
     }
 
@@ -85,12 +95,9 @@ export const validateCsrfToken = (req: Request, res: Response, next: NextFunctio
  * Legacy Origin Validation (Defense-in-Depth)
  */
 const getAllowedOrigins = (): string[] => {
-    const defaults = [
-        'https://qscrap.qa',
-        'https://www.qscrap.qa'
-    ];
+    const defaults = ['https://qscrap.qa', 'https://www.qscrap.qa'];
     return process.env.ALLOWED_ORIGINS
-        ? [...process.env.ALLOWED_ORIGINS.split(',').map(o => o.trim()), ...defaults]
+        ? [...process.env.ALLOWED_ORIGINS.split(',').map((o) => o.trim()), ...defaults]
         : defaults;
 };
 
@@ -100,8 +107,18 @@ export const validateOrigin = (req: Request, res: Response, next: NextFunction) 
 
     // Skip for public routes (Login, Register, Public Config)
     // Note: req.path is the path AFTER the mount point (e.g., '/auth/login' not '/api/auth/login')
-    const publicRoutes = ['/auth/login', '/auth/register', '/auth/register/garage', '/auth/refresh', '/auth/register-with-email', '/auth/verify-email-otp', '/auth/resend-otp', '/v1/config/public', '/config/public'];
-    if (publicRoutes.some(route => req.path.startsWith(route))) {
+    const publicRoutes = [
+        '/auth/login',
+        '/auth/register',
+        '/auth/register/garage',
+        '/auth/refresh',
+        '/auth/register-with-email',
+        '/auth/verify-email-otp',
+        '/auth/resend-otp',
+        '/v1/config/public',
+        '/config/public'
+    ];
+    if (publicRoutes.some((route) => req.path.startsWith(route))) {
         return next();
     }
 

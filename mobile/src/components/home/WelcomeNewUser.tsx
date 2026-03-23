@@ -17,19 +17,21 @@ const WelcomeNewUser = ({ onGetStarted }: { onGetStarted: () => void }) => {
     useEffect(() => {
         Animated.parallel([
             Animated.timing(fadeAnim, { toValue: 1, duration: 400, useNativeDriver: true }),
-            Animated.spring(scaleAnim, { toValue: 1, useNativeDriver: true }),
+            Animated.spring(scaleAnim, { toValue: 1, useNativeDriver: true })
         ]).start();
     }, []);
 
     return (
-        <Animated.View style={[
-            styles.welcomeCard,
-            {
-                opacity: fadeAnim,
-                transform: [{ scale: scaleAnim }],
-                backgroundColor: colors.surface,
-            }
-        ]}>
+        <Animated.View
+            style={[
+                styles.welcomeCard,
+                {
+                    opacity: fadeAnim,
+                    transform: [{ scale: scaleAnim }],
+                    backgroundColor: colors.surface
+                }
+            ]}
+        >
             <LinearGradient
                 colors={['rgba(141, 27, 61, 0.05)', 'rgba(201, 162, 39, 0.1)']}
                 style={styles.welcomeGradient}
@@ -47,9 +49,7 @@ const WelcomeNewUser = ({ onGetStarted }: { onGetStarted: () => void }) => {
                     accessibilityLabel={t('home.getStarted') || 'Get Started'}
                     accessibilityRole="button"
                 >
-                    <Text style={styles.welcomeButtonText}>
-                        {t('home.getStarted') || 'Get Started'}
-                    </Text>
+                    <Text style={styles.welcomeButtonText}>{t('home.getStarted') || 'Get Started'}</Text>
                 </TouchableOpacity>
             </LinearGradient>
         </Animated.View>
@@ -62,27 +62,27 @@ const styles = StyleSheet.create({
         marginBottom: Spacing.md,
         borderRadius: BorderRadius.lg,
         overflow: 'hidden',
-        ...Shadows.md,
+        ...Shadows.md
     },
     welcomeGradient: {
         padding: Spacing.lg,
-        alignItems: 'center',
+        alignItems: 'center'
     },
     welcomeEmoji: {
         fontSize: 48,
-        marginBottom: Spacing.sm,
+        marginBottom: Spacing.sm
     },
     welcomeTitle: {
         fontSize: FontSizes.xl,
         fontWeight: '700',
         marginBottom: Spacing.xs,
-        textAlign: 'center',
+        textAlign: 'center'
     },
     welcomeSubtitle: {
         fontSize: FontSizes.sm,
         textAlign: 'center',
         marginBottom: Spacing.md,
-        lineHeight: 20,
+        lineHeight: 20
     },
     welcomeButton: {
         paddingHorizontal: Spacing.xl,
@@ -92,13 +92,13 @@ const styles = StyleSheet.create({
         shadowOffset: { width: 0, height: 4 },
         shadowOpacity: 0.3,
         shadowRadius: 8,
-        elevation: 6,
+        elevation: 6
     },
     welcomeButtonText: {
         color: '#FFFFFF',
         fontSize: FontSizes.md,
-        fontWeight: '700',
-    },
+        fontWeight: '700'
+    }
 });
 
 export default WelcomeNewUser;

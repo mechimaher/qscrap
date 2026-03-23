@@ -42,10 +42,7 @@ export async function initializeSocketAdapter(io: Server): Promise<boolean> {
         });
 
         // Connect both clients
-        await Promise.all([
-            pubClient.connect(),
-            subClient.connect()
-        ]);
+        await Promise.all([pubClient.connect(), subClient.connect()]);
 
         // Set the adapter
         io.adapter(createAdapter(pubClient, subClient));

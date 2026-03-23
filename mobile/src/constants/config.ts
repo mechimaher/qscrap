@@ -13,15 +13,29 @@ export const PART_CATEGORIES = [
     { id: 'suspension', name: 'Suspension', nameAr: 'التعليق', icon: 'swap-vertical-outline' },
     { id: 'interior', name: 'Interior', nameAr: 'داخلي', icon: 'car-sport-outline' },
     { id: 'lights', name: 'Lights', nameAr: 'أضواء', icon: 'bulb-outline' },
-    { id: 'other', name: 'Other', nameAr: 'أخرى', icon: 'ellipsis-horizontal' },
+    { id: 'other', name: 'Other', nameAr: 'أخرى', icon: 'ellipsis-horizontal' }
 ];
 
 // Car Makes
 export const CAR_MAKES = [
-    'Toyota', 'Nissan', 'Honda', 'Lexus', 'Land Rover',
-    'Mercedes-Benz', 'BMW', 'Audi', 'Porsche', 'Ford',
-    'Chevrolet', 'GMC', 'Hyundai', 'Kia', 'Mitsubishi',
-    'Mazda', 'Volkswagen', 'Other'
+    'Toyota',
+    'Nissan',
+    'Honda',
+    'Lexus',
+    'Land Rover',
+    'Mercedes-Benz',
+    'BMW',
+    'Audi',
+    'Porsche',
+    'Ford',
+    'Chevrolet',
+    'GMC',
+    'Hyundai',
+    'Kia',
+    'Mitsubishi',
+    'Mazda',
+    'Volkswagen',
+    'Other'
 ];
 
 // Order Status Labels
@@ -39,7 +53,7 @@ export const ORDER_STATUS = {
     completed: { label: 'Completed', color: 'success', icon: 'checkmark-done-outline' },
     cancelled: { label: 'Cancelled', color: 'danger', icon: 'close-circle-outline' },
     disputed: { label: 'Disputed', color: 'warning', icon: 'warning-outline' },
-    returned: { label: 'Returned', color: 'textMuted', icon: 'return-down-back-outline' },
+    returned: { label: 'Returned', color: 'textMuted', icon: 'return-down-back-outline' }
 };
 
 // Request Status Labels
@@ -48,7 +62,7 @@ export const REQUEST_STATUS = {
     pending: { label: 'Pending', color: 'warning', icon: 'time-outline' },
     fulfilled: { label: 'Fulfilled', color: 'primary', icon: 'checkmark-circle-outline' },
     expired: { label: 'Expired', color: 'textMuted', icon: 'timer-outline' },
-    cancelled: { label: 'Cancelled', color: 'danger', icon: 'close-circle-outline' },
+    cancelled: { label: 'Cancelled', color: 'danger', icon: 'close-circle-outline' }
 };
 
 // Bid Status Labels
@@ -57,5 +71,5 @@ export const BID_STATUS = {
     accepted: { label: 'Accepted', color: 'success', icon: 'checkmark-circle-outline' },
     rejected: { label: 'Rejected', color: 'danger', icon: 'close-circle-outline' },
     negotiating: { label: 'Negotiating', color: 'primary', icon: 'chatbubbles-outline' },
-    withdrawn: { label: 'Withdrawn', color: 'textMuted', icon: 'exit-outline' },
+    withdrawn: { label: 'Withdrawn', color: 'textMuted', icon: 'exit-outline' }
 };

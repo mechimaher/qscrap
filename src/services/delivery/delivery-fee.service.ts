@@ -1,6 +1,6 @@
 /**
  * DeliveryFeeService - Centralized Delivery Fee Calculation
- * 
+ *
  * Features:
  * - Zone-based base fee calculation
  * - Order-value tier discounts
@@ -55,7 +55,8 @@ export class DeliveryFeeService {
      * Find applicable tier for order value
      */
     async getTierForOrderValue(orderValue: number): Promise<FeeTier | null> {
-        const result = await this.pool.query(`
+        const result = await this.pool.query(
+            `
             SELECT tier_id, min_order_value, max_order_value, discount_percent, description
             FROM delivery_fee_tiers
             WHERE is_active = true
@@ -63,23 +64,21 @@ export class DeliveryFeeService {
             AND ($1 < max_order_value OR max_order_value IS NULL)
             ORDER BY min_order_value DESC
             LIMIT 1
-        `, [orderValue]);
+        `,
+            [orderValue]
+        );
 
         return result.rows.length > 0 ? result.rows[0] : null;
     }
 
     /**
      * Calculate delivery fee with order-value discounts
-     * 
+     *
      * @param lat Delivery latitude
      * @param lng Delivery longitude
      * @param orderTotal Total order value (part price)
      */
-    async calculateFee(
-        lat: number,
-        lng: number,
-        orderTotal: number
-    ): Promise<DeliveryFeeCalculation> {
+    async calculateFee(lat: number, lng: number, orderTotal: number): Promise<DeliveryFeeCalculation> {
         // Get zone-based fee
         const geoResult = await this.geoService.calculateDeliveryFee(lat, lng);
         const baseFee = geoResult.fee;
@@ -127,16 +126,15 @@ export class DeliveryFeeService {
     }> {
         // Get all zones to determine fee range
         const zones = await this.geoService.getDeliveryZones();
-        const minZoneFee = Math.min(...zones.map(z => z.delivery_fee));
-        const maxZoneFee = Math.max(...zones.map(z => z.delivery_fee));
+        const minZoneFee = Math.min(...zones.map((z) => z.delivery_fee));
+        const maxZoneFee = Math.max(...zones.map((z) => z.delivery_fee));
 
         // Get applicable tier
         const tier = await this.getTierForOrderValue(orderTotal);
         const discountPercent = tier?.discount_percent || 0;
 
         // Apply discount to range
-        const applyDiscount = (fee: number) =>
-            Math.max(0, fee - (fee * discountPercent) / 100);
+        const applyDiscount = (fee: number) => Math.max(0, fee - (fee * discountPercent) / 100);
 
         const isFreeDelivery = discountPercent === 100;
 
@@ -150,8 +148,8 @@ export class DeliveryFeeService {
             message: isFreeDelivery
                 ? 'FREE delivery for orders 1000+ QAR!'
                 : discountPercent > 0
-                    ? `${discountPercent}% off delivery!`
-                    : 'Delivery fee varies by location'
+                  ? `${discountPercent}% off delivery!`
+                  : 'Delivery fee varies by location'
         };
     }
 

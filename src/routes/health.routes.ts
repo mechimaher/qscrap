@@ -1,10 +1,5 @@
 import { Router } from 'express';
-import {
-    getHealth,
-    getDetailedHealth,
-    getPlatformStatus,
-    getMetrics
-} from '../controllers/health.controller';
+import { getHealth, getDetailedHealth, getPlatformStatus, getMetrics } from '../controllers/health.controller';
 
 const router = Router();
 

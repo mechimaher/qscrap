@@ -38,14 +38,15 @@ export const getHealth = async (req: Request, res: Response): Promise<void> => {
                     connected: true,
                     ...dbStats.primary
                 },
-                replica: dbStats.replica ? {
-                    connected: true,
-                    ...dbStats.replica
-                } : null
+                replica: dbStats.replica
+                    ? {
+                          connected: true,
+                          ...dbStats.replica
+                      }
+                    : null
             },
             redis: process.env.REDIS_URL ? 'configured' : 'not_configured',
-            storage: process.env.S3_BUCKET ? 'S3' :
-                process.env.AZURE_STORAGE_ACCOUNT ? 'Azure' : 'Local'
+            storage: process.env.S3_BUCKET ? 'S3' : process.env.AZURE_STORAGE_ACCOUNT ? 'Azure' : 'Local'
         });
     } catch (err: unknown) {
         res.status(503).json({
@@ -110,11 +111,7 @@ export const getDetailedHealth = async (req: Request, res: Response): Promise<vo
  */
 export const getPlatformStatus = async (req: Request, res: Response): Promise<void> => {
     try {
-        const [
-            garagesResult,
-            requestsResult,
-            ordersResult
-        ] = await Promise.all([
+        const [garagesResult, requestsResult, ordersResult] = await Promise.all([
             pool.query('SELECT COUNT(*) as count FROM garages WHERE approval_status = $1', ['approved']),
             pool.query('SELECT COUNT(*) as count FROM part_requests WHERE status = $1', ['active']),
             pool.query(`SELECT 
@@ -198,7 +195,10 @@ export const getJobHealth = (req: Request, res: Response): void => {
                 autoResolveDisputes: { description: 'Auto-approve disputes after 48h', frequency: 'hourly' },
                 autoConfirmDeliveries: { description: 'Auto-complete orders after 24h delivery', frequency: 'hourly' },
                 autoConfirmPayouts: { description: 'Auto-confirm payout receipt after 7 days', frequency: 'hourly' },
-                schedulePendingPayouts: { description: 'Create payout records for completed orders', frequency: 'hourly' },
+                schedulePendingPayouts: {
+                    description: 'Create payout records for completed orders',
+                    frequency: 'hourly'
+                },
                 autoProcessPayouts: { description: 'Process mature payouts, hold disputed ones', frequency: 'hourly' },
                 cleanupOldData: { description: 'Remove old notifications and history', frequency: 'hourly' }
             },
@@ -225,7 +225,7 @@ export const triggerJob = async (req: Request, res: Response): Promise<void> => 
 
     try {
         // Dynamic import to avoid circular dependencies
-        const jobsModule = await import('../config/jobs') as JobsModule;
+        const jobsModule = (await import('../config/jobs')) as JobsModule;
         const jobFn = jobsModule.default[jobName];
 
         if (!jobFn || typeof jobFn !== 'function') {

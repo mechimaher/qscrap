@@ -1,6 +1,6 @@
 /**
  * Location Service - Centralized geospatial operations for QScrap platform
- * 
+ *
  * Handles all location-related operations including:
  * - Garage location management
  * - Pickup/delivery coordinate retrieval
@@ -49,12 +49,14 @@ export interface DeliveryInfo {
  */
 export function calculateDistance(from: Coordinates, to: Coordinates): number {
     const R = 6371; // Earth's radius in kilometers
-    const dLat = (to.lat - from.lat) * Math.PI / 180;
-    const dLon = (to.lng - from.lng) * Math.PI / 180;
+    const dLat = ((to.lat - from.lat) * Math.PI) / 180;
+    const dLon = ((to.lng - from.lng) * Math.PI) / 180;
     const a =
         Math.sin(dLat / 2) * Math.sin(dLat / 2) +
-        Math.cos(from.lat * Math.PI / 180) * Math.cos(to.lat * Math.PI / 180) *
-        Math.sin(dLon / 2) * Math.sin(dLon / 2);
+        Math.cos((from.lat * Math.PI) / 180) *
+            Math.cos((to.lat * Math.PI) / 180) *
+            Math.sin(dLon / 2) *
+            Math.sin(dLon / 2);
     const c = 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1 - a));
     return R * c;
 }
@@ -66,9 +68,12 @@ export function isValidCoordinates(coords: Coordinates): boolean {
     return (
         typeof coords.lat === 'number' &&
         typeof coords.lng === 'number' &&
-        coords.lat >= -90 && coords.lat <= 90 &&
-        coords.lng >= -180 && coords.lng <= 180 &&
-        !isNaN(coords.lat) && !isNaN(coords.lng)
+        coords.lat >= -90 &&
+        coords.lat <= 90 &&
+        coords.lng >= -180 &&
+        coords.lng <= 180 &&
+        !isNaN(coords.lat) &&
+        !isNaN(coords.lng)
     );
 }
 
@@ -77,10 +82,7 @@ export function isValidCoordinates(coords: Coordinates): boolean {
  * Qatar: Lat 24.4-26.2, Lng 50.7-51.7
  */
 export function isWithinQatar(coords: Coordinates): boolean {
-    return (
-        coords.lat >= 24.4 && coords.lat <= 26.2 &&
-        coords.lng >= 50.7 && coords.lng <= 51.7
-    );
+    return coords.lat >= 24.4 && coords.lat <= 26.2 && coords.lng >= 50.7 && coords.lng <= 51.7;
 }
 
 // ============================================
@@ -90,11 +92,7 @@ export function isWithinQatar(coords: Coordinates): boolean {
 /**
  * Set or update a garage's GPS location
  */
-export async function setGarageLocation(
-    garageId: string,
-    coords: Coordinates,
-    address?: string
-): Promise<boolean> {
+export async function setGarageLocation(garageId: string, coords: Coordinates, address?: string): Promise<boolean> {
     if (!isValidCoordinates(coords)) {
         logger.warn('Invalid coordinates provided for garage location', { garageId, coords });
         return false;
@@ -114,10 +112,7 @@ export async function setGarageLocation(
             params.push(address);
         }
 
-        const result = await pool.query(
-            `UPDATE garages SET ${updateFields.join(', ')} WHERE garage_id = $1`,
-            params
-        );
+        const result = await pool.query(`UPDATE garages SET ${updateFields.join(', ')} WHERE garage_id = $1`, params);
 
         if (result.rowCount === 0) {
             logger.error('Garage not found when setting location', { garageId });
@@ -197,10 +192,12 @@ export async function getPickupCoordinates(orderId: string): Promise<PickupInfo 
         const hasCoords = row.location_lat !== null && row.location_lng !== null;
 
         return {
-            coordinates: hasCoords ? {
-                lat: parseFloat(row.location_lat),
-                lng: parseFloat(row.location_lng)
-            } : null,
+            coordinates: hasCoords
+                ? {
+                      lat: parseFloat(row.location_lat),
+                      lng: parseFloat(row.location_lng)
+                  }
+                : null,
             garage: {
                 garage_id: row.garage_id,
                 garage_name: row.garage_name,
@@ -239,10 +236,12 @@ export async function getDeliveryCoordinates(orderId: string): Promise<DeliveryI
         const hasCoords = row.delivery_lat !== null && row.delivery_lng !== null;
 
         return {
-            coordinates: hasCoords ? {
-                lat: parseFloat(row.delivery_lat),
-                lng: parseFloat(row.delivery_lng)
-            } : null,
+            coordinates: hasCoords
+                ? {
+                      lat: parseFloat(row.delivery_lat),
+                      lng: parseFloat(row.delivery_lng)
+                  }
+                : null,
             address: row.delivery_address,
             has_coordinates: hasCoords
         };
@@ -286,7 +285,7 @@ export async function findNearbyGarages(
             [coords.lat, coords.lng, radiusKm]
         );
 
-        return result.rows.map(row => ({
+        return result.rows.map((row) => ({
             garage_id: row.garage_id,
             garage_name: row.garage_name,
             address: row.address,

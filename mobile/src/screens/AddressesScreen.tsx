@@ -14,7 +14,7 @@ import {
     KeyboardAvoidingView,
     Platform,
     ScrollView,
-    Dimensions,
+    Dimensions
 } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { useNavigation, useRoute } from '@react-navigation/native';
@@ -38,14 +38,14 @@ const { width } = Dimensions.get('window');
 // Popular Qatar Areas for Quick-Pick
 // Popular Qatar Areas for Quick-Pick - Keys for localization
 const QATAR_ZONE_KEYS = [
-    { key: 'alSadd', lat: 25.2632, lng: 51.5230 },
+    { key: 'alSadd', lat: 25.2632, lng: 51.523 },
     { key: 'thePearl', lat: 25.3716, lng: 51.5513 },
-    { key: 'westBay', lat: 25.3235, lng: 51.5310 },
-    { key: 'lusail', lat: 25.4300, lng: 51.4900 },
+    { key: 'westBay', lat: 25.3235, lng: 51.531 },
+    { key: 'lusail', lat: 25.43, lng: 51.49 },
     { key: 'alWakra', lat: 25.1659, lng: 51.6036 },
     { key: 'alRayyan', lat: 25.2919, lng: 51.4244 },
-    { key: 'alDuhail', lat: 25.3100, lng: 51.4700 },
-    { key: 'industrialArea', lat: 25.1800, lng: 51.4500 },
+    { key: 'alDuhail', lat: 25.31, lng: 51.47 },
+    { key: 'industrialArea', lat: 25.18, lng: 51.45 }
 ];
 
 export default function AddressBookScreen() {
@@ -111,11 +111,11 @@ export default function AddressBookScreen() {
         setAddressText(address.address_text);
         // Parse coordinates as floats - DB returns strings
         const lat = address.latitude ? parseFloat(String(address.latitude)) : 25.2854;
-        const lng = address.longitude ? parseFloat(String(address.longitude)) : 51.5310;
+        const lng = address.longitude ? parseFloat(String(address.longitude)) : 51.531;
         setSelectedLocation({
             latitude: lat,
             longitude: lng,
-            address: address.address_text,
+            address: address.address_text
         });
         setFlowStep('map');
         setShowAddFlow(true);
@@ -143,7 +143,7 @@ export default function AddressBookScreen() {
 
             // Use Balanced accuracy with 5s timeout
             const locationPromise = Location.getCurrentPositionAsync({
-                accuracy: Location.Accuracy.Balanced,
+                accuracy: Location.Accuracy.Balanced
             });
             const timeoutPromise = new Promise<never>((_, reject) =>
                 setTimeout(() => reject(new Error('GPS Timeout')), 5000)
@@ -153,7 +153,7 @@ export default function AddressBookScreen() {
 
             const [geocoded] = await Location.reverseGeocodeAsync({
                 latitude: loc.coords.latitude,
-                longitude: loc.coords.longitude,
+                longitude: loc.coords.longitude
             });
 
             const area = geocoded?.district || geocoded?.subregion || geocoded?.name || '';
@@ -164,7 +164,7 @@ export default function AddressBookScreen() {
             setSelectedLocation({
                 latitude: loc.coords.latitude,
                 longitude: loc.coords.longitude,
-                address: addressStr,
+                address: addressStr
             });
             setAddressText(addressStr);
             setFlowStep('details');
@@ -178,13 +178,13 @@ export default function AddressBookScreen() {
     };
 
     // Quick-Pick Zone Selection
-    const handleZoneSelect = (zone: typeof QATAR_ZONE_KEYS[0]) => {
+    const handleZoneSelect = (zone: (typeof QATAR_ZONE_KEYS)[0]) => {
         Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
         const zoneName = t(`profile.zones.${zone.key}` as any);
         setSelectedLocation({
             latitude: zone.lat,
             longitude: zone.lng,
-            address: `${zoneName}, ${t('common.doha')}, ${t('common.qatar')}`,
+            address: `${zoneName}, ${t('common.doha')}, ${t('common.qatar')}`
         });
         setAddressText(`${zoneName}, ${t('common.doha')}, ${t('common.qatar')}`);
         setFlowStep('details');
@@ -211,7 +211,7 @@ export default function AddressBookScreen() {
                 label: label.trim(),
                 address_text: addressText.trim(),
                 latitude: selectedLocation.latitude,
-                longitude: selectedLocation.longitude,
+                longitude: selectedLocation.longitude
             };
 
             if (editingAddress) {
@@ -252,7 +252,10 @@ export default function AddressBookScreen() {
                         Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success);
                         loadAddresses();
                     } catch (error) {
-                        handleApiError(error, toast, { customMessage: t('profile.deleteAddressFailed'), useAlert: true });
+                        handleApiError(error, toast, {
+                            customMessage: t('profile.deleteAddressFailed'),
+                            useAlert: true
+                        });
                     }
                 }
             }
@@ -274,30 +277,54 @@ export default function AddressBookScreen() {
                 { backgroundColor: colors.surface, borderColor: colors.border },
                 item.is_default && styles.defaultCard
             ]}
-            onPress={() => isSelectionMode ? handleSelect(item) : null}
+            onPress={() => (isSelectionMode ? handleSelect(item) : null)}
             disabled={!isSelectionMode}
             activeOpacity={isSelectionMode ? 0.7 : 1}
         >
             <View style={styles.cardIcon}>
                 <Ionicons
-                    name={item.label?.toLowerCase().includes('home') || item.label?.includes(t('profile.labels.home')) ? 'home' :
-                        item.label?.toLowerCase().includes('office') || item.label?.includes(t('profile.labels.office')) ? 'business' :
-                            item.label?.toLowerCase().includes('work') || item.label?.includes(t('profile.labels.work')) ? 'briefcase' : 'location'}
+                    name={
+                        item.label?.toLowerCase().includes('home') || item.label?.includes(t('profile.labels.home'))
+                            ? 'home'
+                            : item.label?.toLowerCase().includes('office') ||
+                                item.label?.includes(t('profile.labels.office'))
+                              ? 'business'
+                              : item.label?.toLowerCase().includes('work') ||
+                                  item.label?.includes(t('profile.labels.work'))
+                                ? 'briefcase'
+                                : 'location'
+                    }
                     size={22}
                     color={Colors.primary}
                 />
             </View>
             <View style={{ flex: 1 }}>
                 <View style={[styles.cardHeader, { flexDirection: rtlFlexDirection(isRTL) }]}>
-                    <Text style={[styles.label, { color: colors.text, textAlign: rtlTextAlign(isRTL), marginRight: isRTL ? 0 : Spacing.sm, marginLeft: isRTL ? Spacing.sm : 0 }]}>{item.label}</Text>
+                    <Text
+                        style={[
+                            styles.label,
+                            {
+                                color: colors.text,
+                                textAlign: rtlTextAlign(isRTL),
+                                marginRight: isRTL ? 0 : Spacing.sm,
+                                marginLeft: isRTL ? Spacing.sm : 0
+                            }
+                        ]}
+                    >
+                        {item.label}
+                    </Text>
                     {item.is_default && <Text style={styles.defaultBadge}>{t('profile.default')}</Text>}
                 </View>
-                <Text style={[styles.addressText, { color: colors.textSecondary, textAlign: rtlTextAlign(isRTL) }]} numberOfLines={2}>
+                <Text
+                    style={[styles.addressText, { color: colors.textSecondary, textAlign: rtlTextAlign(isRTL) }]}
+                    numberOfLines={2}
+                >
                     {item.address_text}
                 </Text>
                 {item.latitude && item.longitude && (
                     <Text style={[styles.coordsText, { textAlign: rtlTextAlign(isRTL) }]}>
-                        <Ionicons name="location" size={12} color="#9CA3AF" /> {parseFloat(String(item.latitude)).toFixed(4)}, {parseFloat(String(item.longitude)).toFixed(4)}
+                        <Ionicons name="location" size={12} color="#9CA3AF" />{' '}
+                        {parseFloat(String(item.latitude)).toFixed(4)}, {parseFloat(String(item.longitude)).toFixed(4)}
                     </Text>
                 )}
             </View>
@@ -321,7 +348,9 @@ export default function AddressBookScreen() {
     const renderMapStep = () => (
         <View style={styles.mapStepContainer}>
             {/* Header */}
-            <View style={[styles.flowHeader, { backgroundColor: colors.surface, flexDirection: rtlFlexDirection(isRTL) }]}>
+            <View
+                style={[styles.flowHeader, { backgroundColor: colors.surface, flexDirection: rtlFlexDirection(isRTL) }]}
+            >
                 <TouchableOpacity onPress={handleCloseFlow} style={styles.flowBackBtn}>
                     <Text style={styles.flowBackText}>✕</Text>
                 </TouchableOpacity>
@@ -361,7 +390,9 @@ export default function AddressBookScreen() {
                             style={[styles.zoneChip, { backgroundColor: colors.surface, borderColor: colors.border }]}
                             onPress={() => handleZoneSelect(zone)}
                         >
-                            <Text style={[styles.zoneChipText, { color: colors.text }]}>{t(`profile.zones.${zone.key}` as any)}</Text>
+                            <Text style={[styles.zoneChipText, { color: colors.text }]}>
+                                {t(`profile.zones.${zone.key}` as any)}
+                            </Text>
                         </TouchableOpacity>
                     ))}
                 </ScrollView>
@@ -372,10 +403,15 @@ export default function AddressBookScreen() {
                 <MapLocationPicker
                     onLocationSelect={handleLocationSelect}
                     onCancel={handleCloseFlow}
-                    initialLocation={selectedLocation || (editingAddress?.latitude ? {
-                        latitude: parseFloat(String(editingAddress.latitude)),
-                        longitude: parseFloat(String(editingAddress.longitude)),
-                    } : undefined)}
+                    initialLocation={
+                        selectedLocation ||
+                        (editingAddress?.latitude
+                            ? {
+                                  latitude: parseFloat(String(editingAddress.latitude)),
+                                  longitude: parseFloat(String(editingAddress.longitude))
+                              }
+                            : undefined)
+                    }
                 />
             </View>
         </View>
@@ -385,13 +421,15 @@ export default function AddressBookScreen() {
     // DETAILS/CONFIRM STEP
     // ============================================
     const renderDetailsStep = () => (
-        <KeyboardAvoidingView
-            behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
-            style={styles.detailsContainer}
-        >
+        <KeyboardAvoidingView behavior={Platform.OS === 'ios' ? 'padding' : 'height'} style={styles.detailsContainer}>
             <ScrollView style={{ flex: 1 }} keyboardShouldPersistTaps="handled">
                 {/* Header */}
-                <View style={[styles.flowHeader, { backgroundColor: colors.surface, flexDirection: rtlFlexDirection(isRTL) }]}>
+                <View
+                    style={[
+                        styles.flowHeader,
+                        { backgroundColor: colors.surface, flexDirection: rtlFlexDirection(isRTL) }
+                    ]}
+                >
                     <TouchableOpacity onPress={() => setFlowStep('map')} style={styles.flowBackBtn}>
                         <Ionicons name="arrow-back" size={20} color={Colors.primary} />
                     </TouchableOpacity>
@@ -418,10 +456,7 @@ export default function AddressBookScreen() {
                             )}
                         </View>
                     </LinearGradient>
-                    <TouchableOpacity
-                        style={styles.changeLocationBtn}
-                        onPress={() => setFlowStep('map')}
-                    >
+                    <TouchableOpacity style={styles.changeLocationBtn} onPress={() => setFlowStep('map')}>
                         <Text style={styles.changeLocationText}>{t('profile.changeLocation')}</Text>
                     </TouchableOpacity>
                 </View>
@@ -447,10 +482,12 @@ export default function AddressBookScreen() {
                                         setLabel(presetText);
                                     }}
                                 >
-                                    <Text style={[
-                                        styles.labelChipText,
-                                        { color: label === presetText ? '#fff' : colors.text }
-                                    ]}>
+                                    <Text
+                                        style={[
+                                            styles.labelChipText,
+                                            { color: label === presetText ? '#fff' : colors.text }
+                                        ]}
+                                    >
                                         {presetText}
                                     </Text>
                                 </TouchableOpacity>
@@ -458,18 +495,40 @@ export default function AddressBookScreen() {
                         })}
                     </View>
                     <TextInput
-                        style={[styles.input, { backgroundColor: colors.background, borderColor: colors.border, color: colors.text, textAlign: rtlTextAlign(isRTL) }]}
+                        style={[
+                            styles.input,
+                            {
+                                backgroundColor: colors.background,
+                                borderColor: colors.border,
+                                color: colors.text,
+                                textAlign: rtlTextAlign(isRTL)
+                            }
+                        ]}
                         value={label}
                         onChangeText={setLabel}
                         placeholder={t('profile.customLabelPlaceholder')}
                         placeholderTextColor={colors.textMuted}
                     />
 
-                    <Text style={[styles.inputLabel, { color: colors.textSecondary, marginTop: Spacing.lg, textAlign: rtlTextAlign(isRTL) }]}>
+                    <Text
+                        style={[
+                            styles.inputLabel,
+                            { color: colors.textSecondary, marginTop: Spacing.lg, textAlign: rtlTextAlign(isRTL) }
+                        ]}
+                    >
                         {t('profile.fullAddress')}
                     </Text>
                     <TextInput
-                        style={[styles.input, styles.addressInput, { backgroundColor: colors.background, borderColor: colors.border, color: colors.text, textAlign: rtlTextAlign(isRTL) }]}
+                        style={[
+                            styles.input,
+                            styles.addressInput,
+                            {
+                                backgroundColor: colors.background,
+                                borderColor: colors.border,
+                                color: colors.text,
+                                textAlign: rtlTextAlign(isRTL)
+                            }
+                        ]}
                         value={addressText}
                         onChangeText={setAddressText}
                         placeholder={t('profile.addressPlaceholder')}
@@ -494,7 +553,9 @@ export default function AddressBookScreen() {
                                 <ActivityIndicator color="#fff" />
                             ) : (
                                 <Text style={styles.saveText}>
-                                    {editingAddress ? `✓ ${t('profile.updateAddress')}` : `✓ ${t('profile.saveAddress')}`}
+                                    {editingAddress
+                                        ? `✓ ${t('profile.updateAddress')}`
+                                        : `✓ ${t('profile.saveAddress')}`}
                                 </Text>
                             )}
                         </LinearGradient>
@@ -507,9 +568,22 @@ export default function AddressBookScreen() {
     return (
         <SafeAreaView style={[styles.container, { backgroundColor: colors.background }]} edges={['top']}>
             {/* Header */}
-            <View style={[styles.header, { backgroundColor: colors.surface, borderColor: colors.border, flexDirection: rtlFlexDirection(isRTL) }]}>
-                <TouchableOpacity onPress={() => navigation.goBack()} style={[styles.backButton, { backgroundColor: colors.background }]}>
-                    <Ionicons name="arrow-back" size={20} color={Colors.primary} /> <Text style={styles.backText}>{t('common.back')}</Text>
+            <View
+                style={[
+                    styles.header,
+                    {
+                        backgroundColor: colors.surface,
+                        borderColor: colors.border,
+                        flexDirection: rtlFlexDirection(isRTL)
+                    }
+                ]}
+            >
+                <TouchableOpacity
+                    onPress={() => navigation.goBack()}
+                    style={[styles.backButton, { backgroundColor: colors.background }]}
+                >
+                    <Ionicons name="arrow-back" size={20} color={Colors.primary} />{' '}
+                    <Text style={styles.backText}>{t('common.back')}</Text>
                 </TouchableOpacity>
                 <Text style={[styles.title, { color: colors.text }]}>
                     {isSelectionMode ? t('profile.selectAddress') : t('profile.addressBook')}
@@ -528,7 +602,7 @@ export default function AddressBookScreen() {
                 <FlatList
                     data={addresses}
                     renderItem={renderAddressCard}
-                    keyExtractor={item => item.address_id}
+                    keyExtractor={(item) => item.address_id}
                     contentContainerStyle={styles.list}
                     ListEmptyComponent={
                         <View style={styles.emptyContainer}>
@@ -544,7 +618,10 @@ export default function AddressBookScreen() {
 
             {/* Add/Edit Flow Modal */}
             <Modal visible={showAddFlow} animationType="slide">
-                <SafeAreaView style={[styles.flowContainer, { backgroundColor: colors.background }]} edges={['top', 'bottom']}>
+                <SafeAreaView
+                    style={[styles.flowContainer, { backgroundColor: colors.background }]}
+                    edges={['top', 'bottom']}
+                >
                     {flowStep === 'map' ? renderMapStep() : renderDetailsStep()}
                 </SafeAreaView>
             </Modal>
@@ -559,11 +636,11 @@ const styles = StyleSheet.create({
         justifyContent: 'space-between',
         alignItems: 'center',
         padding: Spacing.lg,
-        borderBottomWidth: 1,
+        borderBottomWidth: 1
     },
     backButton: {
         padding: Spacing.sm,
-        borderRadius: BorderRadius.md,
+        borderRadius: BorderRadius.md
     },
     backText: { color: Colors.primary, fontSize: FontSizes.md, fontWeight: '600' },
     title: { fontSize: FontSizes.xl, fontWeight: '800', letterSpacing: -0.5 },
@@ -571,12 +648,12 @@ const styles = StyleSheet.create({
         width: 40,
         height: 40,
         borderRadius: 20,
-        overflow: 'hidden',
+        overflow: 'hidden'
     },
     addGradient: {
         flex: 1,
         justifyContent: 'center',
-        alignItems: 'center',
+        alignItems: 'center'
     },
     addText: { fontSize: 24, color: '#fff', fontWeight: '700' },
     list: { padding: Spacing.lg, paddingBottom: 100 },
@@ -589,7 +666,7 @@ const styles = StyleSheet.create({
         marginBottom: Spacing.md,
         alignItems: 'center',
         borderWidth: 1,
-        ...Shadows.sm,
+        ...Shadows.sm
     },
     defaultCard: { borderColor: Colors.primary, borderWidth: 2 },
     cardIcon: {
@@ -599,7 +676,7 @@ const styles = StyleSheet.create({
         backgroundColor: Colors.primary + '15',
         justifyContent: 'center',
         alignItems: 'center',
-        marginRight: Spacing.md,
+        marginRight: Spacing.md
     },
     cardIconText: { fontSize: 22 },
     cardHeader: { flexDirection: 'row', alignItems: 'center', marginBottom: 4 },
@@ -611,7 +688,7 @@ const styles = StyleSheet.create({
         paddingHorizontal: 8,
         paddingVertical: 2,
         borderRadius: BorderRadius.full,
-        fontWeight: '600',
+        fontWeight: '600'
     },
     addressText: { fontSize: FontSizes.sm, lineHeight: 20 },
     coordsText: { fontSize: 10, color: '#9CA3AF', marginTop: 4 },
@@ -629,7 +706,7 @@ const styles = StyleSheet.create({
         backgroundColor: Colors.primary,
         paddingHorizontal: Spacing.xl,
         paddingVertical: Spacing.md,
-        borderRadius: BorderRadius.lg,
+        borderRadius: BorderRadius.lg
     },
     emptyButtonText: { color: '#fff', fontWeight: '700', fontSize: FontSizes.md },
 
@@ -641,7 +718,7 @@ const styles = StyleSheet.create({
         alignItems: 'center',
         padding: Spacing.lg,
         borderBottomWidth: 1,
-        borderBottomColor: '#E5E7EB',
+        borderBottomColor: '#E5E7EB'
     },
     flowBackBtn: {
         width: 40,
@@ -649,7 +726,7 @@ const styles = StyleSheet.create({
         borderRadius: 20,
         backgroundColor: '#F3F4F6',
         justifyContent: 'center',
-        alignItems: 'center',
+        alignItems: 'center'
     },
     flowBackText: { fontSize: 18, color: Colors.primary, fontWeight: '700' },
     flowTitle: { fontSize: FontSizes.lg, fontWeight: '800' },
@@ -659,7 +736,7 @@ const styles = StyleSheet.create({
     quickActionsBar: {
         flexDirection: 'row',
         padding: Spacing.md,
-        gap: Spacing.sm,
+        gap: Spacing.sm
     },
     quickActionBtn: {
         flexDirection: 'row',
@@ -667,27 +744,27 @@ const styles = StyleSheet.create({
         paddingVertical: Spacing.sm,
         paddingHorizontal: Spacing.lg,
         borderRadius: BorderRadius.lg,
-        gap: Spacing.xs,
+        gap: Spacing.xs
     },
     quickActionIcon: { fontSize: 18 },
     quickActionText: { fontWeight: '700', fontSize: FontSizes.sm },
     zonesContainer: {
         paddingHorizontal: Spacing.md,
-        paddingVertical: Spacing.sm,
+        paddingVertical: Spacing.sm
     },
     zonesTitle: {
         fontSize: FontSizes.xs,
         fontWeight: '600',
         marginBottom: Spacing.xs,
         textTransform: 'uppercase',
-        letterSpacing: 0.5,
+        letterSpacing: 0.5
     },
     zoneChip: {
         paddingHorizontal: Spacing.md,
         paddingVertical: Spacing.sm,
         borderRadius: BorderRadius.lg,
         marginRight: Spacing.sm,
-        borderWidth: 1,
+        borderWidth: 1
     },
     zoneChipText: { fontWeight: '600', fontSize: FontSizes.sm },
     mapContainer: { flex: 1 },
@@ -698,13 +775,13 @@ const styles = StyleSheet.create({
         margin: Spacing.lg,
         borderRadius: BorderRadius.xl,
         overflow: 'hidden',
-        ...Shadows.md,
+        ...Shadows.md
     },
     previewGradient: {
         flexDirection: 'row',
         alignItems: 'center',
         padding: Spacing.lg,
-        gap: Spacing.md,
+        gap: Spacing.md
     },
     previewIcon: { fontSize: 32 },
     previewLabel: { fontSize: FontSizes.xs, color: 'rgba(255,255,255,0.7)', marginBottom: 2 },
@@ -714,7 +791,7 @@ const styles = StyleSheet.create({
         padding: Spacing.md,
         alignItems: 'center',
         borderTopWidth: 1,
-        borderTopColor: '#E5E7EB',
+        borderTopColor: '#E5E7EB'
     },
     changeLocationText: { color: Colors.primary, fontWeight: '600', fontSize: FontSizes.sm },
 
@@ -722,49 +799,49 @@ const styles = StyleSheet.create({
         marginHorizontal: Spacing.lg,
         padding: Spacing.lg,
         borderRadius: BorderRadius.xl,
-        ...Shadows.sm,
+        ...Shadows.sm
     },
     inputLabel: { marginBottom: Spacing.xs, fontSize: FontSizes.sm, fontWeight: '600' },
     labelChips: {
         flexDirection: 'row',
         flexWrap: 'wrap',
         gap: Spacing.sm,
-        marginBottom: Spacing.md,
+        marginBottom: Spacing.md
     },
     labelChip: {
         paddingHorizontal: Spacing.md,
         paddingVertical: Spacing.sm,
         borderRadius: BorderRadius.lg,
-        borderWidth: 1,
+        borderWidth: 1
     },
     labelChipActive: {
         backgroundColor: Colors.primary,
-        borderColor: Colors.primary,
+        borderColor: Colors.primary
     },
     labelChipText: { fontWeight: '600', fontSize: FontSizes.sm },
     input: {
         borderRadius: BorderRadius.lg,
         padding: Spacing.md,
         borderWidth: 1,
-        fontSize: FontSizes.md,
+        fontSize: FontSizes.md
     },
     addressInput: {
         minHeight: 80,
-        textAlignVertical: 'top',
+        textAlignVertical: 'top'
     },
 
     saveContainer: {
         padding: Spacing.lg,
-        paddingBottom: Spacing.xxl,
+        paddingBottom: Spacing.xxl
     },
     saveButton: {
         borderRadius: BorderRadius.lg,
         overflow: 'hidden',
-        ...Shadows.md,
+        ...Shadows.md
     },
     saveGradient: {
         padding: Spacing.lg,
-        alignItems: 'center',
+        alignItems: 'center'
     },
-    saveText: { color: '#fff', fontWeight: '800', fontSize: FontSizes.lg },
+    saveText: { color: '#fff', fontWeight: '800', fontSize: FontSizes.lg }
 });

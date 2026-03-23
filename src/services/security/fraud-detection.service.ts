@@ -1,7 +1,7 @@
 /**
  * Fraud Detection Service
  * Prevents fake/spam bids and suspicious behavior
- * 
+ *
  * Rules implemented:
  * 1. Rate limit bids per garage (max 10/hour per request)
  * 2. Flag rapid-fire bids (same price in < 30 seconds)
@@ -15,7 +15,7 @@ import logger from '../../utils/logger';
 interface FraudCheckResult {
     allowed: boolean;
     reason?: string;
-    riskScore: number;  // 0-100, higher = more suspicious
+    riskScore: number; // 0-100, higher = more suspicious
     flags: string[];
 }
 
@@ -30,10 +30,10 @@ export class FraudDetectionService {
     private pool: Pool;
 
     // Configuration (can be moved to database later)
-    private readonly MAX_BIDS_PER_HOUR = 50;           // Per garage total
-    private readonly MAX_BIDS_PER_REQUEST_HOUR = 10;   // Per request per garage
-    private readonly MIN_BID_INTERVAL_SECONDS = 30;    // Between bids on same request
-    private readonly SUSPICIOUS_PRICE_PATTERNS = true;  // Detect same price patterns
+    private readonly MAX_BIDS_PER_HOUR = 50; // Per garage total
+    private readonly MAX_BIDS_PER_REQUEST_HOUR = 10; // Per request per garage
+    private readonly MIN_BID_INTERVAL_SECONDS = 30; // Between bids on same request
+    private readonly SUSPICIOUS_PRICE_PATTERNS = true; // Detect same price patterns
 
     constructor(pool: Pool) {
         this.pool = pool;
@@ -93,7 +93,6 @@ export class FraudDetectionService {
             }
 
             return { allowed: true, riskScore, flags };
-
         } catch (error) {
             logger.error('[FraudDetection] Error checking bid');
             // Fail open but flag for review
@@ -105,7 +104,8 @@ export class FraudDetectionService {
      * Check if garage is approved and has active subscription
      */
     private async checkGarageStatus(garageId: string): Promise<{ allowed: boolean; reason?: string }> {
-        const result = await this.pool.query(`
+        const result = await this.pool.query(
+            `
             SELECT 
                 g.approval_status,
                 g.demo_expires_at,
@@ -115,7 +115,9 @@ export class FraudDetectionService {
             LEFT JOIN garage_subscriptions gs ON g.garage_id = gs.garage_id 
                 AND gs.status IN ('active', 'trial')
             WHERE g.garage_id = $1
-        `, [garageId]);
+        `,
+            [garageId]
+        );
 
         if (result.rows.length === 0) {
             return { allowed: false, reason: 'Garage not found' };
@@ -152,13 +154,18 @@ export class FraudDetectionService {
     /**
      * Rate limit: Max bids per hour per garage
      */
-    private async checkBidRateLimit(garageId: string): Promise<{ allowed: boolean; reason?: string; warning?: boolean }> {
-        const result = await this.pool.query(`
+    private async checkBidRateLimit(
+        garageId: string
+    ): Promise<{ allowed: boolean; reason?: string; warning?: boolean }> {
+        const result = await this.pool.query(
+            `
             SELECT COUNT(*) as bid_count
             FROM bids
             WHERE garage_id = $1
             AND created_at > NOW() - INTERVAL '1 hour'
-        `, [garageId]);
+        `,
+            [garageId]
+        );
 
         const bidCount = parseInt(result.rows[0].bid_count);
 
@@ -178,14 +185,20 @@ export class FraudDetectionService {
     /**
      * Prevent rapid-fire bidding on same request
      */
-    private async checkRapidBidding(garageId: string, requestId: string): Promise<{ allowed: boolean; reason?: string }> {
-        const result = await this.pool.query(`
+    private async checkRapidBidding(
+        garageId: string,
+        requestId: string
+    ): Promise<{ allowed: boolean; reason?: string }> {
+        const result = await this.pool.query(
+            `
             SELECT created_at
             FROM bids
             WHERE garage_id = $1 AND request_id = $2
             ORDER BY created_at DESC
             LIMIT 1
-        `, [garageId, requestId]);
+        `,
+            [garageId, requestId]
+        );
 
         if (result.rows.length > 0) {
             const lastBidTime = new Date(result.rows[0].created_at);
@@ -206,16 +219,21 @@ export class FraudDetectionService {
      * Detect duplicate pricing (possible spam/bot behavior)
      */
     private async checkDuplicatePricing(context: BidContext): Promise<{ suspicious: boolean }> {
-        if (!this.SUSPICIOUS_PRICE_PATTERNS) {return { suspicious: false };}
+        if (!this.SUSPICIOUS_PRICE_PATTERNS) {
+            return { suspicious: false };
+        }
 
         // Check if garage submitted same exact price on multiple requests in last hour
-        const result = await this.pool.query(`
+        const result = await this.pool.query(
+            `
             SELECT COUNT(DISTINCT request_id) as same_price_count
             FROM bids
             WHERE garage_id = $1
             AND price = $2
             AND created_at > NOW() - INTERVAL '1 hour'
-        `, [context.garageId, context.bidAmount]);
+        `,
+            [context.garageId, context.bidAmount]
+        );
 
         const samepriceCount = parseInt(result.rows[0].same_price_count);
 
@@ -226,12 +244,18 @@ export class FraudDetectionService {
     /**
      * Prevent too many bids on same request
      */
-    private async checkOverbidding(garageId: string, requestId: string): Promise<{ allowed: boolean; reason?: string }> {
-        const result = await this.pool.query(`
+    private async checkOverbidding(
+        garageId: string,
+        requestId: string
+    ): Promise<{ allowed: boolean; reason?: string }> {
+        const result = await this.pool.query(
+            `
             SELECT COUNT(*) as bid_count
             FROM bids
             WHERE garage_id = $1 AND request_id = $2
-        `, [garageId, requestId]);
+        `,
+            [garageId, requestId]
+        );
 
         const bidCount = parseInt(result.rows[0].bid_count);
 

@@ -1,5 +1,12 @@
 import { Router } from 'express';
-import { submitBid, getMyBids, getBidById, rejectBid, updateBid, getFairPriceEstimate } from '../controllers/bid.controller';
+import {
+    submitBid,
+    getMyBids,
+    getBidById,
+    rejectBid,
+    updateBid,
+    getFairPriceEstimate
+} from '../controllers/bid.controller';
 import { authenticate, requireRole } from '../middleware/auth.middleware';
 import { upload, optimizeFiles } from '../middleware/file.middleware';
 import { validateParams, bidIdParamSchema } from '../middleware/validation.middleware';
@@ -16,7 +23,15 @@ router.get('/estimate', authenticate, getFairPriceEstimate);
 
 // Submit bid (Garage only) - Allow up to 10 images (rate limited)
 // Note: Body validation handled by BidService (multipart form)
-router.post('/', authenticate, requireRole('garage'), bidWriteLimiter, upload.array('images', 10), optimizeFiles, submitBid);
+router.post(
+    '/',
+    authenticate,
+    requireRole('garage'),
+    bidWriteLimiter,
+    upload.array('images', 10),
+    optimizeFiles,
+    submitBid
+);
 
 // Get my bids (Garage only)
 router.get('/my', authenticate, requireRole('garage'), getMyBids);

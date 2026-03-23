@@ -1,4 +1,3 @@
-
 import { Pool, PoolClient } from 'pg';
 import { getWritePool } from '../config/db';
 
@@ -14,15 +13,13 @@ export class DriverRepository {
     }
 
     async findDriverByUserId(userId: string) {
-        const result = await this.pool.query(
-            'SELECT driver_id, status FROM drivers WHERE user_id = $1',
-            [userId]
-        );
+        const result = await this.pool.query('SELECT driver_id, status FROM drivers WHERE user_id = $1', [userId]);
         return result.rows[0];
     }
 
     async getDriverProfile(userId: string) {
-        const result = await this.pool.query(`
+        const result = await this.pool.query(
+            `
             SELECT 
                 d.driver_id, d.full_name, d.phone, d.email,
                 d.vehicle_type, d.vehicle_plate, d.vehicle_model,
@@ -34,12 +31,15 @@ export class DriverRepository {
             FROM drivers d 
             JOIN users u ON d.user_id = u.user_id 
             WHERE d.user_id = $1
-        `, [userId]);
+        `,
+            [userId]
+        );
         return result.rows[0];
     }
 
     async findActiveAssignments(userId: string, statusFilter: string) {
-        const result = await this.pool.query(`
+        const result = await this.pool.query(
+            `
             SELECT 
                 da.assignment_id, da.order_id, da.status, da.status as assignment_status,
                 da.pickup_address, da.delivery_address,
@@ -71,13 +71,16 @@ export class DriverRepository {
                 END,
                 da.created_at DESC
             LIMIT 50
-        `, [userId]);
+        `,
+            [userId]
+        );
         return result.rows;
     }
 
     async findAssignmentById(assignmentId: string, userId: string, client?: PoolClient) {
         const db = this.getClient(client);
-        const result = await db.query(`
+        const result = await db.query(
+            `
             SELECT 
                 da.assignment_id, da.order_id, da.driver_id, da.status, da.assignment_type, da.created_at,
                 da.pickup_address, da.delivery_address, 
@@ -107,35 +110,44 @@ export class DriverRepository {
             JOIN garages g ON o.garage_id = g.garage_id
             LEFT JOIN users gu ON gu.user_id = g.garage_id AND gu.user_type = 'garage'
             WHERE da.assignment_id = $1 AND d.user_id = $2
-        `, [assignmentId, userId]);
+        `,
+            [assignmentId, userId]
+        );
         return result.rows[0];
     }
 
     async findAssignmentForUpdate(assignmentId: string, userId: string, client: PoolClient) {
-        const result = await client.query(`
+        const result = await client.query(
+            `
             SELECT da.*, d.driver_id, o.customer_id, o.garage_id, o.order_number, o.order_status
             FROM delivery_assignments da
             JOIN drivers d ON da.driver_id = d.driver_id
             JOIN orders o ON da.order_id = o.order_id
             WHERE da.assignment_id = $1 AND d.user_id = $2
             FOR UPDATE
-        `, [assignmentId, userId]);
+        `,
+            [assignmentId, userId]
+        );
         return result.rows[0];
     }
 
     async updateDriverLocation(driverId: string, lat: number, lng: number, heading = 0, speed = 0, accuracy = 0) {
         // 1. Update Profile (drivers table) - Legacy/Slow changing
-        await this.pool.query(`
+        await this.pool.query(
+            `
             UPDATE drivers SET 
                 current_lat = $1, 
                 current_lng = $2, 
                 last_location_update = NOW(),
                 updated_at = NOW()
             WHERE driver_id = $3
-        `, [lat, lng, driverId]);
+        `,
+            [lat, lng, driverId]
+        );
 
         // 2. Update Real-Time Tracking (driver_locations table) - High velocity
-        await this.pool.query(`
+        await this.pool.query(
+            `
             INSERT INTO driver_locations (driver_id, latitude, longitude, heading, speed)
             VALUES ($1, $2, $3, $4, $5)
             ON CONFLICT (driver_id) DO UPDATE SET
@@ -144,11 +156,14 @@ export class DriverRepository {
                 heading = EXCLUDED.heading,
                 speed = EXCLUDED.speed,
                 updated_at = NOW()
-        `, [driverId, lat, lng, heading || 0, speed || 0]);
+        `,
+            [driverId, lat, lng, heading || 0, speed || 0]
+        );
     }
 
     async updateAssignmentsLocation(driverId: string, lat: number, lng: number) {
-        const result = await this.pool.query(`
+        const result = await this.pool.query(
+            `
             WITH updated_assignments AS (
                 UPDATE delivery_assignments SET
                     current_lat = $1,
@@ -166,7 +181,9 @@ export class DriverRepository {
                 o.customer_id
             FROM updated_assignments ua
             JOIN orders o ON ua.order_id = o.order_id
-        `, [lat, lng, driverId]);
+        `,
+            [lat, lng, driverId]
+        );
         return result.rows;
     }
 
@@ -204,12 +221,15 @@ export class DriverRepository {
     }
 
     async updateOrderStatus(orderId: string, status: string, client: PoolClient) {
-        await client.query(`
+        await client.query(
+            `
             UPDATE orders SET 
                 order_status = $1, 
                 updated_at = NOW()
             WHERE order_id = $2
-        `, [status, orderId]);
+        `,
+            [status, orderId]
+        );
     }
 
     async createStatusHistory(
@@ -220,11 +240,14 @@ export class DriverRepository {
         reason: string,
         client: PoolClient
     ) {
-        await client.query(`
+        await client.query(
+            `
             INSERT INTO order_status_history 
             (order_id, old_status, new_status, changed_by_type, changed_by, reason)
             VALUES ($1, $2, $3, 'driver', $4, $5)
-        `, [orderId, oldStatus, newStatus, userId, reason]);
+        `,
+            [orderId, oldStatus, newStatus, userId, reason]
+        );
     }
 
     async createDispute(
@@ -235,53 +258,58 @@ export class DriverRepository {
         description: string,
         client: PoolClient
     ) {
-        await client.query(`
+        await client.query(
+            `
             INSERT INTO disputes 
             (order_id, customer_id, garage_id, reason, description, photo_urls, refund_amount, restocking_fee, status)
             VALUES ($1, $2, $3, $4, $5, $6, $7, $8, 'pending')
-        `, [orderId, customerId, garageId, reason, description, JSON.stringify([]), 0, 0]);
+        `,
+            [orderId, customerId, garageId, reason, description, JSON.stringify([]), 0, 0]
+        );
     }
 
     async countOtherActiveAssignments(driverId: string, currentAssignmentId: string, client: PoolClient) {
-        const result = await client.query(`
+        const result = await client.query(
+            `
             SELECT COUNT(*) FROM delivery_assignments 
             WHERE driver_id = $1 AND status IN ('assigned', 'picked_up', 'in_transit')
             AND assignment_id != $2
-        `, [driverId, currentAssignmentId]);
+        `,
+            [driverId, currentAssignmentId]
+        );
         return parseInt(result.rows[0].count);
     }
 
     async updateDriverStatus(driverId: string, status: string, client?: PoolClient) {
         const db = this.getClient(client);
-        await db.query(
-            `UPDATE drivers SET status = $1, updated_at = NOW() WHERE driver_id = $2`,
-            [status, driverId]
-        );
+        await db.query(`UPDATE drivers SET status = $1, updated_at = NOW() WHERE driver_id = $2`, [status, driverId]);
     }
 
     async updateDriverStatusByUserId(userId: string, status: string) {
-        const result = await this.pool.query(`
+        const result = await this.pool.query(
+            `
             UPDATE drivers SET 
                 status = $1,
                 updated_at = NOW()
             WHERE user_id = $2
             RETURNING driver_id, status
-        `, [status, userId]);
+        `,
+            [status, userId]
+        );
         return result.rows[0];
     }
 
     async incrementDeliveryCount(driverId: string, client: PoolClient) {
-        await client.query(`
+        await client.query(
+            `
             UPDATE drivers SET 
                 total_deliveries = total_deliveries + 1,
                 updated_at = NOW()
             WHERE driver_id = $1
-        `, [driverId]);
+        `,
+            [driverId]
+        );
     }
-
-
-
-
 
     async saveDeliveryProof(
         assignmentId: string,
@@ -292,7 +320,8 @@ export class DriverRepository {
     ) {
         // Explicitly cast paymentMethod to text to avoid PostgreSQL type inference errors
         // when parameter is undefined (error: "Could not determine data type of parameter $5")
-        const result = await this.pool.query(`
+        const result = await this.pool.query(
+            `
             WITH updated_assignment AS (
                 UPDATE delivery_assignments SET
                     delivery_photo_url = $1,
@@ -312,12 +341,15 @@ export class DriverRepository {
                 AND $5::text IS NOT NULL
             )
             SELECT * FROM updated_assignment
-        `, [photoUrl, signatureUrl, notes, assignmentId, paymentMethod || null]);
+        `,
+            [photoUrl, signatureUrl, notes, assignmentId, paymentMethod || null]
+        );
         return result.rows[0];
     }
 
     async getDriverStats(userId: string) {
-        const result = await this.pool.query(`
+        const result = await this.pool.query(
+            `
             SELECT 
                 d.total_deliveries,
                 d.rating_average::FLOAT as rating_average,
@@ -329,19 +361,26 @@ export class DriverRepository {
             LEFT JOIN delivery_assignments da ON d.driver_id = da.driver_id
             WHERE d.user_id = $1
             GROUP BY d.driver_id, d.total_deliveries, d.rating_average, d.rating_count
-        `, [userId]);
+        `,
+            [userId]
+        );
         return result.rows[0];
     }
 
-
-
     async updateDriverProfile(userId: string, data: any) {
         const {
-            full_name, email, vehicle_type, vehicle_plate, vehicle_model,
-            bank_name, bank_account_iban, bank_account_name
+            full_name,
+            email,
+            vehicle_type,
+            vehicle_plate,
+            vehicle_model,
+            bank_name,
+            bank_account_iban,
+            bank_account_name
         } = data;
 
-        const result = await this.pool.query(`
+        const result = await this.pool.query(
+            `
             UPDATE drivers SET
                 full_name = COALESCE($1, full_name),
                 email = COALESCE($2, email),
@@ -354,19 +393,31 @@ export class DriverRepository {
                 updated_at = NOW()
             WHERE user_id = $9
             RETURNING *
-        `, [
-            full_name, email, vehicle_type, vehicle_plate, vehicle_model,
-            bank_name, bank_account_iban, bank_account_name, userId
-        ]);
+        `,
+            [
+                full_name,
+                email,
+                vehicle_type,
+                vehicle_plate,
+                vehicle_model,
+                bank_name,
+                bank_account_iban,
+                bank_account_name,
+                userId
+            ]
+        );
         return result.rows[0];
     }
 
     async countActiveAssignmentsForUser(userId: string) {
-        const result = await this.pool.query(`
+        const result = await this.pool.query(
+            `
             SELECT COUNT(*) FROM delivery_assignments da
             JOIN drivers d ON da.driver_id = d.driver_id
             WHERE d.user_id = $1 AND da.status IN ('assigned', 'picked_up', 'in_transit')
-        `, [userId]);
+        `,
+            [userId]
+        );
         return parseInt(result.rows[0].count);
     }
 
@@ -376,22 +427,28 @@ export class DriverRepository {
             await client.query('BEGIN');
 
             // 1. Upsert Wallet
-            const walletRes = await client.query(`
+            const walletRes = await client.query(
+                `
                 INSERT INTO driver_wallets (driver_id, cash_collected, balance)
                 VALUES ($1, $2, 0)
                 ON CONFLICT (driver_id) DO UPDATE SET
                     cash_collected = driver_wallets.cash_collected + $2,
                     last_updated = NOW()
                 RETURNING wallet_id
-            `, [driverId, amount]);
+            `,
+                [driverId, amount]
+            );
 
             const walletId = walletRes.rows[0].wallet_id;
 
             // 2. Log Transaction
-            await client.query(`
+            await client.query(
+                `
                 INSERT INTO driver_transactions (wallet_id, amount, type, reference_id, description)
                 VALUES ($1, $2, 'cash_collection', $3, 'Cash collected from customer')
-            `, [walletId, amount, orderId]);
+            `,
+                [walletId, amount, orderId]
+            );
 
             await client.query('COMMIT');
         } catch (err) {
@@ -401,7 +458,5 @@ export class DriverRepository {
             client.release();
         }
     }
-
-
 }
 export const driverRepository = new DriverRepository();

@@ -6,7 +6,7 @@
 
 export const en = {
     COMMON: {
-        PAYNOW: 'Pay Now',
+        PAYNOW: 'Pay Now'
     },
     // =============================================
     // COMMON - Universal UI elements
@@ -79,6 +79,7 @@ export const en = {
         permissionDenied: 'Permission Denied',
         galleryPermission: 'We need access to your gallery to upload photos',
         cameraPermission: 'We need access to your camera to take photos',
+        imageTooLarge: 'Image is too large. Please choose a photo under 10MB.',
         unknown: 'Unknown error occurred',
         gallery: 'Gallery',
         camera: 'Camera',
@@ -126,7 +127,7 @@ export const en = {
             d: 'd',
             now: 'Just now',
             ago: 'ago'
-        },
+        }
     },
 
     // =============================================
@@ -159,10 +160,8 @@ export const en = {
         invalidEmail: 'Please enter a valid email address',
         invalidVin: 'Please enter a valid 17-character VIN',
         passwordShort: 'Password must be at least 6 characters',
-        passwordMismatch: 'Passwords do not match',
+        passwordMismatch: 'Passwords do not match'
     },
-
-
 
     // =============================================
     // GREETINGS - Time-based greetings
@@ -171,7 +170,7 @@ export const en = {
         morning: 'Good Morning',
         afternoon: 'Good Afternoon',
         evening: 'Good Evening',
-        night: 'Good Night',
+        night: 'Good Night'
     },
 
     // =============================================
@@ -192,7 +191,7 @@ export const en = {
         monthsAgo: '{{count}} months ago',
         inMonths: 'In {{count}} months',
         yearsAgo: '{{count}} years ago',
-        inYears: 'In {{count}} years',
+        inYears: 'In {{count}} years'
     },
 
     // =============================================
@@ -309,7 +308,7 @@ export const en = {
         passwordsMustDiffer: 'New password must be different from old one',
         passwordResetSuccess: 'Password Reset Successful',
         passwordResetSuccessMessage: 'Your password has been reset successfully. Please login with your new password.',
-        resetFailed: 'Password reset failed. Please try again.',
+        resetFailed: 'Password reset failed. Please try again.'
     },
 
     // =============================================
@@ -325,7 +324,7 @@ export const en = {
         settings: 'Settings',
 
         newRequest: 'New Request',
-        whatsappGreeting: 'Hi QScrap Support',
+        whatsappGreeting: 'Hi QScrap Support'
     },
 
     // =============================================
@@ -352,7 +351,7 @@ export const en = {
         supplierBadges: {
             used: 'Used',
             commercial: 'Commercial',
-            genuine: 'Genuine',
+            genuine: 'Genuine'
         },
         verifiedSuppliers: '100+ verified suppliers in Qatar',
         member: 'Member',
@@ -367,7 +366,8 @@ export const en = {
         rewards: 'Rewards',
         currentLocation: 'Current Location',
         alertAddressTitle: 'Delivery Address Required',
-        alertAddressMessage: 'Please add a delivery address before creating a request. Tap "Delivering to" to add your address.',
+        alertAddressMessage:
+            'Please add a delivery address before creating a request. Tap "Delivering to" to add your address.',
         addAddress: 'Add Address',
         featured: 'FEATURED',
         enterprise: 'ENTERPRISE',
@@ -383,7 +383,7 @@ export const en = {
         howItWorksSteps: {
             step1: {
                 title: 'Request Your Part',
-                subtitle: 'Tell us what you need and we\'ll find it'
+                subtitle: "Tell us what you need and we'll find it"
             },
             step2: {
                 title: 'Review Bids',
@@ -412,7 +412,7 @@ export const en = {
             default: '(Default)',
             mapLocation: 'Map Location',
             permissionDenied: 'Location permission denied. Please enable in settings.',
-            detectionFailed: 'Could not detect location. Please select from saved addresses.',
+            detectionFailed: 'Could not detect location. Please select from saved addresses.'
         },
         mapPicker: {
             searchPlaceholder: 'Search for a place...',
@@ -424,7 +424,7 @@ export const en = {
             confirmLocation: '✓ Confirm Location',
             cancel: 'Cancel',
             satellite: 'Satellite',
-            map: 'Map',
+            map: 'Map'
         },
         labels: {
             home: 'Home',
@@ -456,7 +456,8 @@ export const en = {
         chooseFromCars: 'Choose from your saved cars',
         addNewVehicle: '+ Add New Vehicle',
         vinRequired: 'VIN Required',
-        vinRequiredMessage: 'Qatar garages require VIN/Chassis number from your Istimara for accurate part matching.\n\nWould you like to add VIN to this vehicle now?',
+        vinRequiredMessage:
+            'Qatar garages require VIN/Chassis number from your Istimara for accurate part matching.\n\nWould you like to add VIN to this vehicle now?',
         addVin: 'Add VIN',
         tapToAddVin: 'VIN Required - Tap to add',
         vinVerified: 'VIN: {{vin}} ✓',
@@ -512,7 +513,7 @@ export const en = {
         garagesReviewing: 'Garages are reviewing your request',
         orderAgain: 'Order Again',
         orderAgainPrefilled: 'Form pre-filled with your previous order details',
-        prefilledMsg: 'Form pre-filled with your previous order details',
+        prefilledMsg: 'Form pre-filled with your previous order details'
     },
 
     // =============================================
@@ -531,7 +532,7 @@ export const en = {
             all: 'All',
             active: 'Active',
             withBids: 'With Bids',
-            expired: 'Expired',
+            expired: 'Expired'
         },
         bids: 'bid',
         bids_plural: 'bids',
@@ -555,7 +556,7 @@ export const en = {
         deleted: 'Deleted',
         deletedSuccess: 'Request deleted successfully',
         daysHoursLeft: '{{days}}d {{hours}}h left',
-        hoursLeft: '{{hours}}h left',
+        hoursLeft: '{{hours}}h left'
     },
 
     // =============================================
@@ -576,7 +577,7 @@ export const en = {
             all: 'All',
             active: 'Active',
             completed: 'Completed',
-            cancelled: 'Cancelled',
+            cancelled: 'Cancelled'
         },
         trackDelivery: 'Track Delivery',
         confirmDelivery: 'Confirm Delivery',
@@ -601,7 +602,7 @@ export const en = {
         reorder: 'Order Again',
         ordered: 'Ordered',
         trackLiveDelivery: 'Track Live Delivery',
-        tapToConfirmDelivery: 'Tap to Confirm Delivery',
+        tapToConfirmDelivery: 'Tap to Confirm Delivery'
     },
 
     // =============================================
@@ -643,7 +644,7 @@ export const en = {
         escrowFrozen: 'Issue reported. Funds are frozen until we arbitrate.',
         escrowFrozenTitle: 'Funds Frozen',
         escrowFrozenBody: 'We have frozen the payout and opened an arbitration ticket. Support will contact you.',
-        escrowUnavailable: 'Escrow unavailable for this order. Please contact support.',
+        escrowUnavailable: 'Escrow unavailable for this order. Please contact support.'
     },
 
     // =============================================
@@ -726,7 +727,7 @@ export const en = {
         copyOtp: 'Copy OTP',
         refreshOtp: 'Refresh OTP',
         sanitizationPromise: 'Parts are power-washed & shrink-wrapped before dispatch.',
-        otpError: 'Could not load delivery code. Please retry.',
+        otpError: 'Could not load delivery code. Please retry.'
     },
 
     // =============================================
@@ -855,7 +856,7 @@ export const en = {
             alRayyan: 'Al Rayyan',
             alDuhail: 'Al Duhail',
             industrialArea: 'Industrial Area'
-        },
+        }
     },
 
     // =============================================
@@ -882,7 +883,7 @@ export const en = {
         // Warnings
         warning1: '• All your personal data will be permanently deleted',
         warning2: '• Your order history will be anonymized',
-        warning3: '• You will not be able to recover your account',
+        warning3: '• You will not be able to recover your account'
     },
 
     // =============================================
@@ -914,10 +915,16 @@ export const en = {
         clearCacheMessage: 'This will clear temporary data. You will remain logged in.',
         cacheCleared: 'Cache cleared successfully',
         about: 'About',
+        security: 'Security & Privacy',
         appVersion: 'App Version',
         termsOfService: 'Terms of Service',
         contactSupport: 'Contact Support',
         privacyPolicy: 'Privacy Policy',
+        biometrics: 'Biometric unlock',
+        biometricsDesc: 'Store credentials for faster, secure sign-in',
+        clearBiometrics: 'Clear biometric credentials',
+        sentryScreenshots: 'Allow crash screenshots',
+        sentryScreenshotsDesc: 'Include blurred screenshots in crash reports (privacy aware)',
         // VVIP 2026 - Dark Mode
         theme: 'Theme',
         light: 'Light',
@@ -927,7 +934,7 @@ export const en = {
         enterPasswordToDelete: 'Please enter your password to confirm',
         accountDeleted: 'Account Deleted',
         accountDeletedMessage: 'Your account and data have been permanently deleted.',
-        deleteAccountFailed: 'Failed to delete account. Please try again.',
+        deleteAccountFailed: 'Failed to delete account. Please try again.'
     },
 
     // =============================================
@@ -961,7 +968,7 @@ export const en = {
         searchLocation: 'Search for a location',
         confirmLocation: 'Confirm Location',
         deliveryInstructions: 'Delivery Instructions',
-        deliveryInstructionsPlaceholder: 'e.g. Ring doorbell, leave at reception',
+        deliveryInstructionsPlaceholder: 'e.g. Ring doorbell, leave at reception'
     },
 
     // =============================================
@@ -1013,7 +1020,7 @@ export const en = {
         vinSubtitle: 'Found on your Istimara (Registration Card)',
         vinPhotoCaptured: 'VIN Photo Captured',
         takePhoto: 'Take Photo of Istimara',
-        chooseGallery: 'Choose from Gallery',
+        chooseGallery: 'Choose from Gallery'
     },
 
     // =============================================
@@ -1055,7 +1062,7 @@ export const en = {
             justNow: 'Just now',
             minutesAgo: '{{count}}m ago',
             hoursAgo: '{{count}}h ago',
-            daysAgo: '{{count}}d ago',
+            daysAgo: '{{count}}d ago'
         },
         // Legacy keys (kept for compatibility)
         newTicket: 'Create New Ticket',
@@ -1066,7 +1073,7 @@ export const en = {
         subjectPlaceholder: 'Brief description of your issue',
         messagePlaceholder: 'Describe your issue in detail...',
         submitTicket: 'Submit Ticket',
-        ticketSubmitted: 'Ticket Submitted',
+        ticketSubmitted: 'Ticket Submitted'
     },
 
     // =============================================
@@ -1089,7 +1096,7 @@ export const en = {
         sendFailed: 'Failed to send message',
         connecting: 'Connecting...',
         noMessages: 'No messages yet',
-        sendMessageTo: 'Send a message to {{name}}',
+        sendMessageTo: 'Send a message to {{name}}'
     },
 
     // =============================================
@@ -1154,7 +1161,7 @@ export const en = {
         youPay: 'You Pay',
         codAmount: 'COD Amount',
         pay: 'Pay {{amount}} QAR',
-        off: 'OFF',
+        off: 'OFF'
     },
 
     // =============================================
@@ -1217,7 +1224,7 @@ export const en = {
             yourOrder: 'Your order',
             chatDriverLabel: 'Driver Message',
             chatGarageLabel: 'Garage Message',
-            chatDefaultBody: 'You have a new message',
+            chatDefaultBody: 'You have a new message'
         },
         // Android notification channel names
         channels: {
@@ -1229,7 +1236,7 @@ export const en = {
             bidsName: 'New Bids',
             bidsDesc: 'Notifications when you receive new bids',
             messagesName: 'Messages',
-            messagesDesc: 'Chat messages from drivers and garages',
+            messagesDesc: 'Chat messages from drivers and garages'
         },
         // iOS notification category action buttons
         iosActions: {
@@ -1237,8 +1244,8 @@ export const en = {
             ignore: 'Ignore',
             trackOrder: 'Track Order',
             viewDetails: 'View Details',
-            accept: 'Accept',
-        },
+            accept: 'Accept'
+        }
     },
 
     // =============================================
@@ -1286,7 +1293,7 @@ export const en = {
         processingDesc: 'Processing your order',
         issueDesc: 'Issue reported',
         qcDesc: 'Quality check in progress',
-        qcPassedDesc: 'Quality check passed',
+        qcPassedDesc: 'Quality check passed'
     },
 
     // =============================================
@@ -1321,10 +1328,11 @@ export const en = {
         rejectBidTitle: 'Reject Bid',
         rejectBidMessage: 'Reject bid from {{name}}?',
         continueToPayment: 'Continue to Payment',
-        totalBreakdown: 'Total: {{total}} {{currency}}\n(Part: {{price}} {{currency}} + Delivery: {{fee}} {{currency}})',
+        totalBreakdown:
+            'Total: {{total}} {{currency}}\n(Part: {{price}} {{currency}} + Delivery: {{fee}} {{currency}})',
         chooseMethodHint: 'You can choose payment method on the next screen.',
         counterAcceptedTitle: 'Counter-Offer Accepted!',
-        counterAcceptedMsg: 'Garage accepted your offer of {{price}} QAR. Proceed to payment?',
+        counterAcceptedMsg: 'Garage accepted your offer of {{price}} QAR. Proceed to payment?'
     },
 
     // =============================================
@@ -1335,13 +1343,16 @@ export const en = {
         next: 'Next',
         getStarted: 'Get Started',
         slide1Title: 'Find Any Auto Part',
-        slide1Desc: 'Search for new or used parts for any car make and model. Our network of verified garages has you covered.',
+        slide1Desc:
+            'Search for new or used parts for any car make and model. Our network of verified garages has you covered.',
         slide2Title: 'Get Competitive Bids',
-        slide2Desc: 'Post your request and receive multiple bids from trusted suppliers. Compare prices, warranties, and ratings.',
+        slide2Desc:
+            'Post your request and receive multiple bids from trusted suppliers. Compare prices, warranties, and ratings.',
         slide3Title: 'Quality Guaranteed',
-        slide3Desc: 'All garages are verified. Parts go through quality checks before delivery. Warranty protection included.',
+        slide3Desc:
+            'All garages are verified. Parts go through quality checks before delivery. Warranty protection included.',
         slide4Title: 'Fast Delivery',
-        slide4Desc: 'Track your order in real-time. Same-day delivery available across Qatar. Hassle-free returns.',
+        slide4Desc: 'Track your order in real-time. Same-day delivery available across Qatar. Hassle-free returns.'
     },
 
     // =============================================
@@ -1360,7 +1371,7 @@ export const en = {
         offerSubmittedMsg: 'The garage will review your offer',
         garageCounter: 'Garage Counter Offer',
         accept: 'Accept',
-        decline: 'Decline',
+        decline: 'Decline'
     },
 
     // =============================================
@@ -1393,7 +1404,7 @@ export const en = {
         you: 'You',
         negotiationComplete: 'Negotiation Complete',
         maxRoundsReached: 'Maximum negotiation rounds have been reached. Accept, reject, or keep the current offer.',
-        historyTitle: 'Negotiation History',
+        historyTitle: 'Negotiation History'
     },
 
     // =============================================
@@ -1441,8 +1452,8 @@ export const en = {
             statusCorrected: 'Corrected',
             // Undo
             undoMessage: 'Report submitted',
-            undoAction: 'Undo',
-        },
+            undoAction: 'Undo'
+        }
     },
 
     // =============================================
@@ -1458,7 +1469,7 @@ export const en = {
         reviewSubmitted: 'Review Submitted',
         reviewSubmittedMsg: 'Thank you for your feedback!',
         noReviews: 'No reviews yet',
-        verified: 'Verified Purchase',
+        verified: 'Verified Purchase'
     },
 
     // =============================================
@@ -1475,9 +1486,8 @@ export const en = {
         confirmDelivery: 'Confirm Delivery',
         reportIssue: 'Report Issue',
         deliveryConfirmed: 'Delivery Confirmed!',
-        releasePayment: 'Payment will be released to the garage',
+        releasePayment: 'Payment will be released to the garage'
     },
-
 
     // =============================================
     // DISPUTE
@@ -1491,14 +1501,14 @@ export const en = {
             damaged: 'Part is damaged',
             notAsDescribed: 'Not as described',
             lateDelivery: 'Very late delivery',
-            other: 'Other',
+            other: 'Other'
         },
         description: 'Description',
         descriptionPlaceholder: 'Describe the issue in detail...',
         attachPhotos: 'Attach Photos',
         submitDispute: 'Submit Dispute',
         disputeSubmitted: 'Dispute Submitted',
-        disputeSubmittedMsg: 'Our team will review and respond within 24 hours',
+        disputeSubmittedMsg: 'Our team will review and respond within 24 hours'
     },
 
     // =============================================
@@ -1513,7 +1523,7 @@ export const en = {
         step3Title: 'Choose & Pay',
         step3Desc: 'Select the best offer and pay securely',
         step4Title: 'Fast Delivery',
-        step4Desc: 'Get your part delivered to your door',
+        step4Desc: 'Get your part delivered to your door'
     },
 
     // =============================================
@@ -1563,11 +1573,11 @@ export const en = {
         dedicatedManager: 'Dedicated account manager',
         cashback10: '10% cashback',
         exclusiveDeals: 'Exclusive deals',
-        priorityDispatch: 'Priority dispatch',
+        priorityDispatch: 'Priority dispatch'
     },
     network: {
         backOnline: 'Back online',
-        noConnection: 'No internet connection',
+        noConnection: 'No internet connection'
     },
     urgentAction: {
         paymentRequired: 'Payment Required',
@@ -1585,7 +1595,7 @@ export const en = {
         respond: 'Respond',
         actionRequired: 'Action Required',
         expired: 'Expired',
-        urgent: 'URGENT',
+        urgent: 'URGENT'
     },
     warranty: {
         warranty: 'WARRANTY',
@@ -1609,11 +1619,12 @@ export const en = {
         share: 'Share',
         claim: 'Claim',
         fileWarrantyClaim: 'File Warranty Claim',
-        warrantyClaimMsg: 'To file a warranty claim, please contact the garage or use the dispute feature in your order.',
+        warrantyClaimMsg:
+            'To file a warranty claim, please contact the garage or use the dispute feature in your order.',
         viewOrder: 'View Order',
         close: 'Close',
         shareError: 'Failed to share warranty card',
-        disclaimerMsg: 'This warranty is provided by {{garage}} through QScrap platform. Terms and conditions apply.',
+        disclaimerMsg: 'This warranty is provided by {{garage}} through QScrap platform. Terms and conditions apply.'
     },
     emptyState: {
         noRequestsVehicle: 'No requests for your {{vehicle}}',
@@ -1630,23 +1641,23 @@ export const en = {
         viewRequests: 'View Requests',
         nothingHere: 'Nothing here yet',
         getStartedHint: 'Get started to see content here',
-        getStarted: 'Get Started',
+        getStarted: 'Get Started'
     },
     errorBoundary: {
         title: 'Oops! Something went wrong',
         message: 'We apologize for the inconvenience. The app encountered an unexpected error.',
         tryAgain: 'Try Again',
-        helpText: 'If the problem persists, please contact support.',
+        helpText: 'If the problem persists, please contact support.'
     },
     screenError: {
         errorOccurred: 'A screen error occurred',
         couldNotLoad: "We couldn't load {{screen}}",
         couldNotDisplay: "This screen couldn't be displayed",
-        restartHint: 'If this problem persists, please restart the app',
+        restartHint: 'If this problem persists, please restart the app'
     },
     offline: {
         noConnection: 'No Internet Connection',
-        featuresUnavailable: 'Some features may be unavailable',
+        featuresUnavailable: 'Some features may be unavailable'
     },
     condition: {
         new: 'New',
@@ -1656,9 +1667,8 @@ export const en = {
         used_fair: 'Used - Fair',
         refurbished: 'Refurbished',
         commercial: 'Commercial',
-        genuine: 'Genuine',
+        genuine: 'Genuine'
     },
-
 
     // =============================================
     // BID CARD
@@ -1692,9 +1702,9 @@ export const en = {
         photoCount: '{{count}} photos',
         waitingForGarage: 'Waiting for garage',
         // Final round and rejection UI
-        finalRoundWarning: 'Final Round - Accept or reject the garage\'s offer',
-        acceptableOffer: 'Garage\'s Last Offer',
-        rejectedStatus: '(Rejected)',
+        finalRoundWarning: "Final Round - Accept or reject the garage's offer",
+        acceptableOffer: "Garage's Last Offer",
+        rejectedStatus: '(Rejected)'
     },
 
     // =============================================
@@ -1715,12 +1725,13 @@ export const en = {
         invalidVin: 'Invalid VIN',
         invalidFormat: 'VIN must be exactly 17 characters',
         whereToFind: 'Where to Find VIN?',
-        whereToFindContent: 'You can find the VIN on your vehicle registration (Istimara) or on the dashboard near the windshield.',
+        whereToFindContent:
+            'You can find the VIN on your vehicle registration (Istimara) or on the dashboard near the windshield.',
         infoText: 'The VIN helps us match the exact parts for your vehicle',
         proTipContent: 'Check your Istimara (registration card) for the VIN number',
         locationDashboard: 'Dashboard (near windshield)',
         locationDoorJamb: 'Driver door jamb',
-        locationRegCard: 'Registration card (Istimara)',
+        locationRegCard: 'Registration card (Istimara)'
     },
 
     // =============================================
@@ -1737,7 +1748,7 @@ export const en = {
         thankYou: 'Thank You!',
         submittedMsg: 'Your review has been submitted',
         failed: 'Failed to submit review',
-        howWasExp: 'How was your experience?',
+        howWasExp: 'How was your experience?'
     },
 
     // bidCard already defined above - duplicate removed
@@ -1789,8 +1800,8 @@ export const en = {
             after_payment: '5% fee - Order was confirmed',
             during_preparation: '10% fee - Garage started preparing',
             in_transit: '10% + Delivery fee - Part already dispatched',
-            after_delivery: '20% + Delivery fee - Use 7-day return instead',
-        },
+            after_delivery: '20% + Delivery fee - Use 7-day return instead'
+        }
     },
 
     // =============================================
@@ -1821,7 +1832,7 @@ export const en = {
         submittedMessage: 'Our team will review your request within 24 hours',
         abuseWarning: 'You have reached your monthly return limit (3/month)',
         cannotReturn: 'This order cannot be returned',
-        maxPhotos: 'Maximum 3 photos allowed',
+        maxPhotos: 'Maximum 3 photos allowed'
     },
 
     // =============================================
@@ -1833,14 +1844,14 @@ export const en = {
         waitingForBids: 'Waiting for Bids',
         noBids: 'No Bids Yet',
         noBidsMessage: 'Garages are reviewing your request...',
-        noBidsSubtext: 'You\'ll be notified when bids arrive',
+        noBidsSubtext: "You'll be notified when bids arrive",
         bidsReceived: '{{count}} Bids Received',
         priceRange: 'Price Range',
         partNumber: 'Part Number',
         expired: 'Request Expired',
         deletedRequest: 'Request Deleted',
         loadFailed: 'Failed to load request',
-        bidCount: '{{count}} Bids',
+        bidCount: '{{count}} Bids'
     },
 
     // =============================================
@@ -1858,10 +1869,12 @@ export const en = {
         // crNumber removed - CR only shown on invoices/documents, not in legal text for app stores
         // Section 1 - Agreement
         section1Title: '1. Agreement to Terms',
-        section1Content: 'By downloading, installing, or using the QScrap mobile application ("App"), you agree to be legally bound by these Terms of Service ("Terms"). QScrap Services & Trading L.L.C, a company registered in the State of Qatar ("QScrap", "we", "us", or "our"), operates this marketplace platform. If you do not agree to these Terms, you must not access or use our services.',
+        section1Content:
+            'By downloading, installing, or using the QScrap mobile application ("App"), you agree to be legally bound by these Terms of Service ("Terms"). QScrap Services & Trading L.L.C, a company registered in the State of Qatar ("QScrap", "we", "us", or "our"), operates this marketplace platform. If you do not agree to these Terms, you must not access or use our services.',
         // Section 2 - Eligibility
         section2Title: '2. Eligibility Requirements',
-        section2Content: 'To use QScrap, you must meet the following requirements, which you represent and warrant to be true:',
+        section2Content:
+            'To use QScrap, you must meet the following requirements, which you represent and warrant to be true:',
         section2Item1: 'You are at least 18 years of age',
         section2Item2: 'You are a legal resident of Qatar or possess a valid Qatar ID/visa',
         section2Item3: 'You have the legal capacity to enter into binding contracts',
@@ -1878,12 +1891,15 @@ export const en = {
         // Section 4 - Services
         section4Title: '4. Platform Services',
         subheading1: 'Customer Services',
-        section4Content1: 'QScrap is a marketplace platform that connects customers seeking automotive spare parts with verified garages and scrap yards across Qatar. We facilitate: part requests and bidding, order processing and escrow payment protection, delivery coordination, and warranty support. QScrap acts as an intermediary—we are not the seller of parts.',
+        section4Content1:
+            'QScrap is a marketplace platform that connects customers seeking automotive spare parts with verified garages and scrap yards across Qatar. We facilitate: part requests and bidding, order processing and escrow payment protection, delivery coordination, and warranty support. QScrap acts as an intermediary—we are not the seller of parts.',
         subheading2: 'Garage Partner Services',
-        section4Content2: 'Registered garage partners can list parts, respond to customer requests, set pricing, and fulfill orders through our platform. All garages must maintain valid Qatar Commercial Registration and comply with Ministry of Commerce and Industry (MOCI) regulations.',
+        section4Content2:
+            'Registered garage partners can list parts, respond to customer requests, set pricing, and fulfill orders through our platform. All garages must maintain valid Qatar Commercial Registration and comply with Ministry of Commerce and Industry (MOCI) regulations.',
         // Section 5 - Payments
         section5Title: '5. Payments, Fees & Escrow',
-        section5Content: 'All transactions are processed through our secure escrow system. By making a purchase, you agree to:',
+        section5Content:
+            'All transactions are processed through our secure escrow system. By making a purchase, you agree to:',
         section5Item1: 'Pay all applicable fees and charges at the published prices',
         section5Item2: 'Provide valid and authorized payment information',
         section5Item3: 'Authorize charges to your selected payment method',
@@ -1891,7 +1907,8 @@ export const en = {
         section5Item5: 'Understand that platform service fees apply to transactions',
         // Section 6 - Delivery
         section6Title: '6. Delivery Terms',
-        section6Content: 'Delivery is provided by QScrap-verified independent drivers. Delivery fees are calculated based on distance from the garage to your delivery address. Estimated delivery times are provided for guidance only and may vary based on traffic, weather, and driver availability. QScrap is not liable for delays caused by factors beyond our reasonable control.',
+        section6Content:
+            'Delivery is provided by QScrap-verified independent drivers. Delivery fees are calculated based on distance from the garage to your delivery address. Estimated delivery times are provided for guidance only and may vary based on traffic, weather, and driver availability. QScrap is not liable for delays caused by factors beyond our reasonable control.',
         // Section 7 - Warranties
         section7Title: '7. Warranty & Returns (7-Day Policy)',
         section7Content: 'All parts sold through QScrap are covered by our standardized warranty policy:',
@@ -1911,7 +1928,8 @@ export const en = {
         section8Item6: 'Violating Qatar Consumer Protection Law or MOCI regulations',
         // Section 9 - Intellectual Property
         section9Title: '9. Intellectual Property Rights',
-        section9Content: 'All content, trademarks, logos, and intellectual property displayed on QScrap are owned by QScrap Services & Trading L.L.C or its licensors. You may not:',
+        section9Content:
+            'All content, trademarks, logos, and intellectual property displayed on QScrap are owned by QScrap Services & Trading L.L.C or its licensors. You may not:',
         section9Item1: 'Copy, reproduce, modify, or distribute any QScrap content',
         section9Item2: 'Use QScrap trademarks or branding without written permission',
         section9Item3: 'Reverse engineer, decompile, or disassemble the App',
@@ -1919,19 +1937,24 @@ export const en = {
         section9Item5: 'Remove, alter, or obscure any proprietary notices or attributions',
         // Section 10 - Limitation of Liability
         section10Title: '10. Limitation of Liability',
-        section10Content: 'To the maximum extent permitted by Qatar law, QScrap and its directors, officers, employees, and agents shall not be liable for any indirect, incidental, special, consequential, or punitive damages arising from your use of our services. Our total aggregate liability shall not exceed the amount you paid to QScrap for the specific transaction giving rise to the claim.',
+        section10Content:
+            'To the maximum extent permitted by Qatar law, QScrap and its directors, officers, employees, and agents shall not be liable for any indirect, incidental, special, consequential, or punitive damages arising from your use of our services. Our total aggregate liability shall not exceed the amount you paid to QScrap for the specific transaction giving rise to the claim.',
         // Section 11 - Indemnification
         section11Title: '11. Indemnification',
-        section11Content: 'You agree to defend, indemnify, and hold harmless QScrap, its officers, directors, employees, agents, and affiliates from and against any claims, liabilities, damages, losses, or expenses (including reasonable legal fees) arising from: (a) your use of the App; (b) your violation of these Terms; (c) your violation of any third-party rights; or (d) any content you submit through the App.',
+        section11Content:
+            'You agree to defend, indemnify, and hold harmless QScrap, its officers, directors, employees, agents, and affiliates from and against any claims, liabilities, damages, losses, or expenses (including reasonable legal fees) arising from: (a) your use of the App; (b) your violation of these Terms; (c) your violation of any third-party rights; or (d) any content you submit through the App.',
         // Section 12 - Governing Law
         section12Title: '12. Governing Law & Jurisdiction',
-        section12Content: 'These Terms are governed by and construed in accordance with the laws of the State of Qatar, including Qatar Consumer Protection Law No. 8 of 2008 and applicable MOCI regulations. Any disputes arising from or relating to these Terms shall be subject to the exclusive jurisdiction of the courts of Qatar. You irrevocably consent to such jurisdiction and venue.',
+        section12Content:
+            'These Terms are governed by and construed in accordance with the laws of the State of Qatar, including Qatar Consumer Protection Law No. 8 of 2008 and applicable MOCI regulations. Any disputes arising from or relating to these Terms shall be subject to the exclusive jurisdiction of the courts of Qatar. You irrevocably consent to such jurisdiction and venue.',
         // Section 13 - Changes to Terms
         section13Title: '13. Modifications to Terms',
-        section13Content: 'We reserve the right to modify these Terms at any time. Material changes will be notified via: in-app notifications, email to your registered address, or prominent notice on our website. Continued use of QScrap after modifications constitutes acceptance of the updated Terms. If you disagree with any changes, you must discontinue use of our services.',
+        section13Content:
+            'We reserve the right to modify these Terms at any time. Material changes will be notified via: in-app notifications, email to your registered address, or prominent notice on our website. Continued use of QScrap after modifications constitutes acceptance of the updated Terms. If you disagree with any changes, you must discontinue use of our services.',
         // Section 14 - Contact
         section14Title: '14. Contact Information',
-        section14Content: 'For questions, concerns, or complaints regarding these Terms of Service, please contact our Legal Department at:',
+        section14Content:
+            'For questions, concerns, or complaints regarding these Terms of Service, please contact our Legal Department at:'
     },
 
     privacy: {
@@ -1945,8 +1968,10 @@ export const en = {
         dataProtectionOfficer: 'Data Protection: privacy@qscrap.qa',
         // Section 1 - Introduction
         section1Title: '1. Introduction & Scope',
-        section1Content1: 'QScrap Services & Trading L.L.C ("QScrap," "we," "us," or "our"), a company registered in the State of Qatar, is committed to protecting your privacy and personal data. This Privacy Policy explains how we collect, use, disclose, retain, and safeguard your information when you use our mobile applications (QScrap Customer App and QScrap Driver App) and related services.',
-        section1Content2: 'This policy complies with Qatar Personal Data Protection Law No. 13 of 2016 and Google Play Developer Program Policies. By using QScrap, you consent to the data practices described herein. If you do not agree, please do not use our services.',
+        section1Content1:
+            'QScrap Services & Trading L.L.C ("QScrap," "we," "us," or "our"), a company registered in the State of Qatar, is committed to protecting your privacy and personal data. This Privacy Policy explains how we collect, use, disclose, retain, and safeguard your information when you use our mobile applications (QScrap Customer App and QScrap Driver App) and related services.',
+        section1Content2:
+            'This policy complies with Qatar Personal Data Protection Law No. 13 of 2016 and Google Play Developer Program Policies. By using QScrap, you consent to the data practices described herein. If you do not agree, please do not use our services.',
         // Section 2 - Information We Collect
         section2Title: '2. Information We Collect',
         personalInfo: 'Information You Provide',
@@ -1960,7 +1985,8 @@ export const en = {
         autoCollectedInfo: 'Information Collected Automatically',
         section2Content2: 'When you use our App, we automatically collect:',
         section2Item7: 'Device Information: Device type, OS version, unique device identifiers, push tokens',
-        section2Item8: 'Location Data: GPS coordinates for delivery fee calculation, driver tracking, and garage matching (with your explicit permission)',
+        section2Item8:
+            'Location Data: GPS coordinates for delivery fee calculation, driver tracking, and garage matching (with your explicit permission)',
         section2Item9: 'Usage Analytics: App interactions, features used, session duration, search queries',
         section2Item10: 'Technical Data: IP address, network information, crash reports',
         section2Item11: 'Media Files: Photos you upload (VIN photos, part images) for order processing',
@@ -1979,34 +2005,42 @@ export const en = {
         section4Content: 'We share your information only as necessary and with appropriate safeguards:',
         section4Item1: 'Garage Partners: Name, phone, delivery address for order fulfillment',
         section4Item2: 'Delivery Drivers: Name, phone, precise delivery location for deliveries',
-        section4Item3: 'Third-Party Services: Cloud providers (AWS), analytics (Google), maps (Google Maps), notifications (Firebase)',
+        section4Item3:
+            'Third-Party Services: Cloud providers (AWS), analytics (Google), maps (Google Maps), notifications (Firebase)',
         section4Item4: 'Legal Authorities: When required by Qatar law, court orders, or government agencies',
         section4Item5: 'We do NOT sell your personal data to third parties for advertising purposes',
         // Section 5 - Data Security
         section5Title: '5. Data Security Measures',
-        section5Content: 'We implement comprehensive security measures to protect your data: SSL/TLS encryption for all data transmissions; encrypted database storage with access controls; OTP-based authentication for account access; role-based access restrictions for employees; regular security audits and vulnerability assessments; incident response procedures for breach notification within 72 hours. While we employ industry-standard security, no system is 100% secure.',
+        section5Content:
+            'We implement comprehensive security measures to protect your data: SSL/TLS encryption for all data transmissions; encrypted database storage with access controls; OTP-based authentication for account access; role-based access restrictions for employees; regular security audits and vulnerability assessments; incident response procedures for breach notification within 72 hours. While we employ industry-standard security, no system is 100% secure.',
         // Section 6 - Your Rights
         section6Title: '6. Your Data Rights',
-        section6Content: 'Under Qatar law and our policies, you have the following rights regarding your personal data:',
+        section6Content:
+            'Under Qatar law and our policies, you have the following rights regarding your personal data:',
         section6Item1: 'Right of Access: Request a copy of personal data we hold about you',
         section6Item2: 'Right of Correction: Update or correct inaccurate information in your profile',
-        section6Item3: 'Right of Deletion: Request deletion of your account and personal data (subject to legal retention requirements)',
+        section6Item3:
+            'Right of Deletion: Request deletion of your account and personal data (subject to legal retention requirements)',
         section6Item4: 'Right to Opt-Out: Unsubscribe from marketing communications',
-        section6Item5: 'Right to Withdraw Consent: Revoke permissions for optional data processing (e.g., location when not using the app)',
+        section6Item5:
+            'Right to Withdraw Consent: Revoke permissions for optional data processing (e.g., location when not using the app)',
         // Section 7 - Data Retention
         section7Title: '7. Data Retention Policy',
-        section7Content: 'We retain your personal information for the following periods: Active account data is retained while your account is active; Transaction records are retained for 10 years per Qatar Commercial Law; Anonymized analytics data may be retained indefinitely; Upon account deletion, personal data is removed or anonymized within 30 days, except where retention is required by law.',
+        section7Content:
+            'We retain your personal information for the following periods: Active account data is retained while your account is active; Transaction records are retained for 10 years per Qatar Commercial Law; Anonymized analytics data may be retained indefinitely; Upon account deletion, personal data is removed or anonymized within 30 days, except where retention is required by law.',
         // Section 8 - Children
-        section8Title: '8. Children\'s Privacy',
-        section8Content: 'QScrap is intended for users 18 years of age or older. We do not knowingly collect, use, or disclose personal information from children under 18. If you believe a child has provided us with personal data, please contact us immediately at privacy@qscrap.qa, and we will promptly delete such information.',
+        section8Title: "8. Children's Privacy",
+        section8Content:
+            'QScrap is intended for users 18 years of age or older. We do not knowingly collect, use, or disclose personal information from children under 18. If you believe a child has provided us with personal data, please contact us immediately at privacy@qscrap.qa, and we will promptly delete such information.',
         // Section 9 - Changes
         section9Title: '9. Policy Updates',
-        section9Content: 'We may update this Privacy Policy periodically to reflect changes in our practices, legal requirements, or App features. We will notify you of material changes through: in-app notifications, email to your registered address, and prominent notice on our website. The "Last Updated" date at the top indicates when the policy was last revised. Continued use after updates constitutes acceptance.',
+        section9Content:
+            'We may update this Privacy Policy periodically to reflect changes in our practices, legal requirements, or App features. We will notify you of material changes through: in-app notifications, email to your registered address, and prominent notice on our website. The "Last Updated" date at the top indicates when the policy was last revised. Continued use after updates constitutes acceptance.',
         // Section 10 - Contact
         section10Title: '10. Contact & Data Protection',
-        section10Content: 'For questions, access requests, or complaints regarding this Privacy Policy or your personal data, please contact our Data Protection team:',
+        section10Content:
+            'For questions, access requests, or complaints regarding this Privacy Policy or your personal data, please contact our Data Protection team:'
     },
-
 
     // =============================================
     // WAIT STATE - G-02 Anxiety Reduction Messages
@@ -2017,14 +2051,14 @@ export const en = {
         garagesReviewing: 'Garages are reviewing your request',
         preparingQuotes: 'Garages are preparing their quotes',
         stillSearching: 'Still searching for the best prices',
-        notifyWhenReady: 'We\'ll notify you when offers arrive',
+        notifyWhenReady: "We'll notify you when offers arrive",
         requestPosted: 'Request Posted',
         justNow: 'Just now',
         elapsedMinutes: '{{minutes}} min ago',
         elapsedHours: '{{hours}}h {{minutes}}m ago',
         elapsedDays: '{{days}}d {{hours}}h ago',
         garagesViewing: '{{count}} garages viewing',
-        tip: 'Adding clear photos helps garages respond faster',
+        tip: 'Adding clear photos helps garages respond faster'
     },
 
     // =============================================
@@ -2038,7 +2072,7 @@ export const en = {
         deliveryLocation: 'Delivery location',
         changeLocation: 'Change your delivery address',
         newRequest: 'Create new part request',
-        newRequestHint: 'Tap to request a car part',
+        newRequestHint: 'Tap to request a car part'
     },
 
     // =============================================
@@ -2047,7 +2081,7 @@ export const en = {
     socialProof: {
         fastResponse: 'Fast Response',
         topRated: 'Top Rated',
-        trustedSeller: 'Trusted Seller',
+        trustedSeller: 'Trusted Seller'
     },
 
     // =============================================
@@ -2056,7 +2090,7 @@ export const en = {
     viewerBadge: {
         garageViewing: '{{count}} garage viewing',
         garagesViewing: '{{count}} garages viewing',
-        viewingNow: '{{count}} viewing now',
+        viewingNow: '{{count}} viewing now'
     },
 
     // =============================================
@@ -2069,7 +2103,7 @@ export const en = {
         warranty: 'Warranty',
         bestPriceBadge: 'BEST PRICE',
         accept: 'Accept',
-        none: 'None',
+        none: 'None'
     },
 
     // =============================================
@@ -2081,7 +2115,7 @@ export const en = {
         morning: 'Morning',
         afternoon: 'Afternoon',
         evening: 'Evening',
-        night: 'Night',
+        night: 'Night'
     },
 
     // =============================================
@@ -2121,8 +2155,8 @@ export const en = {
         inWhiteCar: "I'm in a white car",
         deliveryComplete: 'Delivery complete. Thank you!',
         onMyWayPickup: 'On my way to pickup the part',
-        trafficDelay: 'Traffic delay, will be there in 10 min',
-    },
+        trafficDelay: 'Traffic delay, will be there in 10 min'
+    }
 };
 
 export type TranslationKeys = typeof en;

@@ -27,7 +27,7 @@ export class OTPService {
     private readonly OTP_LENGTH = 6;
     private readonly OTP_EXPIRY_MINUTES = 10;
     private readonly RESEND_COOLDOWN_SECONDS = 30;
-    private readonly MAX_ATTEMPTS = 10;  // Increased from 5 for better UX
+    private readonly MAX_ATTEMPTS = 10; // Increased from 5 for better UX
 
     /**
      * Generate a secure 6-digit OTP
@@ -86,11 +86,7 @@ export class OTPService {
      * Verify OTP code
      * ROBUST: Allows many attempts without requiring new OTP
      */
-    async verifyOTP(
-        email: string,
-        otpCode: string,
-        purpose: string = 'registration'
-    ): Promise<VerifyResult> {
+    async verifyOTP(email: string, otpCode: string, purpose: string = 'registration'): Promise<VerifyResult> {
         try {
             email = email.toLowerCase().trim();
 
@@ -128,27 +124,22 @@ export class OTPService {
             // Verify the OTP code FIRST before incrementing attempts
             if (otpRecord.otp_code !== otpCode.trim()) {
                 // Increment attempts OUTSIDE transaction so it persists
-                await pool.query(
-                    `UPDATE email_otps SET attempts = attempts + 1 WHERE id = $1`,
-                    [otpRecord.id]
-                );
+                await pool.query(`UPDATE email_otps SET attempts = attempts + 1 WHERE id = $1`, [otpRecord.id]);
 
                 const attemptsRemaining = effectiveMaxAttempts - (otpRecord.attempts + 1);
 
                 return {
                     success: false,
-                    error: attemptsRemaining > 0
-                        ? `Invalid code. ${attemptsRemaining} attempts remaining.`
-                        : 'Invalid code. Please request a new code.',
+                    error:
+                        attemptsRemaining > 0
+                            ? `Invalid code. ${attemptsRemaining} attempts remaining.`
+                            : 'Invalid code. Please request a new code.',
                     attemptsRemaining: Math.max(0, attemptsRemaining)
                 };
             }
 
             // OTP is correct - mark as used
-            await pool.query(
-                `UPDATE email_otps SET is_used = TRUE WHERE id = $1`,
-                [otpRecord.id]
-            );
+            await pool.query(`UPDATE email_otps SET is_used = TRUE WHERE id = $1`, [otpRecord.id]);
 
             logger.info('Successfully verified OTP', { email });
 
@@ -227,9 +218,7 @@ export class OTPService {
      */
     async cleanupExpiredOTPs(): Promise<number> {
         try {
-            const result = await pool.query(
-                `DELETE FROM email_otps WHERE expires_at < NOW()`
-            );
+            const result = await pool.query(`DELETE FROM email_otps WHERE expires_at < NOW()`);
 
             const deletedCount = result.rowCount || 0;
             if (deletedCount > 0) {

@@ -1,13 +1,13 @@
 /**
  * SupportActionsService
- * 
+ *
  * Handles support quick actions with PROPER integration with:
  * - PayoutService (cancel/reversal for garage payouts)
  * - PaymentGateway (customer refunds)
  * - 7-day warranty validation
  * - BRAIN v3.0 stage-based refund calculation
  * - Complete audit trail
- * 
+ *
  * This replaces the broken executeQuickAction() in support.service.ts
  */
 
@@ -48,7 +48,7 @@ interface ActionResult {
 }
 
 export class SupportActionsService {
-    constructor(private pool: Pool) { }
+    constructor(private pool: Pool) {}
 
     /**
      * Enterprise Pattern: Ensure a support ticket exists for an order.
@@ -65,11 +65,14 @@ export class SupportActionsService {
         client: PoolClient
     ): Promise<string> {
         // Check for existing open ticket linked to this order
-        const existing = await client.query(`
+        const existing = await client.query(
+            `
             SELECT ticket_id FROM support_tickets
             WHERE order_id = $1 AND status NOT IN ('closed', 'resolved')
             ORDER BY created_at DESC LIMIT 1
-        `, [orderId]);
+        `,
+            [orderId]
+        );
 
         if (existing.rows.length > 0) {
             return existing.rows[0].ticket_id;
@@ -77,13 +80,16 @@ export class SupportActionsService {
 
         // Auto-create ticket
         const slaHours = category === 'billing' ? 8 : category === 'delivery' ? 12 : 24;
-        const result = await client.query(`
+        const result = await client.query(
+            `
             INSERT INTO support_tickets (
                 customer_id, requester_id, requester_type, subject, priority,
                 category, order_id, status, sla_deadline, assigned_to
             ) VALUES ($1, $2, 'support', $3, 'high', $4, $5, 'open', NOW() + INTERVAL '${slaHours} hours', $2)
             RETURNING ticket_id
-        `, [customerId, agentId, actionSubject, category, orderId]);
+        `,
+            [customerId, agentId, actionSubject, category, orderId]
+        );
 
         logger.info('Auto-created ticket for support action', {
             ticketId: result.rows[0].ticket_id,
@@ -104,16 +110,22 @@ export class SupportActionsService {
         message: string,
         client: PoolClient
     ): Promise<void> {
-        await client.query(`
+        await client.query(
+            `
             INSERT INTO chat_messages (ticket_id, sender_id, sender_type, message_text, is_internal)
             VALUES ($1, $2, 'system', $3, false)
-        `, [ticketId, agentId, message]);
+        `,
+            [ticketId, agentId, message]
+        );
 
         // Update ticket's last_message_at
-        await client.query(`
+        await client.query(
+            `
             UPDATE support_tickets SET last_message_at = NOW(), updated_at = NOW()
             WHERE ticket_id = $1
-        `, [ticketId]);
+        `,
+            [ticketId]
+        );
     }
 
     /**
@@ -121,7 +133,8 @@ export class SupportActionsService {
      * Shows payout status, warranty status, payment info
      */
     async getActionContext(orderId: string): Promise<ActionContext> {
-        const result = await this.pool.query(`
+        const result = await this.pool.query(
+            `
             SELECT 
                 o.order_id, o.order_number, o.order_status, o.payment_status,
                 o.total_amount, o.part_price, o.delivery_fee, o.platform_fee,
@@ -138,7 +151,9 @@ export class SupportActionsService {
             LEFT JOIN garages g ON o.garage_id = g.garage_id
             LEFT JOIN garage_payouts gp ON o.order_id = gp.order_id
             WHERE o.order_id = $1
-        `, [orderId]);
+        `,
+            [orderId]
+        );
 
         if (result.rows.length === 0) {
             throw new Error(`Order ${orderId} not found`);
@@ -154,13 +169,15 @@ export class SupportActionsService {
                 name: order.customer_name,
                 phone: order.customer_phone
             },
-            payout: order.payout_id ? {
-                payout_id: order.payout_id,
-                status: order.payout_status,
-                amount: order.payout_amount,
-                sent_at: order.payout_sent_at,
-                confirmed_at: order.payout_confirmed_at
-            } : null,
+            payout: order.payout_id
+                ? {
+                      payout_id: order.payout_id,
+                      status: order.payout_status,
+                      amount: order.payout_amount,
+                      sent_at: order.payout_sent_at,
+                      confirmed_at: order.payout_confirmed_at
+                  }
+                : null,
             warrantyDaysRemaining: Math.max(0, WARRANTY_DAYS - daysSinceCompletion),
             isWithinWarranty: daysSinceCompletion <= WARRANTY_DAYS
         };
@@ -168,11 +185,11 @@ export class SupportActionsService {
 
     /**
      * REQUEST Refund (Support → Finance Approval Required)
-     * 
+     *
      * CRITICAL: Support agents can ONLY REQUEST refunds.
      * The refund is NOT processed immediately - creates a pending
      * record that Finance team must approve.
-     * 
+     *
      * Workflow:
      * 1. Support submits refund request → Creates 'pending' refund record
      * 2. Finance team sees it in their Pending Refunds queue
@@ -197,7 +214,7 @@ export class SupportActionsService {
             if (context.order.payment_status !== 'paid') {
                 throw new Error(
                     `Cannot request refund: Order payment status is '${context.order.payment_status}'. ` +
-                    `Only fully paid orders can be refunded.`
+                        `Only fully paid orders can be refunded.`
                 );
             }
 
@@ -206,7 +223,7 @@ export class SupportActionsService {
             if (!refundableStatuses.includes(context.order.order_status)) {
                 throw new Error(
                     `Cannot request refund: Order status is '${context.order.order_status}'. ` +
-                    `For orders not yet delivered, use 'Cancel Order' instead.`
+                        `For orders not yet delivered, use 'Cancel Order' instead.`
                 );
             }
 
@@ -214,8 +231,8 @@ export class SupportActionsService {
             if (!context.isWithinWarranty) {
                 throw new Error(
                     `Order past ${WARRANTY_DAYS}-day warranty period. ` +
-                    `Days since completion: ${Math.ceil(WARRANTY_DAYS - context.warrantyDaysRemaining)}. ` +
-                    `Please escalate to operations manager.`
+                        `Days since completion: ${Math.ceil(WARRANTY_DAYS - context.warrantyDaysRemaining)}. ` +
+                        `Please escalate to operations manager.`
                 );
             }
 
@@ -226,15 +243,17 @@ export class SupportActionsService {
             }
 
             // Check for existing pending refund request
-            const existingRefund = await client.query(`
+            const existingRefund = await client.query(
+                `
                 SELECT refund_id, refund_status FROM refunds 
                 WHERE order_id = $1 AND refund_status = 'pending'
-            `, [params.orderId]);
+            `,
+                [params.orderId]
+            );
 
             if (existingRefund.rows.length > 0) {
                 throw new Error(
-                    `A refund request is already pending for this order. ` +
-                    `Please wait for Finance team to review.`
+                    `A refund request is already pending for this order. ` + `Please wait for Finance team to review.`
                 );
             }
 
@@ -262,32 +281,34 @@ export class SupportActionsService {
 
             // Create PENDING refund request (Finance must approve)
             const idempotencyKey = `support_refund_req_${params.orderId}_${Date.now()}`;
-            const refundResult = await client.query(`
+            const refundResult = await client.query(
+                `
                 INSERT INTO refunds 
                 (order_id, customer_id, original_amount, refund_amount, fee_retained, delivery_fee_retained,
                  refund_reason, refund_status, initiated_by, refund_type, idempotency_key, payment_intent_id)
                 VALUES ($1, $2, $3, $4, $5, $6, $7, 'pending', 'support', 'support_refund_request', $8, $9)
                 RETURNING refund_id
-            `, [
-                params.orderId,
-                params.customerId,
-                refundCalc.originalAmount,
-                refundCalc.refundableAmount, // Stage-adjusted amount
-                refundCalc.platformFee,
-                refundCalc.deliveryFeeRetained,
-                `${params.reason} [Stage ${refundCalc.stage}: ${refundCalc.stageName}]`,
-                idempotencyKey,
-                paymentIntentId
-            ]);
+            `,
+                [
+                    params.orderId,
+                    params.customerId,
+                    refundCalc.originalAmount,
+                    refundCalc.refundableAmount, // Stage-adjusted amount
+                    refundCalc.platformFee,
+                    refundCalc.deliveryFeeRetained,
+                    `${params.reason} [Stage ${refundCalc.stage}: ${refundCalc.stageName}]`,
+                    idempotencyKey,
+                    paymentIntentId
+                ]
+            );
 
             const refundId = refundResult.rows[0]?.refund_id;
 
             // 3. Flag order and freeze payout while refund is pending
             // This prevents garage from getting paid for an order being refunded
-            await client.query(
-                `UPDATE orders SET payment_status = 'refund_pending' WHERE order_id = $1`,
-                [params.orderId]
-            );
+            await client.query(`UPDATE orders SET payment_status = 'refund_pending' WHERE order_id = $1`, [
+                params.orderId
+            ]);
 
             // Put garage payout on hold (if not already paid out)
             await client.query(
@@ -301,9 +322,12 @@ export class SupportActionsService {
 
             // 4. Ensure ticket exists and post action to timeline
             const ticketId = await this.ensureTicketForOrder(
-                params.orderId, params.customerId, params.agentId,
+                params.orderId,
+                params.customerId,
+                params.agentId,
                 `Refund Request — Order #${context.order.order_number}`,
-                'billing', client
+                'billing',
+                client
             );
 
             let ticketMessage = `🔄 **Refund Requested**\n\n`;
@@ -318,26 +342,29 @@ export class SupportActionsService {
             await this.postTicketUpdate(ticketId, params.agentId, ticketMessage, client);
 
             // 5. Log resolution (as REQUEST, not completed action)
-            await this.logResolution({
-                orderId: params.orderId,
-                customerId: params.customerId,
-                agentId: params.agentId,
-                actionType: 'refund_request',
-                actionDetails: {
-                    refund_id: refundId,
-                    original_amount: refundCalc.originalAmount,
-                    refundable_amount: refundCalc.refundableAmount,
-                    stage: refundCalc.stage,
-                    stage_name: refundCalc.stageName,
-                    fee_percentage: refundCalc.feePercentage,
-                    platform_fee: refundCalc.platformFee,
-                    delivery_fee_retained: refundCalc.deliveryFeeRetained,
-                    status: 'pending_finance_approval',
-                    warranty_days_remaining: context.warrantyDaysRemaining,
-                    ticket_id: ticketId
+            await this.logResolution(
+                {
+                    orderId: params.orderId,
+                    customerId: params.customerId,
+                    agentId: params.agentId,
+                    actionType: 'refund_request',
+                    actionDetails: {
+                        refund_id: refundId,
+                        original_amount: refundCalc.originalAmount,
+                        refundable_amount: refundCalc.refundableAmount,
+                        stage: refundCalc.stage,
+                        stage_name: refundCalc.stageName,
+                        fee_percentage: refundCalc.feePercentage,
+                        platform_fee: refundCalc.platformFee,
+                        delivery_fee_retained: refundCalc.deliveryFeeRetained,
+                        status: 'pending_finance_approval',
+                        warranty_days_remaining: context.warrantyDaysRemaining,
+                        ticket_id: ticketId
+                    },
+                    notes: params.reason
                 },
-                notes: params.reason
-            }, client);
+                client
+            );
 
             await client.query('COMMIT');
 
@@ -381,7 +408,11 @@ export class SupportActionsService {
             }
             message += `\nAwaiting Finance team approval.`;
 
-            logger.info('Refund request submitted', { orderNumber: context.order.order_number, amount: refundCalc.refundableAmount, stage: refundCalc.stage });
+            logger.info('Refund request submitted', {
+                orderNumber: context.order.order_number,
+                amount: refundCalc.refundableAmount,
+                stage: refundCalc.stage
+            });
 
             return {
                 success: true,
@@ -391,7 +422,6 @@ export class SupportActionsService {
                 refundId,
                 status: 'pending_finance_approval'
             };
-
         } catch (err: any) {
             await client.query('ROLLBACK');
             logger.error('Refund request error', { error: err.message });
@@ -431,9 +461,7 @@ export class SupportActionsService {
                         `Order already ${context.order.order_status}. Use "Full Refund" instead of cancel.`
                     );
                 }
-                throw new Error(
-                    `Cannot cancel order with status "${context.order.order_status}"`
-                );
+                throw new Error(`Cannot cancel order with status "${context.order.order_status}"`);
             }
 
             let payoutAction: any = null;
@@ -441,14 +469,17 @@ export class SupportActionsService {
 
             // Cancel any pending payout
             if (context.payout && ['pending', 'held', 'processing'].includes(context.payout.status)) {
-                await client.query(`
+                await client.query(
+                    `
                     UPDATE garage_payouts 
                     SET payout_status = 'cancelled',
                         cancellation_reason = $2,
                         cancelled_at = NOW(),
                         updated_at = NOW()
                     WHERE payout_id = $1
-                `, [context.payout.payout_id, `Order cancelled: ${params.reason}`]);
+                `,
+                    [context.payout.payout_id, `Order cancelled: ${params.reason}`]
+                );
 
                 payoutAction = { action: 'cancelled', payout_id: context.payout.payout_id };
             }
@@ -465,54 +496,73 @@ export class SupportActionsService {
 
             // Cancel driver assignment if exists
             if (context.order.driver_id) {
-                await client.query(`
+                await client.query(
+                    `
                     UPDATE delivery_assignments 
                     SET status = 'cancelled', 
                         cancellation_reason = $2,
                         updated_at = NOW()
                     WHERE order_id = $1 AND status NOT IN ('delivered', 'cancelled')
-                `, [params.orderId, params.reason]);
+                `,
+                    [params.orderId, params.reason]
+                );
             }
 
             // Update order status
-            await client.query(`
+            await client.query(
+                `
                 UPDATE orders SET 
                     order_status = 'cancelled_by_ops',
                     updated_at = NOW()
                 WHERE order_id = $1
-            `, [params.orderId]);
+            `,
+                [params.orderId]
+            );
 
             // Record history
-            await client.query(`
+            await client.query(
+                `
                 INSERT INTO order_status_history 
                 (order_id, old_status, new_status, changed_by, changed_by_type, reason)
                 VALUES ($1, $2, 'cancelled_by_ops', $3, 'support', $4)
-            `, [params.orderId, context.order.order_status, params.agentId, params.reason]);
+            `,
+                [params.orderId, context.order.order_status, params.agentId, params.reason]
+            );
 
             // Ensure ticket and post action to timeline
             const ticketId = await this.ensureTicketForOrder(
-                params.orderId, params.customerId, params.agentId,
+                params.orderId,
+                params.customerId,
+                params.agentId,
                 `Order Cancellation — Order #${context.order.order_number}`,
-                'billing', client
+                'billing',
+                client
             );
 
             let ticketMsg = `❌ **Order Cancelled**\n\n`;
             ticketMsg += `Order #${context.order.order_number}\n`;
             ticketMsg += `Reason: ${params.reason}\n`;
-            if (payoutAction) { ticketMsg += `Payout: Cancelled\n`; }
-            if (refundAction) { ticketMsg += `Refund: ${refundAction.amount} QAR initiated`; }
+            if (payoutAction) {
+                ticketMsg += `Payout: Cancelled\n`;
+            }
+            if (refundAction) {
+                ticketMsg += `Refund: ${refundAction.amount} QAR initiated`;
+            }
 
             await this.postTicketUpdate(ticketId, params.agentId, ticketMsg, client);
 
             // Log resolution
-            await this.logResolution({
-                orderId: params.orderId,
-                customerId: params.customerId,
-                agentId: params.agentId,
-                actionType: 'cancel_order',
-                actionDetails: { payout_action: payoutAction, refund_action: refundAction, ticket_id: ticketId },
-                notes: params.reason
-            }, client);
+            await this.logResolution(
+                {
+                    orderId: params.orderId,
+                    customerId: params.customerId,
+                    agentId: params.agentId,
+                    actionType: 'cancel_order',
+                    actionDetails: { payout_action: payoutAction, refund_action: refundAction, ticket_id: ticketId },
+                    notes: params.reason
+                },
+                client
+            );
 
             // Notify garage
             await this.notifyGarageCancellation(context, params.reason);
@@ -527,7 +577,6 @@ export class SupportActionsService {
                 payoutAction,
                 refundAction
             };
-
         } catch (err: any) {
             await client.query('ROLLBACK');
             logger.error('Cancel order error', { error: err.message });
@@ -565,43 +614,57 @@ export class SupportActionsService {
             }
 
             // Cancel current assignment
-            await client.query(`
+            await client.query(
+                `
                 UPDATE delivery_assignments 
                 SET status = 'reassignment_pending', 
                     reassignment_reason = $2,
                     updated_at = NOW()
                 WHERE order_id = $1 AND status NOT IN ('delivered', 'cancelled')
-            `, [params.orderId, params.reason]);
+            `,
+                [params.orderId, params.reason]
+            );
 
             // Clear driver from order
-            await client.query(`
+            await client.query(
+                `
                 UPDATE orders SET 
                     driver_id = NULL,
                     updated_at = NOW()
                 WHERE order_id = $1
-            `, [params.orderId]);
+            `,
+                [params.orderId]
+            );
 
             // Ensure ticket and post action to timeline
             const ticketId = await this.ensureTicketForOrder(
-                params.orderId, params.customerId, params.agentId,
+                params.orderId,
+                params.customerId,
+                params.agentId,
                 `Driver Reassignment — Order #${context.order.order_number}`,
-                'delivery', client
+                'delivery',
+                client
             );
 
-            await this.postTicketUpdate(ticketId, params.agentId,
+            await this.postTicketUpdate(
+                ticketId,
+                params.agentId,
                 `🔄 **Driver Reassignment Requested**\n\nOrder #${context.order.order_number}\nReason: ${params.reason}\nOps team has been notified.`,
                 client
             );
 
             // Log
-            await this.logResolution({
-                orderId: params.orderId,
-                customerId: params.customerId,
-                agentId: params.agentId,
-                actionType: 'reassign_driver',
-                actionDetails: { previous_driver_id: context.order.driver_id, ticket_id: ticketId },
-                notes: params.reason
-            }, client);
+            await this.logResolution(
+                {
+                    orderId: params.orderId,
+                    customerId: params.customerId,
+                    agentId: params.agentId,
+                    actionType: 'reassign_driver',
+                    actionDetails: { previous_driver_id: context.order.driver_id, ticket_id: ticketId },
+                    notes: params.reason
+                },
+                client
+            );
 
             // Notify ops team via socket
             const io = getIO();
@@ -622,7 +685,6 @@ export class SupportActionsService {
                 orderId: params.orderId,
                 message: `Driver reassignment requested for order ${context.order.order_number}. Operations team notified.`
             };
-
         } catch (err: any) {
             await client.query('ROLLBACK');
             return {
@@ -658,40 +720,51 @@ export class SupportActionsService {
 
             // Ensure ticket exists (escalation ALWAYS needs a ticket)
             const ticketId = await this.ensureTicketForOrder(
-                params.orderId, params.customerId, params.agentId,
-                `Escalation — Order #${context.order.order_number}`,
-                'billing', client
-            );
-
-            // Create escalation record linked to ticket
-            await client.query(`
-                INSERT INTO support_escalations 
-                (order_id, customer_id, escalated_by, reason, priority, status, ticket_id)
-                VALUES ($1, $2, $3, $4, $5, 'pending', $6)
-            `, [
                 params.orderId,
                 params.customerId,
                 params.agentId,
-                params.reason,
-                params.priority || 'normal',
-                ticketId
-            ]);
+                `Escalation — Order #${context.order.order_number}`,
+                'billing',
+                client
+            );
+
+            // Create escalation record linked to ticket
+            await client.query(
+                `
+                INSERT INTO support_escalations 
+                (order_id, customer_id, escalated_by, reason, priority, status, ticket_id)
+                VALUES ($1, $2, $3, $4, $5, 'pending', $6)
+            `,
+                [
+                    params.orderId,
+                    params.customerId,
+                    params.agentId,
+                    params.reason,
+                    params.priority || 'normal',
+                    ticketId
+                ]
+            );
 
             const priorityIcon = params.priority === 'urgent' ? '🔴' : params.priority === 'high' ? '🟠' : '🟡';
-            await this.postTicketUpdate(ticketId, params.agentId,
+            await this.postTicketUpdate(
+                ticketId,
+                params.agentId,
                 `${priorityIcon} **Escalated to Operations**\n\nOrder #${context.order.order_number}\nPriority: ${(params.priority || 'normal').toUpperCase()}\nReason: ${params.reason}`,
                 client
             );
 
             // Log
-            await this.logResolution({
-                orderId: params.orderId,
-                customerId: params.customerId,
-                agentId: params.agentId,
-                actionType: 'escalate_to_ops',
-                actionDetails: { priority: params.priority || 'normal', ticket_id: ticketId },
-                notes: params.reason
-            }, client);
+            await this.logResolution(
+                {
+                    orderId: params.orderId,
+                    customerId: params.customerId,
+                    agentId: params.agentId,
+                    actionType: 'escalate_to_ops',
+                    actionDetails: { priority: params.priority || 'normal', ticket_id: ticketId },
+                    notes: params.reason
+                },
+                client
+            );
 
             // Notify ops via socket
             const io = getIO();
@@ -715,7 +788,6 @@ export class SupportActionsService {
                 orderId: params.orderId,
                 message: `Order ${context.order.order_number} escalated to operations team`
             };
-
         } catch (err: any) {
             await client.query('ROLLBACK');
             return {
@@ -735,7 +807,8 @@ export class SupportActionsService {
     // ============================================
 
     private async getActionContextInternal(orderId: string, client: PoolClient): Promise<ActionContext> {
-        const result = await client.query(`
+        const result = await client.query(
+            `
             SELECT 
                 o.order_id, o.order_number, o.order_status, o.payment_status,
                 o.total_amount, o.part_price, o.delivery_fee, o.platform_fee,
@@ -753,7 +826,9 @@ export class SupportActionsService {
             LEFT JOIN garage_payouts gp ON o.order_id = gp.order_id
             WHERE o.order_id = $1
             FOR UPDATE OF o
-        `, [orderId]);
+        `,
+            [orderId]
+        );
 
         if (result.rows.length === 0) {
             throw new Error(`Order ${orderId} not found`);
@@ -769,13 +844,15 @@ export class SupportActionsService {
                 name: order.customer_name,
                 phone: order.customer_phone
             },
-            payout: order.payout_id ? {
-                payout_id: order.payout_id,
-                status: order.payout_status,
-                amount: order.payout_amount,
-                sent_at: order.payout_sent_at,
-                confirmed_at: order.payout_confirmed_at
-            } : null,
+            payout: order.payout_id
+                ? {
+                      payout_id: order.payout_id,
+                      status: order.payout_status,
+                      amount: order.payout_amount,
+                      sent_at: order.payout_sent_at,
+                      confirmed_at: order.payout_confirmed_at
+                  }
+                : null,
             warrantyDaysRemaining: Math.max(0, WARRANTY_DAYS - daysSinceCompletion),
             isWithinWarranty: daysSinceCompletion <= WARRANTY_DAYS
         };
@@ -787,31 +864,35 @@ export class SupportActionsService {
         reason: string,
         client: PoolClient
     ): Promise<{ action: string; payout_id: string; reversal_id?: string }> {
-
         const cancellableStatuses = ['pending', 'held', 'processing', 'awaiting_confirmation'];
 
         if (cancellableStatuses.includes(payout.status)) {
             // Cancel the payout
-            await client.query(`
+            await client.query(
+                `
                 UPDATE garage_payouts 
                 SET payout_status = 'cancelled',
                     cancellation_reason = $2,
                     cancelled_at = NOW(),
                     updated_at = NOW()
                 WHERE payout_id = $1
-            `, [payout.payout_id, `Refund: ${reason}`]);
+            `,
+                [payout.payout_id, `Refund: ${reason}`]
+            );
 
             logger.info('Cancelled payout', { payoutId: payout.payout_id });
             return { action: 'cancelled', payout_id: payout.payout_id };
-
         } else if (payout.status === 'confirmed' || payout.status === 'completed') {
             // Payout already sent - create a reversal
-            const reversalResult = await client.query(`
+            const reversalResult = await client.query(
+                `
                 INSERT INTO payout_reversals 
                 (garage_id, original_payout_id, amount, reason, status)
                 VALUES ($1, $2, $3, $4, 'pending')
                 RETURNING reversal_id
-            `, [garageId, payout.payout_id, payout.amount, `Refund: ${reason}`]);
+            `,
+                [garageId, payout.payout_id, payout.amount, `Refund: ${reason}`]
+            );
 
             const reversalId = reversalResult.rows[0].reversal_id;
             logger.info('Created reversal for payout', { payoutId: payout.payout_id });
@@ -861,14 +942,17 @@ export class SupportActionsService {
         const idempotencyKey = `support_refund_${order.order_id}_${Date.now()}`;
 
         // Record the refund in our database using the same schema as RefundService
-        const refundResult = await client.query(`
+        const refundResult = await client.query(
+            `
             INSERT INTO refunds 
             (order_id, customer_id, original_amount, refund_amount, refund_reason, 
              refund_status, initiated_by, refund_type, idempotency_key)
             VALUES ($1, $2, $3, $4, $5, 'pending', 'support', 'support_refund', $6)
             ON CONFLICT (order_id, refund_type) DO NOTHING
             RETURNING refund_id
-        `, [order.order_id, order.customer_id, order.total_amount, amount, reason, idempotencyKey]);
+        `,
+            [order.order_id, order.customer_id, order.total_amount, amount, reason, idempotencyKey]
+        );
 
         // Handle duplicate refund attempt
         if (refundResult.rows.length === 0) {
@@ -889,62 +973,79 @@ export class SupportActionsService {
                     apiVersion: '2025-12-15.clover'
                 });
 
-                const stripeRefund = await stripe.refunds.create({
-                    payment_intent: paymentIntentId,
-                    amount: Math.round(amount * 100), // cents
-                    metadata: {
-                        order_id: order.order_id,
-                        order_number: order.order_number,
-                        reason: 'support_refund',
-                        refund_id: refundId
+                const stripeRefund = await stripe.refunds.create(
+                    {
+                        payment_intent: paymentIntentId,
+                        amount: Math.round(amount * 100), // cents
+                        metadata: {
+                            order_id: order.order_id,
+                            order_number: order.order_number,
+                            reason: 'support_refund',
+                            refund_id: refundId
+                        }
+                    },
+                    {
+                        idempotencyKey // G-04 FIX: Stripe-level idempotency
                     }
-                }, {
-                    idempotencyKey // G-04 FIX: Stripe-level idempotency
-                });
+                );
 
                 stripeRefundId = stripeRefund.id;
                 logger.info('Stripe refund executed', { stripeRefundId, amount });
 
                 // Mark refund as completed
-                await client.query(`
+                await client.query(
+                    `
                     UPDATE refunds SET 
                         refund_status = 'completed',
                         stripe_refund_id = $2,
                         processed_at = NOW()
                     WHERE refund_id = $1
-                `, [refundId, stripeRefundId]);
+                `,
+                    [refundId, stripeRefundId]
+                );
 
                 // Update order payment status
-                await client.query(`
+                await client.query(
+                    `
                     UPDATE orders SET payment_status = 'refunded', updated_at = NOW() WHERE order_id = $1
-                `, [order.order_id]);
-
+                `,
+                    [order.order_id]
+                );
             } catch (stripeError: any) {
                 logger.error('Stripe refund failed', { orderNumber: order.order_number, error: stripeError.message });
 
                 // Mark refund as failed but don't throw - let transaction complete
-                await client.query(`
+                await client.query(
+                    `
                     UPDATE refunds SET 
                         refund_status = 'failed',
                         refund_reason = refund_reason || ' [Stripe Error: ' || $2 || ']'
                     WHERE refund_id = $1
-                `, [refundId, stripeError.message]);
+                `,
+                    [refundId, stripeError.message]
+                );
 
                 // Still mark order as needing attention
-                await client.query(`
+                await client.query(
+                    `
                     UPDATE orders SET payment_status = 'refund_failed', updated_at = NOW() WHERE order_id = $1
-                `, [order.order_id]);
+                `,
+                    [order.order_id]
+                );
             }
         } else {
             // No payment intent - mark for manual processing
             logger.warn('No payment intent found - manual processing required', { orderNumber: order.order_number });
 
-            await client.query(`
+            await client.query(
+                `
                 UPDATE refunds SET 
                     refund_status = 'pending',
                     refund_reason = refund_reason || ' [Manual processing required - no payment intent]'
                 WHERE refund_id = $1
-            `, [refundId]);
+            `,
+                [refundId]
+            );
         }
 
         return {
@@ -954,26 +1055,32 @@ export class SupportActionsService {
         };
     }
 
-    private async logResolution(params: {
-        orderId: string | null;
-        customerId: string;
-        agentId: string;
-        actionType: string;
-        actionDetails: any;
-        notes: string;
-    }, client: PoolClient): Promise<void> {
-        await client.query(`
+    private async logResolution(
+        params: {
+            orderId: string | null;
+            customerId: string;
+            agentId: string;
+            actionType: string;
+            actionDetails: any;
+            notes: string;
+        },
+        client: PoolClient
+    ): Promise<void> {
+        await client.query(
+            `
             INSERT INTO resolution_logs 
             (order_id, customer_id, agent_id, action_type, action_details, notes)
             VALUES ($1, $2, $3, $4, $5, $6)
-        `, [
-            params.orderId,
-            params.customerId,
-            params.agentId,
-            params.actionType,
-            JSON.stringify(params.actionDetails),
-            params.notes
-        ]);
+        `,
+            [
+                params.orderId,
+                params.customerId,
+                params.agentId,
+                params.actionType,
+                JSON.stringify(params.actionDetails),
+                params.notes
+            ]
+        );
     }
 
     private async notifyRefund(context: ActionContext, reason: string): Promise<void> {

@@ -1,4 +1,3 @@
-
 import { Response } from 'express';
 import { AuthRequest } from '../middleware/auth.middleware';
 import { driverService } from '../services/driver.service';
@@ -45,8 +44,7 @@ interface ToggleAvailabilityBody {
 
 type JsonRecord = Record<string, unknown>;
 
-const isRecord = (value: unknown): value is JsonRecord =>
-    typeof value === 'object' && value !== null;
+const isRecord = (value: unknown): value is JsonRecord => typeof value === 'object' && value !== null;
 
 const toStringValue = (value: unknown): string | undefined => {
     if (typeof value === 'string') {
@@ -202,11 +200,7 @@ export const rejectAssignment = async (req: AuthRequest, res: Response) => {
     const rejectionReason = toStringValue(body.rejection_reason);
 
     try {
-        const result = await driverService.rejectAssignment(
-            userId,
-            assignmentId,
-            rejectionReason
-        );
+        const result = await driverService.rejectAssignment(userId, assignmentId, rejectionReason);
 
         const io = getIO();
         if (io) {
@@ -258,14 +252,7 @@ export const updateMyLocation = async (req: AuthRequest, res: Response) => {
     }
 
     try {
-        const result = await driverService.updateMyLocation(
-            userId,
-            lat,
-            lng,
-            accuracy,
-            heading,
-            speed
-        );
+        const result = await driverService.updateMyLocation(userId, lat, lng, accuracy, heading, speed);
         res.json(result);
     } catch (err) {
         const errorMessage = logControllerError('updateMyLocation Error', err);
@@ -301,13 +288,7 @@ export const updateAssignmentStatus = async (req: AuthRequest, res: Response) =>
     }
 
     try {
-        const result = await driverService.updateAssignmentStatus(
-            userId,
-            assignmentId,
-            status,
-            notes,
-            failureReason
-        );
+        const result = await driverService.updateAssignmentStatus(userId, assignmentId, status, notes, failureReason);
         res.json(result);
     } catch (err) {
         const errorMessage = logControllerError('updateAssignmentStatus Error', err);

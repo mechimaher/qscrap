@@ -10,7 +10,7 @@ import { API_BASE_URL, API_ENDPOINTS } from '../config/api';
 jest.mock('../utils/logger', () => ({
     log: jest.fn(),
     warn: jest.fn(),
-    error: jest.fn(),
+    error: jest.fn()
 }));
 
 import { api } from '../services/api';
@@ -21,7 +21,7 @@ const mockFetch = (data: any) => {
         ok: true,
         status: 200,
         json: jest.fn().mockResolvedValue(data),
-        headers: new Map([['content-type', 'application/json']]),
+        headers: new Map([['content-type', 'application/json']])
     });
 };
 
@@ -66,8 +66,8 @@ describe('Integration: Critical User Flows', () => {
                 request: { request_id: 'req-1', status: 'active' },
                 bids: [
                     { bid_id: 'bid-1', bid_amount: 100, garage_name: 'Test Garage' },
-                    { bid_id: 'bid-2', bid_amount: 150, garage_name: 'Other Garage' },
-                ],
+                    { bid_id: 'bid-2', bid_amount: 150, garage_name: 'Other Garage' }
+                ]
             });
             const reqResult = await api.getRequestDetails('req-1');
             expect(reqResult.bids).toHaveLength(2);
@@ -83,8 +83,8 @@ describe('Integration: Critical User Flows', () => {
                 order: {
                     order_id: 'order-1',
                     order_status: 'pending_payment',
-                    total_amount: 125,
-                },
+                    total_amount: 125
+                }
             });
             const orderResult = await api.getOrderDetails('order-1');
             expect(orderResult.order.order_status).toBe('pending_payment');
@@ -107,7 +107,14 @@ describe('Integration: Critical User Flows', () => {
             mockFetch({
                 success: true,
                 intent: { id: 'pi_test_123', clientSecret: 'pi_test_123_secret_xxx', amount: 2500, currency: 'qar' },
-                breakdown: { partPrice: 100, deliveryFee: 25, loyaltyDiscount: 0, originalTotal: 125, codAmount: 100, total: 25 },
+                breakdown: {
+                    partPrice: 100,
+                    deliveryFee: 25,
+                    loyaltyDiscount: 0,
+                    originalTotal: 125,
+                    codAmount: 100,
+                    total: 25
+                }
             });
             const intentResult = await api.createDeliveryFeeIntent('order-1', 0);
             expect(intentResult.intent.clientSecret).toBeTruthy();
@@ -124,8 +131,8 @@ describe('Integration: Critical User Flows', () => {
                     order_id: 'order-1',
                     order_status: 'confirmed',
                     deposit_status: 'paid',
-                    total_amount: 125,
-                },
+                    total_amount: 125
+                }
             });
             const orderResult = await api.getOrderDetails('order-1');
             expect(orderResult.order.order_status).toBe('confirmed');
@@ -155,8 +162,8 @@ describe('Integration: Critical User Flows', () => {
                     order_id: 'order-2',
                     order_status: 'confirmed',
                     total_amount: 125,
-                    loyalty_discount: 125,
-                },
+                    loyalty_discount: 125
+                }
             });
             const orderResult = await api.getOrderDetails('order-2');
             expect(orderResult.order.order_status).toBe('confirmed');
@@ -182,7 +189,7 @@ describe('Integration: Critical User Flows', () => {
                 part_quality_rating: 5,
                 communication_rating: 4,
                 delivery_rating: 5,
-                review_text: 'Excellent service!',
+                review_text: 'Excellent service!'
             });
             expect(reviewResult.success).toBe(true);
 
@@ -204,7 +211,7 @@ describe('Integration: Critical User Flows', () => {
                 canCancel: true,
                 refund_amount: 100,
                 penalty_fee: 0,
-                stage: 'before_pickup',
+                stage: 'before_pickup'
             });
             const preview = await api.getCancellationPreview('order-123');
             expect(preview.canCancel).toBe(true);
@@ -234,7 +241,7 @@ describe('Integration: Critical User Flows', () => {
                 return_fee: 15,
                 delivery_fee_retained: 25,
                 refund_amount: 60,
-                days_remaining: 5,
+                days_remaining: 5
             });
             const preview = await api.getReturnPreview('order-123');
             expect(preview.can_return).toBe(true);
@@ -245,12 +252,12 @@ describe('Integration: Critical User Flows', () => {
                 success: true,
                 return_id: 'return-1',
                 refund_amount: 60,
-                message: 'Return request created',
+                message: 'Return request created'
             });
             const returnResult = await api.createReturnRequest('order-123', {
                 reason: 'wrong_part',
                 photo_urls: ['photo1.jpg'],
-                condition_description: 'Part does not fit',
+                condition_description: 'Part does not fit'
             });
             expect(returnResult.success).toBe(true);
         });
@@ -270,14 +277,14 @@ describe('Integration: Critical User Flows', () => {
             mockFetch({ success: true, counter_offer_id: 'co-1' });
             await api.request(API_ENDPOINTS.COUNTER_OFFER('bid-1'), {
                 method: 'POST',
-                body: JSON.stringify({ counter_amount: 80 }),
+                body: JSON.stringify({ counter_amount: 80 })
             });
 
             // Step 3: Respond to garage counter
             mockFetch({ success: true, message: 'Accepted' });
             await api.request(API_ENDPOINTS.RESPOND_TO_COUNTER('co-1'), {
                 method: 'POST',
-                body: JSON.stringify({ action: 'accept' }),
+                body: JSON.stringify({ action: 'accept' })
             });
 
             expect(global.fetch).toHaveBeenCalledTimes(3);
@@ -293,8 +300,8 @@ describe('Integration: Critical User Flows', () => {
             mockFetch({
                 notifications: [
                     { notification_id: 'n1', is_read: false, title: 'New bid' },
-                    { notification_id: 'n2', is_read: false, title: 'Order update' },
-                ],
+                    { notification_id: 'n2', is_read: false, title: 'Order update' }
+                ]
             });
             const notifs = await api.getNotifications();
             expect(notifs.notifications).toHaveLength(2);
@@ -326,7 +333,7 @@ describe('Integration: Critical User Flows', () => {
                 label: 'Home',
                 address_text: 'West Bay, Doha',
                 latitude: 25.3548,
-                longitude: 51.1839,
+                longitude: 51.1839
             });
             expect(created.address.label).toBe('Home');
 
@@ -357,7 +364,7 @@ describe('Integration: Critical User Flows', () => {
             const added = await api.addVehicle({
                 car_make: 'Toyota',
                 car_model: 'Camry',
-                car_year: 2024,
+                car_year: 2024
             });
             expect(added.success).toBe(true);
 
@@ -391,9 +398,9 @@ describe('Integration: Critical User Flows', () => {
                         type: 'active_orders',
                         count: 2,
                         message: 'You have 2 active orders',
-                        action: 'Complete or cancel your orders',
-                    },
-                ],
+                        action: 'Complete or cancel your orders'
+                    }
+                ]
             });
             const eligibility = await api.checkDeletionEligibility();
             expect(eligibility.canDelete).toBe(false);

@@ -1,14 +1,6 @@
 // HeroRequestCard - Premium header component for request details
 import React, { useState, useRef, useEffect, useCallback } from 'react';
-import {
-    View,
-    Text,
-    StyleSheet,
-    ScrollView,
-    TouchableOpacity,
-    Animated,
-    Easing,
-} from 'react-native';
+import { View, Text, StyleSheet, ScrollView, TouchableOpacity, Animated, Easing } from 'react-native';
 import { Image } from 'expo-image';
 import { LinearGradient } from 'expo-linear-gradient';
 import { Request } from '../../services/api';
@@ -77,14 +69,14 @@ const HeroRequestCard = ({
                         toValue: 1,
                         duration: 1500,
                         easing: Easing.inOut(Easing.ease),
-                        useNativeDriver: true,
+                        useNativeDriver: true
                     }),
                     Animated.timing(pulseAnim, {
                         toValue: 0,
                         duration: 1500,
                         easing: Easing.inOut(Easing.ease),
-                        useNativeDriver: true,
-                    }),
+                        useNativeDriver: true
+                    })
                 ])
             ).start();
         }
@@ -92,18 +84,25 @@ const HeroRequestCard = ({
 
     const getStatusConfig = (status: string) => {
         switch (status) {
-            case 'active': return { color: '#22C55E', bg: '#DCFCE7', icon: 'ellipse' as const, label: t('status.active') };
-            case 'accepted': return { color: '#3B82F6', bg: '#DBEAFE', icon: 'checkmark' as const, label: t('status.accepted') };
-            case 'expired': return { color: '#9CA3AF', bg: '#F3F4F6', icon: 'time-outline' as const, label: t('status.expired') };
-            default: return { color: '#6B7280', bg: '#F3F4F6', icon: 'ellipse' as const, label: status };
+            case 'active':
+                return { color: '#22C55E', bg: '#DCFCE7', icon: 'ellipse' as const, label: t('status.active') };
+            case 'accepted':
+                return { color: '#3B82F6', bg: '#DBEAFE', icon: 'checkmark' as const, label: t('status.accepted') };
+            case 'expired':
+                return { color: '#9CA3AF', bg: '#F3F4F6', icon: 'time-outline' as const, label: t('status.expired') };
+            default:
+                return { color: '#6B7280', bg: '#F3F4F6', icon: 'ellipse' as const, label: status };
         }
     };
 
     const getUrgencyColor = (urgency: string) => {
         switch (urgency) {
-            case 'critical': return '#EF4444';
-            case 'warning': return '#F59E0B';
-            default: return '#22C55E';
+            case 'critical':
+                return '#EF4444';
+            case 'warning':
+                return '#F59E0B';
+            default:
+                return '#22C55E';
         }
     };
 
@@ -112,7 +111,7 @@ const HeroRequestCard = ({
 
     const pulseOpacity = pulseAnim.interpolate({
         inputRange: [0, 1],
-        outputRange: [0.6, 1],
+        outputRange: [0.6, 1]
     });
 
     return (
@@ -122,28 +121,32 @@ const HeroRequestCard = ({
         >
             {/* Status Badge */}
             <View style={[styles.heroHeader, { flexDirection: rtlFlexDirection(isRTL) }]}>
-                <Animated.View style={[
-                    styles.heroStatusBadge,
-                    { backgroundColor: statusConfig.bg },
-                    isActive && { opacity: pulseOpacity }
-                ]}>
-                    <Ionicons name={statusConfig.icon} size={12} color={statusConfig.color} style={{ marginRight: Spacing.xs }} />
-                    <Text style={[styles.heroStatusText, { color: statusConfig.color }]}>
-                        {statusConfig.label}
-                    </Text>
+                <Animated.View
+                    style={[
+                        styles.heroStatusBadge,
+                        { backgroundColor: statusConfig.bg },
+                        isActive && { opacity: pulseOpacity }
+                    ]}
+                >
+                    <Ionicons
+                        name={statusConfig.icon}
+                        size={12}
+                        color={statusConfig.color}
+                        style={{ marginRight: Spacing.xs }}
+                    />
+                    <Text style={[styles.heroStatusText, { color: statusConfig.color }]}>{statusConfig.label}</Text>
                 </Animated.View>
 
                 {/* Countdown Timer */}
                 {isActive && timeRemaining && (
-                    <View style={[
-                        styles.countdownBadge,
-                        { backgroundColor: getUrgencyColor(timeRemaining.urgency) + '20' }
-                    ]}>
+                    <View
+                        style={[
+                            styles.countdownBadge,
+                            { backgroundColor: getUrgencyColor(timeRemaining.urgency) + '20' }
+                        ]}
+                    >
                         <Text style={styles.countdownIcon}>⏱</Text>
-                        <Text style={[
-                            styles.countdownText,
-                            { color: getUrgencyColor(timeRemaining.urgency) }
-                        ]}>
+                        <Text style={[styles.countdownText, { color: getUrgencyColor(timeRemaining.urgency) }]}>
                             {timeRemaining.text}
                         </Text>
                     </View>
@@ -152,12 +155,31 @@ const HeroRequestCard = ({
 
             {/* Car Info */}
             <View style={[styles.heroCarInfo, { flexDirection: rtlFlexDirection(isRTL) }]}>
-                <Ionicons name="car-sport" size={48} color={isActive ? '#C9A227' : Colors.primary} style={isRTL ? { marginLeft: Spacing.md, marginRight: 0 } : { marginRight: Spacing.md, marginLeft: 0 }} />
+                <Ionicons
+                    name="car-sport"
+                    size={48}
+                    color={isActive ? '#C9A227' : Colors.primary}
+                    style={
+                        isRTL ? { marginLeft: Spacing.md, marginRight: 0 } : { marginRight: Spacing.md, marginLeft: 0 }
+                    }
+                />
                 <View style={styles.heroCarDetails}>
-                    <Text style={[styles.heroCarName, !isActive && { color: '#1a1a1a' }, { textAlign: rtlTextAlign(isRTL) }]}>
+                    <Text
+                        style={[
+                            styles.heroCarName,
+                            !isActive && { color: '#1a1a1a' },
+                            { textAlign: rtlTextAlign(isRTL) }
+                        ]}
+                    >
                         {request.car_make} {request.car_model}
                     </Text>
-                    <Text style={[styles.heroCarYear, !isActive && { color: Colors.primary }, { textAlign: rtlTextAlign(isRTL) }]}>
+                    <Text
+                        style={[
+                            styles.heroCarYear,
+                            !isActive && { color: Colors.primary },
+                            { textAlign: rtlTextAlign(isRTL) }
+                        ]}
+                    >
                         {request.car_year}
                     </Text>
                 </View>
@@ -173,17 +195,36 @@ const HeroRequestCard = ({
                 </Text>
                 {request.part_category ? (
                     <>
-                        <Text style={[styles.heroPartDescription, !isActive && { color: '#1a1a1a' }, { textAlign: rtlTextAlign(isRTL) }]}>
-                            {request.part_category}{(request as any).part_subcategory ? ` > ${(request as any).part_subcategory}` : ''}
+                        <Text
+                            style={[
+                                styles.heroPartDescription,
+                                !isActive && { color: '#1a1a1a' },
+                                { textAlign: rtlTextAlign(isRTL) }
+                            ]}
+                        >
+                            {request.part_category}
+                            {(request as any).part_subcategory ? ` > ${(request as any).part_subcategory}` : ''}
                         </Text>
                         {request.part_description && request.part_description !== request.part_category && (
-                            <Text style={[styles.heroPartNotes, !isActive && { color: '#525252' }, { textAlign: rtlTextAlign(isRTL) }]}>
+                            <Text
+                                style={[
+                                    styles.heroPartNotes,
+                                    !isActive && { color: '#525252' },
+                                    { textAlign: rtlTextAlign(isRTL) }
+                                ]}
+                            >
                                 {request.part_description}
                             </Text>
                         )}
                     </>
                 ) : (
-                    <Text style={[styles.heroPartDescription, !isActive && { color: '#1a1a1a' }, { textAlign: rtlTextAlign(isRTL) }]}>
+                    <Text
+                        style={[
+                            styles.heroPartDescription,
+                            !isActive && { color: '#1a1a1a' },
+                            { textAlign: rtlTextAlign(isRTL) }
+                        ]}
+                    >
                         {request.part_description}
                     </Text>
                 )}
@@ -194,16 +235,44 @@ const HeroRequestCard = ({
                 <View style={[styles.heroMetaRow, { flexDirection: rtlFlexDirection(isRTL) }]}>
                     {request.part_number && (
                         <View style={styles.heroMetaItem}>
-                            <Text style={[styles.heroMetaLabel, !isActive && { color: '#737373' }, { textAlign: rtlTextAlign(isRTL) }]}>{t('requestDetail.partNumber')}</Text>
-                            <Text style={[styles.heroMetaValue, !isActive && { color: '#1a1a1a' }, { textAlign: rtlTextAlign(isRTL) }]}>
+                            <Text
+                                style={[
+                                    styles.heroMetaLabel,
+                                    !isActive && { color: '#737373' },
+                                    { textAlign: rtlTextAlign(isRTL) }
+                                ]}
+                            >
+                                {t('requestDetail.partNumber')}
+                            </Text>
+                            <Text
+                                style={[
+                                    styles.heroMetaValue,
+                                    !isActive && { color: '#1a1a1a' },
+                                    { textAlign: rtlTextAlign(isRTL) }
+                                ]}
+                            >
                                 {request.part_number}
                             </Text>
                         </View>
                     )}
                     {request.vin_number && (
                         <View style={styles.heroMetaItem}>
-                            <Text style={[styles.heroMetaLabel, !isActive && { color: '#737373' }, { textAlign: rtlTextAlign(isRTL) }]}>{t('common.vin')}</Text>
-                            <Text style={[styles.heroMetaValue, !isActive && { color: '#1a1a1a' }, { textAlign: rtlTextAlign(isRTL) }]}>
+                            <Text
+                                style={[
+                                    styles.heroMetaLabel,
+                                    !isActive && { color: '#737373' },
+                                    { textAlign: rtlTextAlign(isRTL) }
+                                ]}
+                            >
+                                {t('common.vin')}
+                            </Text>
+                            <Text
+                                style={[
+                                    styles.heroMetaValue,
+                                    !isActive && { color: '#1a1a1a' },
+                                    { textAlign: rtlTextAlign(isRTL) }
+                                ]}
+                            >
                                 {request.vin_number}
                             </Text>
                         </View>
@@ -220,7 +289,7 @@ const HeroRequestCard = ({
                             <TouchableOpacity
                                 key={index}
                                 onPress={() => {
-                                    const images = request.image_urls!.map(u =>
+                                    const images = request.image_urls!.map((u) =>
                                         u.startsWith('http') ? u : `${UPLOAD_BASE_URL}${u}`
                                     );
                                     onImagePress(images, index);
@@ -237,7 +306,13 @@ const HeroRequestCard = ({
             {/* Vehicle ID Photos */}
             {((request as any).car_front_image_url || (request as any).car_rear_image_url) && (
                 <>
-                    <Text style={[styles.heroLabel, !isActive && { color: '#525252' }, { textAlign: rtlTextAlign(isRTL) }]}>
+                    <Text
+                        style={[
+                            styles.heroLabel,
+                            !isActive && { color: '#525252' },
+                            { textAlign: rtlTextAlign(isRTL) }
+                        ]}
+                    >
                         {t('newRequest.vehicleIdPhotos')}
                     </Text>
                     <ScrollView horizontal showsHorizontalScrollIndicator={false} style={styles.heroImages}>
@@ -297,20 +372,20 @@ const styles = StyleSheet.create({
         margin: Spacing.lg,
         borderRadius: BorderRadius.xl,
         padding: Spacing.lg,
-        ...Shadows.lg,
+        ...Shadows.lg
     },
     heroHeader: {
         flexDirection: 'row',
         justifyContent: 'space-between',
         alignItems: 'center',
-        marginBottom: Spacing.lg,
+        marginBottom: Spacing.lg
     },
     heroStatusBadge: {
         flexDirection: 'row',
         alignItems: 'center',
         paddingHorizontal: Spacing.md,
         paddingVertical: Spacing.xs,
-        borderRadius: BorderRadius.full,
+        borderRadius: BorderRadius.full
     },
     heroStatusIcon: { fontSize: 12, marginRight: Spacing.xs },
     heroStatusText: { fontSize: FontSizes.sm, fontWeight: '700' },
@@ -319,7 +394,7 @@ const styles = StyleSheet.create({
         alignItems: 'center',
         paddingHorizontal: Spacing.md,
         paddingVertical: Spacing.xs,
-        borderRadius: BorderRadius.full,
+        borderRadius: BorderRadius.full
     },
     countdownIcon: { fontSize: 12, marginRight: 4 },
     countdownText: { fontSize: FontSizes.sm, fontWeight: '700' },
@@ -335,7 +410,7 @@ const styles = StyleSheet.create({
         fontWeight: '700',
         color: 'rgba(255,255,255,0.6)',
         letterSpacing: 1,
-        marginBottom: Spacing.xs,
+        marginBottom: Spacing.xs
     },
     heroPartDescription: { fontSize: FontSizes.lg, color: '#fff', lineHeight: 24 },
     heroPartNotes: { fontSize: FontSizes.sm, color: 'rgba(255,255,255,0.7)', marginTop: Spacing.xs, lineHeight: 20 },
@@ -358,8 +433,8 @@ const styles = StyleSheet.create({
         textAlign: 'center',
         letterSpacing: 0.3,
         borderBottomLeftRadius: BorderRadius.md,
-        borderBottomRightRadius: BorderRadius.md,
-    },
+        borderBottomRightRadius: BorderRadius.md
+    }
 });
 
 export default HeroRequestCard;

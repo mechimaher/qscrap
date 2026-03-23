@@ -25,8 +25,22 @@ router.post('/request-quote', authenticate, showcaseController.requestQuoteFromS
 // GARAGE ENDPOINTS (Enterprise Only)
 // ============================================
 router.get('/garage', authenticate, requireRole('garage'), showcaseController.getMyShowcaseParts);
-router.post('/garage', authenticate, requireRole('garage'), upload.array('images', 5), optimizeFiles, showcaseController.addGaragePart);
-router.put('/garage/:id', authenticate, requireRole('garage'), upload.array('images', 5), optimizeFiles, showcaseController.updateGaragePart);
+router.post(
+    '/garage',
+    authenticate,
+    requireRole('garage'),
+    upload.array('images', 5),
+    optimizeFiles,
+    showcaseController.addGaragePart
+);
+router.put(
+    '/garage/:id',
+    authenticate,
+    requireRole('garage'),
+    upload.array('images', 5),
+    optimizeFiles,
+    showcaseController.updateGaragePart
+);
 router.delete('/garage/:id', authenticate, requireRole('garage'), showcaseController.deleteGaragePart);
 router.post('/garage/:id/toggle', authenticate, requireRole('garage'), showcaseController.togglePartStatus);
 

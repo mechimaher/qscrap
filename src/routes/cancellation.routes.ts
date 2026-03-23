@@ -70,4 +70,3 @@ router.get('/abuse-status/lookup', authenticate, getCustomerAbuseStatusByAgent);
 router.get('/history', authenticate, getCancellationHistory);
 
 export default router;
-

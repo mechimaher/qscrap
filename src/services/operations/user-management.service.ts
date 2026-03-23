@@ -6,7 +6,7 @@ import { Pool } from 'pg';
 import { UserFilters, PaginationMetadata } from './types';
 
 export class UserManagementService {
-    constructor(private pool: Pool) { }
+    constructor(private pool: Pool) {}
 
     /**
      * Get users (customers or garages) with pagination
@@ -105,7 +105,8 @@ export class UserManagementService {
      * Get single user details
      */
     async getUserDetails(userId: string): Promise<any> {
-        const result = await this.pool.query(`
+        const result = await this.pool.query(
+            `
             SELECT u.*, 
                    g.garage_name, g.license_number, g.commercial_reg as cr_number,
                    (SELECT COUNT(*) FROM orders WHERE customer_id = u.user_id) as customer_orders,
@@ -115,7 +116,9 @@ export class UserManagementService {
             FROM users u
             LEFT JOIN garages g ON u.user_id = g.garage_id
             WHERE u.user_id = $1
-        `, [userId]);
+        `,
+            [userId]
+        );
 
         if (result.rows.length === 0) {
             throw new Error('User not found');
@@ -128,9 +131,12 @@ export class UserManagementService {
      * Suspend user
      */
     async suspendUser(userId: string, reason: string): Promise<void> {
-        await this.pool.query(`
+        await this.pool.query(
+            `
             UPDATE users SET is_active = false, updated_at = NOW() WHERE user_id = $1
-        `, [userId]);
+        `,
+            [userId]
+        );
 
         // LOG SUSPENSION (Institutional Mandate)
         console.log(`[USER_MGMT] User ${userId} suspended. Reason: ${reason}`);
@@ -140,9 +146,12 @@ export class UserManagementService {
      * Activate user
      */
     async activateUser(userId: string): Promise<void> {
-        await this.pool.query(`
+        await this.pool.query(
+            `
             UPDATE users SET is_active = true, updated_at = NOW() WHERE user_id = $1
-        `, [userId]);
+        `,
+            [userId]
+        );
     }
 
     /**

@@ -33,13 +33,12 @@ export const checkExpiringRequests = async (): Promise<number> => {
         `);
 
         for (const request of result.rows) {
-            const hoursLeft = Math.round(
-                (new Date(request.expires_at).getTime() - Date.now()) / (1000 * 60 * 60)
-            );
+            const hoursLeft = Math.round((new Date(request.expires_at).getTime() - Date.now()) / (1000 * 60 * 60));
 
-            const bidMessage = request.bid_count > 0
-                ? `${request.bid_count} bid${request.bid_count > 1 ? 's' : ''} waiting!`
-                : 'No bids yet.';
+            const bidMessage =
+                request.bid_count > 0
+                    ? `${request.bid_count} bid${request.bid_count > 1 ? 's' : ''} waiting!`
+                    : 'No bids yet.';
 
             await createNotification({
                 userId: request.customer_id,

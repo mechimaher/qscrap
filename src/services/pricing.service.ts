@@ -42,8 +42,12 @@ async function getPriceStatistics(
         `;
 
         const params: any[] = [partName];
-        if (vehicleMake) {params.push(vehicleMake);}
-        if (vehicleModel) {params.push(vehicleModel);}
+        if (vehicleMake) {
+            params.push(vehicleMake);
+        }
+        if (vehicleModel) {
+            params.push(vehicleModel);
+        }
 
         const result = await readPool.query(query, params);
 

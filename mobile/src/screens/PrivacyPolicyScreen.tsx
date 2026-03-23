@@ -1,13 +1,5 @@
 import React from 'react';
-import {
-    View,
-    Text,
-    StyleSheet,
-    TouchableOpacity,
-    ScrollView,
-    Dimensions,
-    StatusBar,
-} from 'react-native';
+import { View, Text, StyleSheet, TouchableOpacity, ScrollView, Dimensions, StatusBar } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { Ionicons } from '@expo/vector-icons';
 import { LinearGradient } from 'expo-linear-gradient';
@@ -40,7 +32,8 @@ const SECTIONS_EN: Section[] = [
         num: 1,
         title: 'Introduction',
         icon: 'globe',
-        content: 'This Privacy Policy explains how QScrap ("we", "our", or "the Platform") collects, uses, stores, and protects personal data when you use our mobile applications, website, and related services.\nBy using the Platform, you acknowledge that your personal data will be processed in accordance with this Policy and applicable law.',
+        content:
+            'This Privacy Policy explains how QScrap ("we", "our", or "the Platform") collects, uses, stores, and protects personal data when you use our mobile applications, website, and related services.\nBy using the Platform, you acknowledge that your personal data will be processed in accordance with this Policy and applicable law.'
     },
     {
         num: 2,
@@ -55,22 +48,23 @@ const SECTIONS_EN: Section[] = [
                     'Vehicle information and service requests',
                     'Payment identifiers necessary to complete transactions',
                     'Location information, including delivery address and saved locations',
-                    'Communications with customer support',
-                ],
+                    'Communications with customer support'
+                ]
             },
             {
                 title: '2.2 Information Collected Automatically',
                 items: [
                     'Device type, operating system, and unique identifiers',
                     'Log data, app usage analytics, and performance diagnostics',
-                    'Push notification tokens',
-                ],
+                    'Push notification tokens'
+                ]
             },
             {
                 title: '2.3 Location Data',
-                content: 'Location services are used to enable delivery, garage matching, and order tracking. You may disable location permissions at any time through your device settings; however, doing so may prevent essential Platform functionality.',
+                content:
+                    'Location services are used to enable delivery, garage matching, and order tracking. You may disable location permissions at any time through your device settings; however, doing so may prevent essential Platform functionality.'
             }
-        ],
+        ]
     },
     {
         num: 3,
@@ -80,8 +74,8 @@ const SECTIONS_EN: Section[] = [
             'Consent provided by the user',
             'Contractual necessity to fulfill orders and services',
             'Legal obligations under applicable regulations',
-            'Legitimate interests, limited to service improvement, fraud prevention, and security',
-        ],
+            'Legitimate interests, limited to service improvement, fraud prevention, and security'
+        ]
     },
     {
         num: 4,
@@ -92,8 +86,8 @@ const SECTIONS_EN: Section[] = [
             'Facilitate orders, payments, and deliveries',
             'Communicate service updates and support responses',
             'Improve Platform functionality and security',
-            'Send marketing communications only where consent is obtained (Opt-out available via in-app settings)',
-        ],
+            'Send marketing communications only where consent is obtained (Opt-out available via in-app settings)'
+        ]
     },
     {
         num: 5,
@@ -104,15 +98,16 @@ const SECTIONS_EN: Section[] = [
             'Independent garages and service providers fulfilling your request',
             'Licensed payment processors handling transactions',
             'Technology vendors providing hosting, analytics, or notifications',
-            'Competent authorities where legally required',
+            'Competent authorities where legally required'
         ],
-        footnote: 'All third parties are required to protect personal data in accordance with applicable law.',
+        footnote: 'All third parties are required to protect personal data in accordance with applicable law.'
     },
     {
         num: 6,
         title: 'International Data Transfers',
         icon: 'earth',
-        content: 'Your personal data may be processed or stored outside your country of residence. Where transfers occur, we implement appropriate safeguards such as Standard contractual clauses or equivalent legal protection mechanisms. By using the Platform, you acknowledge the potential risks of cross-border data transfers where local laws may differ.',
+        content:
+            'Your personal data may be processed or stored outside your country of residence. Where transfers occur, we implement appropriate safeguards such as Standard contractual clauses or equivalent legal protection mechanisms. By using the Platform, you acknowledge the potential risks of cross-border data transfers where local laws may differ.'
     },
     {
         num: 7,
@@ -120,8 +115,8 @@ const SECTIONS_EN: Section[] = [
         icon: 'time',
         items: [
             'We retain personal data only as long as necessary to provide services and comply with legal requirements.',
-            'Data is securely deleted or anonymized when no longer required.',
-        ],
+            'Data is securely deleted or anonymized when no longer required.'
+        ]
     },
     {
         num: 8,
@@ -131,9 +126,9 @@ const SECTIONS_EN: Section[] = [
             'Encrypted communications',
             'Secure authentication and one-time verification codes',
             'Restricted internal access controls',
-            'Continuous monitoring for unauthorized activity',
+            'Continuous monitoring for unauthorized activity'
         ],
-        footnote: 'No digital system is completely secure; however, we apply industry-standard protections.',
+        footnote: 'No digital system is completely secure; however, we apply industry-standard protections.'
     },
     {
         num: 9,
@@ -143,27 +138,30 @@ const SECTIONS_EN: Section[] = [
         items: [
             'Access, correct, or delete your personal data',
             'Restrict or object to processing',
-            'Receive a portable copy of your data',
+            'Receive a portable copy of your data'
         ],
-        footnote: 'Requests may be submitted via privacy@qscrap.qa or through the in-app privacy request form. We aim to respond within 30 days.',
+        footnote:
+            'Requests may be submitted via privacy@qscrap.qa or through the in-app privacy request form. We aim to respond within 30 days.'
     },
     {
         num: 10,
-        title: 'Children\'s Privacy',
+        title: "Children's Privacy",
         icon: 'people',
-        content: 'The Platform is not intended for individuals under 18 years old. We do not knowingly collect children\'s personal data. If such data is discovered, it will be deleted promptly upon verification.',
+        content:
+            "The Platform is not intended for individuals under 18 years old. We do not knowingly collect children's personal data. If such data is discovered, it will be deleted promptly upon verification."
     },
     {
         num: 11,
         title: 'Data Protection Contact',
         icon: 'mail',
-        content: 'For privacy inquiries or complaints, contact: privacy@qscrap.qa',
+        content: 'For privacy inquiries or complaints, contact: privacy@qscrap.qa'
     },
     {
         num: 12,
         title: 'Policy Updates',
         icon: 'create',
-        content: 'We may update this Privacy Policy from time to time. Material changes will be communicated through the Platform. Continued use constitutes acceptance.',
+        content:
+            'We may update this Privacy Policy from time to time. Material changes will be communicated through the Platform. Continued use constitutes acceptance.'
     },
     {
         num: 13,
@@ -173,9 +171,9 @@ const SECTIONS_EN: Section[] = [
             'QScrap Services & Trading L.L.C',
             'Commercial Registration No.: [CR NUMBER]',
             'Registered Address: Doha, Qatar',
-            'Email: privacy@qscrap.qa',
-        ],
-    },
+            'Email: privacy@qscrap.qa'
+        ]
+    }
 ];
 
 // ============================================
@@ -186,13 +184,15 @@ const SECTIONS_AR: Section[] = [
         num: 1,
         title: 'المقدمة والنطاق',
         icon: 'globe',
-        content: 'تدير شركة كيوسكراب للخدمات والتجارة ذ.م.م تطبيق كيوسكراب للعملاء وتطبيق كيوسكراب للسائقين. تنطبق سياسة الخصوصية هذه على جميع المستخدمين:',
+        content:
+            'تدير شركة كيوسكراب للخدمات والتجارة ذ.م.م تطبيق كيوسكراب للعملاء وتطبيق كيوسكراب للسائقين. تنطبق سياسة الخصوصية هذه على جميع المستخدمين:',
         items: [
             'العملاء: المستخدمون الباحثون عن قطع غيار السيارات',
             'شركاء الكراجات: الشركات التي توفر قطع الغيار عبر منصتنا',
-            'السائقون: موظفو التوصيل الذين يستخدمون تطبيق كيوسكراب للسائقين',
+            'السائقون: موظفو التوصيل الذين يستخدمون تطبيق كيوسكراب للسائقين'
         ],
-        footnote: 'باستخدامك لتطبيقاتنا أو خدماتنا، فإنك توافق على جمع واستخدام والإفصاح عن معلوماتك كما هو موضح في سياسة الخصوصية هذه. تتوافق هذه السياسة مع القانون القطري رقم 13 لسنة 2016 بشأن حماية البيانات الشخصية.',
+        footnote:
+            'باستخدامك لتطبيقاتنا أو خدماتنا، فإنك توافق على جمع واستخدام والإفصاح عن معلوماتك كما هو موضح في سياسة الخصوصية هذه. تتوافق هذه السياسة مع القانون القطري رقم 13 لسنة 2016 بشأن حماية البيانات الشخصية.'
     },
     {
         num: 2,
@@ -207,8 +207,8 @@ const SECTIONS_AR: Section[] = [
                     'معلومات المركبة: رقم الهيكل، الشركة المصنعة، الطراز، سنة الصنع لمطابقة القطع',
                     'معلومات الدفع: تفضيلات طريقة الدفع (الدفع عند الاستلام، البطاقة)',
                     'معلومات الأعمال (للكراجات): رقم السجل التجاري، رقم الحساب البنكي الدولي (IBAN)، عنوان العمل',
-                    'معلومات السائق: الهوية القطرية، رخصة القيادة، تسجيل المركبة',
-                ],
+                    'معلومات السائق: الهوية القطرية، رخصة القيادة، تسجيل المركبة'
+                ]
             },
             {
                 title: '2.2 المعلومات المجمّعة تلقائيًا',
@@ -217,11 +217,14 @@ const SECTIONS_AR: Section[] = [
                     'بيانات الموقع: إحداثيات GPS لمناطق التوصيل، التتبع في الوقت الفعلي',
                     'بيانات الاستخدام: تفاعلات التطبيق، الميزات المستخدمة، مدة الجلسة',
                     'بيانات السجل: عنوان IP، أوقات الوصول، أعطال التطبيق، نشاط النظام',
-                    'الصور والوسائط: الصور المرفوعة لطلبات القطع وإثبات التسليم',
-                ],
-            },
+                    'الصور والوسائط: الصور المرفوعة لطلبات القطع وإثبات التسليم'
+                ]
+            }
         ],
-        highlight: { type: 'default', text: 'تتطلب تطبيقاتنا الوصول إلى الموقع لتعمل بشكل صحيح. نستخدمه لحساب رسوم التوصيل ومطابقة الكراجات القريبة والتتبع في الوقت الفعلي وتحسين المسارات. يمكنك تعطيله في الإعدادات، لكن ذلك سيؤثر على الوظائف.' },
+        highlight: {
+            type: 'default',
+            text: 'تتطلب تطبيقاتنا الوصول إلى الموقع لتعمل بشكل صحيح. نستخدمه لحساب رسوم التوصيل ومطابقة الكراجات القريبة والتتبع في الوقت الفعلي وتحسين المسارات. يمكنك تعطيله في الإعدادات، لكن ذلك سيؤثر على الوظائف.'
+        }
     },
     {
         num: 3,
@@ -236,8 +239,8 @@ const SECTIONS_AR: Section[] = [
                     'حساب رسوم التوصيل بناءً على موقعك',
                     'توفير تتبع الطلبات والإشعارات في الوقت الفعلي',
                     'معالجة المدفوعات والتحويلات',
-                    'إدارة الضمانات والمرتجعات والاسترداد',
-                ],
+                    'إدارة الضمانات والمرتجعات والاسترداد'
+                ]
             },
             {
                 title: '3.2 التواصل',
@@ -245,8 +248,8 @@ const SECTIONS_AR: Section[] = [
                     'إرسال تأكيدات الطلبات والتحديثات وإشعارات التوصيل',
                     'دعم العملاء وحل النزاعات',
                     'إعلانات الخدمة المهمة وتحديثات السياسات',
-                    'الاتصالات التسويقية (بموافقتك)',
-                ],
+                    'الاتصالات التسويقية (بموافقتك)'
+                ]
             },
             {
                 title: '3.3 التحسين والأمان',
@@ -254,10 +257,10 @@ const SECTIONS_AR: Section[] = [
                     'تحليل أنماط الاستخدام لتحسين خدماتنا',
                     'كشف ومنع الاحتيال',
                     'ضمان أمان وسلامة المنصة',
-                    'الامتثال للالتزامات القانونية',
-                ],
-            },
-        ],
+                    'الامتثال للالتزامات القانونية'
+                ]
+            }
+        ]
     },
     {
         num: 4,
@@ -270,8 +273,8 @@ const SECTIONS_AR: Section[] = [
                 items: [
                     'الكراجات: اسمك ورقم هاتفك وعنوان التوصيل لتنفيذ الطلب',
                     'السائقون: اسمك ورقم هاتفك وموقع التوصيل لتسليم الطلب',
-                    'معالجو الدفع: تفاصيل المعاملات لمعالجة الدفع',
-                ],
+                    'معالجو الدفع: تفاصيل المعاملات لمعالجة الدفع'
+                ]
             },
             {
                 title: '4.2 مزودو الخدمات الخارجيون',
@@ -279,15 +282,15 @@ const SECTIONS_AR: Section[] = [
                     'البنية التحتية السحابية: تخزين آمن للبيانات',
                     'التحليلات: تحليل الاستخدام',
                     'الخرائط والموقع: خرائط جوجل لخدمات الموقع',
-                    'الإشعارات الفورية: Firebase Cloud Messaging (خدمة الإشعارات من جوجل) للإشعارات',
-                ],
+                    'الإشعارات الفورية: Firebase Cloud Messaging (خدمة الإشعارات من جوجل) للإشعارات'
+                ]
             },
             {
                 title: '4.3 المتطلبات القانونية',
-                content: 'قد نفصح عن معلوماتك عندما يتطلب ذلك القانون القطري أو أوامر المحكمة أو اللوائح الحكومية.',
-            },
+                content: 'قد نفصح عن معلوماتك عندما يتطلب ذلك القانون القطري أو أوامر المحكمة أو اللوائح الحكومية.'
+            }
         ],
-        highlight: { type: 'gold', text: 'نحن لا نبيع معلوماتك الشخصية لأطراف ثالثة لأغراض الإعلان أو التسويق.' },
+        highlight: { type: 'gold', text: 'نحن لا نبيع معلوماتك الشخصية لأطراف ثالثة لأغراض الإعلان أو التسويق.' }
     },
     {
         num: 5,
@@ -300,9 +303,9 @@ const SECTIONS_AR: Section[] = [
             'المصادقة: التحقق عبر رمز الاستخدام الواحد (OTP) للوصول إلى الحساب',
             'التحكم في الوصول: قيود قائمة على الأدوار للموظفين',
             'التدقيق المنتظم: تقييمات أمنية واختبارات الثغرات',
-            'الاستجابة للحوادث: إخطار بانتهاك البيانات خلال 72 ساعة',
+            'الاستجابة للحوادث: إخطار بانتهاك البيانات خلال 72 ساعة'
         ],
-        footnote: 'بينما نسعى لحماية بياناتك، لا توجد طريقة لنقل البيانات عبر الإنترنت آمنة بنسبة 100%.',
+        footnote: 'بينما نسعى لحماية بياناتك، لا توجد طريقة لنقل البيانات عبر الإنترنت آمنة بنسبة 100%.'
     },
     {
         num: 6,
@@ -313,9 +316,9 @@ const SECTIONS_AR: Section[] = [
             'تقديم خدماتنا وتنفيذ الطلبات',
             'الامتثال للمتطلبات القانونية في قطر (الاحتفاظ لمدة 10 سنوات للسجلات التجارية)',
             'حل النزاعات وإنفاذ الاتفاقيات',
-            'الحفاظ على سجلات المراجعة للامتثال التنظيمي',
+            'الحفاظ على سجلات المراجعة للامتثال التنظيمي'
         ],
-        footnote: 'عندما لا تعود البيانات مطلوبة، نحذفها بشكل آمن أو نجعلها مجهولة الهوية.',
+        footnote: 'عندما لا تعود البيانات مطلوبة، نحذفها بشكل آمن أو نجعلها مجهولة الهوية.'
     },
     {
         num: 7,
@@ -328,9 +331,9 @@ const SECTIONS_AR: Section[] = [
             'الحذف: طلب حذف حسابك وبياناتك (وفقًا للاحتفاظ القانوني)',
             'إمكانية نقل البيانات: طلب تصدير بياناتك بتنسيق شائع',
             'إلغاء الاشتراك: إلغاء الاشتراك من الاتصالات التسويقية',
-            'سحب الموافقة: إلغاء الأذونات لمعالجة البيانات الاختيارية',
+            'سحب الموافقة: إلغاء الأذونات لمعالجة البيانات الاختيارية'
         ],
-        footnote: 'لممارسة هذه الحقوق، تواصل معنا على privacy@qscrap.qa. سنرد خلال 30 يومًا.',
+        footnote: 'لممارسة هذه الحقوق، تواصل معنا على privacy@qscrap.qa. سنرد خلال 30 يومًا.'
     },
     {
         num: 8,
@@ -340,26 +343,29 @@ const SECTIONS_AR: Section[] = [
         items: [
             'سيتم إزالة ملفك الشخصي وبياناتك الشخصية أو جعلها مجهولة الهوية',
             'قد يتم الاحتفاظ بسجل الطلبات بشكل مجهول لأغراض قانونية/المراجعة',
-            'البيانات المطلوبة قانونيًا (الفواتير، سجلات المعاملات) سيتم الاحتفاظ بها وفقًا للقانون التجاري القطري',
-        ],
+            'البيانات المطلوبة قانونيًا (الفواتير، سجلات المعاملات) سيتم الاحتفاظ بها وفقًا للقانون التجاري القطري'
+        ]
     },
     {
         num: 9,
         title: 'خصوصية القُصّر',
         icon: 'people',
-        content: 'تطبيقاتنا غير مخصصة للمستخدمين الذين تقل أعمارهم عن 18 عامًا. نحن لا نجمع عمدًا معلومات شخصية من القُصّر دون سن 18 عامًا. إذا كنت تعتقد أن قاصراً قدم لنا معلومات شخصية، يرجى التواصل معنا فورًا.',
+        content:
+            'تطبيقاتنا غير مخصصة للمستخدمين الذين تقل أعمارهم عن 18 عامًا. نحن لا نجمع عمدًا معلومات شخصية من القُصّر دون سن 18 عامًا. إذا كنت تعتقد أن قاصراً قدم لنا معلومات شخصية، يرجى التواصل معنا فورًا.'
     },
     {
         num: 10,
         title: 'روابط الأطراف الثالثة',
         icon: 'link',
-        content: 'قد تحتوي تطبيقاتنا على روابط لمواقع أو خدمات أطراف ثالثة. نحن غير مسؤولين عن ممارسات الخصوصية لهذه الأطراف. ننصحك بقراءة سياسات الخصوصية الخاصة بهم قبل تقديم أي معلومات شخصية.',
+        content:
+            'قد تحتوي تطبيقاتنا على روابط لمواقع أو خدمات أطراف ثالثة. نحن غير مسؤولين عن ممارسات الخصوصية لهذه الأطراف. ننصحك بقراءة سياسات الخصوصية الخاصة بهم قبل تقديم أي معلومات شخصية.'
     },
     {
         num: 11,
         title: 'نقل البيانات الدولي',
         icon: 'earth',
-        content: 'قد يتم نقل معلوماتك ومعالجتها على خوادم موجودة خارج قطر. نضمن وجود ضمانات مناسبة لحماية بياناتك وفقًا للقانون القطري رقم 13 لسنة 2016.',
+        content:
+            'قد يتم نقل معلوماتك ومعالجتها على خوادم موجودة خارج قطر. نضمن وجود ضمانات مناسبة لحماية بياناتك وفقًا للقانون القطري رقم 13 لسنة 2016.'
     },
     {
         num: 12,
@@ -369,16 +375,17 @@ const SECTIONS_AR: Section[] = [
         items: [
             'إشعارات داخل التطبيق',
             'بريد إلكتروني إلى عنوان بريدك الإلكتروني المسجل',
-            'إشعار بارز على موقعنا الإلكتروني',
+            'إشعار بارز على موقعنا الإلكتروني'
         ],
-        footnote: 'استمرارك في استخدام تطبيقاتنا بعد التغييرات يعني قبولك للسياسة المحدّثة.',
+        footnote: 'استمرارك في استخدام تطبيقاتنا بعد التغييرات يعني قبولك للسياسة المحدّثة.'
     },
     {
         num: 13,
         title: 'القانون المعمول به',
         icon: 'scale',
-        content: 'تخضع سياسة الخصوصية هذه لقوانين دولة قطر، بما في ذلك القانون رقم 13 لسنة 2016 بشأن حماية البيانات الشخصية. تخضع أي نزاعات للاختصاص الحصري لمحاكم دولة قطر.',
-    },
+        content:
+            'تخضع سياسة الخصوصية هذه لقوانين دولة قطر، بما في ذلك القانون رقم 13 لسنة 2016 بشأن حماية البيانات الشخصية. تخضع أي نزاعات للاختصاص الحصري لمحاكم دولة قطر.'
+    }
 ];
 
 // ============================================
@@ -388,35 +395,37 @@ const CHROME = {
     en: {
         badge: 'Your Data is Protected',
         summaryTitle: 'Your Privacy is Our Priority',
-        summaryText: 'This Privacy Policy explains how QScrap Services & Trading L.L.C collects, uses, shares, and protects your personal information. We are committed to transparency and compliance with Qatar\'s Law No. 13 of 2016 on Personal Data Protection.',
+        summaryText:
+            "This Privacy Policy explains how QScrap Services & Trading L.L.C collects, uses, shares, and protects your personal information. We are committed to transparency and compliance with Qatar's Law No. 13 of 2016 on Personal Data Protection.",
         lastUpdated: 'Last updated: January 31, 2026',
         contactTitle: 'Contact Us',
         contactItems: [
             { icon: 'shield', label: 'Data Protection Officer', value: 'privacy@qscrap.qa' },
             { icon: 'mail', label: 'General Support', value: 'support@qscrap.qa' },
-            { icon: 'call', label: 'WhatsApp Support', value: '+974 5026 7974' },
+            { icon: 'call', label: 'WhatsApp Support', value: '+974 5026 7974' }
         ],
         companyName: 'QScrap Services & Trading L.L.C',
         companyArabic: 'كيوسكراب للخدمات والتجارة ذ.م.م',
         footer: '© 2026 QScrap Services & Trading L.L.C. All rights reserved.',
-        compliance: 'Compliant with Google Play Developer Program Policies and Qatar\'s Personal Data Protection Law.',
+        compliance: "Compliant with Google Play Developer Program Policies and Qatar's Personal Data Protection Law."
     },
     ar: {
         badge: 'بياناتك محمية',
         summaryTitle: 'خصوصيتك هي أولويتنا',
-        summaryText: 'توضح سياسة الخصوصية هذه كيف تجمع شركة كيوسكراب للخدمات والتجارة ذ.م.م معلوماتك الشخصية وتستخدمها وتشاركها وتحميها. نحن ملتزمون بالشفافية والامتثال للقانون القطري رقم 13 لسنة 2016 بشأن حماية البيانات الشخصية.',
+        summaryText:
+            'توضح سياسة الخصوصية هذه كيف تجمع شركة كيوسكراب للخدمات والتجارة ذ.م.م معلوماتك الشخصية وتستخدمها وتشاركها وتحميها. نحن ملتزمون بالشفافية والامتثال للقانون القطري رقم 13 لسنة 2016 بشأن حماية البيانات الشخصية.',
         lastUpdated: 'آخر تحديث: 31 يناير 2026',
         contactTitle: 'تواصل معنا',
         contactItems: [
             { icon: 'shield', label: 'مسؤول حماية البيانات', value: 'privacy@qscrap.qa' },
             { icon: 'mail', label: 'الدعم العام', value: 'support@qscrap.qa' },
-            { icon: 'call', label: 'دعم واتساب', value: '+974 5026 7974' },
+            { icon: 'call', label: 'دعم واتساب', value: '+974 5026 7974' }
         ],
         companyName: 'كيوسكراب للخدمات والتجارة ذ.م.م',
         companyArabic: 'QScrap Services & Trading L.L.C',
         footer: '© 2026 كيوسكراب للخدمات والتجارة ذ.م.م. جميع الحقوق محفوظة.',
-        compliance: 'متوافق مع سياسات برنامج مطوري Google Play وقانون حماية البيانات الشخصية القطري.',
-    },
+        compliance: 'متوافق مع سياسات برنامج مطوري Google Play وقانون حماية البيانات الشخصية القطري.'
+    }
 };
 
 /**
@@ -480,21 +489,27 @@ export default function PrivacyPolicyScreen() {
                         <Ionicons name="lock-closed" size={28} color="rgba(255,255,255,0.2)" />
                     </View>
                     <Text style={[styles.summaryTitle, { textAlign }]}>{chrome.summaryTitle}</Text>
-                    <Text style={[styles.summaryText, { textAlign }]}>
-                        {chrome.summaryText}
-                    </Text>
+                    <Text style={[styles.summaryText, { textAlign }]}>{chrome.summaryText}</Text>
                 </LinearGradient>
 
                 {/* Sections */}
                 {sections.map((section) => (
-                    <View key={section.num} style={[styles.sectionCard, { backgroundColor: colors.surface, borderColor: colors.borderLight }]}>
+                    <View
+                        key={section.num}
+                        style={[
+                            styles.sectionCard,
+                            { backgroundColor: colors.surface, borderColor: colors.borderLight }
+                        ]}
+                    >
                         {/* Section Header */}
                         <View style={[styles.sectionHeader, { flexDirection: 'row' }]}>
                             <View style={[styles.sectionNumBadge, { backgroundColor: '#1E3A5F' }]}>
                                 <Text style={styles.sectionNumText}>{section.num}</Text>
                             </View>
                             <View style={styles.sectionTitleWrap}>
-                                <Text style={[styles.sectionTitle, { color: colors.text, textAlign }]}>{section.title}</Text>
+                                <Text style={[styles.sectionTitle, { color: colors.text, textAlign }]}>
+                                    {section.title}
+                                </Text>
                             </View>
                             <Ionicons name={section.icon as any} size={20} color="#1E3A5F" style={{ opacity: 0.35 }} />
                         </View>
@@ -507,48 +522,83 @@ export default function PrivacyPolicyScreen() {
                         )}
 
                         {/* List items (top-level) */}
-                        {section.items && section.items.map((item, idx) => (
-                            <View key={idx} style={[styles.listItem, { flexDirection: 'row' }]}>
-                                <Ionicons name="checkmark" size={16} color="#1E3A5F" style={styles.listIcon} />
-                                <Text style={[styles.listText, { color: colors.textSecondary, textAlign }]}>{item}</Text>
-                            </View>
-                        ))}
+                        {section.items &&
+                            section.items.map((item, idx) => (
+                                <View key={idx} style={[styles.listItem, { flexDirection: 'row' }]}>
+                                    <Ionicons name="checkmark" size={16} color="#1E3A5F" style={styles.listIcon} />
+                                    <Text style={[styles.listText, { color: colors.textSecondary, textAlign }]}>
+                                        {item}
+                                    </Text>
+                                </View>
+                            ))}
 
                         {/* Subsections */}
-                        {section.subsections && section.subsections.map((sub, idx) => (
-                            <View key={idx} style={styles.subsection}>
-                                <View style={[styles.subsectionHeader, { flexDirection: 'row' }]}>
-                                    <View style={styles.subsectionBar} />
-                                    <Text style={[styles.subsectionTitle, { color: isDark ? '#6BA3D6' : '#1E3A5F', textAlign }]}>{sub.title}</Text>
-                                </View>
-                                {sub.content && (
-                                    <Text style={[styles.sectionText, { color: colors.textSecondary, textAlign }]}>{sub.content}</Text>
-                                )}
-                                {sub.items && sub.items.map((item, i) => (
-                                    <View key={i} style={[styles.listItem, { flexDirection: 'row' }]}>
-                                        <Ionicons name="checkmark" size={16} color={Colors.secondary} style={styles.listIcon} />
-                                        <Text style={[styles.listText, { color: colors.textSecondary, textAlign }]}>{item}</Text>
+                        {section.subsections &&
+                            section.subsections.map((sub, idx) => (
+                                <View key={idx} style={styles.subsection}>
+                                    <View style={[styles.subsectionHeader, { flexDirection: 'row' }]}>
+                                        <View style={styles.subsectionBar} />
+                                        <Text
+                                            style={[
+                                                styles.subsectionTitle,
+                                                { color: isDark ? '#6BA3D6' : '#1E3A5F', textAlign }
+                                            ]}
+                                        >
+                                            {sub.title}
+                                        </Text>
                                     </View>
-                                ))}
-                            </View>
-                        ))}
+                                    {sub.content && (
+                                        <Text style={[styles.sectionText, { color: colors.textSecondary, textAlign }]}>
+                                            {sub.content}
+                                        </Text>
+                                    )}
+                                    {sub.items &&
+                                        sub.items.map((item, i) => (
+                                            <View key={i} style={[styles.listItem, { flexDirection: 'row' }]}>
+                                                <Ionicons
+                                                    name="checkmark"
+                                                    size={16}
+                                                    color={Colors.secondary}
+                                                    style={styles.listIcon}
+                                                />
+                                                <Text
+                                                    style={[
+                                                        styles.listText,
+                                                        { color: colors.textSecondary, textAlign }
+                                                    ]}
+                                                >
+                                                    {item}
+                                                </Text>
+                                            </View>
+                                        ))}
+                                </View>
+                            ))}
 
                         {/* Footnote */}
                         {section.footnote && (
-                            <Text style={[styles.footnote, { color: colors.textMuted, textAlign }]}>{section.footnote}</Text>
+                            <Text style={[styles.footnote, { color: colors.textMuted, textAlign }]}>
+                                {section.footnote}
+                            </Text>
                         )}
 
                         {/* Highlight box */}
                         {section.highlight && (
-                            <View style={[
-                                styles.highlightBox,
-                                {
-                                    backgroundColor: isDark
-                                        ? (section.highlight.type === 'gold' ? 'rgba(201,162,39,0.1)' : 'rgba(30,58,95,0.15)')
-                                        : (section.highlight.type === 'gold' ? '#FFF9E6' : '#EFF6FF'),
-                                    borderStartColor: section.highlight.type === 'gold' ? Colors.secondary : '#1E3A5F',
-                                },
-                            ]}>
+                            <View
+                                style={[
+                                    styles.highlightBox,
+                                    {
+                                        backgroundColor: isDark
+                                            ? section.highlight.type === 'gold'
+                                                ? 'rgba(201,162,39,0.1)'
+                                                : 'rgba(30,58,95,0.15)'
+                                            : section.highlight.type === 'gold'
+                                              ? '#FFF9E6'
+                                              : '#EFF6FF',
+                                        borderStartColor:
+                                            section.highlight.type === 'gold' ? Colors.secondary : '#1E3A5F'
+                                    }
+                                ]}
+                            >
                                 <Ionicons
                                     name={section.highlight.type === 'gold' ? 'lock-closed' : 'information-circle'}
                                     size={18}
@@ -571,7 +621,13 @@ export default function PrivacyPolicyScreen() {
                     <Text style={[styles.contactTitle, { textAlign }]}>{chrome.contactTitle}</Text>
                     <View style={styles.contactGrid}>
                         {chrome.contactItems.map((item, idx) => (
-                            <ContactItem key={idx} icon={item.icon} label={item.label} value={item.value} isRTL={isRTL} />
+                            <ContactItem
+                                key={idx}
+                                icon={item.icon}
+                                label={item.label}
+                                value={item.value}
+                                isRTL={isRTL}
+                            />
                         ))}
                     </View>
                     <View style={styles.contactLegal}>
@@ -581,12 +637,8 @@ export default function PrivacyPolicyScreen() {
                 </LinearGradient>
 
                 {/* Footer */}
-                <Text style={[styles.footerText, { color: colors.textMuted }]}>
-                    {chrome.footer}
-                </Text>
-                <Text style={[styles.footerCompliance, { color: colors.textMuted }]}>
-                    {chrome.compliance}
-                </Text>
+                <Text style={[styles.footerText, { color: colors.textMuted }]}>{chrome.footer}</Text>
+                <Text style={[styles.footerCompliance, { color: colors.textMuted }]}>{chrome.compliance}</Text>
             </ScrollView>
         </SafeAreaView>
     );
@@ -619,12 +671,12 @@ const styles = StyleSheet.create({
     // Hero
     heroGradient: {
         paddingBottom: Spacing.xl,
-        paddingHorizontal: Spacing.lg,
+        paddingHorizontal: Spacing.lg
     },
     headerRow: {
         alignItems: 'center',
         paddingTop: Spacing.sm,
-        marginBottom: Spacing.md,
+        marginBottom: Spacing.md
     },
     backButton: {
         width: 40,
@@ -632,7 +684,7 @@ const styles = StyleSheet.create({
         borderRadius: BorderRadius.xl,
         backgroundColor: 'rgba(255,255,255,0.12)',
         justifyContent: 'center',
-        alignItems: 'center',
+        alignItems: 'center'
     },
     heroContent: { alignItems: 'center' },
     heroBadge: {
@@ -645,31 +697,31 @@ const styles = StyleSheet.create({
         borderWidth: 1,
         borderColor: 'rgba(74,222,128,0.4)',
         borderRadius: BorderRadius.full,
-        marginBottom: Spacing.md,
+        marginBottom: Spacing.md
     },
     heroBadgeText: {
         fontSize: FontSizes.xs,
         fontWeight: '600',
         color: '#4ADE80',
-        letterSpacing: 0.5,
+        letterSpacing: 0.5
     },
     heroTitle: {
         fontSize: width < 380 ? 26 : 32,
         fontWeight: '800',
         color: '#fff',
         textAlign: 'center',
-        marginBottom: Spacing.xs,
+        marginBottom: Spacing.xs
     },
     heroArabic: {
         fontSize: width < 380 ? 18 : 22,
         fontWeight: '600',
         color: '#4ADE80',
         textAlign: 'center',
-        marginBottom: Spacing.sm,
+        marginBottom: Spacing.sm
     },
     heroDate: {
         fontSize: FontSizes.xs,
-        color: 'rgba(255,255,255,0.65)',
+        color: 'rgba(255,255,255,0.65)'
     },
 
     // Scroll
@@ -681,23 +733,23 @@ const styles = StyleSheet.create({
         borderRadius: BorderRadius.xl,
         padding: Spacing.xl,
         marginBottom: Spacing.lg,
-        overflow: 'hidden',
+        overflow: 'hidden'
     },
     summaryIconWrap: {
         position: 'absolute',
         top: 16,
-        end: 20,
+        end: 20
     },
     summaryTitle: {
         fontSize: FontSizes.lg,
         fontWeight: '700',
         color: '#4ADE80',
-        marginBottom: Spacing.sm,
+        marginBottom: Spacing.sm
     },
     summaryText: {
         fontSize: FontSizes.md,
         lineHeight: 22,
-        color: 'rgba(255,255,255,0.88)',
+        color: 'rgba(255,255,255,0.88)'
     },
 
     // Section cards
@@ -706,77 +758,77 @@ const styles = StyleSheet.create({
         padding: Spacing.xl,
         marginBottom: Spacing.md,
         borderWidth: 1,
-        ...Shadows.sm,
+        ...Shadows.sm
     },
     sectionHeader: {
         alignItems: 'center',
         marginBottom: Spacing.md,
-        gap: Spacing.sm,
+        gap: Spacing.sm
     },
     sectionNumBadge: {
         width: 36,
         height: 36,
         borderRadius: BorderRadius.md,
         justifyContent: 'center',
-        alignItems: 'center',
+        alignItems: 'center'
     },
     sectionNumText: {
         fontSize: FontSizes.md,
         fontWeight: '700',
-        color: '#fff',
+        color: '#fff'
     },
     sectionTitleWrap: { flex: 1 },
     sectionTitle: {
         fontSize: width < 380 ? FontSizes.lg : 18,
-        fontWeight: '700',
+        fontWeight: '700'
     },
 
     // Content
     sectionText: {
         fontSize: FontSizes.md,
         lineHeight: 24,
-        marginBottom: Spacing.sm,
+        marginBottom: Spacing.sm
     },
     listItem: {
         alignItems: 'flex-start',
-        marginBottom: Spacing.sm,
+        marginBottom: Spacing.sm
     },
     listIcon: {
         marginEnd: Spacing.sm,
-        marginTop: 3,
+        marginTop: 3
     },
     listText: {
         flex: 1,
         fontSize: FontSizes.md,
-        lineHeight: 22,
+        lineHeight: 22
     },
     footnote: {
         fontSize: FontSizes.sm,
         fontStyle: 'italic',
         marginTop: Spacing.sm,
-        lineHeight: 20,
+        lineHeight: 20
     },
 
     // Subsections
     subsection: {
-        marginTop: Spacing.md,
+        marginTop: Spacing.md
     },
     subsectionHeader: {
         alignItems: 'center',
         gap: Spacing.sm,
-        marginBottom: Spacing.sm,
+        marginBottom: Spacing.sm
     },
     subsectionBar: {
         width: 4,
         height: 20,
         backgroundColor: Colors.secondary,
         borderRadius: 2,
-        marginEnd: Spacing.sm,
+        marginEnd: Spacing.sm
     },
     subsectionTitle: {
         fontSize: FontSizes.md,
         fontWeight: '600',
-        flex: 1,
+        flex: 1
     },
 
     // Highlight box
@@ -785,34 +837,34 @@ const styles = StyleSheet.create({
         borderStartWidth: 4,
         borderRadius: BorderRadius.sm,
         padding: Spacing.md,
-        marginTop: Spacing.md,
+        marginTop: Spacing.md
     },
     highlightIcon: {
         marginEnd: Spacing.sm,
-        marginTop: 2,
+        marginTop: 2
     },
     highlightText: {
         fontSize: FontSizes.sm,
         lineHeight: 20,
-        fontWeight: '500',
+        fontWeight: '500'
     },
 
     // Contact card
     contactCard: {
         borderRadius: BorderRadius.xl,
         padding: Spacing.xl,
-        marginTop: Spacing.lg,
+        marginTop: Spacing.lg
     },
     contactTitle: {
         fontSize: 20,
         fontWeight: '700',
         color: '#4ADE80',
-        marginBottom: Spacing.lg,
+        marginBottom: Spacing.lg
     },
     contactGrid: { gap: Spacing.md },
     contactItem: {
         alignItems: 'center',
-        gap: Spacing.sm,
+        gap: Spacing.sm
     },
     contactIconWrap: {
         width: 40,
@@ -820,52 +872,52 @@ const styles = StyleSheet.create({
         borderRadius: BorderRadius.md,
         backgroundColor: 'rgba(74,222,128,0.12)',
         justifyContent: 'center',
-        alignItems: 'center',
+        alignItems: 'center'
     },
     contactLabel: {
         fontSize: FontSizes.xs,
         color: '#9A9A9A',
         textTransform: 'uppercase',
         letterSpacing: 0.5,
-        marginBottom: 2,
+        marginBottom: 2
     },
     contactValue: {
         fontSize: FontSizes.md,
-        color: '#fff',
+        color: '#fff'
     },
     contactLegal: {
         marginTop: Spacing.lg,
         paddingTop: Spacing.lg,
         borderTopWidth: 1,
         borderTopColor: 'rgba(255,255,255,0.1)',
-        alignItems: 'center',
+        alignItems: 'center'
     },
     companyName: {
         fontSize: FontSizes.lg,
         fontWeight: '600',
         color: '#fff',
-        marginBottom: 4,
+        marginBottom: 4
     },
     companyArabic: {
         fontSize: FontSizes.md,
         color: '#4ADE80',
-        marginBottom: Spacing.sm,
+        marginBottom: Spacing.sm
     },
     companyCR: {
         fontSize: FontSizes.sm,
-        color: '#9A9A9A',
+        color: '#9A9A9A'
     },
 
     // Footer
     footerText: {
         fontSize: FontSizes.sm,
         textAlign: 'center',
-        marginTop: Spacing.xl,
+        marginTop: Spacing.xl
     },
     footerCompliance: {
         fontSize: FontSizes.xs,
         textAlign: 'center',
         marginTop: Spacing.xs,
-        lineHeight: 18,
-    },
+        lineHeight: 18
+    }
 });

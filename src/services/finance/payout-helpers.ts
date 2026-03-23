@@ -6,20 +6,11 @@ import { Pool, PoolClient } from 'pg';
 import bcrypt from 'bcrypt';
 import { createNotification } from '../notification.service';
 import { emitToGarage, emitToOperations } from '../../utils/socketIO';
-import {
-    Payout,
-    SendPaymentDto,
-    ConfirmPaymentDto,
-    DisputeDto,
-    PayoutStatus
-} from './types';
-import {
-    PayoutNotFoundError,
-    InvalidPayoutStatusError
-} from './errors';
+import { Payout, SendPaymentDto, ConfirmPaymentDto, DisputeDto, PayoutStatus } from './types';
+import { PayoutNotFoundError, InvalidPayoutStatusError } from './errors';
 
 export class PayoutHelpers {
-    constructor(private pool: Pool) { }
+    constructor(private pool: Pool) {}
 
     async getPayoutForUpdate(payoutId: string, client: PoolClient): Promise<Payout> {
         const result = await client.query(
@@ -41,19 +32,11 @@ export class PayoutHelpers {
 
     validatePayoutStatus(payout: Payout, requiredStatuses: PayoutStatus[]): void {
         if (!requiredStatuses.includes(payout.payout_status)) {
-            throw new InvalidPayoutStatusError(
-                payout.payout_id,
-                payout.payout_status,
-                requiredStatuses
-            );
+            throw new InvalidPayoutStatusError(payout.payout_id, payout.payout_status, requiredStatuses);
         }
     }
 
-    async markAsSent(
-        payout: Payout,
-        details: SendPaymentDto,
-        client: PoolClient
-    ): Promise<Payout> {
+    async markAsSent(payout: Payout, details: SendPaymentDto, client: PoolClient): Promise<Payout> {
         const result = await client.query(
             `UPDATE garage_payouts 
              SET payout_status = 'awaiting_confirmation',
@@ -64,23 +47,13 @@ export class PayoutHelpers {
                  updated_at = NOW()
              WHERE payout_id = $5
              RETURNING *`,
-            [
-                details.payout_method,
-                details.payout_reference,
-                details.sent_at,
-                details.notes,
-                payout.payout_id
-            ]
+            [details.payout_method, details.payout_reference, details.sent_at, details.notes, payout.payout_id]
         );
 
         return result.rows[0];
     }
 
-    async markAsConfirmed(
-        payout: Payout,
-        details: ConfirmPaymentDto,
-        client: PoolClient
-    ): Promise<Payout> {
+    async markAsConfirmed(payout: Payout, details: ConfirmPaymentDto, client: PoolClient): Promise<Payout> {
         const result = await client.query(
             `UPDATE garage_payouts 
              SET payout_status = 'confirmed',
@@ -90,22 +63,13 @@ export class PayoutHelpers {
                  updated_at = NOW()
              WHERE payout_id = $4
              RETURNING *`,
-            [
-                details.received_at,
-                details.received_amount,
-                details.confirmation_notes,
-                payout.payout_id
-            ]
+            [details.received_at, details.received_amount, details.confirmation_notes, payout.payout_id]
         );
 
         return result.rows[0];
     }
 
-    async markAsDisputed(
-        payout: Payout,
-        dispute: DisputeDto,
-        client: PoolClient
-    ): Promise<Payout> {
+    async markAsDisputed(payout: Payout, dispute: DisputeDto, client: PoolClient): Promise<Payout> {
         const result = await client.query(
             `UPDATE garage_payouts 
              SET payout_status = 'disputed',
@@ -115,21 +79,13 @@ export class PayoutHelpers {
                  updated_at = NOW()
              WHERE payout_id = $3
              RETURNING *`,
-            [
-                dispute.issue_type,
-                dispute.issue_description,
-                payout.payout_id
-            ]
+            [dispute.issue_type, dispute.issue_description, payout.payout_id]
         );
 
         return result.rows[0];
     }
 
-    async markAsCancelled(
-        payout: Payout,
-        reason: string,
-        client: PoolClient
-    ): Promise<Payout> {
+    async markAsCancelled(payout: Payout, reason: string, client: PoolClient): Promise<Payout> {
         const result = await client.query(
             `UPDATE garage_payouts 
              SET payout_status = 'cancelled',
@@ -173,7 +129,9 @@ export class PayoutHelpers {
         };
 
         const config = notificationMap[type as keyof typeof notificationMap];
-        if (!config) {return;}
+        if (!config) {
+            return;
+        }
 
         if (config.target === 'operations') {
             emitToOperations(config.event, { payout_id: payout.payout_id, payout });
@@ -199,7 +157,9 @@ export class PayoutHelpers {
             [garageId]
         );
 
-        if (result.rows.length === 0) {return false;}
+        if (result.rows.length === 0) {
+            return false;
+        }
         return bcrypt.compare(password, result.rows[0].password_hash);
     }
 }

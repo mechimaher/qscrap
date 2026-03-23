@@ -1,9 +1,9 @@
 /**
  * Expo Push Notification Service
- * 
+ *
  * Enterprise-grade push notification service using Expo's Push API.
  * Sends notifications to users even when app is backgrounded or phone is locked.
- * 
+ *
  * @module services/push.service
  */
 
@@ -58,7 +58,8 @@ class PushService {
             return;
         }
 
-        await pool.query(`
+        await pool.query(
+            `
             INSERT INTO push_tokens (user_id, token, platform, app_type, device_id, updated_at)
             VALUES ($1, $2, $3, $4, $5, NOW())
             ON CONFLICT (user_id, token) 
@@ -68,7 +69,9 @@ class PushService {
                 device_id = EXCLUDED.device_id,
                 is_active = true,
                 updated_at = NOW()
-        `, [userId, token, platform, appType, deviceId]);
+        `,
+            [userId, token, platform, appType, deviceId]
+        );
 
         logger.info('Token registered', { userId, appType });
     }
@@ -84,10 +87,9 @@ class PushService {
             );
         } else {
             // Deactivate all tokens for user
-            await pool.query(
-                'UPDATE push_tokens SET is_active = false, updated_at = NOW() WHERE user_id = $1',
-                [userId]
-            );
+            await pool.query('UPDATE push_tokens SET is_active = false, updated_at = NOW() WHERE user_id = $1', [
+                userId
+            ]);
         }
         logger.info('Token(s) deactivated', { userId });
     }
@@ -96,11 +98,10 @@ class PushService {
      * Get active push tokens for a user
      */
     async getTokensForUser(userId: string): Promise<string[]> {
-        const result = await pool.query(
-            'SELECT token FROM push_tokens WHERE user_id = $1 AND is_active = true',
-            [userId]
-        );
-        return result.rows.map(row => row.token);
+        const result = await pool.query('SELECT token FROM push_tokens WHERE user_id = $1 AND is_active = true', [
+            userId
+        ]);
+        return result.rows.map((row) => row.token);
     }
 
     /**
@@ -120,7 +121,7 @@ class PushService {
             return [];
         }
 
-        const messages: PushMessage[] = tokens.map(token => ({
+        const messages: PushMessage[] = tokens.map((token) => ({
             to: token,
             sound: options?.sound !== false ? 'default' : null,
             title,
@@ -128,7 +129,7 @@ class PushService {
             data: { ...data, timestamp: new Date().toISOString() },
             priority: 'high',
             badge: options?.badge,
-            channelId: options?.channelId || 'default',
+            channelId: options?.channelId || 'default'
         }));
 
         return this.sendMessages(messages, userId);
@@ -171,7 +172,7 @@ class PushService {
                     title,
                     body,
                     data: { ...data, userId, timestamp: new Date().toISOString() },
-                    priority: 'high',
+                    priority: 'high'
                 });
                 messageUserMap.push(userId);
             }
@@ -209,11 +210,11 @@ class PushService {
             const response = await fetch(EXPO_PUSH_API, {
                 method: 'POST',
                 headers: {
-                    'Accept': 'application/json',
+                    Accept: 'application/json',
                     'Accept-Encoding': 'gzip, deflate',
-                    'Content-Type': 'application/json',
+                    'Content-Type': 'application/json'
                 },
-                body: JSON.stringify(messages),
+                body: JSON.stringify(messages)
             });
 
             if (!response.ok) {
@@ -221,7 +222,7 @@ class PushService {
                 return messages.map(() => ({ success: false, error: `HTTP ${response.status}` }));
             }
 
-            const data = await response.json() as ExpoResponse;
+            const data = (await response.json()) as ExpoResponse;
             const tickets: PushTicket[] = data.data || [];
 
             const results: SendResult[] = tickets.map((ticket, idx) => {
@@ -236,7 +237,7 @@ class PushService {
                 }
             });
 
-            const successCount = results.filter(r => r.success).length;
+            const successCount = results.filter((r) => r.success).length;
             logger.info('Push notifications sent', { success: successCount, total: messages.length, userId });
 
             return results;
@@ -251,10 +252,7 @@ class PushService {
      */
     private async deactivateToken(token: string): Promise<void> {
         try {
-            await pool.query(
-                'UPDATE push_tokens SET is_active = false, updated_at = NOW() WHERE token = $1',
-                [token]
-            );
+            await pool.query('UPDATE push_tokens SET is_active = false, updated_at = NOW() WHERE token = $1', [token]);
             logger.info('Deactivated invalid token');
         } catch (err) {
             logger.error('Failed to deactivate token', { error: (err as Error).message });
@@ -274,11 +272,11 @@ class PushService {
         await this.sendToUser(
             recipientUserId,
             `💬 ${senderName}`,
-            message.length > 100 ? `${message.substring(0, 100)  }...` : message,
+            message.length > 100 ? `${message.substring(0, 100)}...` : message,
             {
                 type: 'chat_message',
                 orderId,
-                orderNumber,
+                orderNumber
             },
             { channelId: 'messages' }
         );
@@ -300,7 +298,7 @@ class PushService {
             {
                 type: 'new_assignment',
                 assignmentId,
-                orderNumber,
+                orderNumber
             },
             { channelId: 'assignments' } // CRITICAL: Use high-priority channel for drivers
         );
@@ -317,32 +315,34 @@ class PushService {
         additionalInfo?: { driverName?: string; garageName?: string }
     ): Promise<void> {
         const statusMessages: Record<string, { title: string; body: string }> = {
-            'preparing': {
+            preparing: {
                 title: '🔧 Part Being Prepared',
                 body: `${additionalInfo?.garageName || 'Garage'} is preparing your part`
             },
-            'ready_for_pickup': {
+            ready_for_pickup: {
                 title: '📦 Part Ready',
                 body: `Your part is ready for collection`
             },
-            'collected': {
+            collected: {
                 title: '✅ Part Collected',
                 body: 'QScrap has collected your part for quality check'
             },
-            'in_transit': {
+            in_transit: {
                 title: '🚗 Out for Delivery',
                 body: additionalInfo?.driverName
                     ? `${additionalInfo.driverName} is on the way!`
                     : 'Your part is on its way!'
             },
-            'delivered': {
+            delivered: {
                 title: '🎉 Delivered!',
                 body: `Order #${orderNumber} has arrived. Please confirm receipt.`
-            },
+            }
         };
 
         const message = statusMessages[newStatus];
-        if (!message) {return;}
+        if (!message) {
+            return;
+        }
 
         await this.sendToUser(
             customerId,
@@ -352,7 +352,7 @@ class PushService {
                 type: 'order_status',
                 orderId,
                 orderNumber,
-                status: newStatus,
+                status: newStatus
             },
             { channelId: 'orders' }
         );

@@ -126,5 +126,5 @@ export const DEFAULT_PAYMENT_CONFIG: Partial<PaymentConfig> = {
     provider: 'stripe',
     testMode: true,
     defaultCurrency: 'QAR',
-    upfrontType: 'delivery_fee', // Customer only pays delivery fee upfront
+    upfrontType: 'delivery_fee' // Customer only pays delivery fee upfront
 };

@@ -89,8 +89,7 @@ export const API_ENDPOINTS = {
     REQUEST_PASSWORD_RESET: '/auth/request-password-reset',
     VERIFY_PASSWORD_RESET_OTP: '/auth/verify-password-reset-otp',
     RESET_PASSWORD: '/auth/reset-password',
-    RESEND_PASSWORD_RESET_OTP: '/auth/resend-password-reset-otp',
-
+    RESEND_PASSWORD_RESET_OTP: '/auth/resend-password-reset-otp'
 };
 
 // App Info

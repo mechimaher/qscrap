@@ -8,7 +8,7 @@ import { OrderFilters, PaginatedOrders, OrderDetail } from './types';
 import { OrderNotFoundError, UnauthorizedOrderAccessError } from './errors';
 
 export class OrderQueryService {
-    constructor(private pool: Pool) { }
+    constructor(private pool: Pool) {}
 
     /**
      * Get customer's or garage's orders with pagination
@@ -81,7 +81,8 @@ export class OrderQueryService {
      * Get full order details with history and review
      */
     async getOrderDetails(orderId: string, userId: string): Promise<OrderDetail> {
-        const result = await this.pool.query(`
+        const result = await this.pool.query(
+            `
             SELECT o.*, 
                     o.pod_photo_url,
                     pr.car_make, pr.car_model, pr.car_year, pr.part_description, pr.image_urls as request_images,
@@ -101,7 +102,9 @@ export class OrderQueryService {
              LEFT JOIN delivery_assignments da ON o.order_id = da.order_id
              LEFT JOIN drivers d ON da.driver_id = d.driver_id
              WHERE o.order_id = $1 AND (o.customer_id = $2 OR o.garage_id = $2)
-        `, [orderId, userId]);
+        `,
+            [orderId, userId]
+        );
 
         if (result.rows.length === 0) {
             throw new OrderNotFoundError(orderId);
@@ -114,10 +117,7 @@ export class OrderQueryService {
         );
 
         // Get review if exists
-        const review = await this.pool.query(
-            'SELECT * FROM order_reviews WHERE order_id = $1',
-            [orderId]
-        );
+        const review = await this.pool.query('SELECT * FROM order_reviews WHERE order_id = $1', [orderId]);
 
         return {
             order: result.rows[0],

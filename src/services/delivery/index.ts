@@ -6,14 +6,6 @@
 export { GeoService, getDeliveryFeeForLocation } from './geo.service';
 export { TrackingService } from './tracking.service';
 
-export type {
-    Hub,
-    Zone,
-    DeliveryFeeResult
-} from './geo.service';
+export type { Hub, Zone, DeliveryFeeResult } from './geo.service';
 
-export type {
-    DriverLocation,
-    ActiveDelivery,
-    DeliveryStats
-} from './tracking.service';
+export type { DriverLocation, ActiveDelivery, DeliveryStats } from './tracking.service';

@@ -8,13 +8,7 @@ import { I18nManager, Alert, Platform } from 'react-native';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import * as Localization from 'expo-localization';
 import * as Updates from 'expo-updates';
-import {
-    translations,
-    getTranslation,
-    getTranslationWithParams,
-    Language,
-    isRTLLanguage
-} from '../i18n';
+import { translations, getTranslation, getTranslationWithParams, Language, isRTLLanguage } from '../i18n';
 import { initI18nHelper, setI18nLanguage } from '../utils/i18nHelper';
 
 const LANGUAGE_KEY = 'qscrap_language';
@@ -137,68 +131,76 @@ export function LanguageProvider({ children }: { children: ReactNode }) {
      * CRITICAL: Must ALWAYS update I18nManager state on language change,
      * not just when isRTL differs, because the JS isRTL state can be stale.
      */
-    const setLanguage = useCallback(async (lang: Language) => {
-        try {
-            const previousLanguage = language;
-            const shouldBeRTL = isRTLLanguage(lang);
-            const currentRTL = I18nManager.isRTL;
-            const needsLayoutChange = currentRTL !== shouldBeRTL;
+    const setLanguage = useCallback(
+        async (lang: Language) => {
+            try {
+                const previousLanguage = language;
+                const shouldBeRTL = isRTLLanguage(lang);
+                const currentRTL = I18nManager.isRTL;
+                const needsLayoutChange = currentRTL !== shouldBeRTL;
 
-            // Save to storage first
-            await AsyncStorage.setItem(LANGUAGE_KEY, lang);
+                // Save to storage first
+                await AsyncStorage.setItem(LANGUAGE_KEY, lang);
 
-            // Update state
-            setLanguageState(lang);
-            setIsRTL(shouldBeRTL);
-            setI18nLanguage(lang);
+                // Update state
+                setLanguageState(lang);
+                setIsRTL(shouldBeRTL);
+                setI18nLanguage(lang);
 
-            // ALWAYS update I18nManager to ensure RTL state is correct
-            // This fixes the bug where switching AR → EN didn't properly revert RTL
-            log(`[i18n] Setting RTL: allowRTL(${shouldBeRTL}), forceRTL(${shouldBeRTL})`);
+                // ALWAYS update I18nManager to ensure RTL state is correct
+                // This fixes the bug where switching AR → EN didn't properly revert RTL
+                log(`[i18n] Setting RTL: allowRTL(${shouldBeRTL}), forceRTL(${shouldBeRTL})`);
 
-            // For LTR languages, we must explicitly disable RTL
-            // Order matters: allowRTL first, then forceRTL
-            I18nManager.allowRTL(shouldBeRTL);
-            I18nManager.forceRTL(shouldBeRTL);
+                // For LTR languages, we must explicitly disable RTL
+                // Order matters: allowRTL first, then forceRTL
+                I18nManager.allowRTL(shouldBeRTL);
+                I18nManager.forceRTL(shouldBeRTL);
 
-            // ALWAYS reload app when language changes
-            // I18nManager.isRTL doesn't update until restart, so we can't rely
-            // on needsLayoutChange — we must always restart to guarantee correct layout
-            if (previousLanguage !== lang) {
-                Alert.alert(
-                    lang === 'ar' ? 'تم تغيير اللغة' : 'Language Changed',
-                    lang === 'ar'
-                        ? 'سيتم إعادة تشغيل التطبيق لتطبيق التغييرات'
-                        : 'The app will restart to apply changes',
-                    [{
-                        text: lang === 'ar' ? 'حسناً' : 'OK',
-                        style: 'default',
-                        onPress: async () => {
-                            try {
-                                await Updates.reloadAsync();
-                            } catch (e) {
-                                log('[i18n] Updates.reloadAsync failed, manual restart needed:', e);
+                // ALWAYS reload app when language changes
+                // I18nManager.isRTL doesn't update until restart, so we can't rely
+                // on needsLayoutChange — we must always restart to guarantee correct layout
+                if (previousLanguage !== lang) {
+                    Alert.alert(
+                        lang === 'ar' ? 'تم تغيير اللغة' : 'Language Changed',
+                        lang === 'ar'
+                            ? 'سيتم إعادة تشغيل التطبيق لتطبيق التغييرات'
+                            : 'The app will restart to apply changes',
+                        [
+                            {
+                                text: lang === 'ar' ? 'حسناً' : 'OK',
+                                style: 'default',
+                                onPress: async () => {
+                                    try {
+                                        await Updates.reloadAsync();
+                                    } catch (e) {
+                                        log('[i18n] Updates.reloadAsync failed, manual restart needed:', e);
+                                    }
+                                }
                             }
-                        }
-                    }]
-                );
-            }
+                        ]
+                    );
+                }
 
-            log(`[i18n] Language changed: ${previousLanguage} → ${lang}, RTL: ${currentRTL} → ${shouldBeRTL}`);
-        } catch (error) {
-            log('[i18n] Failed to save language:', error);
-        }
-    }, [language]);
+                log(`[i18n] Language changed: ${previousLanguage} → ${lang}, RTL: ${currentRTL} → ${shouldBeRTL}`);
+            } catch (error) {
+                log('[i18n] Failed to save language:', error);
+            }
+        },
+        [language]
+    );
 
     /**
      * Translation function with optional parameter interpolation
      */
-    const t = useCallback((key: string, params?: Record<string, string | number>): string => {
-        if (params) {
-            return getTranslationWithParams(language, key, params);
-        }
-        return getTranslation(language, key);
-    }, [language]);
+    const t = useCallback(
+        (key: string, params?: Record<string, string | number>): string => {
+            if (params) {
+                return getTranslationWithParams(language, key, params);
+            }
+            return getTranslation(language, key);
+        },
+        [language]
+    );
 
     // Don't render until language is loaded
     if (isLoading) {
@@ -206,13 +208,15 @@ export function LanguageProvider({ children }: { children: ReactNode }) {
     }
 
     return (
-        <LanguageContext.Provider value={{
-            language,
-            isRTL,
-            setLanguage,
-            t,
-            translations
-        }}>
+        <LanguageContext.Provider
+            value={{
+                language,
+                isRTL,
+                setLanguage,
+                t,
+                translations
+            }}
+        >
             {children}
         </LanguageContext.Provider>
     );

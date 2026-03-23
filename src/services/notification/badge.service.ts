@@ -6,7 +6,7 @@
 import { Pool } from 'pg';
 
 export class BadgeCountService {
-    constructor(private pool: Pool) { }
+    constructor(private pool: Pool) {}
 
     /**
      * Get badge counts for customer mobile app
@@ -21,7 +21,8 @@ export class BadgeCountService {
         // Get request counts
         // Note: Valid part_requests.status values are: active, accepted, expired, cancelled_by_customer
         // 'accepted' means bid was accepted and order created - no longer needs customer attention
-        const requestsResult = await this.pool.query(`
+        const requestsResult = await this.pool.query(
+            `
             SELECT 
                 COUNT(*) FILTER (WHERE status = 'active') as active,
                 COUNT(*) FILTER (WHERE status = 'active' AND 
@@ -37,12 +38,15 @@ export class BadgeCountService {
                 ) as pending_action
             FROM part_requests
             WHERE customer_id = $1 AND status = 'active' AND deleted_at IS NULL
-        `, [customerId]);
+        `,
+            [customerId]
+        );
 
         // Get order counts
         // Note: Valid order_status values are: pending_payment, confirmed, preparing, ready_for_pickup, in_transit, delivered, completed, etc.
         // Valid payment_status values are: pending, paid, refunded, partially_refunded
-        const ordersResult = await this.pool.query(`
+        const ordersResult = await this.pool.query(
+            `
             SELECT 
                 COUNT(*) FILTER (WHERE order_status IN ('pending_payment', 'confirmed', 'preparing', 'ready_for_pickup', 'in_transit')) as active,
                 COUNT(*) FILTER (WHERE order_status = 'pending_payment') as pending_payment,
@@ -50,17 +54,27 @@ export class BadgeCountService {
                 COUNT(*) FILTER (WHERE order_status = 'delivered' AND payment_status != 'paid') as pending_confirmation
             FROM orders o
             WHERE o.customer_id = $1 AND o.deleted_at IS NULL
-        `, [customerId]);
+        `,
+            [customerId]
+        );
 
         // Get unread notification count
-        const notificationsResult = await this.pool.query(`
+        const notificationsResult = await this.pool.query(
+            `
             SELECT COUNT(*) as unread
             FROM notifications
             WHERE user_id = $1 AND is_read = false
-        `, [customerId]);
+        `,
+            [customerId]
+        );
 
         const requests = requestsResult.rows[0] || { active: 0, with_bids: 0, pending_action: 0 };
-        const orders = ordersResult.rows[0] || { active: 0, pending_payment: 0, in_transit: 0, pending_confirmation: 0 };
+        const orders = ordersResult.rows[0] || {
+            active: 0,
+            pending_payment: 0,
+            in_transit: 0,
+            pending_confirmation: 0
+        };
         const notifications = notificationsResult.rows[0] || { unread: 0 };
 
         // Calculate total badge (items needing attention)
@@ -72,18 +86,18 @@ export class BadgeCountService {
             requests: {
                 active: parseInt(requests.active) || 0,
                 with_bids: parseInt(requests.with_bids) || 0,
-                pending_action: parseInt(requests.pending_action) || 0,
+                pending_action: parseInt(requests.pending_action) || 0
             },
             orders: {
                 active: parseInt(orders.active) || 0,
                 pending_payment: parseInt(orders.pending_payment) || 0,
                 in_transit: parseInt(orders.in_transit) || 0,
-                pending_confirmation: parseInt(orders.pending_confirmation) || 0,
+                pending_confirmation: parseInt(orders.pending_confirmation) || 0
             },
             notifications: {
-                unread: notificationsBadge,
+                unread: notificationsBadge
             },
-            total_badge: requestsBadge + ordersBadge + notificationsBadge,
+            total_badge: requestsBadge + ordersBadge + notificationsBadge
         };
     }
 
@@ -124,7 +138,8 @@ export class BadgeCountService {
         }
 
         // Count new requests matching garage profile (not yet bid on by this garage)
-        const newRequestsResult = await this.pool.query(`
+        const newRequestsResult = await this.pool.query(
+            `
             SELECT COUNT(*) as count
             FROM part_requests pr
             WHERE ${requestFilter}
@@ -132,33 +147,44 @@ export class BadgeCountService {
                 SELECT 1 FROM bids b WHERE b.request_id = pr.request_id AND b.garage_id = $1
             )
             AND pr.created_at > NOW() - INTERVAL '48 hours'
-        `, params);
+        `,
+            params
+        );
 
         // Count active bids by this garage
-        const activeBidsResult = await this.pool.query(`
+        const activeBidsResult = await this.pool.query(
+            `
             SELECT COUNT(*) as count
             FROM bids b
             JOIN part_requests pr ON b.request_id = pr.request_id
             WHERE b.garage_id = $1 AND pr.status = 'active' AND b.status = 'active'
-        `, [garageId]);
+        `,
+            [garageId]
+        );
 
         // Count pending orders for this garage (orders needing garage attention)
-        const pendingOrdersResult = await this.pool.query(`
+        const pendingOrdersResult = await this.pool.query(
+            `
             SELECT COUNT(*) as count
             FROM orders o
             WHERE o.garage_id = $1 
             AND o.order_status IN ('confirmed', 'preparing', 'ready_for_pickup', 'ready_for_collection')
-        `, [garageId]);
+        `,
+            [garageId]
+        );
 
         // Count counter offers waiting for garage response (made by customer, pending)
-        const counterOffersResult = await this.pool.query(`
+        const counterOffersResult = await this.pool.query(
+            `
             SELECT COUNT(*) as count
             FROM counter_offers co
             JOIN bids b ON co.bid_id = b.bid_id
             WHERE b.garage_id = $1 
             AND co.offered_by_type = 'customer'
             AND co.status = 'pending'
-        `, [garageId]);
+        `,
+            [garageId]
+        );
 
         const newRequests = parseInt(newRequestsResult.rows[0]?.count) || 0;
         const activeBids = parseInt(activeBidsResult.rows[0]?.count) || 0;
@@ -170,7 +196,7 @@ export class BadgeCountService {
             my_active_bids: activeBids,
             pending_orders: pendingOrders,
             counter_offers_pending: counterOffers,
-            total_badge: newRequests + pendingOrders + counterOffers,
+            total_badge: newRequests + pendingOrders + counterOffers
         };
     }
 }

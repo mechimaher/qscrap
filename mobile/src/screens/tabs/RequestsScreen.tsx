@@ -12,7 +12,7 @@ import {
     Dimensions,
     Alert,
     Animated,
-    Easing,
+    Easing
 } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { useNavigation, useFocusEffect } from '@react-navigation/native';
@@ -41,7 +41,7 @@ const ActiveRequestCard = ({
     onPress,
     onDelete,
     showSwipeHint = false,
-    onSwipeHintDismiss,
+    onSwipeHintDismiss
 }: {
     item: Request;
     colors: any;
@@ -66,14 +66,14 @@ const ActiveRequestCard = ({
                         toValue: 1,
                         duration: 1500,
                         easing: Easing.inOut(Easing.ease),
-                        useNativeDriver: false,
+                        useNativeDriver: false
                     }),
                     Animated.timing(glowAnim, {
                         toValue: 0,
                         duration: 1500,
                         easing: Easing.inOut(Easing.ease),
-                        useNativeDriver: false,
-                    }),
+                        useNativeDriver: false
+                    })
                 ])
             ).start();
         }
@@ -86,14 +86,14 @@ const ActiveRequestCard = ({
                         toValue: 1,
                         duration: 800,
                         easing: Easing.inOut(Easing.ease),
-                        useNativeDriver: true,
+                        useNativeDriver: true
                     }),
                     Animated.timing(arrowBounceAnim, {
                         toValue: 0,
                         duration: 800,
                         easing: Easing.inOut(Easing.ease),
-                        useNativeDriver: true,
-                    }),
+                        useNativeDriver: true
+                    })
                 ])
             ).start();
         }
@@ -133,22 +133,38 @@ const ActiveRequestCard = ({
     // Animated glow color
     const glowColor = glowAnim.interpolate({
         inputRange: [0, 1],
-        outputRange: ['rgba(34, 197, 94, 0.0)', 'rgba(34, 197, 94, 0.25)'],
+        outputRange: ['rgba(34, 197, 94, 0.0)', 'rgba(34, 197, 94, 0.25)']
     });
 
     const borderColor = glowAnim.interpolate({
         inputRange: [0, 1],
-        outputRange: ['rgba(34, 197, 94, 0.3)', 'rgba(34, 197, 94, 0.8)'],
+        outputRange: ['rgba(34, 197, 94, 0.3)', 'rgba(34, 197, 94, 0.8)']
     });
 
     const getStatusConfig = (status: string, t: any) => {
         switch (status) {
-            case 'active': return { color: '#22C55E', bg: '#DCFCE7', icon: 'radio-button-on' as const, label: t('status.active') };
-            case 'accepted': return { color: '#3B82F6', bg: '#DBEAFE', icon: 'checkmark-circle' as const, label: t('status.accepted') };
-            case 'completed': return { color: '#8B5CF6', bg: '#EDE9FE', icon: 'checkmark-circle' as const, label: t('status.completed') };
-            case 'expired': return { color: '#9CA3AF', bg: '#F3F4F6', icon: 'time' as const, label: t('status.expired') };
-            case 'cancelled': return { color: '#EF4444', bg: '#FEE2E2', icon: 'close-circle' as const, label: t('status.cancelled') };
-            default: return { color: '#6B7280', bg: '#F3F4F6', icon: 'ellipse' as const, label: status };
+            case 'active':
+                return { color: '#22C55E', bg: '#DCFCE7', icon: 'radio-button-on' as const, label: t('status.active') };
+            case 'accepted':
+                return {
+                    color: '#3B82F6',
+                    bg: '#DBEAFE',
+                    icon: 'checkmark-circle' as const,
+                    label: t('status.accepted')
+                };
+            case 'completed':
+                return {
+                    color: '#8B5CF6',
+                    bg: '#EDE9FE',
+                    icon: 'checkmark-circle' as const,
+                    label: t('status.completed')
+                };
+            case 'expired':
+                return { color: '#9CA3AF', bg: '#F3F4F6', icon: 'time' as const, label: t('status.expired') };
+            case 'cancelled':
+                return { color: '#EF4444', bg: '#FEE2E2', icon: 'close-circle' as const, label: t('status.cancelled') };
+            default:
+                return { color: '#6B7280', bg: '#F3F4F6', icon: 'ellipse' as const, label: status };
         }
     };
 
@@ -156,23 +172,20 @@ const ActiveRequestCard = ({
 
     const getUrgencyColor = (urgency: string) => {
         switch (urgency) {
-            case 'critical': return '#EF4444';
-            case 'warning': return '#F59E0B';
-            default: return '#22C55E';
+            case 'critical':
+                return '#EF4444';
+            case 'warning':
+                return '#F59E0B';
+            default:
+                return '#22C55E';
         }
     };
 
     const renderRightActions = () => {
         if (item.status === 'accepted') return null;
         return (
-            <TouchableOpacity
-                style={styles.deleteAction}
-                onPress={() => onDelete(closeSwipeable)}
-            >
-                <LinearGradient
-                    colors={['#EF4444', '#DC2626']}
-                    style={styles.deleteGradient}
-                >
+            <TouchableOpacity style={styles.deleteAction} onPress={() => onDelete(closeSwipeable)}>
+                <LinearGradient colors={['#EF4444', '#DC2626']} style={styles.deleteGradient}>
                     <Ionicons name="trash-outline" size={24} color="#fff" />
                     <Text style={styles.deleteText}>{t('common.delete')}</Text>
                 </LinearGradient>
@@ -182,7 +195,9 @@ const ActiveRequestCard = ({
 
     return (
         <Swipeable
-            ref={(ref) => { swipeableRef = ref; }}
+            ref={(ref) => {
+                swipeableRef = ref;
+            }}
             renderRightActions={renderRightActions}
             overshootRight={false}
             friction={2}
@@ -195,13 +210,13 @@ const ActiveRequestCard = ({
                 onPressIn={() => {
                     Animated.spring(scaleAnim, {
                         toValue: 0.98,
-                        useNativeDriver: true,
+                        useNativeDriver: true
                     }).start();
                 }}
                 onPressOut={() => {
                     Animated.spring(scaleAnim, {
                         toValue: 1,
-                        useNativeDriver: true,
+                        useNativeDriver: true
                     }).start();
                 }}
             >
@@ -214,19 +229,12 @@ const ActiveRequestCard = ({
                             shadowOffset: { width: 0, height: 4 },
                             shadowOpacity: 0.3,
                             shadowRadius: 12,
-                            elevation: 8,
-                        },
+                            elevation: 8
+                        }
                     ]}
                 >
                     {/* Animated glow background for active cards */}
-                    {isActive && (
-                        <Animated.View
-                            style={[
-                                styles.glowBackground,
-                                { backgroundColor: glowColor },
-                            ]}
-                        />
-                    )}
+                    {isActive && <Animated.View style={[styles.glowBackground, { backgroundColor: glowColor }]} />}
 
                     <Animated.View
                         style={[
@@ -234,8 +242,8 @@ const ActiveRequestCard = ({
                             { backgroundColor: colors.surface },
                             isActive && {
                                 borderWidth: 2,
-                                borderColor: borderColor as any,
-                            },
+                                borderColor: borderColor as any
+                            }
                         ]}
                     >
                         {/* Status-based accent bar - always render one */}
@@ -247,29 +255,51 @@ const ActiveRequestCard = ({
                                 style={styles.accentBar}
                             />
                         ) : (
-                            <View style={[
-                                styles.accentBar,
-                                {
-                                    backgroundColor:
-                                        item.status === 'accepted' ? '#3B82F6' :
-                                            item.status === 'completed' ? '#8B5CF6' :
-                                                item.status === 'expired' ? '#9CA3AF' :
-                                                    item.status === 'cancelled' ? '#EF4444' :
-                                                        '#6B7280'
-                                }
-                            ]} />
+                            <View
+                                style={[
+                                    styles.accentBar,
+                                    {
+                                        backgroundColor:
+                                            item.status === 'accepted'
+                                                ? '#3B82F6'
+                                                : item.status === 'completed'
+                                                  ? '#8B5CF6'
+                                                  : item.status === 'expired'
+                                                    ? '#9CA3AF'
+                                                    : item.status === 'cancelled'
+                                                      ? '#EF4444'
+                                                      : '#6B7280'
+                                    }
+                                ]}
+                            />
                         )}
 
                         <View style={styles.cardContent}>
                             {/* Header with Status */}
                             <View style={styles.cardHeader}>
                                 <View style={styles.carInfo}>
-                                    <Ionicons name="car-sport" size={28} color="#6B7280" style={{ marginRight: Spacing.md }} />
+                                    <Ionicons
+                                        name="car-sport"
+                                        size={28}
+                                        color="#6B7280"
+                                        style={{ marginRight: Spacing.md }}
+                                    />
                                     <View style={{ flex: 1 }}>
-                                        <Text style={[styles.carName, { color: colors.text, textAlign: rtlTextAlign(isRTL) }]} numberOfLines={1}>
+                                        <Text
+                                            style={[
+                                                styles.carName,
+                                                { color: colors.text, textAlign: rtlTextAlign(isRTL) }
+                                            ]}
+                                            numberOfLines={1}
+                                        >
                                             {item.car_make || 'Unknown'} {item.car_model || ''}
                                         </Text>
-                                        <Text style={[styles.carYear, { color: colors.textSecondary, textAlign: rtlTextAlign(isRTL) }]}>
+                                        <Text
+                                            style={[
+                                                styles.carYear,
+                                                { color: colors.textSecondary, textAlign: rtlTextAlign(isRTL) }
+                                            ]}
+                                        >
                                             {item.car_year || 'N/A'}
                                         </Text>
                                     </View>
@@ -292,7 +322,8 @@ const ActiveRequestCard = ({
                                     {/* Status Badge */}
                                     <View style={[styles.statusBadge, { backgroundColor: statusConfig.bg }]}>
                                         <Text style={[styles.statusText, { color: statusConfig.color }]}>
-                                            <Ionicons name={statusConfig.icon} size={12} color={statusConfig.color} /> {statusConfig.label}
+                                            <Ionicons name={statusConfig.icon} size={12} color={statusConfig.color} />{' '}
+                                            {statusConfig.label}
                                         </Text>
                                     </View>
                                 </View>
@@ -301,14 +332,21 @@ const ActiveRequestCard = ({
                             {/* Part Category & Description */}
                             {item.part_category && (
                                 <Text
-                                    style={[styles.partCategory, { color: colors.text, textAlign: rtlTextAlign(isRTL) }]}
+                                    style={[
+                                        styles.partCategory,
+                                        { color: colors.text, textAlign: rtlTextAlign(isRTL) }
+                                    ]}
                                     numberOfLines={1}
                                 >
-                                    {item.part_category}{(item as any).part_subcategory ? ` > ${(item as any).part_subcategory}` : ''}
+                                    {item.part_category}
+                                    {(item as any).part_subcategory ? ` > ${(item as any).part_subcategory}` : ''}
                                 </Text>
                             )}
                             <Text
-                                style={[styles.partDescription, { color: colors.textSecondary, textAlign: rtlTextAlign(isRTL) }]}
+                                style={[
+                                    styles.partDescription,
+                                    { color: colors.textSecondary, textAlign: rtlTextAlign(isRTL) }
+                                ]}
                                 numberOfLines={2}
                             >
                                 {item.part_description || 'No description'}
@@ -317,8 +355,12 @@ const ActiveRequestCard = ({
                             {/* Bid Preview - Show best price when 2+ bids */}
                             {item.bid_count >= 2 && item.lowest_bid_price && (
                                 <View style={styles.bidPreviewContainer}>
-                                    <Text style={[styles.bidPreviewLabel, { textAlign: rtlTextAlign(isRTL) }]}>{t('common.bestPrice')}:</Text>
-                                    <Text style={styles.bidPreviewPrice}>{item.lowest_bid_price} {t('common.currency')}</Text>
+                                    <Text style={[styles.bidPreviewLabel, { textAlign: rtlTextAlign(isRTL) }]}>
+                                        {t('common.bestPrice')}:
+                                    </Text>
+                                    <Text style={styles.bidPreviewPrice}>
+                                        {item.lowest_bid_price} {t('common.currency')}
+                                    </Text>
                                 </View>
                             )}
 
@@ -327,15 +369,24 @@ const ActiveRequestCard = ({
                                 <View style={styles.activeIndicators}>
                                     {/* Countdown Timer */}
                                     {timeRemaining && (
-                                        <View style={[
-                                            styles.timerBadge,
-                                            { backgroundColor: getUrgencyColor(timeRemaining.urgency) + '15' }
-                                        ]}>
-                                            <Ionicons name="time-outline" size={12} color={getUrgencyColor(timeRemaining.urgency)} style={{ marginRight: 4 }} />
-                                            <Text style={[
-                                                styles.timerText,
-                                                { color: getUrgencyColor(timeRemaining.urgency) }
-                                            ]}>
+                                        <View
+                                            style={[
+                                                styles.timerBadge,
+                                                { backgroundColor: getUrgencyColor(timeRemaining.urgency) + '15' }
+                                            ]}
+                                        >
+                                            <Ionicons
+                                                name="time-outline"
+                                                size={12}
+                                                color={getUrgencyColor(timeRemaining.urgency)}
+                                                style={{ marginRight: 4 }}
+                                            />
+                                            <Text
+                                                style={[
+                                                    styles.timerText,
+                                                    { color: getUrgencyColor(timeRemaining.urgency) }
+                                                ]}
+                                            >
                                                 {timeRemaining.text}
                                             </Text>
                                         </View>
@@ -344,7 +395,12 @@ const ActiveRequestCard = ({
                                     {/* New Bids Badge */}
                                     {hasNewBids && (
                                         <View style={styles.newBidsBadge}>
-                                            <Ionicons name="flame" size={12} color="#D97706" style={{ marginRight: 4 }} />
+                                            <Ionicons
+                                                name="flame"
+                                                size={12}
+                                                color="#D97706"
+                                                style={{ marginRight: 4 }}
+                                            />
                                             <Text style={styles.newBidsText}>
                                                 {t('requests.bidsCount', { count: item.bid_count })}
                                             </Text>
@@ -377,27 +433,34 @@ const ActiveRequestCard = ({
                                     )}
                                 </View>
                                 <Text style={styles.dateText}>
-                                    {new Date(item.created_at).toLocaleDateString(language === 'ar' ? 'ar-QA' : 'en-US', {
-                                        month: 'short',
-                                        day: 'numeric'
-                                    })}
+                                    {new Date(item.created_at).toLocaleDateString(
+                                        language === 'ar' ? 'ar-QA' : 'en-US',
+                                        {
+                                            month: 'short',
+                                            day: 'numeric'
+                                        }
+                                    )}
                                 </Text>
                             </View>
 
                             {/* Persistent Swipe Hint for deletable cards */}
                             {item.status !== 'accepted' && (
                                 <View style={styles.swipeHintContainer}>
-                                    <Animated.Text style={[
-                                        styles.swipeArrow,
-                                        {
-                                            transform: [{
-                                                translateX: arrowBounceAnim.interpolate({
-                                                    inputRange: [0, 1],
-                                                    outputRange: [0, -6],
-                                                }),
-                                            }],
-                                        }
-                                    ]}>
+                                    <Animated.Text
+                                        style={[
+                                            styles.swipeArrow,
+                                            {
+                                                transform: [
+                                                    {
+                                                        translateX: arrowBounceAnim.interpolate({
+                                                            inputRange: [0, 1],
+                                                            outputRange: [0, -6]
+                                                        })
+                                                    }
+                                                ]
+                                            }
+                                        ]}
+                                    >
                                         <Ionicons name="arrow-back" size={16} color="#EF4444" />
                                     </Animated.Text>
                                     <Text style={styles.swipeHintText}>{t('requests.swipeToCancel')}</Text>
@@ -441,7 +504,7 @@ export default function RequestsScreen() {
     // G-03: Auto-refresh when app resumes from background (stale data prevention)
     useAppStateRefresh({
         onRefresh: loadRequests,
-        minBackgroundTimeMs: 30000, // Refresh if backgrounded for 30+ seconds
+        minBackgroundTimeMs: 30000 // Refresh if backgrounded for 30+ seconds
     });
 
     const onRefresh = useCallback(() => {
@@ -469,14 +532,14 @@ export default function RequestsScreen() {
                         try {
                             Haptics.notificationAsync(Haptics.NotificationFeedbackType.Warning);
                             await api.deleteRequest(request.request_id);
-                            setRequests(prev => prev.filter(r => r.request_id !== request.request_id));
+                            setRequests((prev) => prev.filter((r) => r.request_id !== request.request_id));
                             Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success);
                             toast.success(t('requests.deleted'), t('requests.deletedSuccess'));
                         } catch (error: any) {
                             handleApiError(error, toast);
                         }
-                    },
-                },
+                    }
+                }
             ]
         );
     };
@@ -499,13 +562,8 @@ export default function RequestsScreen() {
                 <Ionicons name="clipboard-outline" size={48} color="#999" />
             </View>
             <Text style={[styles.emptyTitle, { color: colors.text }]}>{t('requests.noRequests')}</Text>
-            <Text style={[styles.emptyText, { color: colors.textSecondary }]}>
-                {t('requests.noRequestsDesc')}
-            </Text>
-            <TouchableOpacity
-                style={styles.emptyButton}
-                onPress={() => navigation.navigate('NewRequest')}
-            >
+            <Text style={[styles.emptyText, { color: colors.textSecondary }]}>{t('requests.noRequestsDesc')}</Text>
+            <TouchableOpacity style={styles.emptyButton} onPress={() => navigation.navigate('NewRequest')}>
                 <LinearGradient
                     colors={[Colors.primary, '#B31D4A']}
                     start={{ x: 0, y: 0 }}
@@ -519,28 +577,35 @@ export default function RequestsScreen() {
     );
 
     // Count active requests for header
-    const activeCount = requests.filter(r => r.status === 'active').length;
+    const activeCount = requests.filter((r) => r.status === 'active').length;
 
     return (
         <SafeAreaView style={[styles.container, { backgroundColor: colors.background }]} edges={['top']}>
             {/* Premium Header */}
-            <View style={[styles.header, { backgroundColor: colors.surface, borderBottomColor: colors.border, flexDirection: rtlFlexDirection(isRTL) }]}>
+            <View
+                style={[
+                    styles.header,
+                    {
+                        backgroundColor: colors.surface,
+                        borderBottomColor: colors.border,
+                        flexDirection: rtlFlexDirection(isRTL)
+                    }
+                ]}
+            >
                 <View>
-                    <Text style={[styles.headerTitle, { color: colors.text, textAlign: rtlTextAlign(isRTL) }]}>{t('requests.title')}</Text>
-                    <Text style={[styles.headerSubtitle, { color: colors.textSecondary, textAlign: rtlTextAlign(isRTL) }]}>
+                    <Text style={[styles.headerTitle, { color: colors.text, textAlign: rtlTextAlign(isRTL) }]}>
+                        {t('requests.title')}
+                    </Text>
+                    <Text
+                        style={[styles.headerSubtitle, { color: colors.textSecondary, textAlign: rtlTextAlign(isRTL) }]}
+                    >
                         {activeCount > 0 ? `${activeCount} ${t('requests.active')}` : ''}
                         {activeCount > 0 && requests.length > activeCount ? ' • ' : ''}
                         {requests.length} {t('requests.total')}
                     </Text>
                 </View>
-                <TouchableOpacity
-                    style={styles.addButton}
-                    onPress={() => navigation.navigate('NewRequest')}
-                >
-                    <LinearGradient
-                        colors={[Colors.primary, '#B31D4A']}
-                        style={styles.addButtonGradient}
-                    >
+                <TouchableOpacity style={styles.addButton} onPress={() => navigation.navigate('NewRequest')}>
+                    <LinearGradient colors={[Colors.primary, '#B31D4A']} style={styles.addButtonGradient}>
                         <Text style={styles.addButtonText}>+</Text>
                     </LinearGradient>
                 </TouchableOpacity>
@@ -558,18 +623,14 @@ export default function RequestsScreen() {
                     contentContainerStyle={styles.listContent}
                     showsVerticalScrollIndicator={false}
                     refreshControl={
-                        <RefreshControl
-                            refreshing={isRefreshing}
-                            onRefresh={onRefresh}
-                            tintColor={Colors.primary}
-                        />
+                        <RefreshControl refreshing={isRefreshing} onRefresh={onRefresh} tintColor={Colors.primary} />
                     }
                     ListEmptyComponent={EmptyState}
                     initialNumToRender={10}
                     maxToRenderPerBatch={10}
                     windowSize={21}
                     removeClippedSubviews={false}
-                    extraData={requests.length + requests.map(r => r.status).join('')}
+                    extraData={requests.length + requests.map((r) => r.status).join('')}
                 />
             )}
         </SafeAreaView>
@@ -578,7 +639,7 @@ export default function RequestsScreen() {
 
 const styles = StyleSheet.create({
     container: {
-        flex: 1,
+        flex: 1
         // backgroundColor set dynamically via colors.background
     },
     header: {
@@ -588,47 +649,47 @@ const styles = StyleSheet.create({
         paddingHorizontal: Spacing.lg,
         paddingVertical: Spacing.md,
         // backgroundColor set dynamically via colors.surface
-        borderBottomWidth: 1,
+        borderBottomWidth: 1
         // borderBottomColor set dynamically via colors.border
     },
     headerTitle: {
         fontSize: FontSizes.xxl,
         fontWeight: '800',
         // color set dynamically via colors.text
-        letterSpacing: -0.5,
+        letterSpacing: -0.5
     },
     headerSubtitle: {
         fontSize: FontSizes.sm,
         // color set dynamically via colors.textSecondary
-        marginTop: 2,
+        marginTop: 2
     },
     addButton: {
         borderRadius: 24,
         overflow: 'hidden',
-        ...Shadows.sm,
+        ...Shadows.sm
     },
     addButtonGradient: {
         width: 48,
         height: 48,
         justifyContent: 'center',
-        alignItems: 'center',
+        alignItems: 'center'
     },
     addButtonText: {
         fontSize: 28,
         color: '#fff',
-        fontWeight: '300',
+        fontWeight: '300'
     },
     loadingContainer: {
-        padding: Spacing.lg,
+        padding: Spacing.lg
     },
     listContent: {
-        padding: Spacing.lg,
+        padding: Spacing.lg
     },
     // Card Wrapper with glow support
     cardWrapper: {
         marginBottom: Spacing.md,
         borderRadius: BorderRadius.xl,
-        overflow: 'visible',
+        overflow: 'visible'
     },
     glowBackground: {
         position: 'absolute',
@@ -636,7 +697,7 @@ const styles = StyleSheet.create({
         left: -4,
         right: -4,
         bottom: -4,
-        borderRadius: BorderRadius.xl + 4,
+        borderRadius: BorderRadius.xl + 4
     },
     requestCard: {
         // backgroundColor set dynamically via colors.surface
@@ -644,59 +705,59 @@ const styles = StyleSheet.create({
         overflow: 'hidden',
         flexDirection: 'row',
         minHeight: 120, // Ensure card never collapses
-        ...Shadows.sm,
+        ...Shadows.sm
     },
     accentBar: {
         width: 5,
-        backgroundColor: '#22C55E',
+        backgroundColor: '#22C55E'
     },
     cardContent: {
         flex: 1,
-        padding: Spacing.lg,
+        padding: Spacing.lg
     },
     cardHeader: {
         flexDirection: 'row',
         justifyContent: 'space-between',
         alignItems: 'flex-start',
-        marginBottom: Spacing.sm,
+        marginBottom: Spacing.sm
     },
     carInfo: {
         flexDirection: 'row',
         alignItems: 'center',
         flex: 1,
         marginRight: Spacing.md, // Space for badges
-        paddingRight: Spacing.sm,
+        paddingRight: Spacing.sm
     },
     carEmoji: {
         fontSize: 32,
         marginRight: Spacing.md,
-        flexShrink: 0, // Prevent emoji from shrinking
+        flexShrink: 0 // Prevent emoji from shrinking
     },
     carName: {
         fontSize: FontSizes.lg,
         fontWeight: '700',
         // color set dynamically via colors.text
-        marginBottom: 2,
+        marginBottom: 2
     },
     carYear: {
         fontSize: FontSizes.sm,
         // color set dynamically via colors.textSecondary
-        marginTop: 2,
+        marginTop: 2
     },
     badgeRow: {
         flexDirection: 'row',
         alignItems: 'center',
         gap: Spacing.xs,
-        flexShrink: 0, // Prevent badges from shrinking
+        flexShrink: 0 // Prevent badges from shrinking
     },
     statusBadge: {
         paddingHorizontal: Spacing.md,
         paddingVertical: Spacing.xs,
-        borderRadius: BorderRadius.full,
+        borderRadius: BorderRadius.full
     },
     statusText: {
         fontSize: FontSizes.xs,
-        fontWeight: '600',
+        fontWeight: '600'
     },
     bidCountBadge: {
         flexDirection: 'row',
@@ -704,30 +765,30 @@ const styles = StyleSheet.create({
         paddingHorizontal: Spacing.sm,
         paddingVertical: 4,
         borderRadius: BorderRadius.full,
-        gap: 4,
+        gap: 4
     },
     bidCountNumber: {
         fontSize: FontSizes.sm,
         fontWeight: '700',
-        color: '#ffffff',
+        color: '#ffffff'
     },
     bidCountLabel: {
         fontSize: FontSizes.xs,
         fontWeight: '600',
         color: '#ffffff',
-        opacity: 0.9,
+        opacity: 0.9
     },
     partCategory: {
         fontSize: FontSizes.md,
         fontWeight: '700',
         // color set dynamically via colors.text
-        marginBottom: 4,
+        marginBottom: 4
     },
     partDescription: {
         fontSize: FontSizes.md,
         // color set dynamically via colors.textSecondary
         lineHeight: 22,
-        marginBottom: Spacing.sm,
+        marginBottom: Spacing.sm
     },
     bidPreviewContainer: {
         flexDirection: 'row',
@@ -736,39 +797,39 @@ const styles = StyleSheet.create({
         paddingTop: Spacing.xs,
         borderTopWidth: 1,
         borderTopColor: 'rgba(141, 27, 61, 0.1)',
-        gap: Spacing.xs,
+        gap: Spacing.xs
     },
     bidPreviewLabel: {
         fontSize: FontSizes.sm,
         fontWeight: '600',
-        color: '#22C55E',
+        color: '#22C55E'
     },
     bidPreviewPrice: {
         fontSize: FontSizes.md,
         fontWeight: '800',
-        color: '#22C55E',
+        color: '#22C55E'
     },
     // Active indicators row
     activeIndicators: {
         flexDirection: 'row',
         alignItems: 'center',
         gap: Spacing.sm,
-        marginBottom: Spacing.sm,
+        marginBottom: Spacing.sm
     },
     timerBadge: {
         flexDirection: 'row',
         alignItems: 'center',
         paddingHorizontal: Spacing.sm,
         paddingVertical: 4,
-        borderRadius: BorderRadius.md,
+        borderRadius: BorderRadius.md
     },
     timerIcon: {
         fontSize: 12,
-        marginRight: 4,
+        marginRight: 4
     },
     timerText: {
         fontSize: FontSizes.xs,
-        fontWeight: '700',
+        fontWeight: '700'
     },
     newBidsBadge: {
         flexDirection: 'row',
@@ -776,47 +837,47 @@ const styles = StyleSheet.create({
         backgroundColor: '#FEF3C7',
         paddingHorizontal: Spacing.sm,
         paddingVertical: 4,
-        borderRadius: BorderRadius.md,
+        borderRadius: BorderRadius.md
     },
     fireIcon: {
         fontSize: 12,
-        marginRight: 4,
+        marginRight: 4
     },
     newBidsText: {
         fontSize: FontSizes.xs,
         fontWeight: '700',
-        color: '#D97706',
+        color: '#D97706'
     },
     cardDivider: {
         height: 1,
         // backgroundColor set dynamically via colors.border
-        marginVertical: Spacing.sm,
+        marginVertical: Spacing.sm
     },
     cardFooter: {
         flexDirection: 'row',
         justifyContent: 'space-between',
-        alignItems: 'center',
+        alignItems: 'center'
     },
     bidInfo: {
-        flex: 1,
+        flex: 1
     },
     bestBid: {
         flexDirection: 'row',
         alignItems: 'center',
-        gap: Spacing.sm,
+        gap: Spacing.sm
     },
     bestBidLabel: {
-        fontSize: FontSizes.xs,
+        fontSize: FontSizes.xs
         // color set dynamically via colors.textMuted
     },
     bestBidPrice: {
         fontSize: FontSizes.md,
         fontWeight: '800',
-        color: '#22C55E',
+        color: '#22C55E'
     },
     bidCount: {
         flexDirection: 'row',
-        alignItems: 'center',
+        alignItems: 'center'
     },
     bidIconBg: {
         width: 28,
@@ -825,25 +886,25 @@ const styles = StyleSheet.create({
         backgroundColor: Colors.primary + '15',
         justifyContent: 'center',
         alignItems: 'center',
-        marginRight: Spacing.sm,
+        marginRight: Spacing.sm
     },
     bidIcon: {
-        fontSize: 14,
+        fontSize: 14
     },
     bidCountText: {
         fontSize: FontSizes.sm,
         color: Colors.primary,
-        fontWeight: '600',
+        fontWeight: '600'
     },
     dateText: {
-        fontSize: FontSizes.sm,
+        fontSize: FontSizes.sm
         // color set dynamically via colors.textMuted
     },
     // Empty State
     emptyState: {
         alignItems: 'center',
         paddingVertical: Spacing.xxl * 2,
-        paddingHorizontal: Spacing.xl,
+        paddingHorizontal: Spacing.xl
     },
     emptyIconContainer: {
         width: 100,
@@ -852,37 +913,37 @@ const styles = StyleSheet.create({
         backgroundColor: '#FFF3E0',
         justifyContent: 'center',
         alignItems: 'center',
-        marginBottom: Spacing.lg,
+        marginBottom: Spacing.lg
     },
     emptyIcon: {
-        fontSize: 48,
+        fontSize: 48
     },
     emptyTitle: {
         fontSize: FontSizes.xl,
         fontWeight: '700',
         // color set dynamically via colors.text
-        marginBottom: Spacing.sm,
+        marginBottom: Spacing.sm
     },
     emptyText: {
         fontSize: FontSizes.md,
         // color set dynamically via colors.textSecondary
         textAlign: 'center',
         marginBottom: Spacing.xl,
-        lineHeight: 22,
+        lineHeight: 22
     },
     emptyButton: {
         borderRadius: BorderRadius.lg,
         overflow: 'hidden',
-        ...Shadows.md,
+        ...Shadows.md
     },
     emptyButtonGradient: {
         paddingHorizontal: Spacing.xl,
-        paddingVertical: Spacing.md,
+        paddingVertical: Spacing.md
     },
     emptyButtonText: {
         color: '#fff',
         fontSize: FontSizes.md,
-        fontWeight: '700',
+        fontWeight: '700'
     },
     // Delete action
     deleteAction: {
@@ -890,23 +951,23 @@ const styles = StyleSheet.create({
         marginVertical: Spacing.xs,
         borderRadius: BorderRadius.lg,
         overflow: 'hidden',
-        justifyContent: 'center',
+        justifyContent: 'center'
     },
     deleteGradient: {
         width: 80,
         height: '90%',
         justifyContent: 'center',
         alignItems: 'center',
-        borderRadius: BorderRadius.lg,
+        borderRadius: BorderRadius.lg
     },
     deleteIcon: {
         fontSize: 24,
-        marginBottom: 4,
+        marginBottom: 4
     },
     deleteText: {
         color: '#fff',
         fontSize: FontSizes.xs,
-        fontWeight: '600',
+        fontWeight: '600'
     },
     // Swipe hint styles
     swipeHintContainer: {
@@ -916,19 +977,18 @@ const styles = StyleSheet.create({
         marginTop: Spacing.sm,
         paddingTop: Spacing.xs,
         borderTopWidth: 1,
-        borderTopColor: 'rgba(239, 68, 68, 0.1)',
+        borderTopColor: 'rgba(239, 68, 68, 0.1)'
     },
     swipeArrow: {
         fontSize: 14,
         color: '#EF4444',
         fontWeight: '600',
-        marginRight: 4,
+        marginRight: 4
     },
     swipeHintText: {
         fontSize: FontSizes.xs,
         color: '#EF4444',
         fontWeight: '500',
-        opacity: 0.8,
-    },
+        opacity: 0.8
+    }
 });
-

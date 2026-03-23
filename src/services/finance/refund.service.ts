@@ -4,12 +4,7 @@
  */
 
 import { Pool, PoolClient } from 'pg';
-import {
-    Refund,
-    CreateRefundDto,
-    RefundResult,
-    RefundDetail
-} from './types';
+import { Refund, CreateRefundDto, RefundResult, RefundDetail } from './types';
 import {
     RefundNotFoundError,
     OrderNotFoundError,
@@ -19,12 +14,12 @@ import {
 import logger from '../../utils/logger';
 
 export class RefundService {
-    constructor(private pool: Pool) { }
+    constructor(private pool: Pool) {}
 
     /**
      * Create refund with automatic payout adjustment
      * Creates refund record and adjusts garage payout if applicable
-     * 
+     *
      * IMPORTANT: Delivery fee is retained on customer refusals to protect business
      */
     async createRefund(details: CreateRefundDto): Promise<RefundResult> {
@@ -56,11 +51,18 @@ export class RefundService {
             // Determine refund type (default to customer_refusal if driver was assigned)
             // FIX T-02: First validate order status allows refund
             const refundableStates = [
-                'confirmed', 'processing', 'awaiting_pickup', 'in_delivery',
-                'delivered', 'completed', 'disputed'
+                'confirmed',
+                'processing',
+                'awaiting_pickup',
+                'in_delivery',
+                'delivered',
+                'completed',
+                'disputed'
             ];
             if (!refundableStates.includes(order.order_status)) {
-                throw new Error(`Cannot refund order with status: ${order.order_status}. Order must be in refundable state.`);
+                throw new Error(
+                    `Cannot refund order with status: ${order.order_status}. Order must be in refundable state.`
+                );
             }
 
             // FIX SM-01: Check 7-day warranty for post-delivery refunds
@@ -68,13 +70,14 @@ export class RefundService {
                 const deliveredAt = new Date(order.delivered_at || order.completed_at || order.created_at);
                 const daysSince = (Date.now() - deliveredAt.getTime()) / (1000 * 60 * 60 * 24);
                 if (daysSince > 7) {
-                    throw new Error(`Order past 7-day warranty (${Math.ceil(daysSince)} days). Please escalate to operations manager.`);
+                    throw new Error(
+                        `Order past 7-day warranty (${Math.ceil(daysSince)} days). Please escalate to operations manager.`
+                    );
                 }
             }
 
-            const refundType = details.refund_type ||
-
-                (driverAssigned ? 'customer_refusal' : 'cancelled_before_dispatch');
+            const refundType =
+                details.refund_type || (driverAssigned ? 'customer_refusal' : 'cancelled_before_dispatch');
 
             // Calculate delivery fee to retain based on refund type
             let deliveryFeeRetained = 0;
@@ -97,10 +100,9 @@ export class RefundService {
             }
 
             // Check if refund already exists
-            const existingRefund = await client.query(
-                `SELECT refund_id FROM refunds WHERE order_id = $1`,
-                [details.order_id]
-            );
+            const existingRefund = await client.query(`SELECT refund_id FROM refunds WHERE order_id = $1`, [
+                details.order_id
+            ]);
 
             if (existingRefund.rows.length > 0) {
                 throw new RefundAlreadyProcessedError(details.order_id);
@@ -115,9 +117,17 @@ export class RefundService {
                  ) VALUES ($1, $2, $3, $4, $5, $6, 'pending', $7, $8, $9)
                  ON CONFLICT (order_id, refund_type) DO NOTHING
                  RETURNING *`,
-                [details.order_id, order.total_amount, details.refund_amount, details.refund_reason,
-                details.refund_method || 'original_payment', details.initiated_by,
-                    refundType, deliveryFeeRetained, (details as any).idempotency_key || null]
+                [
+                    details.order_id,
+                    order.total_amount,
+                    details.refund_amount,
+                    details.refund_reason,
+                    details.refund_method || 'original_payment',
+                    details.initiated_by,
+                    refundType,
+                    deliveryFeeRetained,
+                    (details as any).idempotency_key || null
+                ]
             );
 
             // Handle ON CONFLICT case (duplicate refund attempt)
@@ -163,9 +173,9 @@ export class RefundService {
                     [
                         order.garage_id,
                         order.order_id,
-                        reversalAmount,  // gross_amount (negative)
-                        0,               // commission_amount (no commission on reversal)
-                        reversalAmount,  // net_amount (same as gross for reversal)
+                        reversalAmount, // gross_amount (negative)
+                        0, // commission_amount (no commission on reversal)
+                        reversalAmount, // net_amount (same as gross for reversal)
                         `Payout reversal for refund: ${details.refund_reason}`
                     ]
                 );
@@ -185,13 +195,14 @@ export class RefundService {
                 refund_amount: refund.refund_amount,
                 delivery_fee_retained: deliveryFeeRetained,
                 payout_adjustment: payoutAdjustment,
-                message: deliveryFeeRetained > 0
-                    ? `Refund created. Delivery fee of ${deliveryFeeRetained} QAR retained (driver was assigned).`
-                    : payoutAdjustment
-                        ? payoutAdjustment.reversal_created
-                            ? 'Refund created with payout reversal'
-                            : 'Refund created with payout adjustment'
-                        : 'Refund created (no payout impact)'
+                message:
+                    deliveryFeeRetained > 0
+                        ? `Refund created. Delivery fee of ${deliveryFeeRetained} QAR retained (driver was assigned).`
+                        : payoutAdjustment
+                          ? payoutAdjustment.reversal_created
+                              ? 'Refund created with payout reversal'
+                              : 'Refund created with payout adjustment'
+                          : 'Refund created (no payout impact)'
             };
         } catch (err) {
             await client.query('ROLLBACK');
@@ -254,10 +265,7 @@ export class RefundService {
         }
 
         // Get total count
-        const countResult = await this.pool.query(
-            `SELECT COUNT(*) FROM refunds r ${whereClause}`,
-            params
-        );
+        const countResult = await this.pool.query(`SELECT COUNT(*) FROM refunds r ${whereClause}`, params);
 
         // Get refunds with related data
         params.push(limit, offset);
@@ -291,9 +299,7 @@ export class RefundService {
         refunds: RefundDetail[];
         total: number;
     }> {
-        const countResult = await this.pool.query(
-            `SELECT COUNT(*) FROM refunds WHERE refund_status = 'pending'`
-        );
+        const countResult = await this.pool.query(`SELECT COUNT(*) FROM refunds WHERE refund_status = 'pending'`);
 
         const result = await this.pool.query(
             `SELECT r.*, 
@@ -320,7 +326,10 @@ export class RefundService {
      * Execute Stripe refund and update status
      * Called by Operations to actually process the refund via Stripe
      */
-    async executeStripeRefund(refundId: string, processedBy: string): Promise<{
+    async executeStripeRefund(
+        refundId: string,
+        processedBy: string
+    ): Promise<{
         success: boolean;
         stripe_refund_id?: string;
         message: string;
@@ -359,7 +368,9 @@ export class RefundService {
 
             if (!refund.stripe_payment_intent_id) {
                 // No Stripe payment found - mark as manual refund (COD, test order, etc.)
-                logger.info('No Stripe payment for order - processing as manual refund', { orderNumber: refund.order_number });
+                logger.info('No Stripe payment for order - processing as manual refund', {
+                    orderNumber: refund.order_number
+                });
                 refundMethod = 'manual';
                 manualRefundAmount = totalRefundAmount;
             } else {
@@ -380,30 +391,37 @@ export class RefundService {
                 const chargeAmountQAR = chargeAmountCents / 100;
 
                 // Also check existing refunds on this payment intent
-                const existingRefunds = paymentIntent.amount_received - (paymentIntent.amount_received - (chargeAmountCents - (paymentIntent.amount || 0)));
+                const existingRefunds =
+                    paymentIntent.amount_received -
+                    (paymentIntent.amount_received - (chargeAmountCents - (paymentIntent.amount || 0)));
                 const refundableAmountCents = chargeAmountCents; // Stripe tracks refundable internally
 
                 const requestedRefundCents = Math.round(totalRefundAmount * 100);
 
                 if (chargeAmountCents === 0) {
                     // Zero charge (fully COD) - process as manual
-                    logger.info('Zero Stripe charge - processing as manual refund', { orderNumber: refund.order_number });
+                    logger.info('Zero Stripe charge - processing as manual refund', {
+                        orderNumber: refund.order_number
+                    });
                     refundMethod = 'manual';
                     manualRefundAmount = totalRefundAmount;
                 } else if (requestedRefundCents <= chargeAmountCents) {
                     // Refund amount fits within Stripe charge - refund full amount via Stripe
                     stripeRefundAmount = totalRefundAmount;
-                    const stripeRefund = await stripe.refunds.create({
-                        payment_intent: refund.stripe_payment_intent_id,
-                        amount: requestedRefundCents,
-                        metadata: {
-                            refund_id: refundId,
-                            order_number: refund.order_number,
-                            processed_by: processedBy
+                    const stripeRefund = await stripe.refunds.create(
+                        {
+                            payment_intent: refund.stripe_payment_intent_id,
+                            amount: requestedRefundCents,
+                            metadata: {
+                                refund_id: refundId,
+                                order_number: refund.order_number,
+                                processed_by: processedBy
+                            }
+                        },
+                        {
+                            idempotencyKey: `manual_refund_${refundId}_${requestedRefundCents}`
                         }
-                    }, {
-                        idempotencyKey: `manual_refund_${refundId}_${requestedRefundCents}`
-                    });
+                    );
                     stripeRefundId = stripeRefund.id;
                 } else {
                     // SPLIT REFUND: Refund amount exceeds Stripe charge (deposit + COD order)
@@ -420,28 +438,34 @@ export class RefundService {
                     });
 
                     // Refund the full Stripe charge
-                    const stripeRefund = await stripe.refunds.create({
-                        payment_intent: refund.stripe_payment_intent_id,
-                        amount: chargeAmountCents,
-                        metadata: {
-                            refund_id: refundId,
-                            order_number: refund.order_number,
-                            processed_by: processedBy,
-                            split_refund: 'true',
-                            manual_portion: manualRefundAmount.toFixed(2)
+                    const stripeRefund = await stripe.refunds.create(
+                        {
+                            payment_intent: refund.stripe_payment_intent_id,
+                            amount: chargeAmountCents,
+                            metadata: {
+                                refund_id: refundId,
+                                order_number: refund.order_number,
+                                processed_by: processedBy,
+                                split_refund: 'true',
+                                manual_portion: manualRefundAmount.toFixed(2)
+                            }
+                        },
+                        {
+                            idempotencyKey: `manual_refund_${refundId}_${chargeAmountCents}`
                         }
-                    }, {
-                        idempotencyKey: `manual_refund_${refundId}_${chargeAmountCents}`
-                    });
+                    );
                     stripeRefundId = stripeRefund.id;
                     refundMethod = 'split';
                 }
             }
 
             // Update refund record
-            const refundNote = refundMethod === 'manual' ? ' [Manual refund - COD/cash]'
-                : refundMethod === 'split' ? ` [Split: ${stripeRefundAmount.toFixed(2)} QAR Stripe + ${manualRefundAmount.toFixed(2)} QAR manual/cash]`
-                    : '';
+            const refundNote =
+                refundMethod === 'manual'
+                    ? ' [Manual refund - COD/cash]'
+                    : refundMethod === 'split'
+                      ? ` [Split: ${stripeRefundAmount.toFixed(2)} QAR Stripe + ${manualRefundAmount.toFixed(2)} QAR manual/cash]`
+                      : '';
             await client.query(
                 `UPDATE refunds SET
                     refund_status = 'completed',
@@ -482,7 +506,11 @@ export class RefundService {
                     [payout.payout_id, newPayoutStatus]
                 );
 
-                logger.info('Payout cancelled due to refund', { payoutId: payout.payout_id, newStatus: newPayoutStatus, wasStatus: payout.payout_status });
+                logger.info('Payout cancelled due to refund', {
+                    payoutId: payout.payout_id,
+                    newStatus: newPayoutStatus,
+                    wasStatus: payout.payout_status
+                });
             }
 
             await client.query('COMMIT');
@@ -550,7 +578,11 @@ export class RefundService {
      * Reject a pending refund request
      * Finance team can reject with a reason, notifying Support and Customer
      */
-    async rejectRefund(refundId: string, rejectedBy: string, rejectionReason: string): Promise<{
+    async rejectRefund(
+        refundId: string,
+        rejectedBy: string,
+        rejectionReason: string
+    ): Promise<{
         success: boolean;
         message: string;
     }> {
@@ -560,12 +592,15 @@ export class RefundService {
             await client.query('BEGIN');
 
             // Get the refund details
-            const refundResult = await client.query(`
+            const refundResult = await client.query(
+                `
                 SELECT r.*, o.order_number, o.customer_id
                 FROM refunds r
                 JOIN orders o ON o.order_id = r.order_id
                 WHERE r.refund_id = $1
-            `, [refundId]);
+            `,
+                [refundId]
+            );
 
             if (refundResult.rows.length === 0) {
                 throw new RefundNotFoundError(refundId);
@@ -578,32 +613,45 @@ export class RefundService {
             }
 
             // Update refund status to rejected
-            await client.query(`
+            await client.query(
+                `
                 UPDATE refunds 
                 SET refund_status = 'rejected',
                     refund_reason = refund_reason || ' | REJECTED: ' || $1,
                     processed_by = $2,
                     processed_at = NOW()
                 WHERE refund_id = $3
-            `, [rejectionReason, rejectedBy, refundId]);
+            `,
+                [rejectionReason, rejectedBy, refundId]
+            );
 
             // Restore order payment status (was set to 'refund_pending' when request was created)
-            await client.query(`
+            await client.query(
+                `
                 UPDATE orders SET payment_status = 'paid' 
                 WHERE order_id = $1 AND payment_status = 'refund_pending'
-            `, [refund.order_id]);
+            `,
+                [refund.order_id]
+            );
 
             // Unfreeze garage payout (was put on_hold when request was created)
-            await client.query(`
+            await client.query(
+                `
                 UPDATE garage_payouts 
                 SET payout_status = 'pending',
                     adjustment_reason = NULL,
                     updated_at = NOW()
                 WHERE order_id = $1 AND payout_status = 'on_hold'
-            `, [refund.order_id]);
+            `,
+                [refund.order_id]
+            );
 
             // Log the rejection
-            logger.info('Refund rejected - order and payout restored', { refundId, rejectedBy, reason: rejectionReason });
+            logger.info('Refund rejected - order and payout restored', {
+                refundId,
+                rejectedBy,
+                reason: rejectionReason
+            });
 
             await client.query('COMMIT');
 
@@ -664,14 +712,17 @@ export class RefundService {
             const readPool = this.pool;
 
             // Find linked support ticket for this order
-            const ticketResult = await readPool.query(`
+            const ticketResult = await readPool.query(
+                `
                 SELECT t.ticket_id, t.assigned_to
                 FROM support_tickets t
                 WHERE t.order_id = (
                     SELECT order_id FROM orders WHERE order_id = $1
                 )
                 ORDER BY t.created_at DESC LIMIT 1
-            `, [orderId]);
+            `,
+                [orderId]
+            );
 
             if (ticketResult.rows.length > 0) {
                 const ticket = ticketResult.rows[0];
@@ -679,14 +730,17 @@ export class RefundService {
                 // Post update to ticket chat so agent sees it
                 const icon = decision === 'approved' ? '✅' : '❌';
                 const statusText = decision === 'approved' ? 'APPROVED' : 'REJECTED';
-                await readPool.query(`
+                await readPool.query(
+                    `
                     INSERT INTO chat_messages (ticket_id, sender_id, sender_type, message_text, is_internal)
                     VALUES ($1, $2, 'system', $3, false)
-                `, [
-                    ticket.ticket_id,
-                    decidedBy,
-                    `${icon} **Refund ${statusText} by Finance Team**\n\nOrder #${orderNumber}\n${details}`
-                ]);
+                `,
+                    [
+                        ticket.ticket_id,
+                        decidedBy,
+                        `${icon} **Refund ${statusText} by Finance Team**\n\nOrder #${orderNumber}\n${details}`
+                    ]
+                );
 
                 // Notify assigned agent specifically
                 if (ticket.assigned_to) {
@@ -708,16 +762,20 @@ export class RefundService {
             }
 
             // Also find the support agent who initiated the refund request
-            const initiatorResult = await readPool.query(`
+            const initiatorResult = await readPool.query(
+                `
                 SELECT initiated_by FROM refunds 
                 WHERE order_id = $1 AND initiated_by != $2
                 ORDER BY created_at DESC LIMIT 1
-            `, [orderId, decidedBy]);
+            `,
+                [orderId, decidedBy]
+            );
 
             if (initiatorResult.rows.length > 0 && initiatorResult.rows[0].initiated_by !== 'support') {
                 const initiatorId = initiatorResult.rows[0].initiated_by;
                 // Don't double-notify if initiator is also the assigned agent
-                const alreadyNotified = ticketResult.rows.length > 0 && ticketResult.rows[0].assigned_to === initiatorId;
+                const alreadyNotified =
+                    ticketResult.rows.length > 0 && ticketResult.rows[0].assigned_to === initiatorId;
                 if (!alreadyNotified) {
                     const { createNotification } = await import('../notification.service');
                     const icon = decision === 'approved' ? '✅' : '❌';

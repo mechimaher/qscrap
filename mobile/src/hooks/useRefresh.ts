@@ -17,14 +17,14 @@ interface UseRefreshReturn {
 /**
  * Hook for pull-to-refresh functionality with consistent UX.
  * Includes haptic feedback and minimum loading duration.
- * 
+ *
  * @example
  * const { refreshing, onRefresh } = useRefresh({
  *   onRefresh: async () => {
  *     await fetchData();
  *   }
  * });
- * 
+ *
  * return (
  *   <FlatList
  *     refreshControl={
@@ -37,7 +37,7 @@ interface UseRefreshReturn {
 export const useRefresh = ({
     onRefresh: refreshCallback,
     hapticFeedback = true,
-    minimumDuration = 500,
+    minimumDuration = 500
 }: UseRefreshOptions): UseRefreshReturn => {
     const [refreshing, setRefreshing] = useState(false);
 
@@ -67,7 +67,7 @@ export const useRefresh = ({
             const remaining = minimumDuration - elapsed;
 
             if (remaining > 0) {
-                await new Promise(resolve => setTimeout(resolve, remaining));
+                await new Promise((resolve) => setTimeout(resolve, remaining));
             }
 
             setRefreshing(false);
@@ -85,7 +85,7 @@ export const useRefresh = ({
 
     return {
         refreshing,
-        onRefresh,
+        onRefresh
     };
 };
 

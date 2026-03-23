@@ -1,11 +1,5 @@
 import React, { useEffect, useRef } from 'react';
-import {
-    View,
-    Text,
-    StyleSheet,
-    Animated,
-    Easing,
-} from 'react-native';
+import { View, Text, StyleSheet, Animated, Easing } from 'react-native';
 import { useTheme } from '../contexts/ThemeContext';
 import { useTranslation } from '../contexts/LanguageContext';
 import { rtlTextAlign } from '../utils/rtl';
@@ -26,37 +20,49 @@ interface StatusTimelineProps {
 
 // Default step keys — labels come from i18n, provided at runtime
 const DEFAULT_STEP_KEYS = [
-    'confirmed', 'preparing', 'ready_for_pickup', 'picked_up',
-    'in_transit', 'arriving', 'delivered', 'completed',
+    'confirmed',
+    'preparing',
+    'ready_for_pickup',
+    'picked_up',
+    'in_transit',
+    'arriving',
+    'delivered',
+    'completed'
 ];
 
-const DEFAULT_ICONS = ['checkmark', 'cube-outline', 'business-outline', 'car-sport', 'trail-sign-outline', 'flag', 'mail-outline', 'ribbon'];
+const DEFAULT_ICONS = [
+    'checkmark',
+    'cube-outline',
+    'business-outline',
+    'car-sport',
+    'trail-sign-outline',
+    'flag',
+    'mail-outline',
+    'ribbon'
+];
 
 // Map order statuses to timeline index
 // Premium 8-step journey: confirmed → preparing → ready → picked → transit → arriving → delivered → completed
 const STATUS_MAP: Record<string, number> = {
-    'confirmed': 0,
-    'preparing': 1,
-    'ready_for_pickup': 2,
-    'ready_for_collection': 2,
-    'collected': 3,
-    'picked_up': 3,
-    'qc_in_progress': 3,
-    'qc_passed': 3,
-    'in_transit': 4,
-    'arriving': 5,
-    'delivered': 6,
-    'completed': 7,
+    confirmed: 0,
+    preparing: 1,
+    ready_for_pickup: 2,
+    ready_for_collection: 2,
+    collected: 3,
+    picked_up: 3,
+    qc_in_progress: 3,
+    qc_passed: 3,
+    in_transit: 4,
+    arriving: 5,
+    delivered: 6,
+    completed: 7
 };
 
 /**
  * Premium Animated Status Timeline
  * Shows order progress with animated transitions
  */
-export const StatusTimeline: React.FC<StatusTimelineProps> = ({
-    currentStatus,
-    steps,
-}) => {
+export const StatusTimeline: React.FC<StatusTimelineProps> = ({ currentStatus, steps }) => {
     const { colors } = useTheme();
     const { t, isRTL } = useTranslation();
 
@@ -69,15 +75,17 @@ export const StatusTimeline: React.FC<StatusTimelineProps> = ({
         in_transit: 'tracking.statusInTransit',
         arriving: 'tracking.statusArrivingSoon',
         delivered: 'tracking.statusDelivered',
-        completed: 'tracking.statusCompleted',
+        completed: 'tracking.statusCompleted'
     };
 
     // Build localized steps if not provided externally
-    const localizedSteps: TimelineStep[] = steps || DEFAULT_STEP_KEYS.map((key, i) => ({
-        key,
-        label: t(LABEL_KEYS[key] as any) || key,
-        icon: DEFAULT_ICONS[i],
-    }));
+    const localizedSteps: TimelineStep[] =
+        steps ||
+        DEFAULT_STEP_KEYS.map((key, i) => ({
+            key,
+            label: t(LABEL_KEYS[key] as any) || key,
+            icon: DEFAULT_ICONS[i]
+        }));
 
     const currentIndex = STATUS_MAP[currentStatus] ?? 0;
 
@@ -93,14 +101,14 @@ export const StatusTimeline: React.FC<StatusTimelineProps> = ({
                     toValue: 1.2,
                     duration: 600,
                     easing: Easing.inOut(Easing.ease),
-                    useNativeDriver: true,
+                    useNativeDriver: true
                 }),
                 Animated.timing(pulseAnim, {
                     toValue: 1,
                     duration: 600,
                     easing: Easing.inOut(Easing.ease),
-                    useNativeDriver: true,
-                }),
+                    useNativeDriver: true
+                })
             ])
         );
         pulse.start();
@@ -111,13 +119,13 @@ export const StatusTimeline: React.FC<StatusTimelineProps> = ({
                 Animated.timing(glowAnim, {
                     toValue: 1,
                     duration: 1000,
-                    useNativeDriver: false,
+                    useNativeDriver: false
                 }),
                 Animated.timing(glowAnim, {
                     toValue: 0,
                     duration: 1000,
-                    useNativeDriver: false,
-                }),
+                    useNativeDriver: false
+                })
             ])
         );
         glow.start();
@@ -130,7 +138,7 @@ export const StatusTimeline: React.FC<StatusTimelineProps> = ({
 
     const glowOpacity = glowAnim.interpolate({
         inputRange: [0, 1],
-        outputRange: [0.3, 0.8],
+        outputRange: [0.3, 0.8]
     });
 
     return (
@@ -153,7 +161,7 @@ export const StatusTimeline: React.FC<StatusTimelineProps> = ({
                                             styles.connector,
                                             { backgroundColor: colors.border },
                                             isCompleted && styles.connectorCompleted,
-                                            isCurrent && styles.connectorActive,
+                                            isCurrent && styles.connectorActive
                                         ]}
                                     />
                                 </View>
@@ -162,20 +170,10 @@ export const StatusTimeline: React.FC<StatusTimelineProps> = ({
                             {/* Step node */}
                             <View style={styles.stepContent}>
                                 <Animated.View
-                                    style={[
-                                        styles.nodeContainer,
-                                        isCurrent && { transform: [{ scale: pulseAnim }] },
-                                    ]}
+                                    style={[styles.nodeContainer, isCurrent && { transform: [{ scale: pulseAnim }] }]}
                                 >
                                     {/* Glow effect for current step */}
-                                    {isCurrent && (
-                                        <Animated.View
-                                            style={[
-                                                styles.nodeGlow,
-                                                { opacity: glowOpacity }
-                                            ]}
-                                        />
-                                    )}
+                                    {isCurrent && <Animated.View style={[styles.nodeGlow, { opacity: glowOpacity }]} />}
 
                                     <View
                                         style={[
@@ -183,7 +181,10 @@ export const StatusTimeline: React.FC<StatusTimelineProps> = ({
                                             { backgroundColor: colors.border },
                                             isCompleted && styles.nodeCompleted,
                                             isCurrent && styles.nodeCurrent,
-                                            isPending && [styles.nodePending, { backgroundColor: colors.surface, borderColor: colors.border }],
+                                            isPending && [
+                                                styles.nodePending,
+                                                { backgroundColor: colors.surface, borderColor: colors.border }
+                                            ]
                                         ]}
                                     >
                                         <Ionicons
@@ -202,17 +203,17 @@ export const StatusTimeline: React.FC<StatusTimelineProps> = ({
                                             styles.stepLabel,
                                             { color: colors.text },
                                             isCurrent && styles.stepLabelCurrent,
-                                            isPending && { color: colors.textSecondary },
+                                            isPending && { color: colors.textSecondary }
                                         ]}
                                     >
                                         {step.label}
                                     </Text>
                                     {step.timestamp && (
-                                        <Text style={[styles.timestamp, { color: colors.textSecondary }]}>{step.timestamp}</Text>
+                                        <Text style={[styles.timestamp, { color: colors.textSecondary }]}>
+                                            {step.timestamp}
+                                        </Text>
                                     )}
-                                    {isCurrent && (
-                                        <Text style={styles.currentLabel}>{t('tracking.statusNow')}</Text>
-                                    )}
+                                    {isCurrent && <Text style={styles.currentLabel}>{t('tracking.statusNow')}</Text>}
                                 </View>
                             </View>
                         </View>
@@ -227,54 +228,54 @@ const styles = StyleSheet.create({
     container: {
         borderRadius: BorderRadius.lg,
         padding: Spacing.lg,
-        marginTop: Spacing.md,
+        marginTop: Spacing.md
     },
     title: {
         fontSize: 16,
         fontWeight: '600',
-        marginBottom: Spacing.lg,
+        marginBottom: Spacing.lg
     },
     timeline: {
-        paddingLeft: Spacing.xs,
+        paddingLeft: Spacing.xs
     },
     stepRow: {
-        marginBottom: 0,
+        marginBottom: 0
     },
     connectorContainer: {
         position: 'absolute',
         left: 15,
         top: -20,
         width: 2,
-        height: 20,
+        height: 20
     },
     connector: {
         width: 2,
-        height: '100%',
+        height: '100%'
     },
     connectorCompleted: {
-        backgroundColor: Colors.primary,
+        backgroundColor: Colors.primary
     },
     connectorActive: {
-        backgroundColor: Colors.primary,
+        backgroundColor: Colors.primary
     },
     stepContent: {
         flexDirection: 'row',
         alignItems: 'center',
-        marginBottom: Spacing.md,
+        marginBottom: Spacing.md
     },
     nodeContainer: {
         position: 'relative',
         width: 32,
         height: 32,
         justifyContent: 'center',
-        alignItems: 'center',
+        alignItems: 'center'
     },
     nodeGlow: {
         position: 'absolute',
         width: 44,
         height: 44,
         borderRadius: 22,
-        backgroundColor: Colors.primary,
+        backgroundColor: Colors.primary
     },
     node: {
         width: 32,
@@ -282,52 +283,51 @@ const styles = StyleSheet.create({
         borderRadius: 16,
         justifyContent: 'center',
         alignItems: 'center',
-        zIndex: 1,
+        zIndex: 1
     },
     nodeCompleted: {
-        backgroundColor: Colors.primary,
+        backgroundColor: Colors.primary
     },
     nodeCurrent: {
         backgroundColor: Colors.primary,
         borderWidth: 3,
-        borderColor: 'rgba(255,255,255,0.3)',
+        borderColor: 'rgba(255,255,255,0.3)'
     },
     nodePending: {
-        borderWidth: 2,
+        borderWidth: 2
     },
     nodeIcon: {
-        fontSize: 14,
+        fontSize: 14
     },
     nodeIconPending: {
-        opacity: 0.5,
+        opacity: 0.5
     },
     labelContainer: {
         flex: 1,
-        marginLeft: Spacing.md,
+        marginLeft: Spacing.md
     },
     stepLabel: {
         fontSize: 14,
-        fontWeight: '500',
+        fontWeight: '500'
     },
-    stepLabelCompleted: {
-    },
+    stepLabelCompleted: {},
     stepLabelCurrent: {
         color: Colors.primary,
-        fontWeight: '600',
+        fontWeight: '600'
     },
     stepLabelPending: {
-        color: Colors.dark.textSecondary,
+        color: Colors.dark.textSecondary
     },
     timestamp: {
         fontSize: 11,
-        marginTop: 2,
+        marginTop: 2
     },
     currentLabel: {
         fontSize: 10,
         color: Colors.primary,
         fontWeight: '700',
-        marginTop: 2,
-    },
+        marginTop: 2
+    }
 });
 
 export default StatusTimeline;

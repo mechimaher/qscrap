@@ -31,7 +31,7 @@ const DEFAULT_COUNTS: BadgeCounts = {
     requests: { active: 0, with_bids: 0, pending_action: 0 },
     orders: { active: 0, pending_payment: 0, in_transit: 0, pending_confirmation: 0 },
     notifications: { unread: 0 },
-    total_badge: 0,
+    total_badge: 0
 };
 
 interface BadgeCountsContextValue {
@@ -46,10 +46,10 @@ interface BadgeCountsContextValue {
 const BadgeCountsContext = createContext<BadgeCountsContextValue>({
     counts: DEFAULT_COUNTS,
     isLoading: true,
-    refresh: async () => { },
+    refresh: async () => {},
     requestsBadge: undefined,
     ordersBadge: undefined,
-    profileBadge: undefined,
+    profileBadge: undefined
 });
 
 export function BadgeCountsProvider({ children }: { children: ReactNode }) {
@@ -65,7 +65,7 @@ export function BadgeCountsProvider({ children }: { children: ReactNode }) {
                     requests: response.requests || DEFAULT_COUNTS.requests,
                     orders: response.orders || DEFAULT_COUNTS.orders,
                     notifications: response.notifications || DEFAULT_COUNTS.notifications,
-                    total_badge: response.total_badge || 0,
+                    total_badge: response.total_badge || 0
                 });
             }
         } catch (error) {
@@ -93,37 +93,37 @@ export function BadgeCountsProvider({ children }: { children: ReactNode }) {
         if (!socket) return;
 
         const handleNewBid = () => {
-            setCounts(prev => ({
+            setCounts((prev) => ({
                 ...prev,
                 requests: { ...prev.requests, with_bids: prev.requests.with_bids + 1 },
-                total_badge: prev.total_badge + 1,
+                total_badge: prev.total_badge + 1
             }));
         };
 
         const handleOrderUpdate = () => fetchBadgeCounts();
 
         const handleCounterOffer = () => {
-            setCounts(prev => ({
+            setCounts((prev) => ({
                 ...prev,
                 requests: { ...prev.requests, pending_action: prev.requests.pending_action + 1 },
-                total_badge: prev.total_badge + 1,
+                total_badge: prev.total_badge + 1
             }));
         };
 
         const handleNotification = () => {
-            setCounts(prev => ({
+            setCounts((prev) => ({
                 ...prev,
                 notifications: { unread: prev.notifications.unread + 1 },
-                total_badge: prev.total_badge + 1,
+                total_badge: prev.total_badge + 1
             }));
         };
 
         // Gap 1 Fix: order_status_updated (not order_status_update)
         // Gap 2 Fix: Added bid_withdrawn listener
         const handleBidWithdrawn = () => {
-            setCounts(prev => ({
+            setCounts((prev) => ({
                 ...prev,
-                requests: { ...prev.requests, with_bids: Math.max(0, prev.requests.with_bids - 1) },
+                requests: { ...prev.requests, with_bids: Math.max(0, prev.requests.with_bids - 1) }
             }));
         };
 
@@ -152,14 +152,10 @@ export function BadgeCountsProvider({ children }: { children: ReactNode }) {
         refresh: fetchBadgeCounts,
         requestsBadge: requestsBadge > 0 ? requestsBadge : undefined,
         ordersBadge: ordersBadge > 0 ? ordersBadge : undefined,
-        profileBadge: profileBadge > 0 ? profileBadge : undefined,
+        profileBadge: profileBadge > 0 ? profileBadge : undefined
     };
 
-    return (
-        <BadgeCountsContext.Provider value={value}>
-            {children}
-        </BadgeCountsContext.Provider>
-    );
+    return <BadgeCountsContext.Provider value={value}>{children}</BadgeCountsContext.Provider>;
 }
 
 export function useBadgeCounts() {

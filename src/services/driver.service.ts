@@ -1,4 +1,3 @@
-
 import { getWritePool } from '../config/db';
 import { driverRepository } from '../repositories/driver.repository';
 import { AssignmentState } from '../state/assignment.state';
@@ -55,7 +54,9 @@ export class DriverService {
         let notifiedCustomers = 0;
 
         for (const row of affectedOrders) {
-            if (notifiedOrderIds.has(row.order_id)) { continue; }
+            if (notifiedOrderIds.has(row.order_id)) {
+                continue;
+            }
 
             io?.to(`user_${row.customer_id}`).emit('driver_location_update', {
                 order_id: row.order_id,
@@ -97,12 +98,15 @@ export class DriverService {
             }
 
             // 3. Update Assignment to 'assigned'
-            await client.query(`
+            await client.query(
+                `
                 UPDATE driver_assignments 
                 SET status = 'assigned',
                     accepted_at = NOW()
                 WHERE assignment_id = $1
-            `, [assignmentId]);
+            `,
+                [assignmentId]
+            );
 
             // 4. Updated driver status to 'busy'
             await driverRepository.updateDriverStatus(assignment.driver_id, 'busy', client);
@@ -132,7 +136,6 @@ export class DriverService {
                 message: 'Assignment accepted',
                 assignment: { ...assignment, status: 'assigned' }
             };
-
         } catch (err) {
             await client.query('ROLLBACK');
             throw err;
@@ -158,13 +161,16 @@ export class DriverService {
             }
 
             // 3. Update Assignment to 'rejected'
-            await client.query(`
+            await client.query(
+                `
                 UPDATE driver_assignments 
                 SET status = 'rejected',
                     rejection_reason = $2,
                     rejected_at = NOW()
                 WHERE assignment_id = $1
-            `, [assignmentId, rejectionReason || 'Driver declined']);
+            `,
+                [assignmentId, rejectionReason || 'Driver declined']
+            );
 
             // 4. Driver remains 'available' for other assignments
 
@@ -188,7 +194,6 @@ export class DriverService {
                 message: 'Assignment rejected',
                 assignment: { ...assignment, status: 'rejected' }
             };
-
         } catch (err) {
             await client.query('ROLLBACK');
             throw err;
@@ -197,7 +202,13 @@ export class DriverService {
         }
     }
 
-    async updateAssignmentStatus(userId: string, assignmentId: string, status: string, notes?: string, failureReason?: string) {
+    async updateAssignmentStatus(
+        userId: string,
+        assignmentId: string,
+        status: string,
+        notes?: string,
+        failureReason?: string
+    ) {
         const client = await this.pool.connect();
         try {
             await client.query('BEGIN');
@@ -213,13 +224,23 @@ export class DriverService {
                 // IDEMPOTENCY CHECK WITH RECOVERY:
                 // Even if assignment is already updated, ensure the Order Status is consistent.
                 // This covers cases where Assignment updated but Order update failed.
-                const currentOrder = await client.query('SELECT order_status FROM orders WHERE order_id = $1', [assignment.order_id]);
+                const currentOrder = await client.query('SELECT order_status FROM orders WHERE order_id = $1', [
+                    assignment.order_id
+                ]);
                 const currentOrderStatus = currentOrder.rows[0]?.order_status;
 
                 let shouldUpdateOrder = false;
-                if (status === 'delivered' && currentOrderStatus !== 'delivered' && currentOrderStatus !== 'completed') {
+                if (
+                    status === 'delivered' &&
+                    currentOrderStatus !== 'delivered' &&
+                    currentOrderStatus !== 'completed'
+                ) {
                     shouldUpdateOrder = true;
-                } else if (status === 'picked_up' && currentOrderStatus !== 'collected' && currentOrderStatus !== 'in_transit') {
+                } else if (
+                    status === 'picked_up' &&
+                    currentOrderStatus !== 'collected' &&
+                    currentOrderStatus !== 'in_transit'
+                ) {
                     shouldUpdateOrder = true;
                 }
 
@@ -233,8 +254,8 @@ export class DriverService {
                 }
                 // If we need to fix the order status, fall through to logic below...
                 // But we need to avoid re-updating assignment.
-                // Refactoring flow to separate Assignment Update from Order Update would be best, 
-                // but for minimal diff, I will just proceed and let the SQL update (which is cheap) run again 
+                // Refactoring flow to separate Assignment Update from Order Update would be best,
+                // but for minimal diff, I will just proceed and let the SQL update (which is cheap) run again
                 // or just skip the assignment update part.
             }
 
@@ -244,9 +265,17 @@ export class DriverService {
 
             if (assignment.status !== status) {
                 if (!AssignmentState.isValidTransition(assignment.status, status)) {
-                    throw new Error(`Cannot transition from '${assignment.status}' to '${status}'. Allowed: ${AssignmentState.getAllowedTransitions(assignment.status).join(', ')}`);
+                    throw new Error(
+                        `Cannot transition from '${assignment.status}' to '${status}'. Allowed: ${AssignmentState.getAllowedTransitions(assignment.status).join(', ')}`
+                    );
                 }
-                updatedAssignment = await driverRepository.updateAssignmentStatus(assignmentId, status, notes, failureReason, client);
+                updatedAssignment = await driverRepository.updateAssignmentStatus(
+                    assignmentId,
+                    status,
+                    notes,
+                    failureReason,
+                    client
+                );
             }
 
             // 4. Update Order Status based on assignment type and new status
@@ -268,13 +297,19 @@ export class DriverService {
             }
             // DELIVERY ASSIGNMENTS: Standard delivery flow
             else if (assignment.assignment_type === 'delivery' || !assignment.assignment_type) {
-                if (status === 'in_transit') { newOrderStatus = 'in_transit'; }
-                else if (status === 'delivered') { newOrderStatus = 'delivered'; }
-                else if (status === 'failed') { newOrderStatus = 'disputed'; }
+                if (status === 'in_transit') {
+                    newOrderStatus = 'in_transit';
+                } else if (status === 'delivered') {
+                    newOrderStatus = 'delivered';
+                } else if (status === 'failed') {
+                    newOrderStatus = 'disputed';
+                }
             }
             // RETURN ASSIGNMENTS: Return to garage
             else if (assignment.assignment_type === 'return_to_garage') {
-                if (status === 'delivered') { newOrderStatus = 'returning_to_garage'; }
+                if (status === 'delivered') {
+                    newOrderStatus = 'returning_to_garage';
+                }
             }
 
             if (newOrderStatus) {
@@ -303,7 +338,11 @@ export class DriverService {
 
             // 6. Handle Completion (Driver Status & Payout)
             if (status === 'delivered' || status === 'failed') {
-                const otherActiveCount = await driverRepository.countOtherActiveAssignments(assignment.driver_id, assignmentId, client);
+                const otherActiveCount = await driverRepository.countOtherActiveAssignments(
+                    assignment.driver_id,
+                    assignmentId,
+                    client
+                );
 
                 if (otherActiveCount === 0) {
                     await driverRepository.updateDriverStatus(assignment.driver_id, 'available', client);
@@ -324,7 +363,6 @@ export class DriverService {
                 assignment: updatedAssignment,
                 message: `Status updated to ${status}`
             };
-
         } catch (err) {
             await client.query('ROLLBACK');
             throw err;
@@ -341,9 +379,10 @@ export class DriverService {
             order_id: assignment.order_id,
             order_number: assignment.order_number,
             new_status: status,
-            notification: status === 'delivered'
-                ? `Your order #${assignment.order_number} has been delivered! Please confirm receipt.`
-                : `Delivery update: ${status.replace('_', ' ')}`
+            notification:
+                status === 'delivered'
+                    ? `Your order #${assignment.order_number} has been delivered! Please confirm receipt.`
+                    : `Delivery update: ${status.replace('_', ' ')}`
         });
 
         // 1. Emit 'order_status_updated' (past tense) for useSocket (Global Context)
@@ -352,9 +391,10 @@ export class DriverService {
             order_number: assignment.order_number,
             old_status: assignment.order_status,
             new_status: status === 'delivered' ? 'delivered' : status,
-            notification: status === 'delivered'
-                ? `Your order #${assignment.order_number} has been delivered! Please confirm receipt.`
-                : `Delivery update: ${status.replace('_', ' ')}`
+            notification:
+                status === 'delivered'
+                    ? `Your order #${assignment.order_number} has been delivered! Please confirm receipt.`
+                    : `Delivery update: ${status.replace('_', ' ')}`
         });
 
         // 2. Emit 'order_status_update' (present tense) for TrackingScreen (Local Socket)
@@ -364,9 +404,10 @@ export class DriverService {
             old_status: assignment.order_status,
             status: status === 'delivered' ? 'delivered' : status, // TrackingScreen expects 'status'
             new_status: status === 'delivered' ? 'delivered' : status,
-            notification: status === 'delivered'
-                ? `Your order #${assignment.order_number} has been delivered! Please confirm receipt.`
-                : `Delivery update: ${status.replace('_', ' ')}`
+            notification:
+                status === 'delivered'
+                    ? `Your order #${assignment.order_number} has been delivered! Please confirm receipt.`
+                    : `Delivery update: ${status.replace('_', ' ')}`
         });
 
         if (status === 'delivered') {
@@ -410,17 +451,26 @@ export class DriverService {
 
         // PUSH NOTIFICATION - Critical for customer app notifications
         if (newOrderStatus && ['collected', 'in_transit', 'delivered'].includes(newOrderStatus)) {
-            pushService.sendOrderStatusNotification(
-                assignment.customer_id,
-                assignment.order_number,
-                newOrderStatus,
-                assignment.order_id,
-                { driverName: assignment.driver_name }
-            ).catch(err => logger.error('Failed to send order status notification', { error: err }));
+            pushService
+                .sendOrderStatusNotification(
+                    assignment.customer_id,
+                    assignment.order_number,
+                    newOrderStatus,
+                    assignment.order_id,
+                    { driverName: assignment.driver_name }
+                )
+                .catch((err) => logger.error('Failed to send order status notification', { error: err }));
         }
     }
 
-    async uploadProof(userId: string, assignmentId: string, photoBase64: string, signatureBase64?: string, notes?: string, paymentMethod?: string) {
+    async uploadProof(
+        userId: string,
+        assignmentId: string,
+        photoBase64: string,
+        signatureBase64?: string,
+        notes?: string,
+        paymentMethod?: string
+    ) {
         // Verify ownership
         const assignment = await driverRepository.findAssignmentById(assignmentId, userId);
         if (!assignment) {
@@ -450,7 +500,13 @@ export class DriverService {
         }
 
         // Save to DB
-        const updatedAssignment = await driverRepository.saveDeliveryProof(assignmentId, photoResult.url, signatureUrl, notes, effectivePaymentMethod);
+        const updatedAssignment = await driverRepository.saveDeliveryProof(
+            assignmentId,
+            photoResult.url,
+            signatureUrl,
+            notes,
+            effectivePaymentMethod
+        );
 
         return {
             success: true,

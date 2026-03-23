@@ -1,12 +1,6 @@
 import { log, warn, error as logError } from '../utils/logger';
 import React, { Component, ErrorInfo, ReactNode } from 'react';
-import {
-    View,
-    Text,
-    TouchableOpacity,
-    StyleSheet,
-    ScrollView,
-} from 'react-native';
+import { View, Text, TouchableOpacity, StyleSheet, ScrollView } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
 import { Colors, Spacing, BorderRadius, FontSize } from '../constants';
 import { useTranslation } from '../contexts/LanguageContext';
@@ -23,7 +17,15 @@ interface State {
 }
 
 /** Functional fallback UI that can use hooks for i18n */
-function ErrorFallbackUI({ error, errorInfo, onRestart }: { error: Error | null; errorInfo: ErrorInfo | null; onRestart: () => void }) {
+function ErrorFallbackUI({
+    error,
+    errorInfo,
+    onRestart
+}: {
+    error: Error | null;
+    errorInfo: ErrorInfo | null;
+    onRestart: () => void;
+}) {
     const { t } = useTranslation();
 
     return (
@@ -36,38 +38,24 @@ function ErrorFallbackUI({ error, errorInfo, onRestart }: { error: Error | null;
 
                 {/* Error Message */}
                 <Text style={styles.title}>{t('errorBoundary.title')}</Text>
-                <Text style={styles.message}>
-                    {t('errorBoundary.message')}
-                </Text>
+                <Text style={styles.message}>{t('errorBoundary.message')}</Text>
 
                 {/* Error Details (Dev Mode) */}
                 {__DEV__ && error && (
                     <ScrollView style={styles.errorDetails} nestedScrollEnabled>
-                        <Text style={styles.errorText}>
-                            {error.toString()}
-                        </Text>
-                        {errorInfo && (
-                            <Text style={styles.stackTrace}>
-                                {errorInfo.componentStack}
-                            </Text>
-                        )}
+                        <Text style={styles.errorText}>{error.toString()}</Text>
+                        {errorInfo && <Text style={styles.stackTrace}>{errorInfo.componentStack}</Text>}
                     </ScrollView>
                 )}
 
                 {/* Retry Button */}
-                <TouchableOpacity
-                    style={styles.retryButton}
-                    onPress={onRestart}
-                    activeOpacity={0.8}
-                >
+                <TouchableOpacity style={styles.retryButton} onPress={onRestart} activeOpacity={0.8}>
                     <Ionicons name="refresh" size={20} color="#fff" />
                     <Text style={styles.retryText}>{t('errorBoundary.tryAgain')}</Text>
                 </TouchableOpacity>
 
                 {/* Help Text */}
-                <Text style={styles.helpText}>
-                    {t('errorBoundary.helpText')}
-                </Text>
+                <Text style={styles.helpText}>{t('errorBoundary.helpText')}</Text>
             </View>
         </View>
     );
@@ -76,7 +64,7 @@ function ErrorFallbackUI({ error, errorInfo, onRestart }: { error: Error | null;
 /**
  * ErrorBoundary catches JavaScript errors anywhere in the child component tree,
  * logs those errors, and displays a fallback UI instead of crashing the app.
- * 
+ *
  * Required for app store certification - prevents white screen crashes.
  */
 export class ErrorBoundary extends Component<Props, State> {
@@ -85,7 +73,7 @@ export class ErrorBoundary extends Component<Props, State> {
         this.state = {
             hasError: false,
             error: null,
-            errorInfo: null,
+            errorInfo: null
         };
     }
 
@@ -106,7 +94,7 @@ export class ErrorBoundary extends Component<Props, State> {
         this.setState({
             hasError: false,
             error: null,
-            errorInfo: null,
+            errorInfo: null
         });
     };
 
@@ -135,11 +123,11 @@ const styles = StyleSheet.create({
         backgroundColor: Colors.dark.background,
         justifyContent: 'center',
         alignItems: 'center',
-        padding: Spacing.xl,
+        padding: Spacing.xl
     },
     content: {
         alignItems: 'center',
-        maxWidth: 320,
+        maxWidth: 320
     },
     iconContainer: {
         width: 120,
@@ -148,21 +136,21 @@ const styles = StyleSheet.create({
         backgroundColor: Colors.dark.warning + '20',
         justifyContent: 'center',
         alignItems: 'center',
-        marginBottom: Spacing.xl,
+        marginBottom: Spacing.xl
     },
     title: {
         fontSize: FontSize.xxl,
         fontWeight: '700',
         color: '#1a1a1a',
         textAlign: 'center',
-        marginBottom: Spacing.md,
+        marginBottom: Spacing.md
     },
     message: {
         fontSize: FontSize.md,
         color: '#525252',
         textAlign: 'center',
         lineHeight: 22,
-        marginBottom: Spacing.xl,
+        marginBottom: Spacing.xl
     },
     errorDetails: {
         maxHeight: 150,
@@ -170,18 +158,18 @@ const styles = StyleSheet.create({
         borderRadius: BorderRadius.md,
         padding: Spacing.md,
         marginBottom: Spacing.xl,
-        width: '100%',
+        width: '100%'
     },
     errorText: {
         fontSize: FontSize.sm,
         color: Colors.dark.danger,
-        fontFamily: 'monospace',
+        fontFamily: 'monospace'
     },
     stackTrace: {
         fontSize: FontSize.xs,
         color: '#737373',
         fontFamily: 'monospace',
-        marginTop: Spacing.sm,
+        marginTop: Spacing.sm
     },
     retryButton: {
         flexDirection: 'row',
@@ -192,18 +180,18 @@ const styles = StyleSheet.create({
         paddingVertical: Spacing.lg,
         borderRadius: BorderRadius.lg,
         gap: Spacing.sm,
-        marginBottom: Spacing.lg,
+        marginBottom: Spacing.lg
     },
     retryText: {
         fontSize: FontSize.lg,
         fontWeight: '600',
-        color: '#fff',
+        color: '#fff'
     },
     helpText: {
         fontSize: FontSize.sm,
         color: '#737373',
-        textAlign: 'center',
-    },
+        textAlign: 'center'
+    }
 });
 
 export default ErrorBoundary;

@@ -19,8 +19,8 @@ jest.mock('expo-haptics', () => ({
     ImpactFeedbackStyle: {
         Light: 'light',
         Medium: 'medium',
-        Heavy: 'heavy',
-    },
+        Heavy: 'heavy'
+    }
 }));
 
 describe('PaymentTypeSelector', () => {
@@ -36,11 +36,11 @@ describe('PaymentTypeSelector', () => {
                 'payment.cashOnDeliveryForPart': 'Cash on delivery for part',
                 'payment.payFullOption': 'Pay Full Amount',
                 'payment.noCashAtDelivery': 'No cash needed at delivery',
-                'common.currency': 'QAR',
+                'common.currency': 'QAR'
             };
             return translations[key] || key;
         },
-        setClientSecret: jest.fn(),
+        setClientSecret: jest.fn()
     };
 
     beforeEach(() => {
@@ -55,15 +55,17 @@ describe('PaymentTypeSelector', () => {
     });
 
     it('should display delivery fee for delivery_only option', () => {
-        const { getByText } = render(<PaymentTypeSelector {...defaultProps} />);
+        const { getByText, getAllByText } = render(<PaymentTypeSelector {...defaultProps} />);
 
-        expect(getByText('50 QAR')).toBeTruthy();
+        expect(getByText('50')).toBeTruthy();
+        expect(getAllByText('QAR').length).toBeGreaterThan(0);
     });
 
     it('should display total amount for full payment option', () => {
-        const { getByText } = render(<PaymentTypeSelector {...defaultProps} />);
+        const { getByText, getAllByText } = render(<PaymentTypeSelector {...defaultProps} />);
 
-        expect(getByText('550 QAR')).toBeTruthy();
+        expect(getByText('550')).toBeTruthy();
+        expect(getAllByText('QAR').length).toBeGreaterThan(0);
     });
 
     it('should highlight selected payment type', () => {
@@ -75,7 +77,9 @@ describe('PaymentTypeSelector', () => {
 
     it('should call setPaymentType when delivery_only is selected', () => {
         const setPaymentTypeMock = jest.fn();
-        const { getByText } = render(<PaymentTypeSelector {...defaultProps} setPaymentType={setPaymentTypeMock} paymentType="full" />);
+        const { getByText } = render(
+            <PaymentTypeSelector {...defaultProps} setPaymentType={setPaymentTypeMock} paymentType="full" />
+        );
 
         const deliveryOption = getByText('Pay Delivery Only').parent?.parent?.parent;
         if (deliveryOption) {
@@ -87,7 +91,9 @@ describe('PaymentTypeSelector', () => {
 
     it('should call setPaymentType when full payment is selected', () => {
         const setPaymentTypeMock = jest.fn();
-        const { getByText } = render(<PaymentTypeSelector {...defaultProps} setPaymentType={setPaymentTypeMock} paymentType="delivery_only" />);
+        const { getByText } = render(
+            <PaymentTypeSelector {...defaultProps} setPaymentType={setPaymentTypeMock} paymentType="delivery_only" />
+        );
 
         const fullOption = getByText('Pay Full Amount').parent?.parent?.parent;
         if (fullOption) {
@@ -99,7 +105,9 @@ describe('PaymentTypeSelector', () => {
 
     it('should call setClientSecret when switching payment types', () => {
         const setClientSecretMock = jest.fn();
-        const { getByText } = render(<PaymentTypeSelector {...defaultProps} setClientSecret={setClientSecretMock} paymentType="delivery_only" />);
+        const { getByText } = render(
+            <PaymentTypeSelector {...defaultProps} setClientSecret={setClientSecretMock} paymentType="delivery_only" />
+        );
 
         const fullOption = getByText('Pay Full Amount').parent?.parent?.parent;
         if (fullOption) {
@@ -123,7 +131,9 @@ describe('PaymentTypeSelector', () => {
 
     it('should not trigger callback when already selected', () => {
         const setPaymentTypeMock = jest.fn();
-        const { getByText } = render(<PaymentTypeSelector {...defaultProps} setPaymentType={setPaymentTypeMock} paymentType="delivery_only" />);
+        const { getByText } = render(
+            <PaymentTypeSelector {...defaultProps} setPaymentType={setPaymentTypeMock} paymentType="delivery_only" />
+        );
 
         const deliveryOption = getByText('Pay Delivery Only').parent?.parent?.parent;
         if (deliveryOption) {

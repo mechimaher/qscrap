@@ -58,9 +58,7 @@ describe('Subscription Service', () => {
             expect(plans).toHaveLength(2);
             expect(plans[0]).toHaveProperty('plan_code', 'starter');
             expect(plans[1]).toHaveProperty('plan_code', 'pro');
-            expect(mockPool.query).toHaveBeenCalledWith(
-                expect.stringContaining('SELECT'),
-            );
+            expect(mockPool.query).toHaveBeenCalledWith(expect.stringContaining('SELECT'));
         });
 
         it('should handle empty plans list', async () => {
@@ -74,8 +72,7 @@ describe('Subscription Service', () => {
         it('should throw error on database failure', async () => {
             (mockPool.query as jest.Mock).mockRejectedValue(new Error('Database error'));
 
-            await expect(SubscriptionService.getAvailablePlans())
-                .rejects.toThrow('Failed to fetch subscription plans');
+            await expect(SubscriptionService.getAvailablePlans()).rejects.toThrow('Failed to fetch subscription plans');
         });
     });
 
@@ -118,8 +115,9 @@ describe('Subscription Service', () => {
         it('should throw error on database failure', async () => {
             (mockPool.query as jest.Mock).mockRejectedValue(new Error('Database error'));
 
-            await expect(SubscriptionService.getGarageSubscription(testGarageId))
-                .rejects.toThrow('Failed to fetch subscription details');
+            await expect(SubscriptionService.getGarageSubscription(testGarageId)).rejects.toThrow(
+                'Failed to fetch subscription details'
+            );
         });
 
         it('should return subscription with plan details', async () => {
@@ -172,12 +170,7 @@ describe('Subscription Service', () => {
         it('should change subscription successfully', async () => {
             (mockPool.query as jest.Mock).mockResolvedValue({ rows: [mockResult] });
 
-            const result = await SubscriptionService.changeSubscription(
-                testGarageId,
-                'pro',
-                'monthly',
-                'admin-user'
-            );
+            const result = await SubscriptionService.changeSubscription(testGarageId, 'pro', 'monthly', 'admin-user');
 
             expect(result.success).toBe(true);
             expect(result.message).toContain('Subscription changed');
@@ -213,8 +206,9 @@ describe('Subscription Service', () => {
         it('should throw error on database failure', async () => {
             (mockPool.query as jest.Mock).mockRejectedValue(new Error('Database error'));
 
-            await expect(SubscriptionService.getSubscriptionHistory(testGarageId))
-                .rejects.toThrow('Failed to fetch subscription history');
+            await expect(SubscriptionService.getSubscriptionHistory(testGarageId)).rejects.toThrow(
+                'Failed to fetch subscription history'
+            );
         });
     });
 
@@ -238,27 +232,24 @@ describe('Subscription Service', () => {
         it('should throw error on database failure', async () => {
             (mockPool.query as jest.Mock).mockRejectedValue(new Error('Database error'));
 
-            await expect(SubscriptionService.getRevenueStats())
-                .rejects.toThrow('Failed to fetch revenue stats');
+            await expect(SubscriptionService.getRevenueStats()).rejects.toThrow('Failed to fetch revenue stats');
         });
     });
 
     describe('calculatePriceDifference', () => {
         const mockPrices = {
-            rows: [{
-                current_price: '99',
-                new_price: '199'
-            }]
+            rows: [
+                {
+                    current_price: '99',
+                    new_price: '199'
+                }
+            ]
         };
 
         it('should calculate price difference for upgrade', async () => {
             (mockPool.query as jest.Mock).mockResolvedValue(mockPrices);
 
-            const result = await SubscriptionService.calculatePriceDifference(
-                'starter',
-                'pro',
-                'monthly'
-            );
+            const result = await SubscriptionService.calculatePriceDifference('starter', 'pro', 'monthly');
 
             expect(result.current_price).toBe(99);
             expect(result.new_price).toBe(199);
@@ -269,9 +260,9 @@ describe('Subscription Service', () => {
         it('should handle database errors', async () => {
             (mockPool.query as jest.Mock).mockRejectedValue(new Error('Database error'));
 
-            await expect(
-                SubscriptionService.calculatePriceDifference('starter', 'pro', 'monthly')
-            ).rejects.toThrow('Failed to calculate price difference');
+            await expect(SubscriptionService.calculatePriceDifference('starter', 'pro', 'monthly')).rejects.toThrow(
+                'Failed to calculate price difference'
+            );
         });
     });
 });

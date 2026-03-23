@@ -12,15 +12,17 @@ export function useLoyaltyCalculation({
     partPrice,
     deliveryFee,
     paymentType,
-    applyDiscount,
+    applyDiscount
 }: LoyaltyCalculationParams) {
     const { loyalty: loyaltyRaw } = useLoyalty();
 
-    const loyaltyData = loyaltyRaw ? {
-        points: loyaltyRaw.points,
-        tier: loyaltyRaw.tier,
-        discountPercentage: loyaltyRaw.discountPercentage,
-    } : null;
+    const loyaltyData = loyaltyRaw
+        ? {
+              points: loyaltyRaw.points,
+              tier: loyaltyRaw.tier,
+              discountPercentage: loyaltyRaw.discountPercentage
+          }
+        : null;
 
     const totalAmount = partPrice + deliveryFee;
 
@@ -61,6 +63,6 @@ export function useLoyaltyCalculation({
         payNowAmount,
         codAmount,
         freeOrder,
-        totalAmount,
+        totalAmount
     };
 }

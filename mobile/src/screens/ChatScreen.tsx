@@ -14,7 +14,7 @@ import {
     Platform,
     ActivityIndicator,
     Linking,
-    Vibration,
+    Vibration
 } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { LinearGradient } from 'expo-linear-gradient';
@@ -102,14 +102,14 @@ export default function ChatScreen() {
             // Fetch message history
             const response = await fetch(`${SOCKET_URL}/api/chat/messages/${orderId}`, {
                 headers: {
-                    Authorization: `Bearer ${await api.getToken()}`,
-                },
+                    Authorization: `Bearer ${await api.getToken()}`
+                }
             });
 
             if (response.ok) {
                 const data = await response.json();
                 const newMessages = data.messages || [];
-                setMessages(prev => {
+                setMessages((prev) => {
                     // Only update if message count changed (avoids unnecessary re-renders)
                     if (prev.length !== newMessages.length) {
                         return newMessages;
@@ -134,7 +134,7 @@ export default function ChatScreen() {
 
             socket.current = io(SOCKET_URL, {
                 auth: { token },
-                transports: ['websocket'],
+                transports: ['websocket']
             });
 
             socket.current.on('connect', () => {
@@ -165,7 +165,7 @@ export default function ChatScreen() {
             // Listen for new messages
             socket.current.on('new_message', (data: Message) => {
                 if (data.order_id === orderId) {
-                    setMessages(prev => [...prev, data]);
+                    setMessages((prev) => [...prev, data]);
 
                     // Only play sound for messages from others (not self)
                     if (data.sender_id !== userId) {
@@ -186,7 +186,6 @@ export default function ChatScreen() {
             socket.current.on('typing', (data: { order_id: string; sender_name: string }) => {
                 // Could show typing indicator here
             });
-
         } catch (error) {
             log('Socket connection error:', error);
         }
@@ -204,12 +203,12 @@ export default function ChatScreen() {
                 method: 'POST',
                 headers: {
                     'Content-Type': 'application/json',
-                    Authorization: `Bearer ${await api.getToken()}`,
+                    Authorization: `Bearer ${await api.getToken()}`
                 },
                 body: JSON.stringify({
                     order_id: orderId,
-                    message: newMessage.trim(),
-                }),
+                    message: newMessage.trim()
+                })
             });
 
             if (response.ok) {
@@ -234,12 +233,19 @@ export default function ChatScreen() {
         const isMe = item.sender_id === userId;
 
         return (
-            <View style={[
-                styles.messageBubble,
-                isMe ? styles.myMessage : styles.theirMessage,
-                isMe ? (isRTL ? { alignSelf: 'flex-start' } : { alignSelf: 'flex-end' }) :
-                    (isRTL ? { alignSelf: 'flex-end' } : { alignSelf: 'flex-start' })
-            ]}>
+            <View
+                style={[
+                    styles.messageBubble,
+                    isMe ? styles.myMessage : styles.theirMessage,
+                    isMe
+                        ? isRTL
+                            ? { alignSelf: 'flex-start' }
+                            : { alignSelf: 'flex-end' }
+                        : isRTL
+                          ? { alignSelf: 'flex-end' }
+                          : { alignSelf: 'flex-start' }
+                ]}
+            >
                 {!isMe && (
                     <Text style={[styles.senderName, { textAlign: rtlTextAlign(isRTL) }]}>{item.sender_name}</Text>
                 )}
@@ -277,19 +283,42 @@ export default function ChatScreen() {
     return (
         <SafeAreaView style={[styles.container, { backgroundColor: colors.background }]} edges={['top']}>
             {/* Header */}
-            <View style={[styles.header, { backgroundColor: colors.surface, borderBottomColor: colors.border, flexDirection: rtlFlexDirection(isRTL) }]}>
-                <TouchableOpacity onPress={() => navigation.goBack()} style={styles.backButton} accessibilityRole="button" accessibilityLabel={t('common.back')}>
+            <View
+                style={[
+                    styles.header,
+                    {
+                        backgroundColor: colors.surface,
+                        borderBottomColor: colors.border,
+                        flexDirection: rtlFlexDirection(isRTL)
+                    }
+                ]}
+            >
+                <TouchableOpacity
+                    onPress={() => navigation.goBack()}
+                    style={styles.backButton}
+                    accessibilityRole="button"
+                    accessibilityLabel={t('common.back')}
+                >
                     <Ionicons name="arrow-back" size={20} color={Colors.primary} />
                 </TouchableOpacity>
                 <View style={[styles.headerInfo, isRTL && { marginLeft: 0, marginRight: Spacing.md }]}>
-                    <Text style={[styles.headerTitle, { color: colors.text, textAlign: rtlTextAlign(isRTL) }]}>{recipientName}</Text>
-                    <Text style={[styles.headerSubtitle, { color: colors.textSecondary, textAlign: rtlTextAlign(isRTL) }]}>
-                        {t('orders.orderNumber', { number: orderNumber })} • {isConnected ? t('chat.online') : t('chat.connecting')}
+                    <Text style={[styles.headerTitle, { color: colors.text, textAlign: rtlTextAlign(isRTL) }]}>
+                        {recipientName}
+                    </Text>
+                    <Text
+                        style={[styles.headerSubtitle, { color: colors.textSecondary, textAlign: rtlTextAlign(isRTL) }]}
+                    >
+                        {t('orders.orderNumber', { number: orderNumber })} •{' '}
+                        {isConnected ? t('chat.online') : t('chat.connecting')}
                     </Text>
                 </View>
                 <View style={styles.headerIcon}>
                     <Text style={styles.avatarEmoji}>
-                        <Ionicons name={recipientType === 'driver' ? 'car-sport' : 'construct'} size={24} color={Colors.primary} />
+                        <Ionicons
+                            name={recipientType === 'driver' ? 'car-sport' : 'construct'}
+                            size={24}
+                            color={Colors.primary}
+                        />
                     </Text>
                 </View>
             </View>
@@ -307,13 +336,18 @@ export default function ChatScreen() {
                         ref={flatListRef}
                         data={messages}
                         renderItem={renderMessage}
-                        keyExtractor={item => item.message_id}
+                        keyExtractor={(item) => item.message_id}
                         contentContainerStyle={styles.messagesList}
                         showsVerticalScrollIndicator={false}
                         onContentSizeChange={() => flatListRef.current?.scrollToEnd()}
                         ListEmptyComponent={
                             <View style={styles.emptyContainer}>
-                                <Ionicons name="chatbubble-outline" size={60} color="#ccc" style={{ marginBottom: Spacing.md }} />
+                                <Ionicons
+                                    name="chatbubble-outline"
+                                    size={60}
+                                    color="#ccc"
+                                    style={{ marginBottom: Spacing.md }}
+                                />
                                 <Text style={[styles.emptyText, { color: colors.text }]}>{t('chat.noMessages')}</Text>
                                 <Text style={[styles.emptyHint, { color: colors.textSecondary }]}>
                                     {t('chat.sendMessageTo', { name: recipientName })}
@@ -324,15 +358,16 @@ export default function ChatScreen() {
                 )}
 
                 {/* Premium Quick Replies */}
-                <QuickReplies
-                    recipientType={recipientType}
-                    onSelectReply={handleQuickReply}
-                />
+                <QuickReplies recipientType={recipientType} onSelectReply={handleQuickReply} />
 
                 {/* Input Area */}
                 <View style={[styles.inputContainer, { flexDirection: rtlFlexDirection(isRTL) }]}>
                     <TextInput
-                        style={[styles.textInput, { textAlign: rtlTextAlign(isRTL) }, isRTL && { marginRight: 0, marginLeft: Spacing.sm }]}
+                        style={[
+                            styles.textInput,
+                            { textAlign: rtlTextAlign(isRTL) },
+                            isRTL && { marginRight: 0, marginLeft: Spacing.sm }
+                        ]}
                         placeholder={t('chat.typeMessage')}
                         placeholderTextColor="#999"
                         value={newMessage}
@@ -342,20 +377,14 @@ export default function ChatScreen() {
                         accessibilityLabel={t('chat.typeMessage')}
                     />
                     <TouchableOpacity
-                        style={[
-                            styles.sendButton,
-                            (!newMessage.trim() || isSending) && styles.sendButtonDisabled
-                        ]}
+                        style={[styles.sendButton, (!newMessage.trim() || isSending) && styles.sendButtonDisabled]}
                         onPress={sendMessage}
                         disabled={!newMessage.trim() || isSending}
                         accessibilityRole="button"
                         accessibilityLabel={t('chat.send')}
                         accessibilityState={{ disabled: !newMessage.trim() || isSending }}
                     >
-                        <LinearGradient
-                            colors={['#22c55e', '#16a34a'] as const}
-                            style={styles.sendGradient}
-                        >
+                        <LinearGradient colors={['#22c55e', '#16a34a'] as const} style={styles.sendGradient}>
                             {isSending ? (
                                 <ActivityIndicator color="#fff" size="small" />
                             ) : (
@@ -372,7 +401,7 @@ export default function ChatScreen() {
 const styles = StyleSheet.create({
     container: {
         flex: 1,
-        backgroundColor: '#FAFAFA',
+        backgroundColor: '#FAFAFA'
     },
     header: {
         flexDirection: 'row',
@@ -380,7 +409,7 @@ const styles = StyleSheet.create({
         padding: Spacing.md,
         backgroundColor: '#fff',
         borderBottomWidth: 1,
-        borderBottomColor: '#F0F0F0',
+        borderBottomColor: '#F0F0F0'
     },
     backButton: {
         width: 40,
@@ -388,25 +417,25 @@ const styles = StyleSheet.create({
         borderRadius: 20,
         backgroundColor: '#F5F5F5',
         justifyContent: 'center',
-        alignItems: 'center',
+        alignItems: 'center'
     },
     backText: {
         fontSize: 20,
-        color: '#1a1a1a',
+        color: '#1a1a1a'
     },
     headerInfo: {
         flex: 1,
-        marginLeft: Spacing.md,
+        marginLeft: Spacing.md
     },
     headerTitle: {
         fontSize: FontSizes.lg,
         fontWeight: '700',
-        color: '#1a1a1a',
+        color: '#1a1a1a'
     },
     headerSubtitle: {
         fontSize: FontSizes.sm,
         color: '#525252',
-        marginTop: 2,
+        marginTop: 2
     },
     headerIcon: {
         width: 44,
@@ -414,88 +443,88 @@ const styles = StyleSheet.create({
         borderRadius: BorderRadius.xl,
         backgroundColor: Colors.primary + '15',
         justifyContent: 'center',
-        alignItems: 'center',
+        alignItems: 'center'
     },
     avatarEmoji: {
-        fontSize: 24,
+        fontSize: 24
     },
     keyboardView: {
-        flex: 1,
+        flex: 1
     },
     loadingContainer: {
         flex: 1,
         justifyContent: 'center',
-        alignItems: 'center',
+        alignItems: 'center'
     },
     messagesList: {
         padding: Spacing.md,
-        flexGrow: 1,
+        flexGrow: 1
     },
     emptyContainer: {
         flex: 1,
         justifyContent: 'center',
         alignItems: 'center',
-        paddingTop: 100,
+        paddingTop: 100
     },
     emptyIcon: {
         fontSize: 60,
-        marginBottom: Spacing.md,
+        marginBottom: Spacing.md
     },
     emptyText: {
         fontSize: FontSizes.lg,
         fontWeight: '600',
-        color: '#1a1a1a',
+        color: '#1a1a1a'
     },
     emptyHint: {
         fontSize: FontSizes.md,
         color: '#525252',
-        marginTop: Spacing.xs,
+        marginTop: Spacing.xs
     },
     messageBubble: {
         maxWidth: '80%',
         padding: Spacing.md,
         borderRadius: BorderRadius.lg,
         marginBottom: Spacing.sm,
-        ...Shadows.sm,
+        ...Shadows.sm
     },
     myMessage: {
         alignSelf: 'flex-end',
         backgroundColor: Colors.primary,
-        borderBottomRightRadius: 4,
+        borderBottomRightRadius: 4
     },
     theirMessage: {
         alignSelf: 'flex-start',
         backgroundColor: '#fff',
-        borderBottomLeftRadius: 4,
+        borderBottomLeftRadius: 4
     },
     senderName: {
         fontSize: FontSizes.xs,
         fontWeight: '600',
         color: Colors.primary,
-        marginBottom: 4,
+        marginBottom: 4
     },
     messageText: {
         fontSize: FontSizes.md,
         color: '#1a1a1a',
-        lineHeight: 22,
+        lineHeight: 22
     },
     myMessageText: {
-        color: '#fff',
+        color: '#fff'
     },
     messageTime: {
         fontSize: FontSizes.xs,
         color: '#737373',
         marginTop: 4,
-        textAlign: 'right',
+        textAlign: 'right'
     },
     myMessageTime: {
-        color: 'rgba(255,255,255,0.7)',
+        color: 'rgba(255,255,255,0.7)'
     },
     quickActions: {
         flexDirection: 'row',
         paddingHorizontal: Spacing.md,
         paddingVertical: Spacing.sm,
-        gap: Spacing.sm,
+        gap: Spacing.sm
     },
     quickAction: {
         backgroundColor: '#fff',
@@ -503,11 +532,11 @@ const styles = StyleSheet.create({
         paddingVertical: Spacing.sm,
         borderRadius: BorderRadius.full,
         borderWidth: 1,
-        borderColor: '#E8E8E8',
+        borderColor: '#E8E8E8'
     },
     quickActionText: {
         fontSize: FontSizes.sm,
-        color: '#1a1a1a',
+        color: '#1a1a1a'
     },
     inputContainer: {
         flexDirection: 'row',
@@ -516,7 +545,7 @@ const styles = StyleSheet.create({
         paddingBottom: Spacing.lg,
         backgroundColor: '#fff',
         borderTopWidth: 1,
-        borderTopColor: '#F0F0F0',
+        borderTopColor: '#F0F0F0'
     },
     textInput: {
         flex: 1,
@@ -530,25 +559,25 @@ const styles = StyleSheet.create({
         maxHeight: 100,
         marginRight: Spacing.sm,
         borderWidth: 1,
-        borderColor: '#E8E8E8',
+        borderColor: '#E8E8E8'
     },
     sendButton: {
         width: 48,
         height: 48,
         borderRadius: 24,
         overflow: 'hidden',
-        ...Shadows.sm,
+        ...Shadows.sm
     },
     sendButtonDisabled: {
-        opacity: 0.5,
+        opacity: 0.5
     },
     sendGradient: {
         flex: 1,
         justifyContent: 'center',
-        alignItems: 'center',
+        alignItems: 'center'
     },
     sendIcon: {
         fontSize: 20,
-        color: '#fff',
-    },
+        color: '#fff'
+    }
 });

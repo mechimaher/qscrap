@@ -9,10 +9,10 @@ interface UseKeyboardReturn {
 /**
  * Hook to monitor keyboard visibility and height.
  * Useful for adjusting layouts when keyboard appears.
- * 
+ *
  * @example
  * const { isKeyboardVisible, keyboardHeight } = useKeyboard();
- * 
+ *
  * return (
  *   <View style={{ paddingBottom: isKeyboardVisible ? keyboardHeight : 0 }}>
  *     <TextInput />
@@ -48,7 +48,7 @@ export const useKeyboard = (): UseKeyboardReturn => {
 
     return {
         isKeyboardVisible,
-        keyboardHeight,
+        keyboardHeight
     };
 };
 

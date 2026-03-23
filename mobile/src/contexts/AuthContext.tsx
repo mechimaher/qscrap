@@ -1,10 +1,11 @@
 import { log, warn, error as logError } from '../utils/logger';
 // Auth Context - Manages authentication state across the app
-import React, { createContext, useContext, useState, useEffect, ReactNode } from 'react';
+import React, { createContext, useContext, useState, useEffect, ReactNode, useCallback } from 'react';
 import * as Sentry from '@sentry/react-native';
 import { api, User } from '../services/api';
 import { initializePushNotifications } from '../services/notifications';
 import { t } from '../utils/i18nHelper';
+import { eventBus, AppEvents } from '../utils/eventBus';
 
 interface AuthContextType {
     user: User | null;
@@ -25,6 +26,14 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     useEffect(() => {
         checkAuth();
     }, []);
+
+    // Centralized handler for auth-expired events emitted from apiClient
+    useEffect(() => {
+        const unsubscribe = eventBus.on(AppEvents.AUTH_EXPIRED, () => {
+            logout();
+        });
+        return unsubscribe;
+    }, [logout]);
 
     const checkAuth = async () => {
         try {
@@ -64,7 +73,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
                         full_name: profileResponse.user.full_name,
                         phone_number: profileResponse.user.phone_number,
                         email: profileResponse.user.email,
-                        user_type: 'customer' as const,
+                        user_type: 'customer' as const
                     };
                     setUser(fullUser);
                     await api.saveUser(fullUser);
@@ -74,7 +83,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
                         user_id: response.userId,
                         full_name: response.user?.full_name || '',
                         phone_number: phone,
-                        user_type: 'customer' as const,
+                        user_type: 'customer' as const
                     };
                     setUser(partialUser);
                     await api.saveUser(partialUser);
@@ -86,7 +95,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
                     user_id: response.userId,
                     full_name: response.user?.full_name || '',
                     phone_number: phone,
-                    user_type: 'customer' as const,
+                    user_type: 'customer' as const
                 };
                 setUser(partialUser);
                 await api.saveUser(partialUser);
@@ -121,11 +130,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
 
             // Clear any cached data from AsyncStorage
             const AsyncStorage = require('@react-native-async-storage/async-storage').default;
-            const keysToRemove = [
-                'qscrap_cache',
-                'qscrap_settings',
-                'qscrap_notifications',
-            ];
+            const keysToRemove = ['qscrap_cache', 'qscrap_settings', 'qscrap_notifications'];
             await AsyncStorage.multiRemove(keysToRemove);
 
             // Reset user state
@@ -149,7 +154,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
                     full_name: response.user.full_name,
                     phone_number: response.user.phone_number,
                     email: response.user.email,
-                    user_type: 'customer' as const,
+                    user_type: 'customer' as const
                 };
                 setUser(updatedUser);
                 // Also persist to storage for next launch
@@ -169,7 +174,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
                 login,
                 register,
                 logout,
-                refreshUser,
+                refreshUser
             }}
         >
             {children}

@@ -24,7 +24,7 @@ export function usePaymentIntent({
     discountOnPart,
     deliveryFee,
     t,
-    toast,
+    toast
 }: PaymentIntentParams) {
     const [clientSecret, setClientSecret] = useState<string | null>(null);
     const [paymentAmount, setPaymentAmount] = useState(deliveryFee);
@@ -95,6 +95,6 @@ export function usePaymentIntent({
         isCreatingOrder,
         setIsCreatingOrder,
         discountAmount,
-        setDiscountAmount,
+        setDiscountAmount
     };
 }

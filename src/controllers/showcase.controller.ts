@@ -67,8 +67,7 @@ type JsonRecord = Record<string, unknown>;
 
 const getUserId = (req: AuthRequest): string | null => req.user?.userId ?? null;
 
-const isRecord = (value: unknown): value is JsonRecord =>
-    typeof value === 'object' && value !== null;
+const isRecord = (value: unknown): value is JsonRecord => typeof value === 'object' && value !== null;
 
 const toRecord = (value: unknown): JsonRecord | null => (isRecord(value) ? value : null);
 
@@ -160,9 +159,7 @@ const getUploadedImageUrls = (req: AuthRequest): string[] => {
     }
 
     return filesValue
-        .filter((file): file is Express.Multer.File =>
-            isRecord(file) && typeof file.filename === 'string'
-        )
+        .filter((file): file is Express.Multer.File => isRecord(file) && typeof file.filename === 'string')
         .map((file) => `/uploads/${file.filename}`);
 };
 

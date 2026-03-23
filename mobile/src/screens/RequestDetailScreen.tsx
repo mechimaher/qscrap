@@ -1,17 +1,8 @@
 import { log, warn, error as logError } from '../utils/logger';
 import { handleApiError } from '../utils/errorHandler';
 // QScrap Request Detail Screen - Premium 2026 Design
-import React, { useState, useEffect, useRef } from 'react';
-import {
-    View,
-    Text,
-    StyleSheet,
-    ScrollView,
-    TouchableOpacity,
-    Alert,
-    Animated,
-    Dimensions,
-} from 'react-native';
+import React, { useState, useEffect, useRef, useCallback } from 'react';
+import { View, Text, StyleSheet, ScrollView, TouchableOpacity, Alert, Animated, Dimensions } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { LinearGradient } from 'expo-linear-gradient';
 import * as Haptics from 'expo-haptics';
@@ -50,22 +41,19 @@ const SkeletonLoading = () => {
             Animated.timing(shimmerAnim, {
                 toValue: 1,
                 duration: 1200,
-                useNativeDriver: true,
+                useNativeDriver: true
             })
         ).start();
     }, []);
 
     const shimmerTranslate = shimmerAnim.interpolate({
         inputRange: [0, 1],
-        outputRange: [-width, width],
+        outputRange: [-width, width]
     });
 
     const SkeletonBox = ({ style }: { style: any }) => (
         <View style={[styles.skeletonBox, style]}>
-            <Animated.View style={[
-                styles.skeletonShimmer,
-                { transform: [{ translateX: shimmerTranslate }] }
-            ]} />
+            <Animated.View style={[styles.skeletonShimmer, { transform: [{ translateX: shimmerTranslate }] }]} />
         </View>
     );
 
@@ -102,16 +90,37 @@ export default function RequestDetailScreen() {
     const [viewerImages, setViewerImages] = useState<string[]>([]);
     const [isComparisonVisible, setIsComparisonVisible] = useState(false);
     const [showConfetti, setShowConfetti] = useState(false);
+    const requestRef = useRef<Request | null>(null);
+    const bidsRef = useRef<Bid[]>([]);
 
+    useEffect(() => {
+        requestRef.current = request;
+    }, [request]);
+    useEffect(() => {
+        bidsRef.current = bids;
+    }, [bids]);
+
+    const loadRequestDetails = useCallback(async () => {
+        try {
+            const data = await api.getRequestDetails(requestId);
+            setRequest(data.request);
+            const sortedBids = (data.bids || []).sort((a: Bid, b: Bid) => Number(a.bid_amount) - Number(b.bid_amount));
+            setBids(sortedBids);
+        } catch (error) {
+            toast.error(t('common.error'), t('errors.loadFailed'));
+        } finally {
+            setIsLoading(false);
+        }
+    }, [requestId, toast, t]);
 
     useEffect(() => {
         loadRequestDetails();
         const unsubscribe = navigation.addListener('focus', loadRequestDetails);
         return unsubscribe;
-    }, [navigation]);
+    }, [navigation, loadRequestDetails]);
 
     useEffect(() => {
-        const hasNewBidForThisRequest = newBids.some(b => b.request_id === requestId);
+        const hasNewBidForThisRequest = newBids.some((b) => b.request_id === requestId);
         if (hasNewBidForThisRequest) {
             loadRequestDetails();
             Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success);
@@ -137,9 +146,13 @@ export default function RequestDetailScreen() {
 
             // Calculate fees for payment screen
             let deliveryFee = 10;
-            if (request?.delivery_lat && request?.delivery_lng) {
+            const currentRequest = requestRef.current;
+            if (currentRequest?.delivery_lat && currentRequest?.delivery_lng) {
                 try {
-                    const feeRes = await api.calculateDeliveryFee(Number(request.delivery_lat), Number(request.delivery_lng));
+                    const feeRes = await api.calculateDeliveryFee(
+                        Number(currentRequest.delivery_lat),
+                        Number(currentRequest.delivery_lng)
+                    );
                     deliveryFee = feeRes.fee || 10;
                 } catch (e) {
                     log('Fee calc failed', e);
@@ -148,29 +161,25 @@ export default function RequestDetailScreen() {
 
             // Find garage name from existing bids (or default)
             // Note: Bids might reload after this, but we try to find it in current state
-            const bid = bids.find(b => b.bid_id === data.bid_id);
+            const bid = bidsRef.current.find((b) => b.bid_id === data.bid_id);
             const garageName = bid?.garage_name || t('common.garage');
 
-            Alert.alert(
-                t('alerts.counterAcceptedTitle'),
-                t('alerts.counterAcceptedMsg', { price: data.final_price }),
-                [
-                    { text: t('common.cancel'), style: 'cancel' },
-                    {
-                        text: t('COMMON.PAYNOW'),
-                        onPress: () => {
-                            navigation.navigate('Payment', {
-                                bidId: data.bid_id,
-                                garageName: garageName,
-                                partPrice: Number(data.final_price),
-                                deliveryFee: deliveryFee,
-                                partDescription: request?.part_description || '',
-                                _cacheKey: `payment_${data.bid_id}_${data.order_id || 'new'}_${Date.now()}`
-                            });
-                        }
+            Alert.alert(t('alerts.counterAcceptedTitle'), t('alerts.counterAcceptedMsg', { price: data.final_price }), [
+                { text: t('common.cancel'), style: 'cancel' },
+                {
+                    text: t('COMMON.PAYNOW'),
+                    onPress: () => {
+                        navigation.navigate('Payment', {
+                            bidId: data.bid_id,
+                            garageName: garageName,
+                            partPrice: Number(data.final_price),
+                            deliveryFee: deliveryFee,
+                            partDescription: request?.part_description || '',
+                            _cacheKey: `payment_${data.bid_id}_${data.order_id || 'new'}_${Date.now()}`
+                        });
                     }
-                ]
-            );
+                }
+            ]);
         };
 
         // Listen for all counter-offer related events
@@ -194,20 +203,7 @@ export default function RequestDetailScreen() {
             socket.off('bid_withdrawn', handleEvent);
             socket.off('bid:superseded', handleEvent);
         };
-    }, [socket, requestId, request, bids]); // Added request and bids to dependency array
-
-    const loadRequestDetails = async () => {
-        try {
-            const data = await api.getRequestDetails(requestId);
-            setRequest(data.request);
-            const sortedBids = (data.bids || []).sort((a: Bid, b: Bid) => Number(a.bid_amount) - Number(b.bid_amount));
-            setBids(sortedBids);
-        } catch (error) {
-            toast.error(t('common.error'), t('errors.loadFailed'));
-        } finally {
-            setIsLoading(false);
-        }
-    };
+    }, [socket, requestId, loadRequestDetails]);
 
     const handleAcceptBid = async (bid: Bid, priceToShow: number) => {
         Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Medium);
@@ -229,7 +225,7 @@ export default function RequestDetailScreen() {
         Alert.alert(
             t('alerts.acceptBidTitle'),
             t('alerts.acceptBidMessage', { name: bid.garage_name, price: priceToShow }) +
-            `\n\n${t('alerts.totalBreakdown', { total: priceToShow + deliveryFee, price: priceToShow, fee: deliveryFee, currency: t('common.currency') })}\n\n${t('alerts.chooseMethodHint')}`,
+                `\n\n${t('alerts.totalBreakdown', { total: priceToShow + deliveryFee, price: priceToShow, fee: deliveryFee, currency: t('common.currency') })}\n\n${t('alerts.chooseMethodHint')}`,
             [
                 { text: t('common.cancel'), style: 'cancel' },
                 {
@@ -242,7 +238,7 @@ export default function RequestDetailScreen() {
                             garageName: bid.garage_name,
                             partPrice: priceToShow,
                             deliveryFee: deliveryFee,
-                            partDescription: request?.part_description || 'Part',
+                            partDescription: request?.part_description || 'Part'
                         };
 
                         log('========================================');
@@ -253,36 +249,32 @@ export default function RequestDetailScreen() {
                         navigation.navigate('Payment', {
                             ...navigationParams,
                             // Unique key forces new screen instance, bypassing cache
-                            _cacheKey: `payment_${bid.bid_id}_${Date.now()}`,
+                            _cacheKey: `payment_${bid.bid_id}_${Date.now()}`
                         });
-                    },
-                },
+                    }
+                }
             ]
         );
     };
 
     const handleRejectBid = async (bid: Bid) => {
         Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
-        Alert.alert(
-            t('alerts.rejectBidTitle'),
-            t('alerts.rejectBidMessage', { name: bid.garage_name }),
-            [
-                { text: t('common.keep'), style: 'cancel' },
-                {
-                    text: t('common.reject'),
-                    style: 'destructive',
-                    onPress: async () => {
-                        try {
-                            await api.rejectBid(bid.bid_id);
-                            Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success);
-                            setBids(prev => prev.filter(b => b.bid_id !== bid.bid_id));
-                        } catch (error: any) {
-                            handleApiError(error, toast);
-                        }
-                    },
-                },
-            ]
-        );
+        Alert.alert(t('alerts.rejectBidTitle'), t('alerts.rejectBidMessage', { name: bid.garage_name }), [
+            { text: t('common.keep'), style: 'cancel' },
+            {
+                text: t('common.reject'),
+                style: 'destructive',
+                onPress: async () => {
+                    try {
+                        await api.rejectBid(bid.bid_id);
+                        Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success);
+                        setBids((prev) => prev.filter((b) => b.bid_id !== bid.bid_id));
+                    } catch (error: any) {
+                        handleApiError(error, toast);
+                    }
+                }
+            }
+        ]);
     };
 
     const handleCounter = (bid: Bid) => {
@@ -290,10 +282,11 @@ export default function RequestDetailScreen() {
         navigation.navigate('CounterOffer', {
             bidId: bid.bid_id,
             garageName: bid.garage_name,
-            currentAmount: (bid as any).garage_counter_amount || (bid as any).last_garage_offer_amount || bid.bid_amount,
+            currentAmount:
+                (bid as any).garage_counter_amount || (bid as any).last_garage_offer_amount || bid.bid_amount,
             partDescription: request?.part_description || '',
             garageCounterId: (bid as any).garage_counter_id || null,
-            requestId: request?.request_id || '',
+            requestId: request?.request_id || ''
         });
     };
 
@@ -303,14 +296,16 @@ export default function RequestDetailScreen() {
         setIsViewerVisible(true);
     };
 
-
-
     if (isLoading) {
         return (
             <SafeAreaView style={[styles.container, { backgroundColor: colors.background }]} edges={['top']}>
                 <View style={[styles.header, { backgroundColor: colors.surface }]}>
-                    <TouchableOpacity onPress={() => navigation.goBack()} style={[styles.backButton, { backgroundColor: colors.background }]}>
-                        <Ionicons name="arrow-back" size={20} color={Colors.primary} /> <Text style={styles.backText}>{t('common.back')}</Text>
+                    <TouchableOpacity
+                        onPress={() => navigation.goBack()}
+                        style={[styles.backButton, { backgroundColor: colors.background }]}
+                    >
+                        <Ionicons name="arrow-back" size={20} color={Colors.primary} />{' '}
+                        <Text style={styles.backText}>{t('common.back')}</Text>
                     </TouchableOpacity>
                     <Text style={[styles.headerTitle, { color: colors.text }]}>{t('requestDetail.title')}</Text>
                     <View style={{ width: 60 }} />
@@ -344,9 +339,22 @@ export default function RequestDetailScreen() {
             )}
 
             {/* Header */}
-            <View style={[styles.header, { backgroundColor: colors.surface, borderBottomColor: colors.border, flexDirection: rtlFlexDirection(isRTL) }]}>
-                <TouchableOpacity onPress={() => navigation.goBack()} style={[styles.backButton, { backgroundColor: colors.background }]}>
-                    <Ionicons name="arrow-back" size={20} color={Colors.primary} /> <Text style={styles.backText}>{t('common.back')}</Text>
+            <View
+                style={[
+                    styles.header,
+                    {
+                        backgroundColor: colors.surface,
+                        borderBottomColor: colors.border,
+                        flexDirection: rtlFlexDirection(isRTL)
+                    }
+                ]}
+            >
+                <TouchableOpacity
+                    onPress={() => navigation.goBack()}
+                    style={[styles.backButton, { backgroundColor: colors.background }]}
+                >
+                    <Ionicons name="arrow-back" size={20} color={Colors.primary} />{' '}
+                    <Text style={styles.backText}>{t('common.back')}</Text>
                 </TouchableOpacity>
                 <Text style={[styles.headerTitle, { color: colors.text }]}>{t('requestDetail.title')}</Text>
                 <View style={{ width: 60 }} />
@@ -354,11 +362,7 @@ export default function RequestDetailScreen() {
 
             <ScrollView style={styles.scrollView} showsVerticalScrollIndicator={false}>
                 {/* Hero Card */}
-                <HeroRequestCard
-                    request={request}
-                    colors={colors}
-                    onImagePress={handleImagePress}
-                />
+                <HeroRequestCard request={request} colors={colors} onImagePress={handleImagePress} />
 
                 {/* Price Comparison Bar */}
                 <BidComparisonBar bids={bids} colors={colors} />
@@ -367,7 +371,9 @@ export default function RequestDetailScreen() {
                 <View style={styles.bidsSection}>
                     <View style={[styles.bidsHeader, { flexDirection: rtlFlexDirection(isRTL) }]}>
                         <Text style={[styles.bidsTitle, { color: colors.text }]}>
-                            {bids.length === 0 ? t('requestDetail.waitingForBids') : t('requestDetail.bidCount', { count: bids.length })}
+                            {bids.length === 0
+                                ? t('requestDetail.waitingForBids')
+                                : t('requestDetail.bidCount', { count: bids.length })}
                         </Text>
                         {bids.length >= 2 && (
                             <TouchableOpacity
@@ -395,7 +401,7 @@ export default function RequestDetailScreen() {
                             colors={{
                                 surface: colors.surface,
                                 text: colors.text,
-                                textSecondary: colors.textSecondary,
+                                textSecondary: colors.textSecondary
                             }}
                         />
                     ) : (
@@ -438,8 +444,6 @@ export default function RequestDetailScreen() {
                 onAccept={(bid) => handleAcceptBid(bid, Number(bid.bid_amount))}
                 onClose={() => setIsComparisonVisible(false)}
             />
-
-
         </SafeAreaView>
     );
 }
@@ -456,12 +460,12 @@ const styles = StyleSheet.create({
         padding: Spacing.lg,
         backgroundColor: '#fff',
         borderBottomWidth: 1,
-        borderBottomColor: '#F0F0F0',
+        borderBottomColor: '#F0F0F0'
     },
     backButton: {
         padding: Spacing.sm,
         backgroundColor: '#F5F5F5',
-        borderRadius: BorderRadius.md,
+        borderRadius: BorderRadius.md
     },
     backText: { color: Colors.primary, fontSize: FontSizes.md, fontWeight: '600' },
     headerTitle: { fontSize: FontSizes.xl, fontWeight: '800', letterSpacing: -0.5 },
@@ -474,21 +478,21 @@ const styles = StyleSheet.create({
         flexDirection: 'row',
         justifyContent: 'space-between',
         alignItems: 'center',
-        marginBottom: Spacing.lg,
+        marginBottom: Spacing.lg
     },
     bidsTitle: { fontSize: FontSizes.xl, fontWeight: '800' },
     compareButton: {
         borderRadius: BorderRadius.full,
-        overflow: 'hidden',
+        overflow: 'hidden'
     },
     compareGradient: {
         paddingHorizontal: Spacing.lg,
-        paddingVertical: Spacing.sm,
+        paddingVertical: Spacing.sm
     },
     compareButtonText: {
         color: '#FFFFFF',
         fontSize: FontSizes.sm,
-        fontWeight: '700',
+        fontWeight: '700'
     },
 
     // Skeleton
@@ -496,7 +500,7 @@ const styles = StyleSheet.create({
     skeletonBox: {
         backgroundColor: '#E8E8E8',
         borderRadius: BorderRadius.xl,
-        overflow: 'hidden',
+        overflow: 'hidden'
     },
     skeletonShimmer: {
         position: 'absolute',
@@ -504,8 +508,8 @@ const styles = StyleSheet.create({
         left: 0,
         right: 0,
         bottom: 0,
-        backgroundColor: 'rgba(255,255,255,0.4)',
+        backgroundColor: 'rgba(255,255,255,0.4)'
     },
     skeletonHero: { height: 280, marginBottom: Spacing.lg },
-    skeletonBid: { height: 160, marginBottom: Spacing.md },
+    skeletonBid: { height: 160, marginBottom: Spacing.md }
 });

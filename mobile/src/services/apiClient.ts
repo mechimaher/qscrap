@@ -1,7 +1,8 @@
-import { log, warn, error as logError } from "../utils/logger";
-import { API_BASE_URL, API_ENDPOINTS } from "../config/api";
-import * as SecureStore from "expo-secure-store";
-import { User } from "./types";
+import { log, error as logError } from '../utils/logger';
+import { API_BASE_URL, API_ENDPOINTS } from '../config/api';
+import * as SecureStore from 'expo-secure-store';
+import { User } from './types';
+import { eventBus, AppEvents } from '../utils/eventBus';
 
 const TOKEN_KEY = 'qscrap_token';
 const REFRESH_TOKEN_KEY = 'qscrap_refresh_token';
@@ -15,6 +16,12 @@ export class ApiClient {
     private refreshTokenValue: string | null = null;
     private isRefreshing = false;
     private refreshQueue: Array<{ resolve: (token: string) => void; reject: (error: Error) => void }> = [];
+    // Circuit breaker state
+    private failureCount = 0;
+    private breakerOpenUntil = 0;
+    private readonly breakerThreshold = 5;
+    private readonly breakerCooldownMs = 30_000;
+    private authExpiredNotified = false;
 
     async getToken(): Promise<string | null> {
         if (this.token) return this.token;
@@ -73,7 +80,7 @@ export class ApiClient {
         const response = await fetch(`${API_BASE_URL}${API_ENDPOINTS.REFRESH}`, {
             method: 'POST',
             headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({ refreshToken: rt }),
+            body: JSON.stringify({ refreshToken: rt })
         });
         if (!response.ok) {
             // Refresh token is invalid/expired — force re-login
@@ -114,12 +121,16 @@ export class ApiClient {
         }
     }
 
-    private async rawRequest<T>(endpoint: string, options: RequestInit = {}, tokenOverride?: string | null): Promise<{ data: T; status: number }> {
+    private async rawRequest<T>(
+        endpoint: string,
+        options: RequestInit = {},
+        tokenOverride?: string | null
+    ): Promise<{ data: T; status: number }> {
         const token = tokenOverride !== undefined ? tokenOverride : await this.getToken();
         const headers: HeadersInit = {
             'Content-Type': 'application/json',
             ...(token ? { Authorization: `Bearer ${token}` } : {}),
-            ...options.headers,
+            ...options.headers
         };
         const controller = new AbortController();
         const timeoutId = setTimeout(() => controller.abort(), 15000);
@@ -127,7 +138,7 @@ export class ApiClient {
             const response = await fetch(`${API_BASE_URL}${endpoint}`, {
                 ...options,
                 headers,
-                signal: controller.signal,
+                signal: controller.signal
             });
 
             clearTimeout(timeoutId);
@@ -157,25 +168,55 @@ export class ApiClient {
     }
 
     public async request<T>(endpoint: string, options: RequestInit = {}): Promise<T> {
-        const { data, status } = await this.rawRequest<T>(endpoint, options);
-        if (status === 401 && !endpoint.startsWith('/auth/')) {
-            try {
-                const newToken = await this.handleTokenRefresh();
-                const retry = await this.rawRequest<T>(endpoint, options, newToken);
-                if (retry.status >= 400) {
-                    throw new Error(this.extractError(retry.data));
+        // Circuit breaker: short-circuit requests during outages (except auth endpoints)
+        const now = Date.now();
+        const isAuthRoute = endpoint.startsWith('/auth/');
+        if (!isAuthRoute && this.breakerOpenUntil > now) {
+            throw new Error('Service temporarily unavailable. Please try again shortly.');
+        }
+
+        const maxRetries = 3;
+        const method = (options.method || 'GET').toUpperCase();
+        const canRetry = method === 'GET';
+
+        let attempt = 0;
+        while (true) {
+            const { data, status } = await this.rawRequest<T>(endpoint, options);
+
+            if (status === 401 && !isAuthRoute) {
+                try {
+                    const newToken = await this.handleTokenRefresh();
+                    const retry = await this.rawRequest<T>(endpoint, options, newToken);
+                    if (retry.status >= 400) {
+                        throw new Error(this.extractError(retry.data));
+                    }
+                    this.resetBreaker();
+                    return retry.data;
+                } catch (refreshError: any) {
+                    if (!this.authExpiredNotified) {
+                        this.authExpiredNotified = true;
+                        eventBus.emit(AppEvents.AUTH_EXPIRED);
+                    }
+                    throw refreshError;
                 }
-                return retry.data;
-            } catch (refreshError: any) {
-                throw refreshError;
             }
-        }
 
-        if (status >= 400) {
-            throw new Error(this.extractError(data));
-        }
+            if (status >= 500 && canRetry && attempt < maxRetries) {
+                this.recordFailure();
+                attempt += 1;
+                const delay = this.getJitterDelay(attempt);
+                await this.sleep(delay);
+                continue;
+            }
 
-        return data;
+            if (status >= 400) {
+                this.recordFailure();
+                throw new Error(this.extractError(data));
+            }
+
+            this.resetBreaker();
+            return data;
+        }
     }
 
     private extractError(data: any): string {
@@ -183,6 +224,29 @@ export class ApiClient {
         if (typeof data?.error?.message === 'string') return data.error.message;
         if (typeof data?.message === 'string') return data.message;
         return 'Request failed';
+    }
+
+    private recordFailure() {
+        this.failureCount += 1;
+        if (this.failureCount >= this.breakerThreshold) {
+            this.breakerOpenUntil = Date.now() + this.breakerCooldownMs;
+        }
+    }
+
+    private resetBreaker() {
+        this.failureCount = 0;
+        this.breakerOpenUntil = 0;
+        this.authExpiredNotified = false;
+    }
+
+    private getJitterDelay(attempt: number) {
+        const base = Math.min(1000 * 2 ** (attempt - 1), 5000);
+        const jitter = Math.random() * 300;
+        return base + jitter;
+    }
+
+    private sleep(ms: number) {
+        return new Promise((resolve) => setTimeout(resolve, ms));
     }
 }
 

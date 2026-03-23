@@ -46,8 +46,7 @@ describe('Order Service', () => {
 
     const testPasswordHash = '$2b$10$dummyhashfortesting123456789012345';
 
-    const createUniquePhone = (): string =>
-        `+974${`${Date.now()}${Math.floor(Math.random() * 1000)}`.slice(-8)}`;
+    const createUniquePhone = (): string => `+974${`${Date.now()}${Math.floor(Math.random() * 1000)}`.slice(-8)}`;
 
     async function cleanupOrderFixture(
         fixture?: Partial<OrderFixture & DriverFixture> & { extraBidIds?: string[] }
@@ -89,79 +88,96 @@ describe('Order Service', () => {
         }
     }
 
-    async function createFreshOrder(options: {
-        bidAmount?: number;
-        deliveryFee?: number;
-        paymentMethod?: string;
-        deliveryAddress?: string;
-        carMake?: string;
-        carModel?: string;
-        carYear?: number;
-        partDescription?: string;
-        partCondition?: string;
-    } = {}): Promise<OrderFixture> {
+    async function createFreshOrder(
+        options: {
+            bidAmount?: number;
+            deliveryFee?: number;
+            paymentMethod?: string;
+            deliveryAddress?: string;
+            carMake?: string;
+            carModel?: string;
+            carYear?: number;
+            partDescription?: string;
+            partCondition?: string;
+        } = {}
+    ): Promise<OrderFixture> {
         const requestId = randomUUID();
         const bidId = randomUUID();
 
         // Ensure test customer exists (in case another test deleted it)
-        await pool.query(`
+        await pool.query(
+            `
             INSERT INTO users (user_id, full_name, phone_number, user_type, password_hash)
             VALUES ($1, 'Test Customer', '+97430000001', 'customer', $2)
             ON CONFLICT (user_id) DO UPDATE SET user_type = 'customer'
-        `, [testCustomerId, testPasswordHash]);
+        `,
+            [testCustomerId, testPasswordHash]
+        );
 
         // Ensure customer_rewards exists
-        await pool.query(`
+        await pool.query(
+            `
             INSERT INTO customer_rewards (customer_id, points_balance, lifetime_points, current_tier)
             VALUES ($1, 0, 0, 'bronze')
             ON CONFLICT (customer_id) DO UPDATE SET
                 points_balance = 0,
                 lifetime_points = 0,
                 current_tier = 'bronze'
-        `, [testCustomerId]);
+        `,
+            [testCustomerId]
+        );
 
         // Ensure test garage exists
-        await pool.query(`
+        await pool.query(
+            `
             INSERT INTO users (user_id, full_name, phone_number, user_type, password_hash)
             VALUES ($1, 'Test Garage', '+97430000002', 'garage', $2)
             ON CONFLICT (user_id) DO UPDATE SET user_type = 'garage'
-        `, [testGarageId, testPasswordHash]);
+        `,
+            [testGarageId, testPasswordHash]
+        );
 
-        await pool.query(`
+        await pool.query(
+            `
             INSERT INTO garages (garage_id, garage_name, approval_status, location_lat, location_lng)
             VALUES ($1, 'Test Garage LLC', 'approved', 25.276987, 51.520008)
             ON CONFLICT (garage_id) DO UPDATE SET approval_status = 'approved'
-        `, [testGarageId]);
+        `,
+            [testGarageId]
+        );
 
         // Ensure garage has active subscription
         await pool.query('DELETE FROM garage_subscriptions WHERE garage_id = $1', [testGarageId]);
-        await pool.query(`
+        await pool.query(
+            `
             INSERT INTO garage_subscriptions (garage_id, plan_id, status, billing_cycle_start, billing_cycle_end)
             VALUES ($1, (SELECT plan_id FROM subscription_plans WHERE plan_code = 'starter' LIMIT 1), 'active', NOW(), NOW() + INTERVAL '30 days')
-        `, [testGarageId]);
+        `,
+            [testGarageId]
+        );
 
-        await pool.query(`
+        await pool.query(
+            `
             INSERT INTO part_requests (request_id, customer_id, car_make, car_model, car_year, part_description, status)
             VALUES ($1, $2, $3, $4, $5, $6, 'active')
-        `, [
-            requestId,
-            testCustomerId,
-            options.carMake || 'Toyota',
-            options.carModel || 'Camry',
-            options.carYear || 2022,
-            options.partDescription || 'Order service test part'
-        ]);
+        `,
+            [
+                requestId,
+                testCustomerId,
+                options.carMake || 'Toyota',
+                options.carModel || 'Camry',
+                options.carYear || 2022,
+                options.partDescription || 'Order service test part'
+            ]
+        );
 
-        await pool.query(`
+        await pool.query(
+            `
             INSERT INTO bids (bid_id, request_id, garage_id, bid_amount, status, part_condition)
             VALUES ($1, $2, $3, $4, 'pending', $5)
-        `, [
-            bidId,
-            requestId,
-            testGarageId,
-            options.bidAmount || 200,
-            options.partCondition || 'used_good'
-        ]);
+        `,
+            [bidId, requestId, testGarageId, options.bidAmount || 200, options.partCondition || 'used_good']
+        );
 
         const params: CreateOrderParams = {
             bidId,
@@ -181,11 +197,13 @@ describe('Order Service', () => {
         };
     }
 
-    async function createReadyForPickupOrder(options: {
-        bidAmount?: number;
-        deliveryFee?: number;
-        partDescription?: string;
-    } = {}): Promise<OrderFixture> {
+    async function createReadyForPickupOrder(
+        options: {
+            bidAmount?: number;
+            deliveryFee?: number;
+            partDescription?: string;
+        } = {}
+    ): Promise<OrderFixture> {
         const fixture = await createFreshOrder(options);
 
         const preparingResult = await updateOrderStatus({
@@ -219,27 +237,36 @@ describe('Order Service', () => {
         const driverId = randomUUID();
         const driverPhone = createUniquePhone();
 
-        await pool.query(`
+        await pool.query(
+            `
             INSERT INTO users (user_id, full_name, phone_number, user_type, password_hash)
             VALUES ($1, 'Test Driver', $2, 'driver', $3)
-        `, [driverId, driverPhone, testPasswordHash]);
+        `,
+            [driverId, driverPhone, testPasswordHash]
+        );
 
-        await pool.query(`
+        await pool.query(
+            `
             INSERT INTO drivers (
                 driver_id, user_id, full_name, phone, email, vehicle_type, vehicle_plate, vehicle_model, status
             )
             VALUES ($1, $1, 'Test Driver', $2, $3, 'motorcycle', 'TST-123', 'Honda Wave', 'busy')
-        `, [driverId, driverPhone, `driver.${driverId}@test.qscrap.qa`]);
-
-        await pool.query(
-            'UPDATE orders SET driver_id = $2, updated_at = NOW() WHERE order_id = $1',
-            [orderId, driverId]
+        `,
+            [driverId, driverPhone, `driver.${driverId}@test.qscrap.qa`]
         );
 
-        await pool.query(`
+        await pool.query('UPDATE orders SET driver_id = $2, updated_at = NOW() WHERE order_id = $1', [
+            orderId,
+            driverId
+        ]);
+
+        await pool.query(
+            `
             INSERT INTO delivery_assignments (order_id, driver_id, status, pickup_address, delivery_address)
             VALUES ($1, $2, 'assigned', 'Garage Pickup Address', 'Customer Delivery Address')
-        `, [orderId, driverId]);
+        `,
+            [orderId, driverId]
+        );
 
         return { driverId, userId: driverId };
     }
@@ -249,7 +276,7 @@ describe('Order Service', () => {
             'SELECT order_id FROM orders WHERE customer_id = $1 OR garage_id = $2',
             [testCustomerId, testGarageId]
         );
-        const orderIds = orderIdsResult.rows.map(row => row.order_id);
+        const orderIds = orderIdsResult.rows.map((row) => row.order_id);
 
         if (orderIds.length > 0) {
             await pool.query('DELETE FROM refunds WHERE order_id = ANY($1::uuid[])', [orderIds]);
@@ -263,11 +290,10 @@ describe('Order Service', () => {
             await pool.query('DELETE FROM orders WHERE order_id = ANY($1::uuid[])', [orderIds]);
         }
 
-        const requestIdsResult = await pool.query(
-            'SELECT request_id FROM part_requests WHERE customer_id = $1',
-            [testCustomerId]
-        );
-        const requestIds = requestIdsResult.rows.map(row => row.request_id);
+        const requestIdsResult = await pool.query('SELECT request_id FROM part_requests WHERE customer_id = $1', [
+            testCustomerId
+        ]);
+        const requestIds = requestIdsResult.rows.map((row) => row.request_id);
 
         if (requestIds.length > 0) {
             await pool.query('DELETE FROM bids WHERE request_id = ANY($1::uuid[])', [requestIds]);
@@ -339,19 +365,26 @@ describe('Order Service', () => {
 
         await cleanupSharedTestData();
 
-        await pool.query(`
+        await pool.query(
+            `
             INSERT INTO users (user_id, full_name, phone_number, user_type, password_hash)
             VALUES ($1, 'Test Customer', '+97430000001', 'customer', $2)
             ON CONFLICT (user_id) DO NOTHING
-        `, [testCustomerId, testPasswordHash]);
+        `,
+            [testCustomerId, testPasswordHash]
+        );
 
-        await pool.query(`
+        await pool.query(
+            `
             INSERT INTO users (user_id, full_name, phone_number, user_type, password_hash)
             VALUES ($1, 'Test Garage', '+97430000002', 'garage', $2)
             ON CONFLICT (user_id) DO NOTHING
-        `, [testGarageId, testPasswordHash]);
+        `,
+            [testGarageId, testPasswordHash]
+        );
 
-        await pool.query(`
+        await pool.query(
+            `
             INSERT INTO customer_rewards (customer_id, points_balance, lifetime_points, current_tier)
             VALUES ($1, 0, 0, 'bronze')
             ON CONFLICT (customer_id) DO UPDATE SET
@@ -359,31 +392,45 @@ describe('Order Service', () => {
                 lifetime_points = 0,
                 current_tier = 'bronze',
                 updated_at = NOW()
-        `, [testCustomerId]);
+        `,
+            [testCustomerId]
+        );
 
-        await pool.query(`
+        await pool.query(
+            `
             INSERT INTO garages (garage_id, garage_name, approval_status, location_lat, location_lng)
             VALUES ($1, 'Test Garage LLC', 'approved', 25.276987, 51.520008)
             ON CONFLICT (garage_id) DO NOTHING
-        `, [testGarageId]);
+        `,
+            [testGarageId]
+        );
 
         await pool.query('DELETE FROM garage_subscriptions WHERE garage_id = $1', [testGarageId]);
-        await pool.query(`
+        await pool.query(
+            `
             INSERT INTO garage_subscriptions (garage_id, plan_id, status, billing_cycle_start, billing_cycle_end)
             VALUES ($1, (SELECT plan_id FROM subscription_plans WHERE plan_code = 'starter' LIMIT 1), 'active', NOW(), NOW() + INTERVAL '30 days')
-        `, [testGarageId]);
+        `,
+            [testGarageId]
+        );
 
-        await pool.query(`
+        await pool.query(
+            `
             INSERT INTO part_requests (request_id, customer_id, car_make, car_model, car_year, part_description, status)
             VALUES ($1, $2, 'Toyota', 'Camry', 2022, 'Test Part', 'active')
             ON CONFLICT (request_id) DO NOTHING
-        `, [testRequestId, testCustomerId]);
+        `,
+            [testRequestId, testCustomerId]
+        );
 
-        await pool.query(`
+        await pool.query(
+            `
             INSERT INTO bids (bid_id, request_id, garage_id, bid_amount, status, part_condition)
             VALUES ($1, $2, $3, 150.00, 'pending', 'new')
             ON CONFLICT (bid_id) DO NOTHING
-        `, [testBidId, testRequestId, testGarageId]);
+        `,
+            [testBidId, testRequestId, testGarageId]
+        );
     });
 
     afterAll(async () => {
@@ -450,7 +497,7 @@ describe('Order Service', () => {
                 throw new Error('No order created for history test');
             }
 
-            const history = await getOrderHistory(createdOrderId) as OrderHistoryEntry[];
+            const history = (await getOrderHistory(createdOrderId)) as OrderHistoryEntry[];
 
             expect(history).toBeInstanceOf(Array);
             expect(history.length).toBeGreaterThan(0);
@@ -529,10 +576,9 @@ describe('Order Service', () => {
 
                 expect(result.message).toBe('Order cancelled successfully');
 
-                const orderResult = await pool.query(
-                    'SELECT order_status FROM orders WHERE order_id = $1',
-                    [fixture.orderId]
-                );
+                const orderResult = await pool.query('SELECT order_status FROM orders WHERE order_id = $1', [
+                    fixture.orderId
+                ]);
                 expect(orderResult.rows[0].order_status).toBe('cancelled_by_customer');
 
                 const requestResult = await pool.query(
@@ -545,7 +591,7 @@ describe('Order Service', () => {
                     status: 'processed'
                 });
 
-                const history = await getOrderHistory(fixture.orderId) as OrderHistoryEntry[];
+                const history = (await getOrderHistory(fixture.orderId)) as OrderHistoryEntry[];
                 expect(history[history.length - 1]).toMatchObject({
                     old_status: 'pending_payment',
                     status: 'cancelled_by_customer',
@@ -586,10 +632,9 @@ describe('Order Service', () => {
 
                 expect(result.message).toContain('Order cancelled');
 
-                const orderResult = await pool.query(
-                    'SELECT order_status FROM orders WHERE order_id = $1',
-                    [fixture.orderId]
-                );
+                const orderResult = await pool.query('SELECT order_status FROM orders WHERE order_id = $1', [
+                    fixture.orderId
+                ]);
                 expect(orderResult.rows[0].order_status).toBe('cancelled_by_garage');
 
                 const requestResult = await pool.query(
@@ -602,7 +647,7 @@ describe('Order Service', () => {
                     status: 'processed'
                 });
 
-                const history = await getOrderHistory(fixture.orderId) as OrderHistoryEntry[];
+                const history = (await getOrderHistory(fixture.orderId)) as OrderHistoryEntry[];
                 expect(history[history.length - 1]).toMatchObject({
                     old_status: 'confirmed',
                     status: 'cancelled_by_garage',
@@ -626,10 +671,9 @@ describe('Order Service', () => {
             });
 
             // Keep the deadline safely ahead of the app clock for this integration test.
-            await pool.query(
-                "UPDATE orders SET undo_deadline = NOW() + INTERVAL '4 hours' WHERE order_id = $1",
-                [undoFixture.orderId]
-            );
+            await pool.query("UPDATE orders SET undo_deadline = NOW() + INTERVAL '4 hours' WHERE order_id = $1", [
+                undoFixture.orderId
+            ]);
 
             return undoFixture;
         }
@@ -643,12 +687,7 @@ describe('Order Service', () => {
         });
 
         it('should undo order within grace window and set status to cancelled_by_undo', async () => {
-            const result = await undoOrder(
-                fixture.orderId,
-                testCustomerId,
-                'customer',
-                'Changed my mind'
-            );
+            const result = await undoOrder(fixture.orderId, testCustomerId, 'customer', 'Changed my mind');
 
             expect(result.success).toBe(true);
             expect(result.order_status).toBe('cancelled_by_undo');
@@ -667,20 +706,16 @@ describe('Order Service', () => {
         it('should revert bid status back to pending after undo', async () => {
             await undoOrder(fixture.orderId, testCustomerId, 'customer');
 
-            const bidResult = await pool.query(
-                'SELECT status FROM bids WHERE bid_id = $1',
-                [fixture.bidId]
-            );
+            const bidResult = await pool.query('SELECT status FROM bids WHERE bid_id = $1', [fixture.bidId]);
             expect(bidResult.rows[0].status).toBe('pending');
         });
 
         it('should revert request status back to active after undo', async () => {
             await undoOrder(fixture.orderId, testCustomerId, 'customer');
 
-            const requestResult = await pool.query(
-                'SELECT status FROM part_requests WHERE request_id = $1',
-                [fixture.requestId]
-            );
+            const requestResult = await pool.query('SELECT status FROM part_requests WHERE request_id = $1', [
+                fixture.requestId
+            ]);
             expect(requestResult.rows[0].status).toBe('active');
         });
 
@@ -690,30 +725,42 @@ describe('Order Service', () => {
             const extraGaragePhone = createUniquePhone();
 
             try {
-                await pool.query(`
+                await pool.query(
+                    `
                     INSERT INTO users (user_id, full_name, phone_number, user_type, password_hash)
                     VALUES ($1, 'Undo Test Garage', $2, 'garage', $3)
-                `, [extraGarageId, extraGaragePhone, testPasswordHash]);
+                `,
+                    [extraGarageId, extraGaragePhone, testPasswordHash]
+                );
 
-                await pool.query(`
+                await pool.query(
+                    `
                     INSERT INTO garages (garage_id, garage_name, approval_status, location_lat, location_lng)
                     VALUES ($1, 'Undo Test Garage LLC', 'approved', 25.276987, 51.520008)
-                `, [extraGarageId]);
+                `,
+                    [extraGarageId]
+                );
 
-                await pool.query(`
+                await pool.query(
+                    `
                     INSERT INTO garage_subscriptions (garage_id, plan_id, status, billing_cycle_start, billing_cycle_end)
                     VALUES ($1, (SELECT plan_id FROM subscription_plans WHERE plan_code = 'starter' LIMIT 1), 'active', NOW(), NOW() + INTERVAL '30 days')
-                `, [extraGarageId]);
+                `,
+                    [extraGarageId]
+                );
 
                 await pool.query(
                     "UPDATE part_requests SET status = 'active', updated_at = NOW() WHERE request_id = $1",
                     [fixture.requestId]
                 );
 
-                await pool.query(`
+                await pool.query(
+                    `
                     INSERT INTO bids (bid_id, request_id, garage_id, bid_amount, status, part_condition)
                     VALUES ($1, $2, $3, 180.00, 'rejected', 'new')
-                `, [extraBidId, fixture.requestId, extraGarageId]);
+                `,
+                    [extraBidId, fixture.requestId, extraGarageId]
+                );
 
                 await pool.query(
                     "UPDATE part_requests SET status = 'accepted', updated_at = NOW() WHERE request_id = $1",
@@ -722,10 +769,7 @@ describe('Order Service', () => {
 
                 await undoOrder(fixture.orderId, testCustomerId, 'customer');
 
-                const extraBidResult = await pool.query(
-                    'SELECT status FROM bids WHERE bid_id = $1',
-                    [extraBidId]
-                );
+                const extraBidResult = await pool.query('SELECT status FROM bids WHERE bid_id = $1', [extraBidId]);
                 expect(extraBidResult.rows[0].status).toBe('pending');
             } finally {
                 await pool.query('DELETE FROM bids WHERE bid_id = $1', [extraBidId]);
@@ -736,10 +780,9 @@ describe('Order Service', () => {
         });
 
         it('should return UNDO_EXPIRED when grace window has expired', async () => {
-            await pool.query(
-                "UPDATE orders SET undo_deadline = NOW() - INTERVAL '1 minute' WHERE order_id = $1",
-                [fixture.orderId]
-            );
+            await pool.query("UPDATE orders SET undo_deadline = NOW() - INTERVAL '1 minute' WHERE order_id = $1", [
+                fixture.orderId
+            ]);
 
             const result = await undoOrder(fixture.orderId, testCustomerId, 'customer');
 
@@ -749,10 +792,9 @@ describe('Order Service', () => {
                 expired: true
             });
 
-            const orderResult = await pool.query(
-                'SELECT order_status, undo_used FROM orders WHERE order_id = $1',
-                [fixture.orderId]
-            );
+            const orderResult = await pool.query('SELECT order_status, undo_used FROM orders WHERE order_id = $1', [
+                fixture.orderId
+            ]);
             expect(orderResult.rows[0]).toMatchObject({
                 order_status: 'pending_payment',
                 undo_used: false
@@ -760,11 +802,7 @@ describe('Order Service', () => {
         });
 
         it('should return ACCESS_DENIED when wrong customer attempts undo', async () => {
-            const result = await undoOrder(
-                fixture.orderId,
-                '88888888-8888-8888-8888-888888888888',
-                'customer'
-            );
+            const result = await undoOrder(fixture.orderId, '88888888-8888-8888-8888-888888888888', 'customer');
 
             expect(result).toMatchObject({
                 success: false,
@@ -807,7 +845,7 @@ describe('Order Service', () => {
         it('should record undo in order_status_history', async () => {
             await undoOrder(fixture.orderId, testCustomerId, 'customer', 'History test');
 
-            const history = await getOrderHistory(fixture.orderId) as OrderHistoryEntry[];
+            const history = (await getOrderHistory(fixture.orderId)) as OrderHistoryEntry[];
 
             expect(history).toHaveLength(2);
             expect(history[1]).toMatchObject({
@@ -870,10 +908,9 @@ describe('Order Service', () => {
             expect(payoutResult.rows[0].garage_id).toBe(orderFinancials.rows[0].garage_id);
             expect(payoutResult.rows[0].scheduled_for).not.toBeNull();
 
-            const driverResult = await pool.query(
-                'SELECT status FROM drivers WHERE driver_id = $1',
-                [driverFixture.driverId]
-            );
+            const driverResult = await pool.query('SELECT status FROM drivers WHERE driver_id = $1', [
+                driverFixture.driverId
+            ]);
             expect(driverResult.rows[0].status).toBe('available');
         });
 
@@ -914,15 +951,17 @@ describe('Order Service', () => {
             });
             expect(completeResult.success).toBe(true);
 
-            const history = await getOrderHistory(fixture.orderId) as OrderHistoryEntry[];
+            const history = (await getOrderHistory(fixture.orderId)) as OrderHistoryEntry[];
 
             expect(history).toHaveLength(4);
-            expect(history.map(({ old_status, status, changed_by, reason }) => ({
-                old_status,
-                status,
-                changed_by,
-                reason
-            }))).toEqual([
+            expect(
+                history.map(({ old_status, status, changed_by, reason }) => ({
+                    old_status,
+                    status,
+                    changed_by,
+                    reason
+                }))
+            ).toEqual([
                 {
                     old_status: null,
                     status: 'pending_payment',
@@ -969,11 +1008,7 @@ describe('Order Service', () => {
         });
 
         it('should return ORDER_NOT_FOUND for undoOrder with non-existent order ID', async () => {
-            const result = await undoOrder(
-                'eeeeeeee-eeee-eeee-eeee-eeeeeeeeeeee',
-                testCustomerId,
-                'customer'
-            );
+            const result = await undoOrder('eeeeeeee-eeee-eeee-eeee-eeeeeeeeeeee', testCustomerId, 'customer');
 
             expect(result).toMatchObject({
                 success: false,

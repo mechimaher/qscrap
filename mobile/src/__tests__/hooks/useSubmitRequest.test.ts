@@ -6,14 +6,14 @@ import * as Haptics from 'expo-haptics';
 
 jest.mock('../../services/api', () => ({
     api: {
-        createRequest: jest.fn(),
+        createRequest: jest.fn()
     }
 }));
 jest.mock('expo-haptics', () => ({
     impactAsync: jest.fn(),
     notificationAsync: jest.fn(),
     ImpactFeedbackStyle: { Medium: 'Medium' },
-    NotificationFeedbackType: { Success: 'Success' },
+    NotificationFeedbackType: { Success: 'Success' }
 }));
 jest.mock('../../utils/logger');
 jest.mock('../../utils/errorHandler');
@@ -24,12 +24,12 @@ describe('useSubmitRequest', () => {
     const mockNavigation = { navigate: jest.fn(), replace: jest.fn() };
 
     // Mock Alert.alert
-    jest.spyOn(Alert, 'alert').mockImplementation(() => { });
+    jest.spyOn(Alert, 'alert').mockImplementation(() => {});
 
     beforeEach(() => {
         jest.clearAllMocks();
         global.FormData = jest.fn(() => ({
-            append: jest.fn(),
+            append: jest.fn()
         })) as any;
     });
 
@@ -38,7 +38,7 @@ describe('useSubmitRequest', () => {
             car_make: 'Toyota',
             car_model: 'Camry',
             car_year: 2020,
-            vin_number: '1FATP42P4X1234567',
+            vin_number: '1FATP42P4X1234567'
         },
         partDescription: 'Brake pads',
         quantity: 1,
@@ -53,13 +53,11 @@ describe('useSubmitRequest', () => {
         carRearImage: 'file://rear.jpg',
         t: mockT,
         toast: mockToast,
-        navigation: mockNavigation,
+        navigation: mockNavigation
     };
 
     it('should show error if vehicle is not selected', async () => {
-        const { result } = renderHook(() =>
-            useSubmitRequest({ ...baseParams, selectedVehicle: null })
-        );
+        const { result } = renderHook(() => useSubmitRequest({ ...baseParams, selectedVehicle: null }));
 
         await act(async () => {
             await result.current.handleSubmit();
@@ -71,9 +69,7 @@ describe('useSubmitRequest', () => {
 
     it('should show VIN alert if selected vehicle is missing VIN', async () => {
         const noVinVehicle = { car_make: 'Toyota', car_model: 'Camry', car_year: 2020, vin_number: null };
-        const { result } = renderHook(() =>
-            useSubmitRequest({ ...baseParams, selectedVehicle: noVinVehicle })
-        );
+        const { result } = renderHook(() => useSubmitRequest({ ...baseParams, selectedVehicle: noVinVehicle }));
 
         await act(async () => {
             await result.current.handleSubmit();
@@ -88,8 +84,8 @@ describe('useSubmitRequest', () => {
     });
 
     it('should show error if part description is missing/empty', async () => {
-        const { result } = renderHook(() =>
-            useSubmitRequest({ ...baseParams, partDescription: '   ' }) // Empty string
+        const { result } = renderHook(
+            () => useSubmitRequest({ ...baseParams, partDescription: '   ' }) // Empty string
         );
 
         await act(async () => {
@@ -103,7 +99,7 @@ describe('useSubmitRequest', () => {
     it('should successfully submit form and correctly format description', async () => {
         const mockAppend = jest.fn();
         global.FormData = jest.fn(() => ({
-            append: mockAppend,
+            append: mockAppend
         })) as any;
 
         (api.createRequest as jest.Mock).mockResolvedValue({ request_id: 'REQ-10001' });
@@ -112,7 +108,7 @@ describe('useSubmitRequest', () => {
             useSubmitRequest({
                 ...baseParams,
                 quantity: 4,
-                side: 'left', // This tests the logic for injecting side and quantity into the description
+                side: 'left' // This tests the logic for injecting side and quantity into the description
             })
         );
 
@@ -128,14 +124,14 @@ describe('useSubmitRequest', () => {
         // Assert modified finalDescription
         expect(mockAppend).toHaveBeenCalledWith(
             'part_description',
-            "Brake pads\n\nnewRequest.quantity: 4 newRequest.pcs\nnewRequest.position: newRequest.leftDriver"
+            'Brake pads\n\nnewRequest.quantity: 4 newRequest.pcs\nnewRequest.position: newRequest.leftDriver'
         );
 
-        // Assert file handling 
+        // Assert file handling
         expect(mockAppend).toHaveBeenCalledWith('images', {
             uri: 'file://image1.jpg',
             name: 'part_0.jpg',
-            type: 'image/jpg',
+            type: 'image/jpg'
         });
 
         expect(api.createRequest).toHaveBeenCalled();
@@ -149,9 +145,7 @@ describe('useSubmitRequest', () => {
             return new Promise((_, reject) => setTimeout(() => reject(new Error('API Error')), 100));
         });
 
-        const { result } = renderHook(() =>
-            useSubmitRequest(baseParams)
-        );
+        const { result } = renderHook(() => useSubmitRequest(baseParams));
 
         // Run submit asynchronously
         let promise: Promise<void> | undefined;

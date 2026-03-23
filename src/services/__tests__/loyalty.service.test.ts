@@ -1,7 +1,7 @@
 import { LoyaltyService } from '../loyalty.service';
 // Mock pool
 jest.mock('../../config/db', () => ({
-    query: jest.fn(),
+    query: jest.fn()
 }));
 
 import pool from '../../config/db';
@@ -57,7 +57,7 @@ describe('Loyalty Service', () => {
                 testCustomerId,
                 50,
                 'order_completion',
-                undefined,  // order_id is optional UUID, use undefined instead of invalid string
+                undefined, // order_id is optional UUID, use undefined instead of invalid string
                 'Order completion'
             );
 
@@ -92,10 +92,7 @@ describe('Loyalty Service', () => {
             (mockPool.query as jest.Mock).mockResolvedValueOnce({
                 rows: [{ success: true, new_balance: 100, discount_amount: '10' }]
             });
-            const result = await LoyaltyService.redeemPoints(
-                testCustomerId,
-                100
-            );
+            const result = await LoyaltyService.redeemPoints(testCustomerId, 100);
 
             expect(result.success).toBe(true);
             expect(result.new_balance).toBe(100); // 200 - 100
@@ -123,13 +120,15 @@ describe('Loyalty Service', () => {
     describe('Get Customer Summary', () => {
         it('should return complete loyalty summary', async () => {
             (mockPool.query as jest.Mock).mockResolvedValueOnce({
-                rows: [{
-                    points_balance: 100,
-                    current_tier: 'bronze',
-                    lifetime_points: 500,
-                    next_tier: 'silver',
-                    points_to_next_tier: 400
-                }]
+                rows: [
+                    {
+                        points_balance: 100,
+                        current_tier: 'bronze',
+                        lifetime_points: 500,
+                        next_tier: 'silver',
+                        points_to_next_tier: 400
+                    }
+                ]
             });
             const summary = await LoyaltyService.getCustomerSummary(testCustomerId);
 
@@ -145,13 +144,15 @@ describe('Loyalty Service', () => {
         it('should retrieve recent transactions', async () => {
             // Mock transactions
             (mockPool.query as jest.Mock).mockResolvedValueOnce({
-                rows: [{
-                    transaction_id: '1',
-                    points_change: 10,
-                    transaction_type: 'bonus',
-                    description: 'Test bonus',
-                    created_at: new Date().toISOString()
-                }]
+                rows: [
+                    {
+                        transaction_id: '1',
+                        points_change: 10,
+                        transaction_type: 'bonus',
+                        description: 'Test bonus',
+                        created_at: new Date().toISOString()
+                    }
+                ]
             });
             const history = await LoyaltyService.getTransactionHistory(testCustomerId, 10);
 

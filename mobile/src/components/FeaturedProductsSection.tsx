@@ -1,21 +1,13 @@
 import { log, warn, error as logError } from '../utils/logger';
 /**
  * Featured Products Section
- * 
+ *
  * Premium horizontal carousel showcasing featured products from Enterprise garages.
  * Displays on the customer home screen to drive B2B value and showcase premium inventory.
  */
 
 import React, { useState, useEffect, useCallback } from 'react';
-import {
-    View,
-    Text,
-    StyleSheet,
-    FlatList,
-    TouchableOpacity,
-    Dimensions,
-    ActivityIndicator,
-} from 'react-native';
+import { View, Text, StyleSheet, FlatList, TouchableOpacity, Dimensions, ActivityIndicator } from 'react-native';
 import { Image } from 'expo-image';
 import { LinearGradient } from 'expo-linear-gradient';
 import { api, Product } from '../services/api';
@@ -96,7 +88,19 @@ export default function FeaturedProductsSection({ onProductPress }: FeaturedProd
             {item.is_featured && (
                 <LinearGradient
                     colors={['#eab308', '#f59e0b']}
-                    style={[styles.featuredBadge, isRTL ? { left: 'auto', right: 0, borderTopLeftRadius: 0, borderBottomRightRadius: 0, borderTopRightRadius: BorderRadius.lg, borderBottomLeftRadius: BorderRadius.lg } : {}]}
+                    style={[
+                        styles.featuredBadge,
+                        isRTL
+                            ? {
+                                  left: 'auto',
+                                  right: 0,
+                                  borderTopLeftRadius: 0,
+                                  borderBottomRightRadius: 0,
+                                  borderTopRightRadius: BorderRadius.lg,
+                                  borderBottomLeftRadius: BorderRadius.lg
+                              }
+                            : {}
+                    ]}
                 >
                     <Text style={styles.featuredBadgeText}>{t('home.featured')}</Text>
                 </LinearGradient>
@@ -111,13 +115,34 @@ export default function FeaturedProductsSection({ onProductPress }: FeaturedProd
 
             {/* Product Info */}
             <View style={styles.info}>
-                <Text style={[styles.title, { color: colors.text, textAlign: rtlTextAlign(isRTL) }]} numberOfLines={2}>{item.title}</Text>
-                <Text style={[styles.garage, { color: colors.textSecondary, textAlign: rtlTextAlign(isRTL) }]} numberOfLines={1}>{item.garage_name}</Text>
+                <Text style={[styles.title, { color: colors.text, textAlign: rtlTextAlign(isRTL) }]} numberOfLines={2}>
+                    {item.title}
+                </Text>
+                <Text
+                    style={[styles.garage, { color: colors.textSecondary, textAlign: rtlTextAlign(isRTL) }]}
+                    numberOfLines={1}
+                >
+                    {item.garage_name}
+                </Text>
 
                 <View style={[styles.footer, { flexDirection: rtlFlexDirection(isRTL) }]}>
-                    <Text style={styles.price}>{item.price} {t('common.qar')}</Text>
-                    <View style={[styles.conditionBadge, { backgroundColor: colors.border }, item.condition === 'new' && styles.conditionNew]}>
-                        <Text style={[styles.conditionText, { color: colors.textSecondary }, item.condition === 'new' && styles.conditionTextNew]}>
+                    <Text style={styles.price}>
+                        {item.price} {t('common.qar')}
+                    </Text>
+                    <View
+                        style={[
+                            styles.conditionBadge,
+                            { backgroundColor: colors.border },
+                            item.condition === 'new' && styles.conditionNew
+                        ]}
+                    >
+                        <Text
+                            style={[
+                                styles.conditionText,
+                                { color: colors.textSecondary },
+                                item.condition === 'new' && styles.conditionTextNew
+                            ]}
+                        >
                             {t(`common.condition.${item.condition}`)}
                         </Text>
                     </View>
@@ -129,8 +154,12 @@ export default function FeaturedProductsSection({ onProductPress }: FeaturedProd
     return (
         <View style={styles.container}>
             <View style={[styles.header, { flexDirection: rtlFlexDirection(isRTL) }]}>
-                <Text style={[styles.sectionTitle, { color: colors.text, textAlign: rtlTextAlign(isRTL) }]}>{t('home.featuredParts')}</Text>
-                <Text style={[styles.sectionSubtitle, { color: colors.textSecondary, textAlign: rtlTextAlign(isRTL) }]}>{t('home.premiumGarages')}</Text>
+                <Text style={[styles.sectionTitle, { color: colors.text, textAlign: rtlTextAlign(isRTL) }]}>
+                    {t('home.featuredParts')}
+                </Text>
+                <Text style={[styles.sectionSubtitle, { color: colors.textSecondary, textAlign: rtlTextAlign(isRTL) }]}>
+                    {t('home.premiumGarages')}
+                </Text>
             </View>
 
             <FlatList
@@ -149,29 +178,29 @@ export default function FeaturedProductsSection({ onProductPress }: FeaturedProd
 
 const styles = StyleSheet.create({
     container: {
-        marginBottom: Spacing.xl,
+        marginBottom: Spacing.xl
     },
     loadingContainer: {
         height: 200,
         justifyContent: 'center',
-        alignItems: 'center',
+        alignItems: 'center'
     },
     header: {
         paddingHorizontal: Spacing.lg,
-        marginBottom: Spacing.md,
+        marginBottom: Spacing.md
     },
     sectionTitle: {
         fontSize: FontSizes.lg,
         fontWeight: '700',
-        color: Colors.dark.text,
+        color: Colors.dark.text
     },
     sectionSubtitle: {
         fontSize: FontSizes.sm,
         color: Colors.dark.textSecondary,
-        marginTop: 2,
+        marginTop: 2
     },
     listContent: {
-        paddingHorizontal: Spacing.lg,
+        paddingHorizontal: Spacing.lg
     },
     card: {
         width: CARD_WIDTH,
@@ -179,12 +208,12 @@ const styles = StyleSheet.create({
         backgroundColor: '#fff',
         borderRadius: BorderRadius.xl,
         overflow: 'hidden',
-        ...Shadows.md,
+        ...Shadows.md
     },
     image: {
         width: '100%',
         height: 150,
-        backgroundColor: '#f0f0f0',
+        backgroundColor: '#f0f0f0'
     },
     featuredBadge: {
         position: 'absolute',
@@ -192,12 +221,12 @@ const styles = StyleSheet.create({
         left: Spacing.sm,
         paddingHorizontal: Spacing.sm,
         paddingVertical: 4,
-        borderRadius: BorderRadius.sm,
+        borderRadius: BorderRadius.sm
     },
     featuredBadgeText: {
         fontSize: 10,
         fontWeight: '800',
-        color: '#000',
+        color: '#000'
     },
     enterpriseBadge: {
         position: 'absolute',
@@ -206,53 +235,53 @@ const styles = StyleSheet.create({
         backgroundColor: 'rgba(0,0,0,0.7)',
         paddingHorizontal: Spacing.sm,
         paddingVertical: 4,
-        borderRadius: BorderRadius.sm,
+        borderRadius: BorderRadius.sm
     },
     enterpriseBadgeText: {
         fontSize: 9,
         fontWeight: '700',
         color: '#eab308',
-        letterSpacing: 0.5,
+        letterSpacing: 0.5
     },
     info: {
-        padding: Spacing.md,
+        padding: Spacing.md
     },
     title: {
         fontSize: FontSizes.md,
         fontWeight: '700',
         color: Colors.dark.text,
-        marginBottom: 4,
+        marginBottom: 4
     },
     garage: {
         fontSize: FontSizes.sm,
         color: Colors.dark.textSecondary,
-        marginBottom: Spacing.sm,
+        marginBottom: Spacing.sm
     },
     footer: {
         flexDirection: 'row',
         justifyContent: 'space-between',
-        alignItems: 'center',
+        alignItems: 'center'
     },
     price: {
         fontSize: FontSizes.lg,
         fontWeight: '800',
-        color: Colors.primary,
+        color: Colors.primary
     },
     conditionBadge: {
         backgroundColor: '#f0f0f0',
         paddingHorizontal: Spacing.sm,
         paddingVertical: 4,
-        borderRadius: BorderRadius.sm,
+        borderRadius: BorderRadius.sm
     },
     conditionNew: {
-        backgroundColor: '#dcfce7',
+        backgroundColor: '#dcfce7'
     },
     conditionText: {
         fontSize: 10,
         fontWeight: '600',
-        color: Colors.dark.textSecondary,
+        color: Colors.dark.textSecondary
     },
     conditionTextNew: {
-        color: '#16a34a',
-    },
+        color: '#16a34a'
+    }
 });

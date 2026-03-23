@@ -150,8 +150,8 @@ export interface GarageWithPendingPayouts {
 
 export interface PayoutStatementParams {
     garage_id: string;
-    from_date: string;  // ISO date YYYY-MM-DD
-    to_date: string;    // ISO date YYYY-MM-DD
+    from_date: string; // ISO date YYYY-MM-DD
+    to_date: string; // ISO date YYYY-MM-DD
 }
 
 export interface PayoutStatementOrderItem {

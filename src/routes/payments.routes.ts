@@ -44,123 +44,112 @@ const refundLimiter = rateLimit({
  * POST /api/payments/process
  * Process a payment transaction
  */
-router.post('/process',
-    authenticate,
-    paymentLimiter,
-    async (req: Request, res: Response) => {
-        try {
-            const userId = (req as any).user.userId;
-            const { orderId, amount, paymentMethod, idempotencyKey, metadata } = req.body;
+router.post('/process', authenticate, paymentLimiter, async (req: Request, res: Response) => {
+    try {
+        const userId = (req as any).user.userId;
+        const { orderId, amount, paymentMethod, idempotencyKey, metadata } = req.body;
 
-            // Validation
-            if (!orderId) {
-                return res.status(400).json({ success: false, error: 'Order ID is required' });
-            }
-            if (!amount || amount <= 0) {
-                return res.status(400).json({ success: false, error: 'Valid amount is required' });
-            }
-            if (!paymentMethod || !paymentMethod.type) {
-                return res.status(400).json({ success: false, error: 'Payment method is required' });
-            }
+        // Validation
+        if (!orderId) {
+            return res.status(400).json({ success: false, error: 'Order ID is required' });
+        }
+        if (!amount || amount <= 0) {
+            return res.status(400).json({ success: false, error: 'Valid amount is required' });
+        }
+        if (!paymentMethod || !paymentMethod.type) {
+            return res.status(400).json({ success: false, error: 'Payment method is required' });
+        }
 
-            // For card payments, validate card details
-            if (paymentMethod.type === 'mock_card') {
-                if (!paymentMethod.cardNumber || !paymentMethod.cardExpiry || !paymentMethod.cardCVV) {
-                    return res.status(400).json({
-                        success: false,
-                        error: 'Card number, expiry, and CVV are required'
-                    });
-                }
+        // For card payments, validate card details
+        if (paymentMethod.type === 'mock_card') {
+            if (!paymentMethod.cardNumber || !paymentMethod.cardExpiry || !paymentMethod.cardCVV) {
+                return res.status(400).json({
+                    success: false,
+                    error: 'Card number, expiry, and CVV are required'
+                });
             }
+        }
 
-            // Extract request metadata
-            const ipAddress = (req.headers['x-forwarded-for'] as string)?.split(',')[0]?.trim()
-                || req.socket.remoteAddress;
-            const userAgent = req.headers['user-agent'];
+        // Extract request metadata
+        const ipAddress = (req.headers['x-forwarded-for'] as string)?.split(',')[0]?.trim() || req.socket.remoteAddress;
+        const userAgent = req.headers['user-agent'];
 
-            // Process payment
-            const result = await paymentService.processPayment({
+        // Process payment
+        const result = await paymentService.processPayment(
+            {
                 orderId,
                 userId,
                 amount: parseFloat(amount),
                 paymentMethod,
                 idempotencyKey,
                 metadata
-            }, ipAddress, userAgent);
+            },
+            ipAddress,
+            userAgent
+        );
 
-            // Return appropriate status code
-            const statusCode = result.success ? 200 : 402; // 402 = Payment Required
-            res.status(statusCode).json(result);
-
-        } catch (error: any) {
-            logger.error('Process error', { error: (error as Error).message });
-            res.status(500).json({
-                success: false,
-                error: error.message || 'Payment processing failed'
-            });
-        }
+        // Return appropriate status code
+        const statusCode = result.success ? 200 : 402; // 402 = Payment Required
+        res.status(statusCode).json(result);
+    } catch (error: any) {
+        logger.error('Process error', { error: (error as Error).message });
+        res.status(500).json({
+            success: false,
+            error: error.message || 'Payment processing failed'
+        });
     }
-);
+});
 
 /**
  * POST /api/payments/:transactionId/refund
  * Refund a payment transaction
  */
-router.post('/:transactionId/refund',
-    authenticate,
-    refundLimiter,
-    async (req: Request, res: Response) => {
-        try {
-            const { transactionId } = req.params;
-            const { amount, reason } = req.body;
+router.post('/:transactionId/refund', authenticate, refundLimiter, async (req: Request, res: Response) => {
+    try {
+        const { transactionId } = req.params;
+        const { amount, reason } = req.body;
 
-            if (!reason) {
-                return res.status(400).json({ success: false, error: 'Refund reason is required' });
-            }
-
-            // Process refund
-            const result = await paymentService.refundPayment(
-                transactionId,
-                reason,
-                amount ? parseFloat(amount) : undefined
-            );
-
-            res.json(result);
-
-        } catch (error: any) {
-            logger.error('Refund error', { error: (error as Error).message });
-            res.status(500).json({
-                success: false,
-                error: error.message || 'Refund processing failed'
-            });
+        if (!reason) {
+            return res.status(400).json({ success: false, error: 'Refund reason is required' });
         }
+
+        // Process refund
+        const result = await paymentService.refundPayment(
+            transactionId,
+            reason,
+            amount ? parseFloat(amount) : undefined
+        );
+
+        res.json(result);
+    } catch (error: any) {
+        logger.error('Refund error', { error: (error as Error).message });
+        res.status(500).json({
+            success: false,
+            error: error.message || 'Refund processing failed'
+        });
     }
-);
+});
 
 /**
  * GET /api/payments/my
  * Get user's payment history
  */
-router.get('/my',
-    authenticate,
-    async (req: Request, res: Response) => {
-        try {
-            const userId = (req as any).user.userId;
-            const limit = parseInt(req.query.limit as string) || 50;
+router.get('/my', authenticate, async (req: Request, res: Response) => {
+    try {
+        const userId = (req as any).user.userId;
+        const limit = parseInt(req.query.limit as string) || 50;
 
-            const transactions = await paymentService.getUserPayments(userId, limit);
+        const transactions = await paymentService.getUserPayments(userId, limit);
 
-            res.json({ success: true, transactions });
-
-        } catch (error: any) {
-            logger.error('Get history error', { error: (error as Error).message });
-            res.status(500).json({
-                success: false,
-                error: error.message || 'Failed to retrieve payment history'
-            });
-        }
+        res.json({ success: true, transactions });
+    } catch (error: any) {
+        logger.error('Get history error', { error: (error as Error).message });
+        res.status(500).json({
+            success: false,
+            error: error.message || 'Failed to retrieve payment history'
+        });
     }
-);
+});
 
 /**
  * GET /api/payments/test-cards
@@ -193,97 +182,84 @@ router.get('/test-cards', (req: Request, res: Response) => {
  * POST /api/payments/methods
  * Save a payment method (card)
  */
-router.post('/methods',
-    authenticate,
-    async (req: Request, res: Response) => {
-        try {
-            const userId = (req as any).user.userId;
-            const { paymentMethodId } = req.body;
+router.post('/methods', authenticate, async (req: Request, res: Response) => {
+    try {
+        const userId = (req as any).user.userId;
+        const { paymentMethodId } = req.body;
 
-            if (!paymentMethodId) {
-                return res.status(400).json({ success: false, error: 'paymentMethodId required' });
-            }
-
-            const method = await depositService.savePaymentMethod(userId, paymentMethodId);
-            res.json({ success: true, method });
-        } catch (error: any) {
-            logger.error('Save method error', { error: (error as Error).message });
-            res.status(500).json({ success: false, error: error.message });
+        if (!paymentMethodId) {
+            return res.status(400).json({ success: false, error: 'paymentMethodId required' });
         }
+
+        const method = await depositService.savePaymentMethod(userId, paymentMethodId);
+        res.json({ success: true, method });
+    } catch (error: any) {
+        logger.error('Save method error', { error: (error as Error).message });
+        res.status(500).json({ success: false, error: error.message });
     }
-);
+});
 
 /**
  * GET /api/payments/methods
  * Get saved payment methods
  */
-router.get('/methods',
-    authenticate,
-    async (req: Request, res: Response) => {
-        try {
-            const userId = (req as any).user.userId;
-            const methods = await depositService.getPaymentMethods(userId);
-            res.json({ success: true, methods });
-        } catch (error: any) {
-            logger.error('Get methods error', { error: (error as Error).message });
-            res.status(500).json({ success: false, error: error.message });
-        }
+router.get('/methods', authenticate, async (req: Request, res: Response) => {
+    try {
+        const userId = (req as any).user.userId;
+        const methods = await depositService.getPaymentMethods(userId);
+        res.json({ success: true, methods });
+    } catch (error: any) {
+        logger.error('Get methods error', { error: (error as Error).message });
+        res.status(500).json({ success: false, error: error.message });
     }
-);
+});
 
 /**
  * DELETE /api/payments/methods/:methodId
  * Remove a saved payment method
  */
-router.delete('/methods/:methodId',
-    authenticate,
-    async (req: Request, res: Response) => {
-        try {
-            const userId = (req as any).user.userId;
-            const { methodId } = req.params;
+router.delete('/methods/:methodId', authenticate, async (req: Request, res: Response) => {
+    try {
+        const userId = (req as any).user.userId;
+        const { methodId } = req.params;
 
-            await depositService.removePaymentMethod(userId, methodId);
-            res.json({ success: true, message: 'Payment method removed' });
-        } catch (error: any) {
-            logger.error('Remove method error', { error: (error as Error).message });
-            res.status(500).json({ success: false, error: error.message });
-        }
+        await depositService.removePaymentMethod(userId, methodId);
+        res.json({ success: true, message: 'Payment method removed' });
+    } catch (error: any) {
+        logger.error('Remove method error', { error: (error as Error).message });
+        res.status(500).json({ success: false, error: error.message });
     }
-);
+});
 
 /**
  * GET /api/payments/:transactionId
  * Get transaction details
  */
-router.get('/:transactionId',
-    authenticate,
-    async (req: Request, res: Response) => {
-        try {
-            const { transactionId } = req.params;
-            const userId = (req as any).user.userId;
+router.get('/:transactionId', authenticate, async (req: Request, res: Response) => {
+    try {
+        const { transactionId } = req.params;
+        const userId = (req as any).user.userId;
 
-            const transaction = await paymentService.getTransaction(transactionId);
+        const transaction = await paymentService.getTransaction(transactionId);
 
-            if (!transaction) {
-                return res.status(404).json({ success: false, error: 'Transaction not found' });
-            }
-
-            // Security: ensure user owns this transaction
-            if (transaction.user_id !== userId) {
-                return res.status(403).json({ success: false, error: 'Unauthorized' });
-            }
-
-            res.json({ success: true, transaction });
-
-        } catch (error: any) {
-            logger.error('Get transaction error', { error: (error as Error).message });
-            res.status(500).json({
-                success: false,
-                error: error.message || 'Failed to retrieve transaction'
-            });
+        if (!transaction) {
+            return res.status(404).json({ success: false, error: 'Transaction not found' });
         }
+
+        // Security: ensure user owns this transaction
+        if (transaction.user_id !== userId) {
+            return res.status(403).json({ success: false, error: 'Unauthorized' });
+        }
+
+        res.json({ success: true, transaction });
+    } catch (error: any) {
+        logger.error('Get transaction error', { error: (error as Error).message });
+        res.status(500).json({
+            success: false,
+            error: error.message || 'Failed to retrieve transaction'
+        });
     }
-);
+});
 
 // ============================================================================
 // STRIPE DEPOSIT ROUTES (Delivery Fee Upfront Model)
@@ -294,219 +270,207 @@ router.get('/:transactionId',
  * Create deposit intent for delivery fee payment
  * Scenario A: Customer pays delivery fee upfront, part price is COD at delivery
  */
-router.post('/deposit/:orderId',
-    authenticate,
-    paymentLimiter,
-    async (req: Request, res: Response) => {
-        try {
-            const userId = (req as any).user.userId;
-            const { orderId } = req.params;
+router.post('/deposit/:orderId', authenticate, paymentLimiter, async (req: Request, res: Response) => {
+    try {
+        const userId = (req as any).user.userId;
+        const { orderId } = req.params;
 
-            // Get order details to get delivery fee
-            const pool = getWritePool();
-            const orderResult = await pool.query(
-                'SELECT part_price, delivery_fee, total_amount, customer_id, order_status FROM orders WHERE order_id = $1',
-                [orderId]
-            );
+        // Get order details to get delivery fee
+        const pool = getWritePool();
+        const orderResult = await pool.query(
+            'SELECT part_price, delivery_fee, total_amount, customer_id, order_status FROM orders WHERE order_id = $1',
+            [orderId]
+        );
 
-            if (orderResult.rows.length === 0) {
-                return res.status(404).json({ success: false, error: 'Order not found' });
-            }
-
-            const order = orderResult.rows[0];
-
-            // Verify ownership
-            if (order.customer_id !== userId) {
-                return res.status(403).json({ success: false, error: 'Access denied' });
-            }
-
-            const partPrice = parseFloat(order.part_price) || 0;
-            const deliveryFee = parseFloat(order.delivery_fee) || 0;
-            const originalTotal = partPrice + deliveryFee;
-
-            // Accept loyalty discount from request body
-            const loyaltyDiscount = parseFloat(req.body.loyaltyDiscount) || 0;
-
-            // For deposit-only payments, discount applies to COD amount (part price)
-            // Customer pays: delivery fee (upfront) + (part_price - discount) (COD)
-            const discountedPartPrice = Math.max(0, partPrice - loyaltyDiscount);
-            const newTotal = deliveryFee + discountedPartPrice;
-
-            if (deliveryFee <= 0) {
-                return res.status(400).json({ success: false, error: 'No delivery fee to pay' });
-            }
-
-            // Save discount info to order if provided
-            if (loyaltyDiscount > 0) {
-                await pool.query(
-                    'UPDATE orders SET loyalty_discount = $2, total_amount = $3 WHERE order_id = $1',
-                    [orderId, loyaltyDiscount, newTotal]
-                );
-                logger.info('Deposit discount applied', { loyaltyDiscount, discountedPartPrice, partPrice, newTotal });
-            }
-
-            const result = await depositService.createDeliveryFeeDeposit(
-                orderId,
-                userId,
-                deliveryFee,
-                'QAR'
-            );
-
-            res.json({
-                success: true,
-                intent: {
-                    id: result.intentId,
-                    clientSecret: result.clientSecret,
-                    amount: result.amount,
-                    currency: result.currency
-                },
-                breakdown: {
-                    partPrice,
-                    deliveryFee,
-                    loyaltyDiscount,
-                    originalTotal,
-                    codAmount: discountedPartPrice,
-                    total: newTotal
-                }
-            });
-        } catch (error: any) {
-            logger.error('Deposit error', { error: (error as Error).message });
-            res.status(500).json({ success: false, error: error.message || 'Deposit creation failed' });
+        if (orderResult.rows.length === 0) {
+            return res.status(404).json({ success: false, error: 'Order not found' });
         }
+
+        const order = orderResult.rows[0];
+
+        // Verify ownership
+        if (order.customer_id !== userId) {
+            return res.status(403).json({ success: false, error: 'Access denied' });
+        }
+
+        const partPrice = parseFloat(order.part_price) || 0;
+        const deliveryFee = parseFloat(order.delivery_fee) || 0;
+        const originalTotal = partPrice + deliveryFee;
+
+        // Accept loyalty discount from request body
+        const loyaltyDiscount = parseFloat(req.body.loyaltyDiscount) || 0;
+
+        // For deposit-only payments, discount applies to COD amount (part price)
+        // Customer pays: delivery fee (upfront) + (part_price - discount) (COD)
+        const discountedPartPrice = Math.max(0, partPrice - loyaltyDiscount);
+        const newTotal = deliveryFee + discountedPartPrice;
+
+        if (deliveryFee <= 0) {
+            return res.status(400).json({ success: false, error: 'No delivery fee to pay' });
+        }
+
+        // Save discount info to order if provided
+        if (loyaltyDiscount > 0) {
+            await pool.query('UPDATE orders SET loyalty_discount = $2, total_amount = $3 WHERE order_id = $1', [
+                orderId,
+                loyaltyDiscount,
+                newTotal
+            ]);
+            logger.info('Deposit discount applied', { loyaltyDiscount, discountedPartPrice, partPrice, newTotal });
+        }
+
+        const result = await depositService.createDeliveryFeeDeposit(orderId, userId, deliveryFee, 'QAR');
+
+        res.json({
+            success: true,
+            intent: {
+                id: result.intentId,
+                clientSecret: result.clientSecret,
+                amount: result.amount,
+                currency: result.currency
+            },
+            breakdown: {
+                partPrice,
+                deliveryFee,
+                loyaltyDiscount,
+                originalTotal,
+                codAmount: discountedPartPrice,
+                total: newTotal
+            }
+        });
+    } catch (error: any) {
+        logger.error('Deposit error', { error: (error as Error).message });
+        res.status(500).json({ success: false, error: error.message || 'Deposit creation failed' });
     }
-);
+});
 
 /**
  * POST /api/payments/full/:orderId
  * Create full payment intent (Part Price + Delivery Fee)
  * Scenario B: Customer pays everything upfront, no COD at delivery
  */
-router.post('/full/:orderId',
-    authenticate,
-    paymentLimiter,
-    async (req: Request, res: Response) => {
-        try {
-            const userId = (req as any).user.userId;
-            const { orderId } = req.params;
+router.post('/full/:orderId', authenticate, paymentLimiter, async (req: Request, res: Response) => {
+    try {
+        const userId = (req as any).user.userId;
+        const { orderId } = req.params;
 
-            // Get order details with full pricing
-            const pool = getWritePool();
-            const orderResult = await pool.query(
-                'SELECT part_price, delivery_fee, customer_id, order_status FROM orders WHERE order_id = $1',
-                [orderId]
-            );
+        // Get order details with full pricing
+        const pool = getWritePool();
+        const orderResult = await pool.query(
+            'SELECT part_price, delivery_fee, customer_id, order_status FROM orders WHERE order_id = $1',
+            [orderId]
+        );
 
-            if (orderResult.rows.length === 0) {
-                return res.status(404).json({ success: false, error: 'Order not found' });
-            }
-
-            const order = orderResult.rows[0];
-
-            // Verify ownership
-            if (order.customer_id !== userId) {
-                return res.status(403).json({ success: false, error: 'Access denied' });
-            }
-
-            const partPrice = parseFloat(order.part_price) || 0;
-            const deliveryFee = parseFloat(order.delivery_fee) || 0;
-            const totalAmount = partPrice + deliveryFee;
-
-            // Accept loyalty discount from request body (platform absorbs this)
-            const loyaltyDiscount = parseFloat(req.body.loyaltyDiscount) || 0;
-            const chargeAmount = Math.max(0, totalAmount - loyaltyDiscount);
-
-            if (chargeAmount <= 0) {
-                return res.status(400).json({ success: false, error: 'No amount to pay' });
-            }
-
-            // Update order with discount info and adjusted total
-            if (loyaltyDiscount > 0) {
-                // Save discount and update total_amount to reflect discounted price
-                await pool.query(
-                    'UPDATE orders SET loyalty_discount = $2, total_amount = $3 WHERE order_id = $1',
-                    [orderId, loyaltyDiscount, chargeAmount]
-                );
-                logger.info('Full payment discount applied', { loyaltyDiscount, chargeAmount });
-            }
-
-            const result = await depositService.createFullPaymentIntent(
-                orderId,
-                userId,
-                chargeAmount, // Customer pays discounted amount
-                partPrice,    // Garage still gets full part price
-                deliveryFee,
-                'QAR'
-            );
-
-            res.json({
-                success: true,
-                intent: {
-                    id: result.intentId,
-                    clientSecret: result.clientSecret,
-                    amount: result.amount,
-                    currency: result.currency
-                },
-                breakdown: {
-                    partPrice,
-                    deliveryFee,
-                    loyaltyDiscount,
-                    originalTotal: totalAmount,
-                    total: chargeAmount
-                }
-            });
-        } catch (error: any) {
-            logger.error('Full payment error', { error: (error as Error).message });
-            res.status(500).json({ success: false, error: error.message || 'Full payment creation failed' });
+        if (orderResult.rows.length === 0) {
+            return res.status(404).json({ success: false, error: 'Order not found' });
         }
+
+        const order = orderResult.rows[0];
+
+        // Verify ownership
+        if (order.customer_id !== userId) {
+            return res.status(403).json({ success: false, error: 'Access denied' });
+        }
+
+        const partPrice = parseFloat(order.part_price) || 0;
+        const deliveryFee = parseFloat(order.delivery_fee) || 0;
+        const totalAmount = partPrice + deliveryFee;
+
+        // Accept loyalty discount from request body (platform absorbs this)
+        const loyaltyDiscount = parseFloat(req.body.loyaltyDiscount) || 0;
+        const chargeAmount = Math.max(0, totalAmount - loyaltyDiscount);
+
+        if (chargeAmount <= 0) {
+            return res.status(400).json({ success: false, error: 'No amount to pay' });
+        }
+
+        // Update order with discount info and adjusted total
+        if (loyaltyDiscount > 0) {
+            // Save discount and update total_amount to reflect discounted price
+            await pool.query('UPDATE orders SET loyalty_discount = $2, total_amount = $3 WHERE order_id = $1', [
+                orderId,
+                loyaltyDiscount,
+                chargeAmount
+            ]);
+            logger.info('Full payment discount applied', { loyaltyDiscount, chargeAmount });
+        }
+
+        const result = await depositService.createFullPaymentIntent(
+            orderId,
+            userId,
+            chargeAmount, // Customer pays discounted amount
+            partPrice, // Garage still gets full part price
+            deliveryFee,
+            'QAR'
+        );
+
+        res.json({
+            success: true,
+            intent: {
+                id: result.intentId,
+                clientSecret: result.clientSecret,
+                amount: result.amount,
+                currency: result.currency
+            },
+            breakdown: {
+                partPrice,
+                deliveryFee,
+                loyaltyDiscount,
+                originalTotal: totalAmount,
+                total: chargeAmount
+            }
+        });
+    } catch (error: any) {
+        logger.error('Full payment error', { error: (error as Error).message });
+        res.status(500).json({ success: false, error: error.message || 'Full payment creation failed' });
     }
-);
+});
 
 /**
  * POST /api/payments/free/:orderId
  * Confirm a FREE order (when loyalty discount covers entire amount)
  * No Stripe payment needed - just confirm order and update status
  */
-router.post('/free/:orderId',
-    authenticate,
-    async (req: Request, res: Response) => {
-        try {
-            const userId = (req as any).user.userId;
-            const { orderId } = req.params;
-            const { loyaltyDiscount } = req.body;
+router.post('/free/:orderId', authenticate, async (req: Request, res: Response) => {
+    try {
+        const userId = (req as any).user.userId;
+        const { orderId } = req.params;
+        const { loyaltyDiscount } = req.body;
 
-            // Get order details
-            const pool = getWritePool();
-            const orderResult = await pool.query(
-                'SELECT part_price, delivery_fee, customer_id, order_status FROM orders WHERE order_id = $1',
-                [orderId]
-            );
+        // Get order details
+        const pool = getWritePool();
+        const orderResult = await pool.query(
+            'SELECT part_price, delivery_fee, customer_id, order_status FROM orders WHERE order_id = $1',
+            [orderId]
+        );
 
-            if (orderResult.rows.length === 0) {
-                return res.status(404).json({ success: false, error: 'Order not found' });
-            }
+        if (orderResult.rows.length === 0) {
+            return res.status(404).json({ success: false, error: 'Order not found' });
+        }
 
-            const order = orderResult.rows[0];
+        const order = orderResult.rows[0];
 
-            // Verify ownership
-            if (order.customer_id !== userId) {
-                return res.status(403).json({ success: false, error: 'Access denied' });
-            }
+        // Verify ownership
+        if (order.customer_id !== userId) {
+            return res.status(403).json({ success: false, error: 'Access denied' });
+        }
 
-            const partPrice = parseFloat(order.part_price) || 0;
-            const deliveryFee = parseFloat(order.delivery_fee) || 0;
-            const totalAmount = partPrice + deliveryFee;
-            const discount = parseFloat(loyaltyDiscount) || 0;
+        const partPrice = parseFloat(order.part_price) || 0;
+        const deliveryFee = parseFloat(order.delivery_fee) || 0;
+        const totalAmount = partPrice + deliveryFee;
+        const discount = parseFloat(loyaltyDiscount) || 0;
 
-            // Verify discount covers the entire amount
-            if (discount < totalAmount) {
-                return res.status(400).json({
-                    success: false,
-                    error: 'Loyalty discount does not cover entire order amount'
-                });
-            }
+        // Verify discount covers the entire amount
+        if (discount < totalAmount) {
+            return res.status(400).json({
+                success: false,
+                error: 'Loyalty discount does not cover entire order amount'
+            });
+        }
 
-            // Update order as confirmed with full loyalty discount
-            await pool.query(`
+        // Update order as confirmed with full loyalty discount
+        await pool.query(
+            `
                 UPDATE orders SET 
                     order_status = 'confirmed',
                     loyalty_discount = $2,
@@ -515,88 +479,79 @@ router.post('/free/:orderId',
                     payment_method = 'loyalty',
                     deposit_paid_at = NOW()
                 WHERE order_id = $1
-            `, [orderId, discount]);
+            `,
+            [orderId, discount]
+        );
 
-            // Log free order event
-            logger.info('Free order confirmed', { orderId, discount, totalAmount });
+        // Log free order event
+        logger.info('Free order confirmed', { orderId, discount, totalAmount });
 
-            // TODO: Award loyalty points for the order (even though it was free)
-            // TODO: Notify garage of new order
+        // TODO: Award loyalty points for the order (even though it was free)
+        // TODO: Notify garage of new order
 
-            res.json({
-                success: true,
-                message: '🎊 Free order confirmed! Your loyalty discount covered the entire amount.',
-                order_id: orderId,
-                breakdown: {
-                    originalTotal: totalAmount,
-                    loyaltyDiscount: discount,
-                    chargedAmount: 0
-                }
-            });
-        } catch (error: any) {
-            logger.error('Free order error', { error: (error as Error).message });
-            res.status(500).json({ success: false, error: error.message || 'Free order confirmation failed' });
-        }
+        res.json({
+            success: true,
+            message: '🎊 Free order confirmed! Your loyalty discount covered the entire amount.',
+            order_id: orderId,
+            breakdown: {
+                originalTotal: totalAmount,
+                loyaltyDiscount: discount,
+                chargedAmount: 0
+            }
+        });
+    } catch (error: any) {
+        logger.error('Free order error', { error: (error as Error).message });
+        res.status(500).json({ success: false, error: error.message || 'Free order confirmation failed' });
     }
-);
+});
 
 /**
  * POST /api/payments/deposit/confirm/:intentId
  * Confirm deposit payment was successful
  */
-router.post('/deposit/confirm/:intentId',
-    authenticate,
-    async (req: Request, res: Response) => {
-        try {
-            const { intentId } = req.params;
-            const success = await depositService.confirmDepositPayment(intentId);
+router.post('/deposit/confirm/:intentId', authenticate, async (req: Request, res: Response) => {
+    try {
+        const { intentId } = req.params;
+        const success = await depositService.confirmDepositPayment(intentId);
 
-            if (success) {
-                res.json({ success: true, message: 'Deposit payment confirmed' });
-            } else {
-                res.status(400).json({ success: false, message: 'Payment not completed' });
-            }
-        } catch (error: any) {
-            logger.error('Confirm deposit error', { error: (error as Error).message });
-            res.status(500).json({ success: false, error: error.message });
+        if (success) {
+            res.json({ success: true, message: 'Deposit payment confirmed' });
+        } else {
+            res.status(400).json({ success: false, message: 'Payment not completed' });
         }
+    } catch (error: any) {
+        logger.error('Confirm deposit error', { error: (error as Error).message });
+        res.status(500).json({ success: false, error: error.message });
     }
-);
+});
 
 /**
  * GET /api/payments/order/:orderId/status
  * Get payment status for an order
  */
-router.get('/order/:orderId/status',
-    authenticate,
-    async (req: Request, res: Response) => {
-        try {
-            const { orderId } = req.params;
-            const userId = (req as any).user.userId;
+router.get('/order/:orderId/status', authenticate, async (req: Request, res: Response) => {
+    try {
+        const { orderId } = req.params;
+        const userId = (req as any).user.userId;
 
-            // Verify ownership
-            const pool = getWritePool();
-            const orderResult = await pool.query(
-                'SELECT customer_id FROM orders WHERE order_id = $1',
-                [orderId]
-            );
+        // Verify ownership
+        const pool = getWritePool();
+        const orderResult = await pool.query('SELECT customer_id FROM orders WHERE order_id = $1', [orderId]);
 
-            if (orderResult.rows.length === 0) {
-                return res.status(404).json({ success: false, error: 'Order not found' });
-            }
-
-            if (orderResult.rows[0].customer_id !== userId) {
-                return res.status(403).json({ success: false, error: 'Access denied' });
-            }
-
-            const status = await depositService.getOrderPaymentStatus(orderId);
-            res.json({ success: true, ...status });
-        } catch (error: any) {
-            logger.error('Get status error', { error: (error as Error).message });
-            res.status(500).json({ success: false, error: error.message });
+        if (orderResult.rows.length === 0) {
+            return res.status(404).json({ success: false, error: 'Order not found' });
         }
-    }
-);
 
+        if (orderResult.rows[0].customer_id !== userId) {
+            return res.status(403).json({ success: false, error: 'Access denied' });
+        }
+
+        const status = await depositService.getOrderPaymentStatus(orderId);
+        res.json({ success: true, ...status });
+    } catch (error: any) {
+        logger.error('Get status error', { error: (error as Error).message });
+        res.status(500).json({ success: false, error: error.message });
+    }
+});
 
 export default router;

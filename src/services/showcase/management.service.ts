@@ -5,14 +5,10 @@
 
 import { Pool, PoolClient } from 'pg';
 import { CreatePartData, UpdatePartData, PartDetail } from './types';
-import {
-    PartNotFoundError,
-    UnauthorizedPartAccessError,
-    NoShowcaseAccessError
-} from './errors';
+import { PartNotFoundError, UnauthorizedPartAccessError, NoShowcaseAccessError } from './errors';
 
 export class ShowcaseManagementService {
-    constructor(private pool: Pool) { }
+    constructor(private pool: Pool) {}
 
     /**
      * Get garage's own showcase parts
@@ -49,28 +45,30 @@ export class ShowcaseManagementService {
         // Verify showcase access
         await this.verifyShowcaseAccess(garageId);
 
-        const {
-            title,
-            part_description,
-            car_make,
-            car_model,
-            car_year,
-            price,
-            quantity,
-            is_negotiable,
-            image_urls
-        } = partData;
+        const { title, part_description, car_make, car_model, car_year, price, quantity, is_negotiable, image_urls } =
+            partData;
 
-        const result = await this.pool.query(`
+        const result = await this.pool.query(
+            `
             INSERT INTO garage_parts 
             (garage_id, title, part_description, car_make, car_model, car_year, 
              price, quantity, is_negotiable, image_urls, status)
             VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, 'active')
             RETURNING *
-        `, [
-            garageId, title, part_description, car_make, car_model, car_year,
-            price, quantity, is_negotiable, image_urls || []
-        ]);
+        `,
+            [
+                garageId,
+                title,
+                part_description,
+                car_make,
+                car_model,
+                car_year,
+                price,
+                quantity,
+                is_negotiable,
+                image_urls || []
+            ]
+        );
 
         return result.rows[0];
     }
@@ -78,11 +76,7 @@ export class ShowcaseManagementService {
     /**
      * Update showcase part
      */
-    async updateGaragePart(
-        partId: string,
-        garageId: string,
-        updates: UpdatePartData
-    ): Promise<PartDetail> {
+    async updateGaragePart(partId: string, garageId: string, updates: UpdatePartData): Promise<PartDetail> {
         const client = await this.pool.connect();
         try {
             await client.query('BEGIN');
@@ -102,9 +96,7 @@ export class ShowcaseManagementService {
             // Handle image removal
             let newImageUrls = currentPart.image_urls || [];
             if (updates.images_to_remove && updates.images_to_remove.length > 0) {
-                newImageUrls = newImageUrls.filter(
-                    (url: string) => !updates.images_to_remove!.includes(url)
-                );
+                newImageUrls = newImageUrls.filter((url: string) => !updates.images_to_remove!.includes(url));
             }
 
             // Build update query
@@ -152,12 +144,15 @@ export class ShowcaseManagementService {
             setClauses.push(`updated_at = NOW()`);
             params.push(partId);
 
-            const result = await client.query(`
+            const result = await client.query(
+                `
                 UPDATE garage_parts
                 SET ${setClauses.join(', ')}
                 WHERE part_id = $${paramIndex}
                 RETURNING *
-            `, params);
+            `,
+                params
+            );
 
             await client.query('COMMIT');
             return result.rows[0];
@@ -173,10 +168,10 @@ export class ShowcaseManagementService {
      * Delete showcase part
      */
     async deleteGaragePart(partId: string, garageId: string): Promise<void> {
-        const result = await this.pool.query(
-            'DELETE FROM garage_parts WHERE part_id = $1 AND garage_id = $2',
-            [partId, garageId]
-        );
+        const result = await this.pool.query('DELETE FROM garage_parts WHERE part_id = $1 AND garage_id = $2', [
+            partId,
+            garageId
+        ]);
 
         if (result.rowCount === 0) {
             throw new UnauthorizedPartAccessError(partId, garageId);
@@ -187,13 +182,16 @@ export class ShowcaseManagementService {
      * Toggle part status (active/hidden)
      */
     async togglePartStatus(partId: string, garageId: string): Promise<PartDetail> {
-        const result = await this.pool.query(`
+        const result = await this.pool.query(
+            `
             UPDATE garage_parts
             SET status = CASE WHEN status = 'active' THEN 'hidden' ELSE 'active' END,
                 updated_at = NOW()
             WHERE part_id = $1 AND garage_id = $2
             RETURNING *
-        `, [partId, garageId]);
+        `,
+            [partId, garageId]
+        );
 
         if (result.rows.length === 0) {
             throw new UnauthorizedPartAccessError(partId, garageId);
@@ -206,14 +204,17 @@ export class ShowcaseManagementService {
      * Verify garage has showcase feature access
      */
     private async verifyShowcaseAccess(garageId: string): Promise<void> {
-        const result = await this.pool.query(`
+        const result = await this.pool.query(
+            `
             SELECT COALESCE(sp.plan_code, 'starter') as plan_code,
                    COALESCE(sp.features, '{}') as features
             FROM garages g
             LEFT JOIN garage_subscriptions gs ON g.garage_id = gs.garage_id AND gs.status = 'active'
             LEFT JOIN subscription_plans sp ON gs.plan_id = sp.plan_id
             WHERE g.garage_id = $1
-        `, [garageId]);
+        `,
+            [garageId]
+        );
 
         if (result.rows.length === 0) {
             throw new Error('Garage not found');

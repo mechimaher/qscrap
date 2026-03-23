@@ -38,10 +38,7 @@ interface S3Module {
 }
 
 interface AzureBlockBlobClientLike {
-    uploadData(
-        data: Buffer,
-        options: { blobHTTPHeaders: { blobContentType: string } }
-    ): Promise<unknown>;
+    uploadData(data: Buffer, options: { blobHTTPHeaders: { blobContentType: string } }): Promise<unknown>;
     deleteIfExists(): Promise<unknown>;
 }
 
@@ -107,7 +104,9 @@ export class LocalFileStorage implements IFileStorage {
     async delete(url: string): Promise<void> {
         // Extract filename from URL
         const filename = url.split('/').pop();
-        if (!filename) {return;}
+        if (!filename) {
+            return;
+        }
 
         const filePath = path.join(this.uploadDir, filename);
         if (fs.existsSync(filePath)) {
@@ -136,8 +135,7 @@ export class S3FileStorage implements IFileStorage {
     constructor() {
         this.bucket = process.env.S3_BUCKET!;
         this.region = process.env.S3_REGION || 'us-east-1';
-        this.baseUrl = process.env.S3_BASE_URL ||
-            `https://${this.bucket}.s3.${this.region}.amazonaws.com`;
+        this.baseUrl = process.env.S3_BASE_URL || `https://${this.bucket}.s3.${this.region}.amazonaws.com`;
 
         // Load AWS SDK only when S3 storage is selected.
         try {

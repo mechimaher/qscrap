@@ -1,10 +1,6 @@
 import { Response } from 'express';
 import { AuthRequest } from '../middleware/auth.middleware';
-import {
-    CancellationService,
-    getReturnService,
-    getFraudDetectionService
-} from '../services/cancellation';
+import { CancellationService, getReturnService, getFraudDetectionService } from '../services/cancellation';
 import { getWritePool } from '../config/db';
 import { getErrorMessage } from '../types';
 import logger from '../utils/logger';
@@ -114,12 +110,7 @@ export const cancelOrderByCustomer = async (req: AuthRequest, res: Response) => 
     }
 
     try {
-        const result = await cancellationService.cancelOrderByCustomer(
-            order_id,
-            customerId,
-            reason_code,
-            reason_text
-        );
+        const result = await cancellationService.cancelOrderByCustomer(order_id, customerId, reason_code, reason_text);
 
         // Cache successful result
         if (idempotencyKey) {
@@ -138,12 +129,7 @@ export const cancelOrderByGarage = async (req: AuthRequest, res: Response) => {
     const garageId = req.user!.userId;
 
     try {
-        const result = await cancellationService.cancelOrderByGarage(
-            order_id,
-            garageId,
-            reason_code,
-            reason_text
-        );
+        const result = await cancellationService.cancelOrderByGarage(order_id, garageId, reason_code, reason_text);
         res.json(result);
     } catch (err) {
         res.status(400).json({ error: getErrorMessage(err) });
@@ -180,12 +166,7 @@ export const cancelOrderByDriver = async (req: AuthRequest, res: Response) => {
     }
 
     try {
-        const result = await cancellationService.cancelOrderByDriver(
-            order_id,
-            driverId,
-            reason_code,
-            reason_text
-        );
+        const result = await cancellationService.cancelOrderByDriver(order_id, driverId, reason_code, reason_text);
         res.json(result);
     } catch (err) {
         res.status(400).json({ error: getErrorMessage(err) });

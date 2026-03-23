@@ -2,13 +2,7 @@
 // Reduces customer anxiety while waiting for bids with calming messages and elapsed time
 
 import React, { useState, useEffect, useRef } from 'react';
-import {
-    View,
-    Text,
-    StyleSheet,
-    Animated,
-    Easing,
-} from 'react-native';
+import { View, Text, StyleSheet, Animated, Easing } from 'react-native';
 import { LinearGradient } from 'expo-linear-gradient';
 import { useTranslation } from '../contexts/LanguageContext';
 import { ViewerBadge } from './ViewerBadge';
@@ -25,7 +19,10 @@ interface WaitStateReassuranceProps {
 }
 
 // Rotating encouraging messages
-const getReassuranceMessage = (elapsedMinutes: number, t: (key: string) => string): { icon: keyof typeof Ionicons.glyphMap; message: string } => {
+const getReassuranceMessage = (
+    elapsedMinutes: number,
+    t: (key: string) => string
+): { icon: keyof typeof Ionicons.glyphMap; message: string } => {
     if (elapsedMinutes < 5) {
         return { icon: 'search-outline', message: t('waitState.searchingGarages') };
     } else if (elapsedMinutes < 15) {
@@ -57,16 +54,15 @@ const formatElapsedTime = (createdAt: string, t: (key: string, params?: any) => 
     return t('waitState.justNow');
 };
 
-export const WaitStateReassurance: React.FC<WaitStateReassuranceProps> = ({
-    createdAt,
-    viewerCount,
-    colors,
-}) => {
+export const WaitStateReassurance: React.FC<WaitStateReassuranceProps> = ({ createdAt, viewerCount, colors }) => {
     const { t } = useTranslation();
     const pulseAnim = useRef(new Animated.Value(0.3)).current;
     const dotAnim = useRef(new Animated.Value(0)).current;
     const [elapsedTime, setElapsedTime] = useState('');
-    const [reassurance, setReassurance] = useState<{ icon: keyof typeof Ionicons.glyphMap; message: string }>({ icon: 'search-outline', message: '' });
+    const [reassurance, setReassurance] = useState<{ icon: keyof typeof Ionicons.glyphMap; message: string }>({
+        icon: 'search-outline',
+        message: ''
+    });
 
     // Pulse animation for the searching indicator
     useEffect(() => {
@@ -76,14 +72,14 @@ export const WaitStateReassurance: React.FC<WaitStateReassuranceProps> = ({
                     toValue: 1,
                     duration: 1500,
                     easing: Easing.inOut(Easing.ease),
-                    useNativeDriver: true,
+                    useNativeDriver: true
                 }),
                 Animated.timing(pulseAnim, {
                     toValue: 0.3,
                     duration: 1500,
                     easing: Easing.inOut(Easing.ease),
-                    useNativeDriver: true,
-                }),
+                    useNativeDriver: true
+                })
             ])
         ).start();
     }, []);
@@ -95,7 +91,7 @@ export const WaitStateReassurance: React.FC<WaitStateReassuranceProps> = ({
                 toValue: 3,
                 duration: 1500,
                 easing: Easing.linear,
-                useNativeDriver: false,
+                useNativeDriver: false
             })
         ).start();
     }, []);
@@ -115,30 +111,23 @@ export const WaitStateReassurance: React.FC<WaitStateReassuranceProps> = ({
 
     const dots = dotAnim.interpolate({
         inputRange: [0, 1, 2, 3],
-        outputRange: ['', '.', '..', '...'],
+        outputRange: ['', '.', '..', '...']
     });
 
     return (
         <View style={[styles.container, { backgroundColor: colors.surface }]}>
             {/* Animated searching indicator */}
             <Animated.View style={[styles.pulseContainer, { opacity: pulseAnim }]}>
-                <LinearGradient
-                    colors={['#8D1B3D', '#C9A227']}
-                    style={styles.pulseCircle}
-                >
+                <LinearGradient colors={['#8D1B3D', '#C9A227']} style={styles.pulseCircle}>
                     <Ionicons name={reassurance.icon} size={36} color="#fff" />
                 </LinearGradient>
             </Animated.View>
 
             {/* Main message */}
-            <Text style={[styles.mainMessage, { color: colors.text }]}>
-                {t('waitState.waitingForOffers')}
-            </Text>
+            <Text style={[styles.mainMessage, { color: colors.text }]}>{t('waitState.waitingForOffers')}</Text>
 
             {/* Reassurance message */}
-            <Text style={[styles.reassuranceText, { color: colors.textSecondary }]}>
-                {reassurance.message}
-            </Text>
+            <Text style={[styles.reassuranceText, { color: colors.textSecondary }]}>{reassurance.message}</Text>
 
             {/* Viewer count if available */}
             {viewerCount !== undefined && viewerCount > 0 && (
@@ -152,16 +141,12 @@ export const WaitStateReassurance: React.FC<WaitStateReassuranceProps> = ({
                 <Text style={[styles.elapsedLabel, { color: colors.textSecondary }]}>
                     {t('waitState.requestPosted')}
                 </Text>
-                <Text style={[styles.elapsedTime, { color: colors.text }]}>
-                    {elapsedTime}
-                </Text>
+                <Text style={[styles.elapsedTime, { color: colors.text }]}>{elapsedTime}</Text>
             </View>
 
             {/* Helpful tips */}
             <View style={[styles.tipContainer, { borderTopColor: colors.textSecondary + '20' }]}>
-                <Text style={[styles.tipText, { color: colors.textSecondary }]}>
-                    {t('waitState.tip')}
-                </Text>
+                <Text style={[styles.tipText, { color: colors.textSecondary }]}>{t('waitState.tip')}</Text>
             </View>
         </View>
     );
@@ -177,66 +162,66 @@ const styles = StyleSheet.create({
         shadowOffset: { width: 0, height: 2 },
         shadowOpacity: 0.1,
         shadowRadius: 8,
-        elevation: 4,
+        elevation: 4
     },
     pulseContainer: {
-        marginBottom: 16,
+        marginBottom: 16
     },
     pulseCircle: {
         width: 80,
         height: 80,
         borderRadius: 40,
         justifyContent: 'center',
-        alignItems: 'center',
+        alignItems: 'center'
     },
     pulseEmoji: {
-        fontSize: 36,
+        fontSize: 36
     },
     mainMessage: {
         fontSize: 20,
         fontWeight: '700',
         textAlign: 'center',
-        marginBottom: 8,
+        marginBottom: 8
     },
     reassuranceText: {
         fontSize: 14,
         textAlign: 'center',
-        marginBottom: 16,
+        marginBottom: 16
     },
     viewerBadge: {
         backgroundColor: '#8D1B3D15',
         paddingHorizontal: 16,
         paddingVertical: 8,
         borderRadius: 20,
-        marginBottom: 16,
+        marginBottom: 16
     },
     viewerText: {
         color: '#8D1B3D',
         fontSize: 14,
-        fontWeight: '600',
+        fontWeight: '600'
     },
     elapsedContainer: {
         alignItems: 'center',
-        marginBottom: 16,
+        marginBottom: 16
     },
     elapsedLabel: {
         fontSize: 12,
-        marginBottom: 4,
+        marginBottom: 4
     },
     elapsedTime: {
         fontSize: 16,
-        fontWeight: '600',
+        fontWeight: '600'
     },
     tipContainer: {
         borderTopWidth: 1,
         paddingTop: 16,
-        width: '100%',
+        width: '100%'
     },
     tipText: {
         fontSize: 13,
         textAlign: 'center',
-        fontStyle: 'italic',
-    },
+        fontStyle: 'italic'
+    }
 });
 
 export default WaitStateReassurance;

@@ -1,6 +1,6 @@
 /**
  * QScrap Shared Type Definitions
- * 
+ *
  * Common interfaces and types used across the application.
  * Replaces unsafe `any` usage with proper type definitions.
  */
@@ -149,13 +149,7 @@ export type BidStatus = 'pending' | 'accepted' | 'rejected' | 'expired' | 'withd
 /**
  * Payout status type
  */
-export type PayoutStatus =
-    | 'pending'
-    | 'awaiting_confirmation'
-    | 'completed'
-    | 'on_hold'
-    | 'disputed'
-    | 'failed';
+export type PayoutStatus = 'pending' | 'awaiting_confirmation' | 'completed' | 'on_hold' | 'disputed' | 'failed';
 
 /**
  * Part condition type

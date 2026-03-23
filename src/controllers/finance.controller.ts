@@ -193,10 +193,7 @@ export const getPayoutSummary = async (req: AuthRequest, res: Response) => {
     }
 
     try {
-        const summary = await payoutService.getPayoutSummary(
-            user.userId,
-            user.userType
-        );
+        const summary = await payoutService.getPayoutSummary(user.userId, user.userType);
         res.json(summary);
     } catch (err) {
         logFinanceError('getPayoutSummary Error:', err);
@@ -265,10 +262,7 @@ export const getInWarrantyPayouts = async (req: AuthRequest, res: Response) => {
     }
 
     try {
-        const payouts = await payoutService.getInWarrantyPayouts(
-            user.userType,
-            user.userId
-        );
+        const payouts = await payoutService.getInWarrantyPayouts(user.userType, user.userId);
         res.json({ in_warranty_payouts: payouts, count: payouts.length });
     } catch (err) {
         logFinanceError('getInWarrantyPayouts Error:', err);
@@ -605,7 +599,7 @@ export const getPayoutStatement = async (req: AuthRequest, res: Response) => {
         // Generate QR code
         let qrCode = '';
         try {
-            const QRCode = await import('qrcode') as unknown as QRCodeModule;
+            const QRCode = (await import('qrcode')) as unknown as QRCodeModule;
             const verifyUrl = `https://theqscrap.com/verify/${statementData.statement_number}`;
             qrCode = await QRCode.toDataURL(verifyUrl, { width: 100, margin: 1 });
         } catch (e) {
@@ -634,8 +628,10 @@ export const getPayoutStatement = async (req: AuthRequest, res: Response) => {
                 const pdfBuffer = await docService.generatePDF(html);
 
                 res.setHeader('Content-Type', 'application/pdf');
-                res.setHeader('Content-Disposition',
-                    `attachment; filename="invoice-${statementData.statement_number}.pdf"`);
+                res.setHeader(
+                    'Content-Disposition',
+                    `attachment; filename="invoice-${statementData.statement_number}.pdf"`
+                );
                 return res.send(pdfBuffer);
             } catch (pdfErr) {
                 logger.warn('PDF generation failed, falling back to HTML', { error: getErrorMessage(pdfErr) });
@@ -646,7 +642,6 @@ export const getPayoutStatement = async (req: AuthRequest, res: Response) => {
         // Return HTML
         res.setHeader('Content-Type', 'text/html');
         res.send(html);
-
     } catch (err) {
         logFinanceError('getPayoutStatement Error:', err);
         return sendFinanceError(res, err, 'Failed to generate payout statement');
@@ -801,10 +796,7 @@ export const getRevenueReport = async (req: AuthRequest, res: Response) => {
             return res.status(400).json({ error: 'Invalid period. Allowed values: 7d, 30d, 90d' });
         }
 
-        const report = await revenueService.getRevenueReport(
-            period,
-            garageId ? { garage_id: garageId } : undefined
-        );
+        const report = await revenueService.getRevenueReport(period, garageId ? { garage_id: garageId } : undefined);
 
         res.json(report);
     } catch (err) {
@@ -929,7 +921,8 @@ export const approveCompensation = async (req: AuthRequest, res: Response) => {
     const reviewerId = req.user?.userId;
 
     try {
-        const result = await pool.query<CompensationPayoutRow>(`
+        const result = await pool.query<CompensationPayoutRow>(
+            `
             UPDATE garage_payouts 
             SET payout_status = 'pending',
                 net_amount = potential_compensation,
@@ -942,7 +935,9 @@ export const approveCompensation = async (req: AuthRequest, res: Response) => {
                 updated_at = NOW()
             WHERE payout_id = $1 AND payout_status = 'pending_compensation_review'
             RETURNING *
-        `, [payout_id, reviewerId, notes || 'Approved']);
+        `,
+            [payout_id, reviewerId, notes || 'Approved']
+        );
 
         if (result.rows.length === 0) {
             return res.status(404).json({ error: 'Payout not found or already reviewed' });
@@ -952,12 +947,15 @@ export const approveCompensation = async (req: AuthRequest, res: Response) => {
         const payoutAmount = toOptionalNumber(payout.net_amount) ?? 0;
 
         // Update cancellation request
-        await pool.query(`
+        await pool.query(
+            `
             UPDATE cancellation_requests 
             SET garage_compensation = $2,
                 compensation_status = 'approved'
             WHERE order_id = $1
-        `, [payout.order_id, payoutAmount]);
+        `,
+            [payout.order_id, payoutAmount]
+        );
 
         // Notify garage
         await createNotification({
@@ -991,7 +989,8 @@ export const denyCompensation = async (req: AuthRequest, res: Response) => {
     const reviewerId = req.user?.userId;
 
     try {
-        const result = await pool.query<CompensationPayoutRow>(`
+        const result = await pool.query<CompensationPayoutRow>(
+            `
             UPDATE garage_payouts 
             SET payout_status = 'cancelled',
                 cancellation_reason = $2,
@@ -1002,7 +1001,9 @@ export const denyCompensation = async (req: AuthRequest, res: Response) => {
                 updated_at = NOW()
             WHERE payout_id = $1 AND payout_status = 'pending_compensation_review'
             RETURNING *
-        `, [payout_id, reason || 'Compensation denied by Support/Finance', reviewerId]);
+        `,
+            [payout_id, reason || 'Compensation denied by Support/Finance', reviewerId]
+        );
 
         if (result.rows.length === 0) {
             return res.status(404).json({ error: 'Payout not found or already reviewed' });
@@ -1011,19 +1012,25 @@ export const denyCompensation = async (req: AuthRequest, res: Response) => {
         const payout = result.rows[0];
 
         // Update cancellation request
-        await pool.query(`
+        await pool.query(
+            `
             UPDATE cancellation_requests 
             SET garage_compensation = 0,
                 compensation_status = 'denied'
             WHERE order_id = $1
-        `, [payout.order_id]);
+        `,
+            [payout.order_id]
+        );
 
         // Apply penalty if requested
         if (applyPenalty && penalty_type && penaltyAmount && penaltyAmount > 0) {
-            await pool.query(`
+            await pool.query(
+                `
                 INSERT INTO garage_penalties (garage_id, order_id, penalty_type, penalty_amount, reason, created_at)
                 VALUES ($1, $2, $3, $4, $5, NOW())
-            `, [payout.garage_id, payout.order_id, penalty_type, penaltyAmount, reason]);
+            `,
+                [payout.garage_id, payout.order_id, penalty_type, penaltyAmount, reason]
+            );
 
             logger.info('Penalty applied', { penaltyAmount, penaltyType: penalty_type, garageId: payout.garage_id });
         }

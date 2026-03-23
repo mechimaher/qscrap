@@ -1,12 +1,12 @@
 /**
  * Refund Calculator Service (BRAIN v3.0 Compliant)
- * 
+ *
  * Calculates refundable amounts based on order stage per Qatar Law No. 8/2008
  * and BRAIN v3.0 policy document.
- * 
+ *
  * Stage Fees:
  * - Stage 1-3 (Pre-Payment): 0% fee
- * - Stage 4 (Payment Complete): 5% fee 
+ * - Stage 4 (Payment Complete): 5% fee
  * - Stage 5 (Preparation): 10% fee
  * - Stage 6 (In Delivery): 10% + 100% delivery fee
  * - Stage 7 (After Delivery/Return Window): 20% + 100% delivery fee
@@ -47,25 +47,25 @@ export interface RefundCalculationInput {
 export function determineRefundStage(orderStatus: string, deliveredAt?: Date | null): number {
     const statusToStage: Record<string, number> = {
         // Stage 1-3: Pre-Payment
-        'pending_payment': 1,
-        'confirmed': 2,
+        pending_payment: 1,
+        confirmed: 2,
 
         // Stage 4: Payment Complete
-        'preparing': 4,
-        'ready_for_pickup': 4,
-        'ready_for_collection': 4,
+        preparing: 4,
+        ready_for_pickup: 4,
+        ready_for_collection: 4,
 
         // Stage 5: Preparation/Collection in progress
-        'collected': 5,
-        'qc_in_progress': 5,
-        'qc_passed': 5,
+        collected: 5,
+        qc_in_progress: 5,
+        qc_passed: 5,
 
         // Stage 6: In Delivery
-        'in_transit': 6,
+        in_transit: 6,
 
         // Stage 7: After Delivery (Return Window)
-        'delivered': 7,
-        'completed': 7,
+        delivered: 7,
+        completed: 7
     };
 
     return statusToStage[orderStatus] || 7; // Default to Stage 7 for unknown statuses
@@ -82,26 +82,19 @@ export function getStageName(stage: number): string {
         4: 'Payment Complete',
         5: 'Preparation',
         6: 'In Delivery',
-        7: 'After Delivery (Return Window)',
+        7: 'After Delivery (Return Window)'
     };
     return stageNames[stage] || 'Unknown Stage';
 }
 
 /**
  * Calculate refundable amount based on BRAIN v3.0 policy
- * 
+ *
  * @param input - Order details for calculation
  * @returns Detailed refund calculation
  */
 export function calculateRefundableAmount(input: RefundCalculationInput): RefundCalculation {
-    const {
-        orderStatus,
-        totalAmount,
-        deliveryFee,
-        deliveredAt,
-        isDefectiveItem = false,
-        isWrongItem = false
-    } = input;
+    const { orderStatus, totalAmount, deliveryFee, deliveredAt, isDefectiveItem = false, isWrongItem = false } = input;
 
     const stage = determineRefundStage(orderStatus, deliveredAt);
     const stageName = getStageName(stage);
@@ -122,10 +115,10 @@ export function calculateRefundableAmount(input: RefundCalculationInput): Refund
                 partPrice,
                 platformFeeAmount: 0,
                 deliveryFeeRetained: 0,
-                totalDeductions: 0,
+                totalDeductions: 0
             },
             reason: isDefectiveItem ? 'Defective Part' : 'Wrong Part Delivered',
-            isDefectiveItem: true,
+            isDefectiveItem: true
         };
     }
 
@@ -169,7 +162,7 @@ export function calculateRefundableAmount(input: RefundCalculationInput): Refund
     }
 
     // Calculate amounts
-    const platformFeeAmount = Math.round((partPrice * feePercentage / 100) * 100) / 100;
+    const platformFeeAmount = Math.round(((partPrice * feePercentage) / 100) * 100) / 100;
     const totalDeductions = platformFeeAmount + deliveryFeeRetained;
     const refundableAmount = Math.max(0, totalAmount - totalDeductions);
 
@@ -186,9 +179,9 @@ export function calculateRefundableAmount(input: RefundCalculationInput): Refund
             partPrice,
             platformFeeAmount,
             deliveryFeeRetained,
-            totalDeductions,
+            totalDeductions
         },
-        isDefectiveItem: false,
+        isDefectiveItem: false
     };
 }
 
@@ -196,7 +189,9 @@ export function calculateRefundableAmount(input: RefundCalculationInput): Refund
  * Validate if refund is allowed based on warranty period (7 days)
  */
 export function isWithinWarrantyPeriod(deliveredAt: Date | null): boolean {
-    if (!deliveredAt) {return false;}
+    if (!deliveredAt) {
+        return false;
+    }
 
     const WARRANTY_DAYS = 7;
     const warrantyEnd = new Date(deliveredAt);
@@ -209,7 +204,9 @@ export function isWithinWarrantyPeriod(deliveredAt: Date | null): boolean {
  * Calculate remaining warranty days
  */
 export function getWarrantyDaysRemaining(deliveredAt: Date | null): number {
-    if (!deliveredAt) {return 0;}
+    if (!deliveredAt) {
+        return 0;
+    }
 
     const WARRANTY_DAYS = 7;
     const now = new Date();

@@ -6,14 +6,7 @@
 import { Pool, PoolClient } from 'pg';
 import bcrypt from 'bcrypt';
 import { BCRYPT_ROUNDS } from '../../config/security';
-import {
-    UserFilters,
-    User,
-    UserDetail,
-    PaginatedUsers,
-    UserUpdates,
-    CreateUserDto
-} from './types';
+import { UserFilters, User, UserDetail, PaginatedUsers, UserUpdates, CreateUserDto } from './types';
 import {
     UserNotFoundError,
     UserAlreadySuspendedError,
@@ -25,7 +18,7 @@ import {
 } from './errors';
 
 export class UserManagementService {
-    constructor(private pool: Pool) { }
+    constructor(private pool: Pool) {}
 
     /**
      * Get all users with filters and pagination
@@ -36,7 +29,7 @@ export class UserManagementService {
             is_active,
             is_suspended,
             search,
-            role,  // New: staff role filter
+            role, // New: staff role filter
             page = 1,
             limit = 20
         } = filters;
@@ -78,15 +71,19 @@ export class UserManagementService {
         // For staff queries, JOIN with staff_profiles to get role/department
         if (isStaffQuery) {
             // Get count
-            const countResult = await this.pool.query(`
+            const countResult = await this.pool.query(
+                `
                 SELECT COUNT(*) FROM users u
                 LEFT JOIN staff_profiles sp ON u.user_id = sp.user_id
                 ${whereClause}
-            `, params);
+            `,
+                params
+            );
             const total = parseInt(countResult.rows[0].count);
 
             // Get paginated results with staff profile info
-            const result = await this.pool.query(`
+            const result = await this.pool.query(
+                `
                 SELECT u.user_id, u.user_type, u.full_name, u.email, u.phone_number, 
                        u.is_active, u.is_suspended, u.created_at,
                        sp.role as staff_role, sp.department, sp.employee_id
@@ -95,7 +92,9 @@ export class UserManagementService {
                 ${whereClause}
                 ORDER BY u.created_at DESC
                 LIMIT $${paramIndex++} OFFSET $${paramIndex}
-            `, [...params, limit, offset]);
+            `,
+                [...params, limit, offset]
+            );
 
             return {
                 users: result.rows,
@@ -112,13 +111,16 @@ export class UserManagementService {
         const countResult = await this.pool.query(`SELECT COUNT(*) FROM users u ${whereClause}`, params);
         const total = parseInt(countResult.rows[0].count);
 
-        const result = await this.pool.query(`
+        const result = await this.pool.query(
+            `
             SELECT user_id, user_type, full_name, email, phone_number, is_active, is_suspended, created_at
             FROM users u
             ${whereClause}
             ORDER BY created_at DESC
             LIMIT $${paramIndex++} OFFSET $${paramIndex}
-        `, [...params, limit, offset]);
+        `,
+            [...params, limit, offset]
+        );
 
         return {
             users: result.rows,
@@ -135,12 +137,15 @@ export class UserManagementService {
      * Get user details with activity
      */
     async getUserDetails(userId: string): Promise<UserDetail> {
-        const userResult = await this.pool.query(`
+        const userResult = await this.pool.query(
+            `
             SELECT user_id, user_type, full_name, email, phone_number, 
                    is_active, is_suspended, created_at, last_login_at, suspension_reason
             FROM users
             WHERE user_id = $1
-        `, [userId]);
+        `,
+            [userId]
+        );
 
         if (userResult.rows.length === 0) {
             throw new UserNotFoundError(userId);
@@ -154,19 +159,25 @@ export class UserManagementService {
         let activity: any = null;
 
         if (user.user_type === 'customer') {
-            const orderData = await this.pool.query(`
+            const orderData = await this.pool.query(
+                `
                 SELECT COUNT(*) as total_orders
                 FROM orders
                 WHERE customer_id = $1
-            `, [userId]);
+            `,
+                [userId]
+            );
             activity = { orders_count: parseInt(orderData.rows[0].total_orders) };
         } else if (user.user_type === 'garage') {
-            const garageData = await this.pool.query(`
+            const garageData = await this.pool.query(
+                `
                 SELECT g.*, 
                     (SELECT COUNT(*) FROM bids WHERE garage_id = $1) as total_bids,
                     (SELECT COUNT(*) FROM orders WHERE garage_id = $1) as total_orders
                 FROM garages g WHERE g.garage_id = $1
-            `, [userId]);
+            `,
+                [userId]
+            );
             if (garageData.rows.length > 0) {
                 typeData = garageData.rows[0];
                 activity = {
@@ -175,12 +186,15 @@ export class UserManagementService {
                 };
             }
         } else if (user.user_type === 'driver') {
-            const driverData = await this.pool.query(`
+            const driverData = await this.pool.query(
+                `
                 SELECT d.*, 
                     (SELECT COUNT(*) FROM delivery_assignments WHERE driver_id = d.driver_id) as total_deliveries,
                     (SELECT COUNT(*) FROM delivery_assignments WHERE driver_id = d.driver_id AND status = 'completed') as completed_deliveries
                 FROM drivers d WHERE d.user_id = $1
-            `, [userId]);
+            `,
+                [userId]
+            );
             if (driverData.rows.length > 0) {
                 typeData = {
                     driver_id: driverData.rows[0].driver_id,
@@ -247,12 +261,15 @@ export class UserManagementService {
             setClauses.push(`updated_at = NOW()`);
             params.push(userId);
 
-            const result = await client.query(`
+            const result = await client.query(
+                `
                 UPDATE users
                 SET ${setClauses.join(', ')}
                 WHERE user_id = $${paramIndex}
                 RETURNING user_id, user_type, full_name, email, phone_number, is_active, is_suspended, created_at
-            `, params);
+            `,
+                params
+            );
 
             if (result.rows.length === 0) {
                 throw new UserNotFoundError(userId);
@@ -280,10 +297,7 @@ export class UserManagementService {
             await client.query('BEGIN');
 
             // Check current status
-            const currentStatus = await client.query(
-                'SELECT is_suspended FROM users WHERE user_id = $1',
-                [userId]
-            );
+            const currentStatus = await client.query('SELECT is_suspended FROM users WHERE user_id = $1', [userId]);
 
             if (currentStatus.rows.length === 0) {
                 throw new UserNotFoundError(userId);
@@ -293,13 +307,16 @@ export class UserManagementService {
                 throw new UserAlreadySuspendedError(userId);
             }
 
-            await client.query(`
+            await client.query(
+                `
                 UPDATE users
                 SET is_suspended = true,
                     suspension_reason = $1,
                     updated_at = NOW()
                 WHERE user_id = $2
-            `, [reason, userId]);
+            `,
+                [reason, userId]
+            );
 
             // Log action
             await this.logAdminAction(client, adminId, 'suspend_user', userId, { reason });
@@ -321,10 +338,7 @@ export class UserManagementService {
         try {
             await client.query('BEGIN');
 
-            const currentStatus = await client.query(
-                'SELECT is_suspended FROM users WHERE user_id = $1',
-                [userId]
-            );
+            const currentStatus = await client.query('SELECT is_suspended FROM users WHERE user_id = $1', [userId]);
 
             if (currentStatus.rows.length === 0) {
                 throw new UserNotFoundError(userId);
@@ -334,13 +348,16 @@ export class UserManagementService {
                 throw new UserAlreadyActiveError(userId);
             }
 
-            await client.query(`
+            await client.query(
+                `
                 UPDATE users
                 SET is_suspended = false,
                     suspension_reason = NULL,
                     updated_at = NOW()
                 WHERE user_id = $1
-            `, [userId]);
+            `,
+                [userId]
+            );
 
             // Log action
             await this.logAdminAction(client, adminId, 'activate_user', userId, { notes });
@@ -368,13 +385,16 @@ export class UserManagementService {
 
             const passwordHash = await bcrypt.hash(newPassword, BCRYPT_ROUNDS);
 
-            const result = await client.query(`
+            const result = await client.query(
+                `
                 UPDATE users
                 SET password_hash = $1,
                     reset_required = true,
                     updated_at = NOW()
                 WHERE user_id = $2
-            `, [passwordHash, userId]);
+            `,
+                [passwordHash, userId]
+            );
 
             if (result.rowCount === 0) {
                 throw new UserNotFoundError(userId);
@@ -398,16 +418,7 @@ export class UserManagementService {
      * Create new user (admin only - all types)
      */
     async createUser(adminId: string, userData: CreateUserDto): Promise<User> {
-        const {
-            user_type,
-            full_name,
-            email,
-            phone_number,
-            password,
-            garage_data,
-            driver_data,
-            permissions
-        } = userData;
+        const { user_type, full_name, email, phone_number, password, garage_data, driver_data, permissions } = userData;
 
         // Validate user type
         const validTypes = ['customer', 'garage', 'driver', 'staff'];
@@ -425,10 +436,13 @@ export class UserManagementService {
             await client.query('BEGIN');
 
             // Check for duplicates
-            const duplicateCheck = await client.query(`
+            const duplicateCheck = await client.query(
+                `
                 SELECT user_id, email, phone_number FROM users
                 WHERE email = $1 OR phone_number = $2
-            `, [email, phone_number]);
+            `,
+                [email, phone_number]
+            );
 
             if (duplicateCheck.rows.length > 0) {
                 const dup = duplicateCheck.rows[0];
@@ -444,49 +458,61 @@ export class UserManagementService {
             const passwordHash = await bcrypt.hash(password, BCRYPT_ROUNDS);
 
             // Create user
-            const userResult = await client.query(`
+            const userResult = await client.query(
+                `
                 INSERT INTO users (user_type, full_name, email, phone_number, password_hash, is_active)
                 VALUES ($1, $2, $3, $4, $5, true)
                 RETURNING user_id, user_type, full_name, email, phone_number, is_active, is_suspended, created_at
-            `, [user_type, full_name, email, phone_number, passwordHash]);
+            `,
+                [user_type, full_name, email, phone_number, passwordHash]
+            );
 
             const user = userResult.rows[0];
 
             // Create type-specific record
             if (user_type === 'garage' && garage_data) {
-                await client.query(`
+                await client.query(
+                    `
                     INSERT INTO garages (garage_id, garage_name, address, location_lat, location_lng, commercial_registration)
                     VALUES ($1, $2, $3, $4, $5, $6)
-                `, [
-                    user.user_id,
-                    garage_data.garage_name,
-                    garage_data.address,
-                    garage_data.location_lat,
-                    garage_data.location_lng,
-                    garage_data.commercial_registration
-                ]);
+                `,
+                    [
+                        user.user_id,
+                        garage_data.garage_name,
+                        garage_data.address,
+                        garage_data.location_lat,
+                        garage_data.location_lng,
+                        garage_data.commercial_registration
+                    ]
+                );
             } else if (user_type === 'driver' && driver_data) {
-                await client.query(`
+                await client.query(
+                    `
                     INSERT INTO drivers (user_id, full_name, phone, vehicle_type, vehicle_plate, vehicle_model)
                     VALUES ($1, $2, $3, $4, $5, $6)
-                `, [
-                    user.user_id,
-                    full_name,
-                    phone_number,
-                    driver_data.vehicle_type,
-                    driver_data.vehicle_plate,
-                    driver_data.vehicle_model
-                ]);
+                `,
+                    [
+                        user.user_id,
+                        full_name,
+                        phone_number,
+                        driver_data.vehicle_type,
+                        driver_data.vehicle_plate,
+                        driver_data.vehicle_model
+                    ]
+                );
             } else if (user_type === 'staff') {
                 // Create staff profile with role
                 const staffRole = userData.staff_data?.role || 'customer_service';
                 const department = userData.staff_data?.department || null;
                 const employeeId = userData.staff_data?.employee_id || null;
 
-                await client.query(`
+                await client.query(
+                    `
                     INSERT INTO staff_profiles (user_id, role, department, employee_id)
                     VALUES ($1, $2, $3, $4)
-                `, [user.user_id, staffRole, department, employeeId]);
+                `,
+                    [user.user_id, staffRole, department, employeeId]
+                );
             }
 
             // Log action
@@ -516,9 +542,12 @@ export class UserManagementService {
         targetId: string,
         data: any
     ): Promise<void> {
-        await client.query(`
+        await client.query(
+            `
             INSERT INTO admin_audit_log (admin_id, action_type, target_type, target_id, new_value)
             VALUES ($1, $2, 'user', $3, $4)
-        `, [adminId, actionType, targetId, JSON.stringify(data)]);
+        `,
+            [adminId, actionType, targetId, JSON.stringify(data)]
+        );
     }
 }

@@ -1,4 +1,3 @@
-
 import pool from '../config/db';
 import { getIO, emitToUser, emitToGarage, emitToOperations } from '../utils/socketIO';
 import { pushService } from './push.service';
@@ -18,16 +17,24 @@ interface NotificationPayload {
  */
 const getChannelId = (type: string): string => {
     // Driver high-priority channels
-    if (type.includes('assignment') || type === 'new_assignment') {return 'assignments';}
+    if (type.includes('assignment') || type === 'new_assignment') {
+        return 'assignments';
+    }
 
     // Customer order channels
-    if (type.includes('order') || type.includes('delivery') || type === 'driver_assigned') {return 'orders';}
+    if (type.includes('order') || type.includes('delivery') || type === 'driver_assigned') {
+        return 'orders';
+    }
 
     // Bid/negotiation channels
-    if (type.includes('bid') || type.includes('counter_offer')) {return 'bids';}
+    if (type.includes('bid') || type.includes('counter_offer')) {
+        return 'bids';
+    }
 
     // Chat/support channels
-    if (type.includes('chat') || type.includes('support') || type.includes('message')) {return 'messages';}
+    if (type.includes('chat') || type.includes('support') || type.includes('message')) {
+        return 'messages';
+    }
 
     return 'default';
 };
@@ -44,7 +51,7 @@ export const createNotification = async (payload: NotificationPayload) => {
     try {
         // 1. Persist to DB (skip operations - they don't have user-specific storage)
         // 1. Persist to DB (skip operations - they don't have user-specific storage)
-        let notificationId = `temp_${  Date.now()}`;
+        let notificationId = `temp_${Date.now()}`;
         if (target_role !== 'operations') {
             const result = await pool.query(
                 `INSERT INTO notifications (user_id, notification_type, title, body, data, is_read)
@@ -111,7 +118,9 @@ export const createNotification = async (payload: NotificationPayload) => {
  * Mark notifications as read
  */
 export const markNotificationsRead = async (userId: string, notificationIds: string[]) => {
-    if (notificationIds.length === 0) {return;}
+    if (notificationIds.length === 0) {
+        return;
+    }
 
     // Handle "Mark All Read" case
     if (notificationIds.includes('all')) {
@@ -124,11 +133,13 @@ export const markNotificationsRead = async (userId: string, notificationIds: str
     }
 
     // Filter out invalid UUIDs to prevent SQL errors
-    const validUuids = notificationIds.filter(id =>
+    const validUuids = notificationIds.filter((id) =>
         /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i.test(id)
     );
 
-    if (validUuids.length === 0) {return;}
+    if (validUuids.length === 0) {
+        return;
+    }
 
     await pool.query(
         `UPDATE notifications SET is_read = true 
@@ -155,7 +166,9 @@ export const getUserNotifications = async (userId: string, limit = 50) => {
  * Create multiple notifications efficiently (Batch Insert)
  */
 export const createBatchNotifications = async (payloads: NotificationPayload[]) => {
-    if (payloads.length === 0) {return 0;}
+    if (payloads.length === 0) {
+        return 0;
+    }
 
     const client = await pool.connect();
     try {
@@ -167,7 +180,7 @@ export const createBatchNotifications = async (payloads: NotificationPayload[]) 
         const placeholders: string[] = [];
         let pIndex = 1;
 
-        payloads.forEach(p => {
+        payloads.forEach((p) => {
             if (p.target_role !== 'operations') {
                 placeholders.push(`($${pIndex++}, $${pIndex++}, $${pIndex++}, $${pIndex++}, $${pIndex++}, false)`);
                 values.push(p.userId, p.type, p.title, p.message, JSON.stringify(p.data || {}));
@@ -188,9 +201,9 @@ export const createBatchNotifications = async (payloads: NotificationPayload[]) 
         // For distinct users, we must loop.
         const io = getIO();
         if (io) {
-            payloads.forEach(p => {
+            payloads.forEach((p) => {
                 const socketPayload = {
-                    notification_id: `temp_${  Date.now()}`,
+                    notification_id: `temp_${Date.now()}`,
                     type: p.type,
                     title: p.title,
                     message: p.message,

@@ -1,7 +1,7 @@
 /**
  * PayoutService - Facade for Payout Operations
  * Re-exports from specialized sub-services for backwards compatibility
- * 
+ *
  * Decomposed into:
  * - PayoutLifecycleService: 2-way confirmation workflow
  * - PayoutQueryService: Read operations
@@ -57,26 +57,15 @@ export class PayoutService {
         return this.lifecycle.sendPayment(payoutId, details);
     }
 
-    async confirmPayment(
-        payoutId: string,
-        garageId: string,
-        details: ConfirmPaymentDto
-    ): Promise<PayoutResult> {
+    async confirmPayment(payoutId: string, garageId: string, details: ConfirmPaymentDto): Promise<PayoutResult> {
         return this.lifecycle.confirmPayment(payoutId, garageId, details);
     }
 
-    async disputePayment(
-        payoutId: string,
-        garageId: string,
-        dispute: DisputeDto
-    ): Promise<PayoutResult> {
+    async disputePayment(payoutId: string, garageId: string, dispute: DisputeDto): Promise<PayoutResult> {
         return this.lifecycle.disputePayment(payoutId, garageId, dispute);
     }
 
-    async resolveDispute(
-        payoutId: string,
-        resolution: ResolveDisputeDto
-    ): Promise<PayoutResult> {
+    async resolveDispute(payoutId: string, resolution: ResolveDisputeDto): Promise<PayoutResult> {
         return this.lifecycle.resolveDispute(payoutId, resolution);
     }
 
@@ -148,10 +137,7 @@ export class PayoutService {
         return this.admin.getBatchPayoutPreview(params);
     }
 
-    async sendBatchPayments(
-        dto: BatchPaymentDto,
-        sentBy: string
-    ): Promise<BatchPaymentResult> {
+    async sendBatchPayments(dto: BatchPaymentDto, sentBy: string): Promise<BatchPaymentResult> {
         return this.admin.sendBatchPayments(dto, sentBy);
     }
 

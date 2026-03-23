@@ -30,13 +30,13 @@ jest.mock('react-native', () => {
             ScrollView: MockScrollView,
             Value: jest.fn(() => ({
                 setValue: jest.fn(),
-                interpolate: jest.fn(() => ({ __getValue: jest.fn() })),
+                interpolate: jest.fn(() => ({ __getValue: jest.fn() }))
             })),
             timing: jest.fn(() => ({ start: jest.fn() })),
             spring: jest.fn(() => ({ start: jest.fn() })),
             parallel: jest.fn(() => ({ start: jest.fn() })),
             sequence: jest.fn(() => ({ start: jest.fn() })),
-            event: jest.fn(),
+            event: jest.fn()
         },
         Alert: { alert: jest.fn() },
         Linking: { openURL: jest.fn() },
@@ -45,7 +45,13 @@ jest.mock('react-native', () => {
         Keyboard: { dismiss: jest.fn(), addListener: jest.fn(() => ({ remove: jest.fn() })) },
         PixelRatio: { get: () => 2, roundToNearestPixel: (v) => v },
         StatusBar: { setBarStyle: jest.fn() },
-        Switch: MockView,
+        Switch: (props) =>
+            React.createElement('View', {
+                ...props,
+                accessible: true,
+                accessibilityRole: 'switch',
+                accessibilityState: { checked: props.value }
+            })
     };
 });
 
@@ -53,7 +59,7 @@ jest.mock('react-native', () => {
 jest.mock('expo-secure-store', () => ({
     getItemAsync: jest.fn().mockResolvedValue(null),
     setItemAsync: jest.fn().mockResolvedValue(undefined),
-    deleteItemAsync: jest.fn().mockResolvedValue(undefined),
+    deleteItemAsync: jest.fn().mockResolvedValue(undefined)
 }));
 
 // Mock expo-haptics
@@ -62,14 +68,14 @@ jest.mock('expo-haptics', () => ({
     notificationAsync: jest.fn(),
     selectionAsync: jest.fn(),
     ImpactFeedbackStyle: { Light: 'light', Medium: 'medium', Heavy: 'heavy' },
-    NotificationFeedbackType: { Success: 'success', Warning: 'warning', Error: 'error' },
+    NotificationFeedbackType: { Success: 'success', Warning: 'warning', Error: 'error' }
 }));
 
 // Mock expo-image
 jest.mock('expo-image', () => {
     const { View } = require('react-native');
     return {
-        Image: View,
+        Image: View
     };
 });
 
@@ -77,7 +83,7 @@ jest.mock('expo-image', () => {
 jest.mock('expo-linear-gradient', () => {
     const { View } = require('react-native');
     return {
-        LinearGradient: View,
+        LinearGradient: View
     };
 });
 
@@ -85,9 +91,9 @@ jest.mock('expo-linear-gradient', () => {
 jest.mock('expo-location', () => ({
     requestForegroundPermissionsAsync: jest.fn().mockResolvedValue({ status: 'granted' }),
     getCurrentPositionAsync: jest.fn().mockResolvedValue({
-        coords: { latitude: 25.2854, longitude: 51.531 },
+        coords: { latitude: 25.2854, longitude: 51.531 }
     }),
-    reverseGeocodeAsync: jest.fn().mockResolvedValue([{ city: 'Doha', country: 'Qatar' }]),
+    reverseGeocodeAsync: jest.fn().mockResolvedValue([{ city: 'Doha', country: 'Qatar' }])
 }));
 
 // Mock expo-notifications
@@ -97,13 +103,13 @@ jest.mock('expo-notifications', () => ({
     requestPermissionsAsync: jest.fn().mockResolvedValue({ status: 'granted' }),
     setNotificationHandler: jest.fn(),
     addNotificationReceivedListener: jest.fn(() => ({ remove: jest.fn() })),
-    addNotificationResponseReceivedListener: jest.fn(() => ({ remove: jest.fn() })),
+    addNotificationResponseReceivedListener: jest.fn(() => ({ remove: jest.fn() }))
 }));
 
 // Mock expo-linking
 jest.mock('expo-linking', () => ({
     openURL: jest.fn(),
-    createURL: jest.fn((path) => `qscrap://${path}`),
+    createURL: jest.fn((path) => `qscrap://${path}`)
 }));
 
 // Mock expo-device
@@ -111,13 +117,13 @@ jest.mock('expo-device', () => ({
     isDevice: true,
     brand: 'TestDevice',
     modelName: 'TestModel',
-    osName: 'android',
+    osName: 'android'
 }));
 
 // Mock expo-font
 jest.mock('expo-font', () => ({
     useFonts: jest.fn(() => [true, null]),
-    isLoaded: jest.fn(() => true),
+    isLoaded: jest.fn(() => true)
 }));
 
 // Mock react-native-safe-area-context
@@ -126,7 +132,7 @@ jest.mock('react-native-safe-area-context', () => {
     return {
         SafeAreaView: View,
         SafeAreaProvider: View,
-        useSafeAreaInsets: () => ({ top: 0, right: 0, bottom: 0, left: 0 }),
+        useSafeAreaInsets: () => ({ top: 0, right: 0, bottom: 0, left: 0 })
     };
 });
 
@@ -137,7 +143,7 @@ jest.mock('@react-native-async-storage/async-storage', () => ({
     removeItem: jest.fn().mockResolvedValue(undefined),
     clear: jest.fn().mockResolvedValue(undefined),
     getAllKeys: jest.fn().mockResolvedValue([]),
-    multiGet: jest.fn().mockResolvedValue([]),
+    multiGet: jest.fn().mockResolvedValue([])
 }));
 
 // Mock @stripe/stripe-react-native
@@ -146,9 +152,9 @@ jest.mock('@stripe/stripe-react-native', () => ({
     useStripe: () => ({
         initPaymentSheet: jest.fn().mockResolvedValue({ error: null }),
         presentPaymentSheet: jest.fn().mockResolvedValue({ error: null }),
-        confirmPayment: jest.fn().mockResolvedValue({ error: null }),
+        confirmPayment: jest.fn().mockResolvedValue({ error: null })
     }),
-    CardField: 'CardField',
+    CardField: 'CardField'
 }));
 
 // Mock socket.io-client
@@ -160,7 +166,7 @@ jest.mock('socket.io-client', () => {
         connect: jest.fn(),
         disconnect: jest.fn(),
         connected: true,
-        id: 'test-socket-id',
+        id: 'test-socket-id'
     };
     return { io: jest.fn(() => mockSocket) };
 });
@@ -168,7 +174,7 @@ jest.mock('socket.io-client', () => {
 // Mock react-native-reanimated
 jest.mock('react-native-reanimated', () => {
     const Reanimated = require('react-native-reanimated/mock');
-    Reanimated.default.call = () => { };
+    Reanimated.default.call = () => {};
     return Reanimated;
 });
 
@@ -178,8 +184,8 @@ jest.mock('@react-native-community/netinfo', () => ({
     fetch: jest.fn().mockResolvedValue({
         isConnected: true,
         isInternetReachable: true,
-        type: 'wifi',
-    }),
+        type: 'wifi'
+    })
 }));
 
 // Mock react-native-gesture-handler
@@ -212,14 +218,63 @@ jest.mock('react-native-gesture-handler', () => {
         FlatList: View,
         gestureHandlerRootHOC: jest.fn((component) => component),
         Directions: {},
-        GestureHandlerRootView: View,
+        GestureHandlerRootView: View
     };
 });
 
 // Mock expo-status-bar
 jest.mock('expo-status-bar', () => ({
-    StatusBar: 'StatusBar',
+    StatusBar: 'StatusBar'
 }));
+
+// Mock expo-localization
+jest.mock('expo-localization', () => ({
+    getLocales: () => [{ languageCode: 'en', regionCode: 'US' }],
+    locale: 'en-US'
+}));
+
+// Mock expo-updates
+jest.mock('expo-updates', () => ({
+    reloadAsync: jest.fn(),
+    checkForUpdateAsync: jest.fn(),
+    downloadUpdateAsync: jest.fn()
+}));
+
+// Mock expo-modules-core
+jest.mock('expo-modules-core', () => ({
+    NativeModulesProxy: {},
+    EventEmitter: class {
+        addListener = jest.fn(() => ({ remove: jest.fn() }));
+        removeAllListeners = jest.fn();
+        emit = jest.fn();
+    },
+    Platform: { OS: 'android' },
+    requireNativeModule: jest.fn(() => ({}))
+}));
+
+// Mock @expo/vector-icons
+jest.mock('@expo/vector-icons', () => {
+    const React = require('react');
+    const MockIcon = (props) => {
+        const { View } = require('react-native');
+        return React.createElement('View', { ...props, testID: props.testID || props.name });
+    };
+    return {
+        Ionicons: MockIcon,
+        MaterialIcons: MockIcon,
+        MaterialCommunityIcons: MockIcon,
+        FontAwesome: MockIcon,
+        AntDesign: MockIcon,
+        Entypo: MockIcon,
+        Feather: MockIcon,
+        FontAwesome5: MockIcon,
+        Fontisto: MockIcon,
+        Foundation: MockIcon,
+        Octicons: MockIcon,
+        SimpleLineIcons: MockIcon,
+        Zocial: MockIcon
+    };
+});
 
 // Mock expo-file-system
 jest.mock('expo-file-system', () => ({
@@ -229,7 +284,7 @@ jest.mock('expo-file-system', () => ({
     writeAsStringAsync: jest.fn(),
     deleteAsync: jest.fn(),
     getInfoAsync: jest.fn(),
-    makeDirectoryAsync: jest.fn(),
+    makeDirectoryAsync: jest.fn()
 }));
 
 // Mock react-native-maps
@@ -240,7 +295,7 @@ jest.mock('react-native-maps', () => {
         default: View,
         Marker: View,
         Callout: View,
-        PROVIDER_GOOGLE: 'google',
+        PROVIDER_GOOGLE: 'google'
     };
 });
 
@@ -251,18 +306,18 @@ jest.mock('@react-navigation/native', () => ({
         goBack: jest.fn(),
         dispatch: jest.fn(),
         reset: jest.fn(),
-        setOptions: jest.fn(),
+        setOptions: jest.fn()
     }),
     useFocusEffect: jest.fn((cb) => cb()),
     useRoute: () => ({ params: {} }),
-    useIsFocused: () => true,
+    useIsFocused: () => true
 }));
 
 jest.mock('@react-navigation/native-stack', () => ({
     createNativeStackNavigator: jest.fn(() => ({
         Navigator: 'Navigator',
-        Screen: 'Screen',
-    })),
+        Screen: 'Screen'
+    }))
 }));
 
 // Suppress console warnings in tests
@@ -270,14 +325,109 @@ const originalWarn = console.warn;
 console.warn = (...args) => {
     if (
         typeof args[0] === 'string' &&
-        (args[0].includes('Animated') ||
-            args[0].includes('useNativeDriver') ||
-            args[0].includes('NativeModule'))
+        (args[0].includes('Animated') || args[0].includes('useNativeDriver') || args[0].includes('NativeModule'))
     ) {
         return;
     }
     originalWarn(...args);
 };
+
+// Suppress react-test-renderer deprecation noise during transition
+const originalError = console.error;
+console.error = (...args) => {
+    if (typeof args[0] === 'string' && args[0].includes('react-test-renderer is deprecated')) {
+        return;
+    }
+    originalError(...args);
+};
+
+// Mock @sentry/react-native
+jest.mock('@sentry/react-native', () => ({
+    init: jest.fn(),
+    captureException: jest.fn(),
+    captureMessage: jest.fn(),
+    addBreadcrumb: jest.fn(),
+    setUser: jest.fn(),
+    setTag: jest.fn(),
+    setExtra: jest.fn(),
+    setContext: jest.fn(),
+    withScope: jest.fn((callback) => callback({ setExtra: jest.fn(), setTag: jest.fn() }))
+}));
+
+// Mock LanguageContext
+jest.mock('src/contexts/LanguageContext', () => ({
+    useLanguage: () => ({
+        language: 'en',
+        isRTL: false,
+        setLanguage: jest.fn(),
+        t: (key) => {
+            const translations = {
+                'common.error': 'Error',
+                'common.unknown': 'Unknown error',
+                'common.ok': 'OK',
+                'common.keep': 'Keep',
+                'common.delete': 'Delete',
+                'profile.accountDeleted': 'Account Deleted',
+                'profile.accountDeletedMsg': 'Your account has been successfully deleted.'
+            };
+            return translations[key] || key;
+        },
+        translations: {}
+    }),
+    useTranslation: () => ({
+        t: (key) => key,
+        language: 'en',
+        isRTL: false
+    }),
+    useRTL: () => false
+}));
+
+// Mock ThemeContext
+jest.mock('src/contexts/ThemeContext', () => ({
+    useTheme: () => ({
+        isDarkMode: false,
+        isDark: false,
+        colors: {
+            primary: '#800020',
+            background: '#FFFFFF',
+            surface: '#F9FAFB',
+            text: '#1F2937',
+            textSecondary: '#6B7280',
+            border: '#E5E7EB',
+            error: '#EF4444',
+            success: '#22C55E'
+        },
+        toggleTheme: jest.fn(),
+        setTheme: jest.fn(),
+        themeMode: 'light'
+    })
+}));
+
+// Also mock the barrel file
+jest.mock('src/contexts', () => ({
+    ...jest.requireActual('src/contexts'),
+    useLanguage: () => ({
+        language: 'en',
+        isRTL: false,
+        t: (key) => key
+    }),
+    useTranslation: () => ({
+        t: (key) => key,
+        language: 'en',
+        isRTL: false
+    }),
+    useTheme: () => ({
+        isDarkMode: false,
+        colors: {
+            primary: '#800020',
+            text: '#1F2937',
+            textSecondary: '#6B7280',
+            background: '#FFFFFF',
+            surface: '#F9FAFB',
+            border: '#E5E7EB'
+        }
+    })
+}));
 
 // Mock global fetch
 global.fetch = jest.fn();

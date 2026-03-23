@@ -5,7 +5,7 @@
 import { Pool } from 'pg';
 
 export class RequestQueryService {
-    constructor(private pool: Pool) { }
+    constructor(private pool: Pool) {}
 
     /**
      * Get active requests for garages with smart routing and filtering
@@ -84,10 +84,7 @@ export class RequestQueryService {
         }
 
         // Get total count with filters
-        const countResult = await this.pool.query(
-            `SELECT COUNT(*) FROM part_requests ${whereClause}`,
-            params
-        );
+        const countResult = await this.pool.query(`SELECT COUNT(*) FROM part_requests ${whereClause}`, params);
         const total = parseInt(countResult.rows[0].count);
         const totalPages = Math.ceil(total / limit);
 
@@ -120,10 +117,9 @@ export class RequestQueryService {
         const offset = (page - 1) * limit;
 
         // Get total count
-        const countResult = await this.pool.query(
-            `SELECT COUNT(*) FROM part_requests WHERE customer_id = $1`,
-            [userId]
-        );
+        const countResult = await this.pool.query(`SELECT COUNT(*) FROM part_requests WHERE customer_id = $1`, [
+            userId
+        ]);
         const total = parseInt(countResult.rows[0].count);
         const totalPages = Math.ceil(total / limit);
 
@@ -143,10 +139,7 @@ export class RequestQueryService {
      * Get request details with bids and anonymization for customers
      */
     async getRequestDetails(requestId: string, userId: string, userType: string) {
-        const requestResult = await this.pool.query(
-            'SELECT * FROM part_requests WHERE request_id = $1',
-            [requestId]
-        );
+        const requestResult = await this.pool.query('SELECT * FROM part_requests WHERE request_id = $1', [requestId]);
 
         if (requestResult.rows.length === 0) {
             throw new Error('Request not found');

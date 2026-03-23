@@ -42,7 +42,7 @@ export function getCurrentLanguage(): Language {
 /**
  * Standalone translation function for non-component code.
  * Uses the cached language — no async, no hooks required.
- * 
+ *
  * @example
  * import { t } from '../utils/i18nHelper';
  * const title = t('notifications.newBidReceived');

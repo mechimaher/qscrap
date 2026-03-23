@@ -23,7 +23,7 @@ export class StripePaymentProvider implements PaymentGateway {
     constructor(secretKey: string) {
         this.stripe = new Stripe(secretKey, {
             apiVersion: '2025-12-15.clover',
-            typescript: true,
+            typescript: true
         });
 
         const isTestMode = secretKey.startsWith('sk_test_');
@@ -32,13 +32,13 @@ export class StripePaymentProvider implements PaymentGateway {
 
     private mapStripeStatus(status: Stripe.PaymentIntent.Status): PaymentStatus {
         const statusMap: Record<string, PaymentStatus> = {
-            'requires_payment_method': 'requires_payment_method',
-            'requires_confirmation': 'pending',
-            'requires_action': 'requires_action',
-            'processing': 'processing',
-            'requires_capture': 'pending',
-            'canceled': 'cancelled',
-            'succeeded': 'succeeded',
+            requires_payment_method: 'requires_payment_method',
+            requires_confirmation: 'pending',
+            requires_action: 'requires_action',
+            processing: 'processing',
+            requires_capture: 'pending',
+            canceled: 'cancelled',
+            succeeded: 'succeeded'
         };
         return statusMap[status] || 'pending';
     }
@@ -55,8 +55,8 @@ export class StripePaymentProvider implements PaymentGateway {
                 },
                 capture_method: options.captureMethod || 'automatic',
                 automatic_payment_methods: {
-                    enabled: true,
-                },
+                    enabled: true
+                }
             };
 
             // Attach to customer for saved cards
@@ -76,12 +76,15 @@ export class StripePaymentProvider implements PaymentGateway {
                 params.description = options.description;
             }
 
-            const intent = await withRetry(
-                () => this.stripe.paymentIntents.create(params),
-                { label: 'stripe.createPaymentIntent' }
-            );
+            const intent = await withRetry(() => this.stripe.paymentIntents.create(params), {
+                label: 'stripe.createPaymentIntent'
+            });
 
-            logger.info('Created payment intent', { intentId: intent.id, amount: options.amount, currency: options.currency });
+            logger.info('Created payment intent', {
+                intentId: intent.id,
+                amount: options.amount,
+                currency: options.currency
+            });
 
             return {
                 id: intent.id,
@@ -106,10 +109,9 @@ export class StripePaymentProvider implements PaymentGateway {
             }
             params.return_url = 'qscrap://payment-complete';
 
-            const intent = await withRetry(
-                () => this.stripe.paymentIntents.confirm(intentId, params),
-                { label: 'stripe.confirmPaymentIntent' }
-            );
+            const intent = await withRetry(() => this.stripe.paymentIntents.confirm(intentId, params), {
+                label: 'stripe.confirmPaymentIntent'
+            });
 
             logger.info('Confirmed intent', { intentId: intent.id, status: intent.status });
 
@@ -134,10 +136,9 @@ export class StripePaymentProvider implements PaymentGateway {
                 params.amount_to_capture = Math.round(amount * 100);
             }
 
-            const intent = await withRetry(
-                () => this.stripe.paymentIntents.capture(intentId, params),
-                { label: 'stripe.capturePayment' }
-            );
+            const intent = await withRetry(() => this.stripe.paymentIntents.capture(intentId, params), {
+                label: 'stripe.capturePayment'
+            });
 
             logger.info('Captured payment', { intentId: intent.id });
 
@@ -157,10 +158,7 @@ export class StripePaymentProvider implements PaymentGateway {
 
     async cancelPaymentIntent(intentId: string): Promise<boolean> {
         try {
-            await withRetry(
-                () => this.stripe.paymentIntents.cancel(intentId),
-                { label: 'stripe.cancelPaymentIntent' }
-            );
+            await withRetry(() => this.stripe.paymentIntents.cancel(intentId), { label: 'stripe.cancelPaymentIntent' });
             logger.info('Cancelled intent', { intentId });
             return true;
         } catch (error: any) {
@@ -169,10 +167,15 @@ export class StripePaymentProvider implements PaymentGateway {
         }
     }
 
-    async refundPayment(intentId: string, amount?: number, reason?: string, idempotencyKey?: string): Promise<RefundResult> {
+    async refundPayment(
+        intentId: string,
+        amount?: number,
+        reason?: string,
+        idempotencyKey?: string
+    ): Promise<RefundResult> {
         try {
             const params: Stripe.RefundCreateParams = {
-                payment_intent: intentId,
+                payment_intent: intentId
             };
 
             if (amount) {
@@ -189,10 +192,9 @@ export class StripePaymentProvider implements PaymentGateway {
                 options.idempotencyKey = idempotencyKey;
             }
 
-            const refund = await withRetry(
-                () => this.stripe.refunds.create(params, options),
-                { label: 'stripe.createRefund' }
-            );
+            const refund = await withRetry(() => this.stripe.refunds.create(params, options), {
+                label: 'stripe.createRefund'
+            });
 
             logger.info('Refund created', { refundId: refund.id, amount: refund.amount / 100 });
 
@@ -209,10 +211,9 @@ export class StripePaymentProvider implements PaymentGateway {
 
     async getPaymentStatus(intentId: string): Promise<PaymentStatus> {
         try {
-            const intent = await withRetry(
-                () => this.stripe.paymentIntents.retrieve(intentId),
-                { label: 'stripe.retrievePaymentIntent' }
-            );
+            const intent = await withRetry(() => this.stripe.paymentIntents.retrieve(intentId), {
+                label: 'stripe.retrievePaymentIntent'
+            });
             return this.mapStripeStatus(intent.status);
         } catch (error: any) {
             logger.error('Get status error', { error: error.message });
@@ -224,11 +225,12 @@ export class StripePaymentProvider implements PaymentGateway {
         try {
             // Check if customer already exists (would need DB lookup in real implementation)
             const customer = await withRetry(
-                () => this.stripe.customers.create({
-                    email: email || `user_${userId}@qscrap.qa`,
-                    name,
-                    metadata: { userId }
-                }),
+                () =>
+                    this.stripe.customers.create({
+                        email: email || `user_${userId}@qscrap.qa`,
+                        name,
+                        metadata: { userId }
+                    }),
                 { label: 'stripe.createCustomer' }
             );
 
@@ -243,19 +245,21 @@ export class StripePaymentProvider implements PaymentGateway {
     async attachPaymentMethod(customerId: string, paymentMethodId: string): Promise<PaymentMethod> {
         try {
             const pm = await withRetry(
-                () => this.stripe.paymentMethods.attach(paymentMethodId, {
-                    customer: customerId
-                }),
+                () =>
+                    this.stripe.paymentMethods.attach(paymentMethodId, {
+                        customer: customerId
+                    }),
                 { label: 'stripe.attachPaymentMethod' }
             );
 
             // Set as default payment method
             await withRetry(
-                () => this.stripe.customers.update(customerId, {
-                    invoice_settings: {
-                        default_payment_method: paymentMethodId
-                    }
-                }),
+                () =>
+                    this.stripe.customers.update(customerId, {
+                        invoice_settings: {
+                            default_payment_method: paymentMethodId
+                        }
+                    }),
                 { label: 'stripe.updateCustomer' }
             );
 
@@ -278,10 +282,9 @@ export class StripePaymentProvider implements PaymentGateway {
 
     async detachPaymentMethod(paymentMethodId: string): Promise<boolean> {
         try {
-            await withRetry(
-                () => this.stripe.paymentMethods.detach(paymentMethodId),
-                { label: 'stripe.detachPaymentMethod' }
-            );
+            await withRetry(() => this.stripe.paymentMethods.detach(paymentMethodId), {
+                label: 'stripe.detachPaymentMethod'
+            });
             logger.info('Detached payment method', { paymentMethodId });
             return true;
         } catch (error: any) {
@@ -293,14 +296,15 @@ export class StripePaymentProvider implements PaymentGateway {
     async listPaymentMethods(customerId: string): Promise<PaymentMethod[]> {
         try {
             const methods = await withRetry(
-                () => this.stripe.paymentMethods.list({
-                    customer: customerId,
-                    type: 'card'
-                }),
+                () =>
+                    this.stripe.paymentMethods.list({
+                        customer: customerId,
+                        type: 'card'
+                    }),
                 { label: 'stripe.listPaymentMethods' }
             );
 
-            return methods.data.map(pm => ({
+            return methods.data.map((pm) => ({
                 id: pm.id,
                 providerId: pm.id,
                 last4: pm.card?.last4 || '****',

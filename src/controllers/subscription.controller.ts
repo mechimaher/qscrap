@@ -19,7 +19,9 @@ export const getSubscriptionPlans = async (req: AuthRequest, res: Response) => {
 export const getMySubscription = async (req: AuthRequest, res: Response) => {
     try {
         const result = await subscriptionService.getMySubscription(req.user!.userId);
-        if (!result) {return res.status(404).json({ error: 'Garage not found' });}
+        if (!result) {
+            return res.status(404).json({ error: 'Garage not found' });
+        }
         res.json(result);
     } catch (err) {
         logger.error('getMySubscription Error', { error: (err as Error).message });
@@ -29,7 +31,11 @@ export const getMySubscription = async (req: AuthRequest, res: Response) => {
 
 export const subscribeToPlan = async (req: AuthRequest, res: Response) => {
     try {
-        const result = await subscriptionService.subscribeToPlan(req.user!.userId, req.body.plan_code, req.body.payment_method);
+        const result = await subscriptionService.subscribeToPlan(
+            req.user!.userId,
+            req.body.plan_code,
+            req.body.payment_method
+        );
         res.status(201).json({ message: 'Subscription activated successfully', ...result });
     } catch (err) {
         res.status(400).json({ error: getErrorMessage(err) });
@@ -57,7 +63,11 @@ export const changePlan = async (req: AuthRequest, res: Response) => {
 export const cancelSubscription = async (req: AuthRequest, res: Response) => {
     try {
         const result = await subscriptionService.cancelSubscription(req.user!.userId, req.body.reason);
-        res.json({ message: 'Subscription cancelled', active_until: result.billing_cycle_end, note: 'You can continue to use the service until the end of your billing cycle' });
+        res.json({
+            message: 'Subscription cancelled',
+            active_until: result.billing_cycle_end,
+            note: 'You can continue to use the service until the end of your billing cycle'
+        });
     } catch (err) {
         res.status(400).json({ error: getErrorMessage(err) });
     }

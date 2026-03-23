@@ -10,7 +10,7 @@ import { API_BASE_URL, API_ENDPOINTS } from '../config/api';
 jest.mock('../utils/logger', () => ({
     log: jest.fn(),
     warn: jest.fn(),
-    error: jest.fn(),
+    error: jest.fn()
 }));
 
 // We need to import api AFTER mocking SecureStore (done in jest.setup.js)
@@ -22,7 +22,7 @@ const mockFetchSuccess = (data: any) => {
         ok: true,
         status: 200,
         json: jest.fn().mockResolvedValue(data),
-        headers: new Map([['content-type', 'application/json']]),
+        headers: new Map([['content-type', 'application/json']])
     });
 };
 
@@ -31,7 +31,7 @@ const mockFetchError = (status: number, data: any) => {
         ok: false,
         status,
         json: jest.fn().mockResolvedValue(data),
-        headers: new Map([['content-type', 'application/json']]),
+        headers: new Map([['content-type', 'application/json']])
     });
 };
 
@@ -54,7 +54,7 @@ describe('API Service', () => {
                 `${API_BASE_URL}${API_ENDPOINTS.LOGIN}`,
                 expect.objectContaining({
                     method: 'POST',
-                    body: JSON.stringify({ phone_number: '33334444', password: 'password123' }),
+                    body: JSON.stringify({ phone_number: '33334444', password: 'password123' })
                 })
             );
         });
@@ -67,7 +67,7 @@ describe('API Service', () => {
             expect(global.fetch).toHaveBeenCalledWith(
                 `${API_BASE_URL}${API_ENDPOINTS.REGISTER}`,
                 expect.objectContaining({
-                    method: 'POST',
+                    method: 'POST'
                 })
             );
         });
@@ -80,7 +80,7 @@ describe('API Service', () => {
             expect(global.fetch).toHaveBeenCalledWith(
                 `${API_BASE_URL}${API_ENDPOINTS.CHANGE_PASSWORD}`,
                 expect.objectContaining({
-                    method: 'POST',
+                    method: 'POST'
                 })
             );
         });
@@ -95,10 +95,7 @@ describe('API Service', () => {
 
             await api.getMyRequests();
 
-            expect(global.fetch).toHaveBeenCalledWith(
-                `${API_BASE_URL}${API_ENDPOINTS.MY_REQUESTS}`,
-                expect.anything()
-            );
+            expect(global.fetch).toHaveBeenCalledWith(`${API_BASE_URL}${API_ENDPOINTS.MY_REQUESTS}`, expect.anything());
         });
 
         it('getRequestDetails should call /requests/:id', async () => {
@@ -106,10 +103,7 @@ describe('API Service', () => {
 
             await api.getRequestDetails('req-123');
 
-            expect(global.fetch).toHaveBeenCalledWith(
-                `${API_BASE_URL}/requests/req-123`,
-                expect.anything()
-            );
+            expect(global.fetch).toHaveBeenCalledWith(`${API_BASE_URL}/requests/req-123`, expect.anything());
         });
 
         it('cancelRequest should POST /requests/:id/cancel', async () => {
@@ -144,10 +138,7 @@ describe('API Service', () => {
 
             await api.getMyOrders();
 
-            expect(global.fetch).toHaveBeenCalledWith(
-                `${API_BASE_URL}${API_ENDPOINTS.MY_ORDERS}`,
-                expect.anything()
-            );
+            expect(global.fetch).toHaveBeenCalledWith(`${API_BASE_URL}${API_ENDPOINTS.MY_ORDERS}`, expect.anything());
         });
 
         it('acceptBid should POST to /orders/accept-bid/:bidId with payment method', async () => {
@@ -159,7 +150,7 @@ describe('API Service', () => {
                 `${API_BASE_URL}${API_ENDPOINTS.ACCEPT_BID('bid-123')}`,
                 expect.objectContaining({
                     method: 'POST',
-                    body: JSON.stringify({ payment_method: 'card' }),
+                    body: JSON.stringify({ payment_method: 'card' })
                 })
             );
         });
@@ -172,7 +163,7 @@ describe('API Service', () => {
             expect(global.fetch).toHaveBeenCalledWith(
                 `${API_BASE_URL}${API_ENDPOINTS.ACCEPT_BID('bid-123')}`,
                 expect.objectContaining({
-                    body: JSON.stringify({ payment_method: 'cash' }),
+                    body: JSON.stringify({ payment_method: 'cash' })
                 })
             );
         });
@@ -215,10 +206,7 @@ describe('API Service', () => {
 
             await api.getOrderDetails('order-123');
 
-            expect(global.fetch).toHaveBeenCalledWith(
-                expect.stringContaining('/orders/order-123'),
-                expect.anything()
-            );
+            expect(global.fetch).toHaveBeenCalledWith(expect.stringContaining('/orders/order-123'), expect.anything());
         });
     });
 
@@ -231,7 +219,7 @@ describe('API Service', () => {
 
             await api.request(API_ENDPOINTS.COUNTER_OFFER('bid-123'), {
                 method: 'POST',
-                body: JSON.stringify({ counter_amount: 50 }),
+                body: JSON.stringify({ counter_amount: 50 })
             });
 
             expect(global.fetch).toHaveBeenCalledWith(
@@ -299,10 +287,7 @@ describe('API Service', () => {
 
             await api.getAddresses();
 
-            expect(global.fetch).toHaveBeenCalledWith(
-                `${API_BASE_URL}${API_ENDPOINTS.ADDRESSES}`,
-                expect.anything()
-            );
+            expect(global.fetch).toHaveBeenCalledWith(`${API_BASE_URL}${API_ENDPOINTS.ADDRESSES}`, expect.anything());
         });
 
         it('addAddress should POST to /addresses', async () => {
@@ -337,10 +322,7 @@ describe('API Service', () => {
 
             await api.getStats();
 
-            expect(global.fetch).toHaveBeenCalledWith(
-                `${API_BASE_URL}${API_ENDPOINTS.STATS}`,
-                expect.anything()
-            );
+            expect(global.fetch).toHaveBeenCalledWith(`${API_BASE_URL}${API_ENDPOINTS.STATS}`, expect.anything());
         });
 
         it('getProfile should call /dashboard/profile', async () => {
@@ -348,10 +330,7 @@ describe('API Service', () => {
 
             await api.getProfile();
 
-            expect(global.fetch).toHaveBeenCalledWith(
-                `${API_BASE_URL}${API_ENDPOINTS.PROFILE}`,
-                expect.anything()
-            );
+            expect(global.fetch).toHaveBeenCalledWith(`${API_BASE_URL}${API_ENDPOINTS.PROFILE}`, expect.anything());
         });
 
         it('updateProfile should PUT to /dashboard/profile', async () => {
@@ -375,10 +354,7 @@ describe('API Service', () => {
 
             await api.getTickets();
 
-            expect(global.fetch).toHaveBeenCalledWith(
-                `${API_BASE_URL}${API_ENDPOINTS.TICKETS}`,
-                expect.anything()
-            );
+            expect(global.fetch).toHaveBeenCalledWith(`${API_BASE_URL}${API_ENDPOINTS.TICKETS}`, expect.anything());
         });
 
         it('createTicket should POST to /support/tickets', async () => {
@@ -402,10 +378,7 @@ describe('API Service', () => {
 
             await api.getDeliveryZones();
 
-            expect(global.fetch).toHaveBeenCalledWith(
-                `${API_BASE_URL}${API_ENDPOINTS.ZONES}`,
-                expect.anything()
-            );
+            expect(global.fetch).toHaveBeenCalledWith(`${API_BASE_URL}${API_ENDPOINTS.ZONES}`, expect.anything());
         });
 
         it('calculateDeliveryFee should POST to /delivery/calculate-fee', async () => {
@@ -429,10 +402,7 @@ describe('API Service', () => {
 
             await api.getLoyaltyBalance();
 
-            expect(global.fetch).toHaveBeenCalledWith(
-                expect.stringContaining('/loyalty/balance'),
-                expect.anything()
-            );
+            expect(global.fetch).toHaveBeenCalledWith(expect.stringContaining('/loyalty/balance'), expect.anything());
         });
 
         it('getLoyaltyHistory should call correct endpoint', async () => {
@@ -440,10 +410,7 @@ describe('API Service', () => {
 
             await api.getLoyaltyHistory();
 
-            expect(global.fetch).toHaveBeenCalledWith(
-                expect.stringContaining('/loyalty/history'),
-                expect.anything()
-            );
+            expect(global.fetch).toHaveBeenCalledWith(expect.stringContaining('/loyalty/history'), expect.anything());
         });
     });
 
@@ -456,10 +423,7 @@ describe('API Service', () => {
 
             await api.getMyVehicles();
 
-            expect(global.fetch).toHaveBeenCalledWith(
-                expect.stringContaining('/vehicles'),
-                expect.anything()
-            );
+            expect(global.fetch).toHaveBeenCalledWith(expect.stringContaining('/vehicles'), expect.anything());
         });
 
         it('addVehicle should POST with vehicle data', async () => {
@@ -468,7 +432,7 @@ describe('API Service', () => {
             await api.addVehicle({
                 car_make: 'Toyota',
                 car_model: 'Camry',
-                car_year: 2024,
+                car_year: 2024
             });
 
             expect(global.fetch).toHaveBeenCalledWith(
@@ -503,7 +467,14 @@ describe('API Service', () => {
             mockFetchSuccess({
                 success: true,
                 intent: { id: 'pi_123', clientSecret: 'cs_123', amount: 2500, currency: 'qar' },
-                breakdown: { partPrice: 100, deliveryFee: 25, loyaltyDiscount: 0, originalTotal: 125, codAmount: 100, total: 25 },
+                breakdown: {
+                    partPrice: 100,
+                    deliveryFee: 25,
+                    loyaltyDiscount: 0,
+                    originalTotal: 125,
+                    codAmount: 100,
+                    total: 25
+                }
             });
 
             const result = await api.createDeliveryFeeIntent('order-123', 5);
@@ -512,7 +483,7 @@ describe('API Service', () => {
                 `${API_BASE_URL}/payments/deposit/order-123`,
                 expect.objectContaining({
                     method: 'POST',
-                    body: JSON.stringify({ loyaltyDiscount: 5 }),
+                    body: JSON.stringify({ loyaltyDiscount: 5 })
                 })
             );
             expect(result.intent.clientSecret).toBe('cs_123');
@@ -521,7 +492,7 @@ describe('API Service', () => {
         it('createDeliveryFeeIntent should default loyaltyDiscount to 0', async () => {
             mockFetchSuccess({
                 success: true,
-                intent: { id: 'pi_123', clientSecret: 'cs_123', amount: 2500, currency: 'qar' },
+                intent: { id: 'pi_123', clientSecret: 'cs_123', amount: 2500, currency: 'qar' }
             });
 
             await api.createDeliveryFeeIntent('order-123');
@@ -529,7 +500,7 @@ describe('API Service', () => {
             expect(global.fetch).toHaveBeenCalledWith(
                 `${API_BASE_URL}/payments/deposit/order-123`,
                 expect.objectContaining({
-                    body: JSON.stringify({ loyaltyDiscount: 0 }),
+                    body: JSON.stringify({ loyaltyDiscount: 0 })
                 })
             );
         });
@@ -538,7 +509,7 @@ describe('API Service', () => {
             mockFetchSuccess({
                 success: true,
                 intent: { id: 'pi_456', clientSecret: 'cs_456', amount: 12500, currency: 'qar' },
-                breakdown: { partPrice: 100, deliveryFee: 25, total: 125 },
+                breakdown: { partPrice: 100, deliveryFee: 25, total: 125 }
             });
 
             const result = await api.createFullPaymentIntent('order-123', 10);
@@ -547,7 +518,7 @@ describe('API Service', () => {
                 `${API_BASE_URL}/payments/full/order-123`,
                 expect.objectContaining({
                     method: 'POST',
-                    body: JSON.stringify({ loyaltyDiscount: 10 }),
+                    body: JSON.stringify({ loyaltyDiscount: 10 })
                 })
             );
             expect(result.breakdown.total).toBe(125);
@@ -574,7 +545,7 @@ describe('API Service', () => {
                 `${API_BASE_URL}/payments/free/order-123`,
                 expect.objectContaining({
                     method: 'POST',
-                    body: JSON.stringify({ loyaltyDiscount: 125 }),
+                    body: JSON.stringify({ loyaltyDiscount: 125 })
                 })
             );
             expect(result.success).toBe(true);
@@ -595,10 +566,7 @@ describe('API Service', () => {
         it('should store token via setToken', async () => {
             const SecureStore = require('expo-secure-store');
             await api.setToken('test-token-123');
-            expect(SecureStore.setItemAsync).toHaveBeenCalledWith(
-                'qscrap_token',
-                'test-token-123'
-            );
+            expect(SecureStore.setItemAsync).toHaveBeenCalledWith('qscrap_token', 'test-token-123');
         });
 
         it('should clear token via clearToken', async () => {

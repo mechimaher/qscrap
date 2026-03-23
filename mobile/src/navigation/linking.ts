@@ -16,20 +16,15 @@ const prefix = Linking.createURL('/');
  * Supports both custom URL scheme (qscrap://) and universal links
  */
 export const linking: LinkingOptions<RootStackParamList> = {
-    prefixes: [
-        prefix,
-        'qscrap://',
-        'https://qscrap.qa',
-        'https://www.qscrap.qa',
-    ],
+    prefixes: [prefix, 'qscrap://', 'https://qscrap.qa', 'https://www.qscrap.qa'],
     config: {
         screens: {
             // Auth screens
             Auth: {
                 screens: {
                     Login: 'login',
-                    Register: 'register',
-                },
+                    Register: 'register'
+                }
             },
             // Main authenticated screens
             Main: {
@@ -40,37 +35,37 @@ export const linking: LinkingOptions<RootStackParamList> = {
                             Requests: 'requests',
                             Orders: 'orders',
                             Profile: 'profile',
-                            Support: 'support',
-                        },
+                            Support: 'support'
+                        }
                     },
                     RequestDetails: {
                         path: 'request/:requestId',
                         parse: {
-                            requestId: (requestId: string) => requestId,
-                        },
+                            requestId: (requestId: string) => requestId
+                        }
                     },
                     OrderDetails: {
                         path: 'order/:orderId',
                         parse: {
-                            orderId: (orderId: string) => orderId,
-                        },
+                            orderId: (orderId: string) => orderId
+                        }
                     },
                     Tracking: {
                         path: 'track/:orderId',
                         parse: {
-                            orderId: (orderId: string) => orderId,
-                        },
+                            orderId: (orderId: string) => orderId
+                        }
                     },
                     CancellationPreview: 'cancel/:orderId',
                     ReturnRequest: 'return/:orderId',
-                    Dispute: 'dispute/:orderId',
-                },
+                    Dispute: 'dispute/:orderId'
+                }
             },
             // Legal screens (accessible without auth)
             PrivacyPolicy: 'privacy',
-            Terms: 'terms',
-        },
-    },
+            Terms: 'terms'
+        }
+    }
 };
 
 /**
@@ -185,5 +180,5 @@ export default {
     handleDeepLink,
     subscribeToLinks,
     getInitialURL,
-    createDeepLink,
+    createDeepLink
 };

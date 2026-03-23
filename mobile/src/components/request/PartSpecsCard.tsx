@@ -42,7 +42,7 @@ function PartSpecsCard({
     onPartNumberChange,
     condition,
     onConditionChange,
-    conditionOptions,
+    conditionOptions
 }: PartSpecsCardProps) {
     const { t, isRTL } = useTranslation();
     const { colors } = useTheme();
@@ -51,7 +51,7 @@ function PartSpecsCard({
         { value: 'left' as const, label: t('newRequest.leftSide'), icon: 'chevron-back' as const },
         { value: 'right' as const, label: t('newRequest.rightSide'), icon: 'chevron-forward' as const },
         { value: 'both' as const, label: t('newRequest.bothSides'), icon: 'swap-horizontal' as const },
-        { value: 'na' as const, label: t('newRequest.notApplicable'), icon: 'settings-outline' as const },
+        { value: 'na' as const, label: t('newRequest.notApplicable'), icon: 'settings-outline' as const }
     ];
 
     return (
@@ -76,9 +76,19 @@ function PartSpecsCard({
                                     onQuantityChange(Math.max(1, quantity - 1));
                                 }
                             }}
-                            style={[styles.stepperBtn, { backgroundColor: quantity > 1 ? Colors.primary + '15' : colors.border }]}
+                            style={[
+                                styles.stepperBtn,
+                                { backgroundColor: quantity > 1 ? Colors.primary + '15' : colors.border }
+                            ]}
                         >
-                            <Text style={[styles.stepperBtnText, { color: quantity > 1 ? Colors.primary : colors.textMuted }]}>−</Text>
+                            <Text
+                                style={[
+                                    styles.stepperBtnText,
+                                    { color: quantity > 1 ? Colors.primary : colors.textMuted }
+                                ]}
+                            >
+                                −
+                            </Text>
                         </TouchableOpacity>
                         <View style={[styles.stepperValue, { backgroundColor: colors.surface }]}>
                             <Text style={[styles.stepperValueText, { color: colors.text }]}>{quantity}</Text>
@@ -90,9 +100,19 @@ function PartSpecsCard({
                                     onQuantityChange(Math.min(10, quantity + 1));
                                 }
                             }}
-                            style={[styles.stepperBtn, { backgroundColor: quantity < 10 ? Colors.primary + '15' : colors.border }]}
+                            style={[
+                                styles.stepperBtn,
+                                { backgroundColor: quantity < 10 ? Colors.primary + '15' : colors.border }
+                            ]}
                         >
-                            <Text style={[styles.stepperBtnText, { color: quantity < 10 ? Colors.primary : colors.textMuted }]}>+</Text>
+                            <Text
+                                style={[
+                                    styles.stepperBtnText,
+                                    { color: quantity < 10 ? Colors.primary : colors.textMuted }
+                                ]}
+                            >
+                                +
+                            </Text>
                         </TouchableOpacity>
                     </View>
                 </View>
@@ -116,12 +136,18 @@ function PartSpecsCard({
                                 {
                                     backgroundColor: side === opt.value ? Colors.primary + '15' : colors.surface,
                                     borderColor: side === opt.value ? Colors.primary : colors.border,
-                                    borderWidth: side === opt.value ? 2 : 1,
-                                },
+                                    borderWidth: side === opt.value ? 2 : 1
+                                }
                             ]}
                         >
-                            <Ionicons name={opt.icon} size={20} color={side === opt.value ? Colors.primary : colors.text} />
-                            <Text style={[styles.sideLabel, { color: side === opt.value ? Colors.primary : colors.text }]}>
+                            <Ionicons
+                                name={opt.icon}
+                                size={20}
+                                color={side === opt.value ? Colors.primary : colors.text}
+                            />
+                            <Text
+                                style={[styles.sideLabel, { color: side === opt.value ? Colors.primary : colors.text }]}
+                            >
                                 {opt.label}
                             </Text>
                         </TouchableOpacity>
@@ -141,8 +167,8 @@ function PartSpecsCard({
                             backgroundColor: colors.background,
                             color: colors.text,
                             borderColor: colors.border,
-                            textAlign: rtlTextAlign(isRTL),
-                        },
+                            textAlign: rtlTextAlign(isRTL)
+                        }
                     ]}
                     placeholder={t('newRequest.partNumberPlaceholder')}
                     placeholderTextColor={colors.textMuted}
@@ -169,15 +195,19 @@ function PartSpecsCard({
                             {
                                 backgroundColor: condition === opt.value ? opt.color + '15' : colors.background,
                                 borderColor: condition === opt.value ? opt.color : colors.border,
-                                borderWidth: condition === opt.value ? 2 : 1,
-                            },
+                                borderWidth: condition === opt.value ? 2 : 1
+                            }
                         ]}
                     >
-                        <Ionicons name={opt.icon as any} size={24} color={condition === opt.value ? opt.color : colors.text} />
+                        <Ionicons
+                            name={opt.icon as any}
+                            size={24}
+                            color={condition === opt.value ? opt.color : colors.text}
+                        />
                         <Text
                             style={[
                                 styles.conditionLabel,
-                                { color: condition === opt.value ? opt.color : colors.text },
+                                { color: condition === opt.value ? opt.color : colors.text }
                             ]}
                         >
                             {opt.label}
@@ -196,109 +226,109 @@ const styles = StyleSheet.create({
         borderRadius: BorderRadius.lg,
         borderWidth: 1,
         padding: Spacing.lg,
-        marginTop: Spacing.md,
+        marginTop: Spacing.md
     },
     specsHeader: {
         alignItems: 'center',
         marginBottom: Spacing.md,
-        gap: Spacing.sm,
+        gap: Spacing.sm
     },
     specsIcon: {
-        fontSize: 20,
+        fontSize: 20
     },
     specsTitle: {
         fontSize: FontSizes.md,
-        fontWeight: '700',
+        fontWeight: '700'
     },
     specsRow: {
         flexDirection: 'row',
         justifyContent: 'space-between',
         alignItems: 'center',
-        marginBottom: Spacing.sm,
+        marginBottom: Spacing.sm
     },
     specsLabel: {
         fontSize: FontSizes.sm,
-        fontWeight: '600',
+        fontWeight: '600'
     },
     quantityStepper: {
         alignItems: 'center',
-        gap: Spacing.sm,
+        gap: Spacing.sm
     },
     stepperBtn: {
         width: 36,
         height: 36,
         borderRadius: 18,
         alignItems: 'center',
-        justifyContent: 'center',
+        justifyContent: 'center'
     },
     stepperBtnText: {
         fontSize: 20,
-        fontWeight: '700',
+        fontWeight: '700'
     },
     stepperValue: {
         width: 48,
         height: 36,
         borderRadius: BorderRadius.md,
         alignItems: 'center',
-        justifyContent: 'center',
+        justifyContent: 'center'
     },
     stepperValueText: {
         fontSize: FontSizes.lg,
-        fontWeight: '800',
+        fontWeight: '800'
     },
     sideGrid: {
         flexWrap: 'wrap',
         gap: Spacing.sm,
-        marginBottom: Spacing.md,
+        marginBottom: Spacing.md
     },
     sideCard: {
         flex: 1,
         minWidth: '22%',
         paddingVertical: Spacing.md,
         borderRadius: BorderRadius.lg,
-        alignItems: 'center',
+        alignItems: 'center'
     },
     sideIcon: {
         fontSize: 20,
-        marginBottom: 4,
+        marginBottom: 4
     },
     sideLabel: {
         fontSize: FontSizes.xs,
-        fontWeight: '600',
+        fontWeight: '600'
     },
     inputGroup: {
-        marginTop: Spacing.md,
+        marginTop: Spacing.md
     },
     label: {
         fontSize: FontSizes.sm,
         fontWeight: '700',
-        marginBottom: Spacing.sm,
+        marginBottom: Spacing.sm
     },
     input: {
         borderWidth: 1,
         borderRadius: BorderRadius.lg,
         paddingVertical: Spacing.md,
         paddingHorizontal: Spacing.lg,
-        fontSize: FontSizes.md,
+        fontSize: FontSizes.md
     },
     conditionGrid: {
         flexWrap: 'wrap',
-        gap: Spacing.sm,
+        gap: Spacing.sm
     },
     conditionCard: {
         flex: 1,
         minWidth: '30%',
         paddingVertical: Spacing.md,
         borderRadius: BorderRadius.lg,
-        alignItems: 'center',
+        alignItems: 'center'
     },
     conditionIcon: {
         fontSize: 24,
-        marginBottom: 4,
+        marginBottom: 4
     },
     conditionLabel: {
         fontSize: FontSizes.xs,
         fontWeight: '600',
-        textAlign: 'center',
-    },
+        textAlign: 'center'
+    }
 });

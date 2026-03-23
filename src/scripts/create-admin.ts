@@ -30,11 +30,14 @@ async function createAdmin() {
         const passwordHash = await bcrypt.hash(password, BCRYPT_ROUNDS);
 
         // Create admin user
-        const result = await pool.query(`
+        const result = await pool.query(
+            `
             INSERT INTO users (phone_number, password_hash, user_type, full_name, email, is_active)
             VALUES ($1, $2, 'admin', $3, $4, true)
             RETURNING user_id, phone_number, user_type, full_name, email
-        `, [phone, passwordHash, fullName, email]);
+        `,
+            [phone, passwordHash, fullName, email]
+        );
 
         console.log('✅ Admin user created successfully!');
         console.log('');
@@ -47,7 +50,6 @@ async function createAdmin() {
         console.log('=================================');
         console.log('');
         console.log('Login at: http://localhost:3000/admin-dashboard.html');
-
     } catch (err: any) {
         console.error('Error creating admin:', err.message);
     } finally {

@@ -14,7 +14,7 @@ import {
     TouchableOpacity,
     Switch,
     KeyboardAvoidingView,
-    Platform,
+    Platform
 } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { useNavigation, useRoute } from '@react-navigation/native';
@@ -36,12 +36,10 @@ import { LoyaltyDiscountCard } from '../components/payment/LoyaltyDiscountCard';
 import { StripeCardField } from '../components/payment/StripeCardField';
 import { PaymentButton } from '../components/payment/PaymentButton';
 
-
 import { useLoyaltyCalculation } from '../hooks/useLoyaltyCalculation';
 import { usePaymentInitialization } from '../hooks/usePaymentInitialization';
 import { usePaymentIntent } from '../hooks/usePaymentIntent';
 import { useStripeCheckout } from '../hooks/useStripeCheckout';
-
 
 // Version for cache-busting diagnostics
 const SCREEN_VERSION = 'v2.0.0-2026-01-27';
@@ -66,6 +64,9 @@ export default function PaymentScreen() {
     const params = route.params as RouteParams;
     const { bidId, garageName, partDescription, orderId: existingOrderId } = params;
 
+    // Order id managed at screen level so both hooks share the same state
+    const [orderId, setOrderId] = useState<string | null>(existingOrderId || null);
+
     const partPrice = parseFloat(String(params.partPrice)) || 0;
     const deliveryFee = parseFloat(String(params.deliveryFee)) || 0;
     const totalAmount = partPrice + deliveryFee;
@@ -75,15 +76,14 @@ export default function PaymentScreen() {
     const [applyDiscount, setApplyDiscount] = useState(false);
 
     // 1. Calculate Loyalty constraints
-    const {
-        loyaltyData,
-        calculateDiscount,
-        payNowAmount,
-        codAmount,
-        freeOrder,
-    } = useLoyaltyCalculation({ partPrice, deliveryFee, paymentType, applyDiscount });
+    const { loyaltyData, calculateDiscount, payNowAmount, codAmount, freeOrder } = useLoyaltyCalculation({
+        partPrice,
+        deliveryFee,
+        paymentType,
+        applyDiscount
+    });
 
-    // 2. Core Stateful data managed by Initialization Hook (Orders & Intent fallbacks)
+    // Single payment intent hook keyed by the current orderId
     const {
         clientSecret,
         setClientSecret,
@@ -92,9 +92,9 @@ export default function PaymentScreen() {
         isCreatingOrder,
         setIsCreatingOrder,
         discountAmount,
-        setDiscountAmount,
+        setDiscountAmount
     } = usePaymentIntent({
-        orderId: null, // Initialized later
+        orderId,
         paymentType,
         applyDiscount,
         payNowAmount,
@@ -102,17 +102,19 @@ export default function PaymentScreen() {
         discountOnPart: calculateDiscount.discountOnPart,
         deliveryFee,
         t,
-        toast,
+        toast
     });
 
+    // 2. Core Stateful data managed by Initialization Hook (Orders & Intent fallbacks)
     const {
-        orderId,
         intentError,
         isCreatingOrder: isInitLoading,
         initializePayment,
-        retryPaymentIntent,
+        retryPaymentIntent
     } = usePaymentInitialization({
         existingOrderId,
+        orderId,
+        setOrderId,
         bidId,
         paymentType,
         applyDiscount,
@@ -128,19 +130,6 @@ export default function PaymentScreen() {
         navigation
     });
 
-    // Replace usePaymentIntent with the initialized OrderID
-    usePaymentIntent({
-        orderId,
-        paymentType,
-        applyDiscount,
-        payNowAmount,
-        discountOnTotal: calculateDiscount.discountOnTotal,
-        discountOnPart: calculateDiscount.discountOnPart,
-        deliveryFee,
-        t,
-        toast,
-    });
-
     // 3. Initialize Payment Intent exactly once
     useEffect(() => {
         initializePayment();
@@ -153,26 +142,21 @@ export default function PaymentScreen() {
         orderId,
         navigation,
         t,
-        toast,
+        toast
     });
 
     // Aggregate loading state
     const isComponentLoading = isCreatingOrder || isInitLoading || isLoading;
 
-
     const handleCancel = useCallback(() => {
-        Alert.alert(
-            t('cancel.title'),
-            t('payment.cancelConfirm'),
-            [
-                { text: t('cancel.keepOrder'), style: 'cancel' },
-                {
-                    text: t('cancel.yesCancel'),
-                    style: 'destructive',
-                    onPress: () => navigation.goBack(),
-                },
-            ]
-        );
+        Alert.alert(t('cancel.title'), t('payment.cancelConfirm'), [
+            { text: t('cancel.keepOrder'), style: 'cancel' },
+            {
+                text: t('cancel.yesCancel'),
+                style: 'destructive',
+                onPress: () => navigation.goBack()
+            }
+        ]);
     }, [navigation, t]);
 
     if (isComponentLoading) {
@@ -180,9 +164,7 @@ export default function PaymentScreen() {
             <SafeAreaView style={[styles.container, { backgroundColor: colors.background }]}>
                 <View style={styles.loadingContainer}>
                     <ActivityIndicator size="large" color={Colors.primary} />
-                    <Text style={[styles.loadingText, { color: colors.text }]}>
-                        {t('payment.preparing')}
-                    </Text>
+                    <Text style={[styles.loadingText, { color: colors.text }]}>{t('payment.preparing')}</Text>
                 </View>
             </SafeAreaView>
         );
@@ -193,10 +175,26 @@ export default function PaymentScreen() {
             <SafeAreaView style={[styles.container, { backgroundColor: colors.background }]}>
                 <View style={styles.loadingContainer}>
                     <Ionicons name="cloud-offline-outline" size={56} color={Colors.error || '#e74c3c'} />
-                    <Text style={[styles.loadingText, { color: colors.text, marginTop: 16, fontSize: 18, fontWeight: '600' }]}>
+                    <Text
+                        style={[
+                            styles.loadingText,
+                            { color: colors.text, marginTop: 16, fontSize: 18, fontWeight: '600' }
+                        ]}
+                    >
                         {t('payment.intentFailed')}
                     </Text>
-                    <Text style={[styles.loadingText, { color: colors.textSecondary, fontSize: 14, marginTop: 8, paddingHorizontal: 32, textAlign: 'center' }]}>
+                    <Text
+                        style={[
+                            styles.loadingText,
+                            {
+                                color: colors.textSecondary,
+                                fontSize: 14,
+                                marginTop: 8,
+                                paddingHorizontal: 32,
+                                textAlign: 'center'
+                            }
+                        ]}
+                    >
                         {intentError}
                     </Text>
                     <TouchableOpacity
@@ -206,10 +204,7 @@ export default function PaymentScreen() {
                         <Ionicons name="refresh-outline" size={20} color="#fff" />
                         <Text style={styles.retryButtonText}>{t('common.retry')}</Text>
                     </TouchableOpacity>
-                    <TouchableOpacity
-                        onPress={() => navigation.goBack()}
-                        style={styles.retryCancel}
-                    >
+                    <TouchableOpacity onPress={() => navigation.goBack()} style={styles.retryCancel}>
                         <Text style={[styles.retryCancelText, { color: colors.textSecondary }]}>
                             {t('common.cancel')}
                         </Text>
@@ -225,7 +220,9 @@ export default function PaymentScreen() {
                 {/* Header */}
                 <View style={[styles.header, { backgroundColor: colors.surface }]}>
                     <TouchableOpacity onPress={handleCancel} style={styles.backButton}>
-                        <Text style={styles.backText}>{isRTL ? '→' : '←'} {t('common.cancel')}</Text>
+                        <Text style={styles.backText}>
+                            {isRTL ? '→' : '←'} {t('common.cancel')}
+                        </Text>
                     </TouchableOpacity>
                     <Text style={[styles.headerTitle, { color: colors.text }]}>
                         {paymentType === 'full' ? t('payment.payFullAmount') : t('payment.payDeliveryFee')}
@@ -238,8 +235,11 @@ export default function PaymentScreen() {
                     behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
                     keyboardVerticalOffset={Platform.OS === 'ios' ? 0 : 20}
                 >
-                    <ScrollView style={styles.content} showsVerticalScrollIndicator={false} keyboardShouldPersistTaps="handled">
-
+                    <ScrollView
+                        style={styles.content}
+                        showsVerticalScrollIndicator={false}
+                        keyboardShouldPersistTaps="handled"
+                    >
                         <PaymentSummary
                             garageName={garageName}
                             partDescription={partDescription}
@@ -276,12 +276,7 @@ export default function PaymentScreen() {
                             t={t}
                         />
 
-                        <StripeCardField
-                            colors={colors}
-                            t={t}
-                            setCardComplete={setCardComplete}
-                            isRTL={isRTL}
-                        />
+                        <StripeCardField colors={colors} t={t} setCardComplete={setCardComplete} isRTL={isRTL} />
 
                         <View style={{ height: 180 }} />
                     </ScrollView>
@@ -307,12 +302,12 @@ const styles = StyleSheet.create({
     loadingContainer: {
         flex: 1,
         justifyContent: 'center',
-        alignItems: 'center',
+        alignItems: 'center'
     },
     loadingText: {
         marginTop: Spacing.lg,
         fontSize: FontSizes.lg,
-        fontWeight: '600',
+        fontWeight: '600'
     },
     retryButton: {
         flexDirection: 'row',
@@ -322,21 +317,21 @@ const styles = StyleSheet.create({
         marginTop: 24,
         paddingVertical: 14,
         paddingHorizontal: 32,
-        borderRadius: 12,
+        borderRadius: 12
     },
     retryButtonText: {
         color: '#fff',
         fontSize: FontSizes.md,
-        fontWeight: '700',
+        fontWeight: '700'
     },
     retryCancel: {
         marginTop: 16,
         paddingVertical: 8,
-        paddingHorizontal: 16,
+        paddingHorizontal: 16
     },
     retryCancelText: {
         fontSize: FontSizes.md,
-        fontWeight: '500',
+        fontWeight: '500'
     },
     header: {
         flexDirection: 'row',
@@ -344,22 +339,22 @@ const styles = StyleSheet.create({
         justifyContent: 'space-between',
         padding: Spacing.lg,
         borderBottomWidth: 1,
-        borderBottomColor: '#E5E5E5',
+        borderBottomColor: '#E5E5E5'
     },
     backButton: {
-        padding: Spacing.sm,
+        padding: Spacing.sm
     },
     backText: {
         color: Colors.primary,
         fontSize: FontSizes.md,
-        fontWeight: '600',
+        fontWeight: '600'
     },
     headerTitle: {
         fontSize: FontSizes.xl,
-        fontWeight: '800',
+        fontWeight: '800'
     },
     content: {
         flex: 1,
-        padding: Spacing.lg,
-    },
+        padding: Spacing.lg
+    }
 });

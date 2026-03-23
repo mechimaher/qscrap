@@ -44,7 +44,7 @@ export interface DeliveryStats {
 }
 
 export class TrackingService {
-    constructor(private pool: Pool) { }
+    constructor(private pool: Pool) {}
 
     /**
      * Update driver's current GPS location
@@ -57,7 +57,8 @@ export class TrackingService {
         heading?: number,
         speed?: number
     ): Promise<void> {
-        await this.pool.query(`
+        await this.pool.query(
+            `
             UPDATE drivers 
             SET current_lat = $1,
                 current_lng = $2,
@@ -67,7 +68,9 @@ export class TrackingService {
                 last_location_update = NOW(),
                 updated_at = NOW()
             WHERE driver_id = $6
-        `, [latitude, longitude, accuracy, heading, speed, driverId]);
+        `,
+            [latitude, longitude, accuracy, heading, speed, driverId]
+        );
 
         // Emit real-time location to tracking systems
         emitToOperations('driver_location_update', {
@@ -166,7 +169,8 @@ export class TrackingService {
      * Get driver's current location
      */
     async getDriverCurrentLocation(driverId: string): Promise<DriverLocation | null> {
-        const result = await this.pool.query(`
+        const result = await this.pool.query(
+            `
             SELECT 
                 driver_id,
                 current_lat as latitude,
@@ -177,7 +181,9 @@ export class TrackingService {
                 last_location_update as timestamp
             FROM drivers
             WHERE driver_id = $1
-        `, [driverId]);
+        `,
+            [driverId]
+        );
 
         if (result.rows.length === 0 || !result.rows[0].latitude) {
             return null;

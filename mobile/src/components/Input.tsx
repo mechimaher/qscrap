@@ -8,7 +8,7 @@ import {
     Animated,
     ViewStyle,
     TextInputProps,
-    Platform,
+    Platform
 } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
 import { useTheme } from '../contexts';
@@ -65,13 +65,13 @@ export const Input: React.FC<InputProps> = ({
         Animated.timing(labelAnim, {
             toValue: isFocused || value ? 1 : 0,
             duration: 150,
-            useNativeDriver: false,
+            useNativeDriver: false
         }).start();
 
         Animated.timing(borderAnim, {
             toValue: isFocused ? 1 : 0,
             duration: 150,
-            useNativeDriver: false,
+            useNativeDriver: false
         }).start();
     }, [isFocused, value, labelAnim, borderAnim]);
 
@@ -97,25 +97,21 @@ export const Input: React.FC<InputProps> = ({
         left: icon ? 48 : Spacing.lg,
         top: labelAnim.interpolate({
             inputRange: [0, 1],
-            outputRange: [16, -8],
+            outputRange: [16, -8]
         }),
         fontSize: labelAnim.interpolate({
             inputRange: [0, 1],
-            outputRange: [FontSize.md, FontSize.xs],
+            outputRange: [FontSize.md, FontSize.xs]
         }),
-        color: error
-            ? colors.danger
-            : isFocused
-                ? colors.primary
-                : colors.textSecondary,
+        color: error ? colors.danger : isFocused ? colors.primary : colors.textSecondary,
         backgroundColor: colors.surface,
         paddingHorizontal: 4,
-        zIndex: 1,
+        zIndex: 1
     };
 
     const borderWidth = borderAnim.interpolate({
         inputRange: [0, 1],
-        outputRange: [1, 2],
+        outputRange: [1, 2]
     });
 
     const isPassword = secureTextEntry !== undefined;
@@ -130,8 +126,8 @@ export const Input: React.FC<InputProps> = ({
                     {
                         backgroundColor: colors.surface,
                         borderColor: getBorderColor(),
-                        borderWidth,
-                    },
+                        borderWidth
+                    }
                 ]}
             >
                 {/* Left Icon */}
@@ -147,7 +143,8 @@ export const Input: React.FC<InputProps> = ({
                 {/* Floating Label */}
                 {label && (
                     <Animated.Text style={labelStyle}>
-                        {label}{required && <Text style={{ color: colors.danger }}> *</Text>}
+                        {label}
+                        {required && <Text style={{ color: colors.danger }}> *</Text>}
                     </Animated.Text>
                 )}
 
@@ -164,8 +161,8 @@ export const Input: React.FC<InputProps> = ({
                         {
                             color: colors.text,
                             paddingLeft: icon ? 48 : Spacing.lg,
-                            paddingRight: (rightIcon || isPassword) ? 48 : Spacing.lg,
-                        },
+                            paddingRight: rightIcon || isPassword ? 48 : Spacing.lg
+                        }
                     ]}
                     placeholderTextColor={colors.textMuted}
                     accessibilityLabel={label}
@@ -187,12 +184,8 @@ export const Input: React.FC<InputProps> = ({
                             />
                         </TouchableOpacity>
                     )}
-                    {!isPassword && success && (
-                        <Ionicons name="checkmark-circle" size={20} color={colors.success} />
-                    )}
-                    {!isPassword && error && (
-                        <Ionicons name="alert-circle" size={20} color={colors.danger} />
-                    )}
+                    {!isPassword && success && <Ionicons name="checkmark-circle" size={20} color={colors.success} />}
+                    {!isPassword && error && <Ionicons name="alert-circle" size={20} color={colors.danger} />}
                     {!isPassword && !success && !error && rightIcon && (
                         <TouchableOpacity
                             onPress={onRightIconPress}
@@ -226,50 +219,50 @@ export const Input: React.FC<InputProps> = ({
 
 const styles = StyleSheet.create({
     container: {
-        marginBottom: Spacing.md,
+        marginBottom: Spacing.md
     },
     inputContainer: {
         flexDirection: 'row',
         alignItems: 'center',
         borderRadius: BorderRadius.md,
         minHeight: 56,
-        position: 'relative',
+        position: 'relative'
     },
     leftIcon: {
         position: 'absolute',
         left: Spacing.lg,
-        zIndex: 1,
+        zIndex: 1
     },
     input: {
         flex: 1,
         fontSize: FontSize.md,
-        paddingVertical: Platform.OS === 'ios' ? Spacing.lg : Spacing.md,
+        paddingVertical: Platform.OS === 'ios' ? Spacing.lg : Spacing.md
     },
     rightIconContainer: {
         position: 'absolute',
         right: Spacing.lg,
         flexDirection: 'row',
-        alignItems: 'center',
+        alignItems: 'center'
     },
     iconButton: {
-        padding: Spacing.xs,
+        padding: Spacing.xs
     },
     helperRow: {
         flexDirection: 'row',
         justifyContent: 'space-between',
         marginTop: Spacing.xs,
-        paddingHorizontal: Spacing.xs,
+        paddingHorizontal: Spacing.xs
     },
     helperTextContainer: {
-        flex: 1,
+        flex: 1
     },
     helperText: {
-        fontSize: FontSize.xs,
+        fontSize: FontSize.xs
     },
     characterCount: {
         fontSize: FontSize.xs,
-        marginLeft: Spacing.sm,
-    },
+        marginLeft: Spacing.sm
+    }
 });
 
 export default Input;

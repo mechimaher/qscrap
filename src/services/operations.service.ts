@@ -1,6 +1,6 @@
 /**
  * OperationsService - Operations Dashboard Business Logic
- * 
+ *
  * Extracted from operations.controller.ts (1,260 lines) to enable:
  * - Testability
  * - Reusability
@@ -55,13 +55,14 @@ export interface UserFilters {
 // ============================================
 
 export class OperationsService {
-
     /**
      * Get live dashboard statistics (cached 1 minute)
      */
     static async getDashboardStats(): Promise<DashboardStats> {
-        return cacheGetOrSet(dashboardStatsKey(), async () => {
-            const result = await pool.query(`
+        return cacheGetOrSet(
+            dashboardStatsKey(),
+            async () => {
+                const result = await pool.query(`
                 SELECT
                     (SELECT COUNT(*) FROM part_requests WHERE status = 'pending') as active_requests,
                     (SELECT COUNT(*) FROM bids WHERE status = 'pending') as pending_bids,
@@ -72,8 +73,10 @@ export class OperationsService {
                     (SELECT COUNT(*) FROM disputes WHERE status IN ('pending', 'contested')) as pending_disputes,
                     (SELECT COUNT(*) FROM delivery_assignments WHERE assignment_type = 'return_to_garage' AND status = 'assigned') as pending_returns
             `);
-            return result.rows[0];
-        }, CacheTTL.SHORT);
+                return result.rows[0];
+            },
+            CacheTTL.SHORT
+        );
     }
 
     /**
@@ -109,16 +112,20 @@ export class OperationsService {
         }
 
         // Count
-        const countResult = await pool.query(`
+        const countResult = await pool.query(
+            `
             SELECT COUNT(*) FROM orders o
             JOIN users u ON o.customer_id = u.user_id
             JOIN garages g ON o.garage_id = g.garage_id
             ${whereClause}
-        `, params);
+        `,
+            params
+        );
         const total = parseInt(countResult.rows[0].count);
 
         // Data
-        const result = await pool.query(`
+        const result = await pool.query(
+            `
             SELECT o.order_id, o.order_number, o.order_status, o.total_amount,
                    o.created_at, o.updated_at, o.driver_id, o.loyalty_discount,
                    u.full_name as customer_name, u.phone_number as customer_phone,
@@ -133,7 +140,9 @@ export class OperationsService {
             ${whereClause}
             ORDER BY o.created_at DESC
             LIMIT $${paramIndex++} OFFSET $${paramIndex}
-        `, [...params, limit, offset]);
+        `,
+            [...params, limit, offset]
+        );
 
         return {
             orders: result.rows,
@@ -149,7 +158,8 @@ export class OperationsService {
      * Get order details with full history
      */
     static async getOrderDetails(order_id: string): Promise<unknown> {
-        const orderResult = await pool.query(`
+        const orderResult = await pool.query(
+            `
             SELECT o.*, 
                    u.full_name as customer_name, u.phone_number as customer_phone,
                    g.garage_name, g.address as garage_address,
@@ -161,19 +171,24 @@ export class OperationsService {
             JOIN part_requests pr ON o.request_id = pr.request_id
             LEFT JOIN drivers d ON o.driver_id = d.user_id
             WHERE o.order_id = $1
-        `, [order_id]);
+        `,
+            [order_id]
+        );
 
         if (orderResult.rows.length === 0) {
             throw ApiError.notFound('Order not found');
         }
 
         // Get status history
-        const historyResult = await pool.query(`
+        const historyResult = await pool.query(
+            `
             SELECT old_status, new_status, reason, changed_by_type, created_at
             FROM order_status_history
             WHERE order_id = $1
             ORDER BY created_at ASC
-        `, [order_id]);
+        `,
+            [order_id]
+        );
 
         return {
             order: orderResult.rows[0],
@@ -201,14 +216,12 @@ export class OperationsService {
         }
 
         // Count
-        const countResult = await pool.query(
-            `SELECT COUNT(*) FROM disputes d ${whereClause}`,
-            params
-        );
+        const countResult = await pool.query(`SELECT COUNT(*) FROM disputes d ${whereClause}`, params);
         const total = parseInt(countResult.rows[0].count);
 
         // Data
-        const result = await pool.query(`
+        const result = await pool.query(
+            `
             SELECT d.*, o.order_number,
                    u.full_name as customer_name,
                    g.garage_name
@@ -219,7 +232,9 @@ export class OperationsService {
             ${whereClause}
             ORDER BY d.created_at DESC
             LIMIT $${paramIndex++} OFFSET $${paramIndex}
-        `, [...params, limit, offset]);
+        `,
+            [...params, limit, offset]
+        );
 
         return {
             disputes: result.rows,
@@ -246,7 +261,8 @@ export class OperationsService {
         try {
             await client.query('BEGIN');
 
-            const result = await client.query(`
+            const result = await client.query(
+                `
                 UPDATE disputes SET
                     status = 'resolved',
                     resolution = $1,
@@ -256,7 +272,9 @@ export class OperationsService {
                     updated_at = NOW()
                 WHERE dispute_id = $4
                 RETURNING *
-            `, [resolution, admin_notes, resolved_by, dispute_id]);
+            `,
+                [resolution, admin_notes, resolved_by, dispute_id]
+            );
 
             if (result.rows.length === 0) {
                 throw ApiError.notFound('Dispute not found');
@@ -314,21 +332,21 @@ export class OperationsService {
         }
 
         // Count
-        const countResult = await pool.query(
-            `SELECT COUNT(*) FROM users ${whereClause}`,
-            params
-        );
+        const countResult = await pool.query(`SELECT COUNT(*) FROM users ${whereClause}`, params);
         const total = parseInt(countResult.rows[0].count);
 
         // Data
-        const result = await pool.query(`
+        const result = await pool.query(
+            `
             SELECT user_id, full_name, phone_number, email, user_type,
                    is_active, is_suspended, created_at
             FROM users
             ${whereClause}
             ORDER BY created_at DESC
             LIMIT $${paramIndex++} OFFSET $${paramIndex}
-        `, [...params, limit, offset]);
+        `,
+            [...params, limit, offset]
+        );
 
         return {
             users: result.rows,
@@ -344,14 +362,17 @@ export class OperationsService {
      * Suspend a user
      */
     static async suspendUser(user_id: string, reason: string, admin_id: string): Promise<{ success: boolean }> {
-        await pool.query(`
+        await pool.query(
+            `
             UPDATE users SET
                 is_suspended = true,
                 suspension_reason = $1,
                 suspended_by = $2,
                 updated_at = NOW()
             WHERE user_id = $3
-        `, [reason, admin_id, user_id]);
+        `,
+            [reason, admin_id, user_id]
+        );
 
         // Invalidate dashboard cache
         await invalidateDashboardCache();
@@ -363,14 +384,17 @@ export class OperationsService {
      * Activate a user
      */
     static async activateUser(user_id: string): Promise<{ success: boolean }> {
-        await pool.query(`
+        await pool.query(
+            `
             UPDATE users SET
                 is_active = true,
                 is_suspended = false,
                 suspension_reason = NULL,
                 updated_at = NOW()
             WHERE user_id = $1
-        `, [user_id]);
+        `,
+            [user_id]
+        );
 
         return { success: true };
     }

@@ -10,7 +10,7 @@ import logger from '../../utils/logger';
 const stripe = new Stripe(process.env.STRIPE_SECRET_KEY!);
 
 export class PaymentMethodsService {
-    constructor(private pool: Pool) { }
+    constructor(private pool: Pool) {}
 
     /**
      * Get or create Stripe customer for garage
@@ -33,10 +33,9 @@ export class PaymentMethodsService {
         }
 
         // Get garage email
-        const userResult = await this.pool.query(
-            'SELECT email, phone_number FROM users WHERE user_id = $1',
-            [garageId]
-        );
+        const userResult = await this.pool.query('SELECT email, phone_number FROM users WHERE user_id = $1', [
+            garageId
+        ]);
 
         // Create Stripe customer
         const customer = await stripe.customers.create({
@@ -50,10 +49,10 @@ export class PaymentMethodsService {
         });
 
         // Save customer ID
-        await this.pool.query(
-            'UPDATE garages SET stripe_customer_id = $1 WHERE garage_id = $2',
-            [customer.id, garageId]
-        );
+        await this.pool.query('UPDATE garages SET stripe_customer_id = $1 WHERE garage_id = $2', [
+            customer.id,
+            garageId
+        ]);
 
         logger.info('Created Stripe customer', { customerId: customer.id, garageName: garage.garage_name });
 
@@ -88,7 +87,8 @@ export class PaymentMethodsService {
      * Get saved payment methods for garage
      */
     async getPaymentMethods(garageId: string): Promise<any[]> {
-        const result = await this.pool.query(`
+        const result = await this.pool.query(
+            `
             SELECT 
                 method_id, 
                 card_last4, 
@@ -100,7 +100,9 @@ export class PaymentMethodsService {
             FROM garage_payment_methods
             WHERE garage_id = $1
             ORDER BY is_default DESC, created_at DESC
-        `, [garageId]);
+        `,
+            [garageId]
+        );
 
         return result.rows;
     }
@@ -114,10 +116,7 @@ export class PaymentMethodsService {
             await client.query('BEGIN');
 
             // Unset all defaults for this garage
-            await client.query(
-                'UPDATE garage_payment_methods SET is_default = false WHERE garage_id = $1',
-                [garageId]
-            );
+            await client.query('UPDATE garage_payment_methods SET is_default = false WHERE garage_id = $1', [garageId]);
 
             // Set new default
             const result = await client.query(
@@ -130,10 +129,9 @@ export class PaymentMethodsService {
             }
 
             // Update Stripe customer default
-            const garageResult = await client.query(
-                'SELECT stripe_customer_id FROM garages WHERE garage_id = $1',
-                [garageId]
-            );
+            const garageResult = await client.query('SELECT stripe_customer_id FROM garages WHERE garage_id = $1', [
+                garageId
+            ]);
 
             if (garageResult.rows[0]?.stripe_customer_id) {
                 await stripe.customers.update(garageResult.rows[0].stripe_customer_id, {
@@ -177,21 +175,21 @@ export class PaymentMethodsService {
         }
 
         // Delete from database
-        await this.pool.query(
-            'DELETE FROM garage_payment_methods WHERE method_id = $1',
-            [methodId]
-        );
+        await this.pool.query('DELETE FROM garage_payment_methods WHERE method_id = $1', [methodId]);
 
         // If was default, set another as default
         if (paymentMethod.is_default) {
-            await this.pool.query(`
+            await this.pool.query(
+                `
                 UPDATE garage_payment_methods 
                 SET is_default = true 
                 WHERE garage_id = $1 
                 AND method_id = (
                     SELECT method_id FROM garage_payment_methods WHERE garage_id = $1 ORDER BY created_at DESC LIMIT 1
                 )
-            `, [garageId]);
+            `,
+                [garageId]
+            );
         }
 
         logger.info('Deleted payment method', { methodId });
@@ -200,11 +198,7 @@ export class PaymentMethodsService {
     /**
      * Manually add a payment method (for webhook fallback)
      */
-    async addPaymentMethod(
-        garageId: string,
-        stripePaymentMethodId: string,
-        stripeCustomerId: string
-    ): Promise<void> {
+    async addPaymentMethod(garageId: string, stripePaymentMethodId: string, stripeCustomerId: string): Promise<void> {
         // Get card details from Stripe
         const paymentMethod = await stripe.paymentMethods.retrieve(stripePaymentMethodId);
 
@@ -213,27 +207,29 @@ export class PaymentMethodsService {
         }
 
         // Check if this is first payment method
-        const existing = await this.pool.query(
-            'SELECT COUNT(*) FROM garage_payment_methods WHERE garage_id = $1',
-            [garageId]
-        );
+        const existing = await this.pool.query('SELECT COUNT(*) FROM garage_payment_methods WHERE garage_id = $1', [
+            garageId
+        ]);
         const isDefault = existing.rows[0].count === '0';
 
-        await this.pool.query(`
+        await this.pool.query(
+            `
             INSERT INTO garage_payment_methods 
             (garage_id, stripe_payment_method_id, stripe_customer_id, card_last4, card_brand, card_exp_month, card_exp_year, is_default)
             VALUES ($1, $2, $3, $4, $5, $6, $7, $8)
             ON CONFLICT (stripe_payment_method_id) DO UPDATE SET updated_at = NOW()
-        `, [
-            garageId,
-            stripePaymentMethodId,
-            stripeCustomerId,
-            paymentMethod.card.last4,
-            paymentMethod.card.brand,
-            paymentMethod.card.exp_month,
-            paymentMethod.card.exp_year,
-            isDefault
-        ]);
+        `,
+            [
+                garageId,
+                stripePaymentMethodId,
+                stripeCustomerId,
+                paymentMethod.card.last4,
+                paymentMethod.card.brand,
+                paymentMethod.card.exp_month,
+                paymentMethod.card.exp_year,
+                isDefault
+            ]
+        );
 
         logger.info('Added payment method', { brand: paymentMethod.card.brand, last4: paymentMethod.card.last4 });
     }

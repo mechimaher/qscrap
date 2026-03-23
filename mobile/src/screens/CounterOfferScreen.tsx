@@ -13,7 +13,7 @@ import {
     Alert,
     ActivityIndicator,
     KeyboardAvoidingView,
-    Platform,
+    Platform
 } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { LinearGradient } from 'expo-linear-gradient';
@@ -55,7 +55,8 @@ const MAX_ROUNDS = 3;
 export default function CounterOfferScreen() {
     const navigation = useNavigation();
     const route = useRoute();
-    const { bidId, garageName, currentAmount, partDescription, garageCounterId, requestId } = route.params as NegotiationParams;
+    const { bidId, garageName, currentAmount, partDescription, garageCounterId, requestId } =
+        route.params as NegotiationParams;
     const { socket } = useSocketContext();
     const { colors } = useTheme();
     const { t, isRTL } = useTranslation();
@@ -121,7 +122,7 @@ export default function CounterOfferScreen() {
         try {
             const token = await api.getToken();
             const response = await fetch(`${API_BASE_URL}${API_ENDPOINTS.NEGOTIATION_HISTORY(bidId)}`, {
-                headers: { Authorization: `Bearer ${token}` },
+                headers: { Authorization: `Bearer ${token}` }
             });
 
             if (response.ok) {
@@ -176,33 +177,30 @@ export default function CounterOfferScreen() {
 
             if (respondingToOfferId) {
                 // We're responding to a garage counter-offer
-                response = await fetch(
-                    `${API_BASE_URL}${API_ENDPOINTS.RESPOND_TO_COUNTER(respondingToOfferId)}`,
-                    {
-                        method: 'POST',
-                        headers: {
-                            'Content-Type': 'application/json',
-                            Authorization: `Bearer ${token}`,
-                        },
-                        body: JSON.stringify({
-                            action: 'counter',
-                            counter_amount: amount,
-                            message: message.trim() || undefined,
-                        }),
-                    }
-                );
+                response = await fetch(`${API_BASE_URL}${API_ENDPOINTS.RESPOND_TO_COUNTER(respondingToOfferId)}`, {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                        Authorization: `Bearer ${token}`
+                    },
+                    body: JSON.stringify({
+                        action: 'counter',
+                        counter_amount: amount,
+                        message: message.trim() || undefined
+                    })
+                });
             } else {
                 // Initial counter-offer (no pending garage offer)
                 response = await fetch(`${API_BASE_URL}${API_ENDPOINTS.COUNTER_OFFER(bidId)}`, {
                     method: 'POST',
                     headers: {
                         'Content-Type': 'application/json',
-                        Authorization: `Bearer ${token}`,
+                        Authorization: `Bearer ${token}`
                     },
                     body: JSON.stringify({
                         proposed_amount: amount,
-                        message: message.trim() || undefined,
-                    }),
+                        message: message.trim() || undefined
+                    })
                 });
             }
 
@@ -238,98 +236,142 @@ export default function CounterOfferScreen() {
         } finally {
             setIsSending(false);
         }
-    }, [proposedAmount, currentAmount, respondingToOfferId, bidId, message, garageName, requestId, toast, t, navigation]);
+    }, [
+        proposedAmount,
+        currentAmount,
+        respondingToOfferId,
+        bidId,
+        message,
+        garageName,
+        requestId,
+        toast,
+        t,
+        navigation
+    ]);
 
-    const handleRespondToOffer = useCallback(async (action: 'accept' | 'reject' | 'counter') => {
-        if (!pendingOffer) return;
+    const handleRespondToOffer = useCallback(
+        async (action: 'accept' | 'reject' | 'counter') => {
+            if (!pendingOffer) return;
 
-        if (action === 'counter') {
-            // Remember which offer we're responding to, then show counter form
-            setRespondingToOfferId(pendingOffer.counter_offer_id);
-            setPendingOffer(null);
-            setProposedAmount('');
-            setMessage('');
-            return;
-        }
-
-        setIsSending(true);
-        Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
-
-        try {
-            const token = await api.getToken();
-            const response = await fetch(
-                `${API_BASE_URL}${API_ENDPOINTS.RESPOND_TO_COUNTER(pendingOffer.counter_offer_id)}`,
-                {
-                    method: 'POST',
-                    headers: {
-                        'Content-Type': 'application/json',
-                        Authorization: `Bearer ${token}`,
-                    },
-                    body: JSON.stringify({ action }),
-                }
-            );
-
-            if (response.ok) {
-                Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success);
-
-                if (action === 'accept') {
-                    toast.show({
-                        type: 'success',
-                        title: t('offers.acceptedTitle'),
-                        message: t('offers.youAccepted', { amount: pendingOffer.proposed_amount }),
-                        action: {
-                            label: t('common.ok'),
-                            onPress: () => navigation.goBack()
-                        }
-                    });
-                } else {
-                    toast.info(t('offers.rejectedTitle'), t('offers.rejectedMessage'));
-                    loadNegotiationHistory();
-                }
-            } else {
-                const data = await response.json();
-                throw new Error(data.error || t('offers.responseFailed'));
+            if (action === 'counter') {
+                // Remember which offer we're responding to, then show counter form
+                setRespondingToOfferId(pendingOffer.counter_offer_id);
+                setPendingOffer(null);
+                setProposedAmount('');
+                setMessage('');
+                return;
             }
-        } catch (error: any) {
-            handleApiError(error, toast);
-        } finally {
-            setIsSending(false);
-        }
-    }, [pendingOffer, toast, t, navigation]);
 
-    const renderHistoryItem = useCallback((item: CounterOffer) => {
-        const isCustomer = item.offered_by_type === 'customer';
+            setIsSending(true);
+            Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
 
-        return (
-            <View
-                key={item.counter_offer_id}
-                style={[styles.historyItem, isCustomer ? styles.customerOffer : styles.garageOffer, isRTL ? (isCustomer ? { borderLeftWidth: 0, borderRightWidth: 3, marginLeft: 0, marginRight: Spacing.xl, borderRightColor: Colors.primary } : { borderLeftWidth: 0, borderRightWidth: 3, marginRight: 0, marginLeft: Spacing.xl, borderRightColor: '#D1D5DB' }) : {}]}
-            >
-                <View style={[styles.historyHeader, { flexDirection: rtlFlexDirection(isRTL) }]}>
-                    <Text style={styles.historyRound}>{t('offers.round')} {item.round_number}</Text>
-                    <Text style={[
-                        styles.historyStatus,
-                        item.status === 'accepted' && styles.statusAccepted,
-                        item.status === 'rejected' && styles.statusRejected,
-                        item.status === 'pending' && styles.statusPending,
-                    ]}>
-                        {item.status.toUpperCase()}
+            try {
+                const token = await api.getToken();
+                const response = await fetch(
+                    `${API_BASE_URL}${API_ENDPOINTS.RESPOND_TO_COUNTER(pendingOffer.counter_offer_id)}`,
+                    {
+                        method: 'POST',
+                        headers: {
+                            'Content-Type': 'application/json',
+                            Authorization: `Bearer ${token}`
+                        },
+                        body: JSON.stringify({ action })
+                    }
+                );
+
+                if (response.ok) {
+                    Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success);
+
+                    if (action === 'accept') {
+                        toast.show({
+                            type: 'success',
+                            title: t('offers.acceptedTitle'),
+                            message: t('offers.youAccepted', { amount: pendingOffer.proposed_amount }),
+                            action: {
+                                label: t('common.ok'),
+                                onPress: () => navigation.goBack()
+                            }
+                        });
+                    } else {
+                        toast.info(t('offers.rejectedTitle'), t('offers.rejectedMessage'));
+                        loadNegotiationHistory();
+                    }
+                } else {
+                    const data = await response.json();
+                    throw new Error(data.error || t('offers.responseFailed'));
+                }
+            } catch (error: any) {
+                handleApiError(error, toast);
+            } finally {
+                setIsSending(false);
+            }
+        },
+        [pendingOffer, toast, t, navigation]
+    );
+
+    const renderHistoryItem = useCallback(
+        (item: CounterOffer) => {
+            const isCustomer = item.offered_by_type === 'customer';
+
+            return (
+                <View
+                    key={item.counter_offer_id}
+                    style={[
+                        styles.historyItem,
+                        isCustomer ? styles.customerOffer : styles.garageOffer,
+                        isRTL
+                            ? isCustomer
+                                ? {
+                                      borderLeftWidth: 0,
+                                      borderRightWidth: 3,
+                                      marginLeft: 0,
+                                      marginRight: Spacing.xl,
+                                      borderRightColor: Colors.primary
+                                  }
+                                : {
+                                      borderLeftWidth: 0,
+                                      borderRightWidth: 3,
+                                      marginRight: 0,
+                                      marginLeft: Spacing.xl,
+                                      borderRightColor: '#D1D5DB'
+                                  }
+                            : {}
+                    ]}
+                >
+                    <View style={[styles.historyHeader, { flexDirection: rtlFlexDirection(isRTL) }]}>
+                        <Text style={styles.historyRound}>
+                            {t('offers.round')} {item.round_number}
+                        </Text>
+                        <Text
+                            style={[
+                                styles.historyStatus,
+                                item.status === 'accepted' && styles.statusAccepted,
+                                item.status === 'rejected' && styles.statusRejected,
+                                item.status === 'pending' && styles.statusPending
+                            ]}
+                        >
+                            {item.status.toUpperCase()}
+                        </Text>
+                    </View>
+                    <Text style={[styles.historyBy, { textAlign: rtlTextAlign(isRTL) }]}>
+                        {isCustomer ? t('offers.you') : garageName}
+                    </Text>
+                    <Text style={[styles.historyAmount, { textAlign: rtlTextAlign(isRTL) }]}>
+                        {item.proposed_amount} {t('common.currency')}
+                    </Text>
+                    {item.message && (
+                        <Text style={[styles.historyMessage, { textAlign: rtlTextAlign(isRTL) }]}>
+                            "{item.message}"
+                        </Text>
+                    )}
+                    <Text style={[styles.historyDate, { textAlign: rtlTextAlign(isRTL) }]}>
+                        {new Date(item.created_at).toLocaleString()}
                     </Text>
                 </View>
-                <Text style={[styles.historyBy, { textAlign: rtlTextAlign(isRTL) }]}>
-                    {isCustomer ? t('offers.you') : garageName}
-                </Text>
-                <Text style={[styles.historyAmount, { textAlign: rtlTextAlign(isRTL) }]}>{item.proposed_amount} {t('common.currency')}</Text>
-                {item.message && (
-                    <Text style={[styles.historyMessage, { textAlign: rtlTextAlign(isRTL) }]}>"{item.message}"</Text>
-                )}
-                <Text style={[styles.historyDate, { textAlign: rtlTextAlign(isRTL) }]}>
-                    {new Date(item.created_at).toLocaleString()}
-                </Text>
-            </View>
-        );
-
-    }, [isRTL, t, garageName, colors]);
+            );
+        },
+        [isRTL, t, garageName, colors]
+    );
 
     if (isLoading) {
         return (
@@ -344,9 +386,19 @@ export default function CounterOfferScreen() {
     return (
         <SafeAreaView style={[styles.container, { backgroundColor: colors.background }]} edges={['top']}>
             {/* Header */}
-            <View style={[styles.header, { backgroundColor: colors.surface, borderBottomColor: colors.border, flexDirection: rtlFlexDirection(isRTL) }]}>
+            <View
+                style={[
+                    styles.header,
+                    {
+                        backgroundColor: colors.surface,
+                        borderBottomColor: colors.border,
+                        flexDirection: rtlFlexDirection(isRTL)
+                    }
+                ]}
+            >
                 <TouchableOpacity onPress={() => navigation.goBack()} style={styles.backButton}>
-                    <Ionicons name="arrow-back" size={20} color={Colors.primary} /> <Text style={styles.backText}>{t('common.back')}</Text>
+                    <Ionicons name="arrow-back" size={20} color={Colors.primary} />{' '}
+                    <Text style={styles.backText}>{t('common.back')}</Text>
                 </TouchableOpacity>
                 <Text style={[styles.headerTitle, { color: colors.text }]}>{t('offers.negotiatePrice')}</Text>
                 <View style={{ width: 60 }} />
@@ -357,27 +409,32 @@ export default function CounterOfferScreen() {
                 behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
                 keyboardVerticalOffset={Platform.OS === 'ios' ? 0 : 20}
             >
-                <ScrollView style={styles.scrollView} showsVerticalScrollIndicator={false} keyboardShouldPersistTaps="handled">
+                <ScrollView
+                    style={styles.scrollView}
+                    showsVerticalScrollIndicator={false}
+                    keyboardShouldPersistTaps="handled"
+                >
                     {/* Current Bid Info */}
                     <View style={[styles.bidCard, { backgroundColor: colors.surface }]}>
-                        <Text style={[styles.garageName, { color: colors.text, textAlign: rtlTextAlign(isRTL) }]}>{garageName}</Text>
+                        <Text style={[styles.garageName, { color: colors.text, textAlign: rtlTextAlign(isRTL) }]}>
+                            {garageName}
+                        </Text>
                         <Text style={[styles.partName, { textAlign: rtlTextAlign(isRTL) }]}>{partDescription}</Text>
                         <View style={[styles.priceRow, { flexDirection: rtlFlexDirection(isRTL) }]}>
                             <Text style={styles.priceLabel}>{t('offers.currentBid')}</Text>
-                            <Text style={styles.priceAmount}>{currentAmount} {t('common.currency')}</Text>
+                            <Text style={styles.priceAmount}>
+                                {currentAmount} {t('common.currency')}
+                            </Text>
                         </View>
                         <View style={styles.roundsInfo}>
                             <Text style={styles.roundsText}>
                                 {t('offers.roundCount', { current: currentRound, max: MAX_ROUNDS })}
                             </Text>
                             <View style={styles.roundsDots}>
-                                {[1, 2, 3].map(r => (
+                                {[1, 2, 3].map((r) => (
                                     <View
                                         key={r}
-                                        style={[
-                                            styles.roundDot,
-                                            r <= currentRound && styles.roundDotActive
-                                        ]}
+                                        style={[styles.roundDot, r <= currentRound && styles.roundDotActive]}
                                     />
                                 ))}
                             </View>
@@ -387,10 +444,16 @@ export default function CounterOfferScreen() {
                     {/* Pending Offer Response */}
                     {pendingOffer && (
                         <View style={styles.pendingCard}>
-                            <Text style={[styles.pendingTitle, { textAlign: rtlTextAlign(isRTL) }]}>{t('offers.garageCounterOffer')}</Text>
-                            <Text style={[styles.pendingAmount, { textAlign: rtlTextAlign(isRTL) }]}>{pendingOffer.proposed_amount} {t('common.currency')}</Text>
+                            <Text style={[styles.pendingTitle, { textAlign: rtlTextAlign(isRTL) }]}>
+                                {t('offers.garageCounterOffer')}
+                            </Text>
+                            <Text style={[styles.pendingAmount, { textAlign: rtlTextAlign(isRTL) }]}>
+                                {pendingOffer.proposed_amount} {t('common.currency')}
+                            </Text>
                             {pendingOffer.message && (
-                                <Text style={[styles.pendingMessage, { textAlign: rtlTextAlign(isRTL) }]}>"{pendingOffer.message}"</Text>
+                                <Text style={[styles.pendingMessage, { textAlign: rtlTextAlign(isRTL) }]}>
+                                    "{pendingOffer.message}"
+                                </Text>
                             )}
 
                             <View style={[styles.responseButtons, { flexDirection: rtlFlexDirection(isRTL) }]}>
@@ -402,7 +465,9 @@ export default function CounterOfferScreen() {
                                         colors={['#22c55e', '#16a34a'] as const}
                                         style={styles.responseGradient}
                                     >
-                                        <Text style={styles.responseText}><Ionicons name="checkmark" size={18} color="#fff" /> {t('common.accept')}</Text>
+                                        <Text style={styles.responseText}>
+                                            <Ionicons name="checkmark" size={18} color="#fff" /> {t('common.accept')}
+                                        </Text>
                                     </LinearGradient>
                                 </TouchableOpacity>
 
@@ -419,7 +484,9 @@ export default function CounterOfferScreen() {
                                     style={styles.rejectOfferButton}
                                     onPress={() => handleRespondToOffer('reject')}
                                 >
-                                    <Text style={styles.rejectButtonText}><Ionicons name="close" size={18} color="#EF4444" /> {t('common.reject')}</Text>
+                                    <Text style={styles.rejectButtonText}>
+                                        <Ionicons name="close" size={18} color="#EF4444" /> {t('common.reject')}
+                                    </Text>
                                 </TouchableOpacity>
                             </View>
                         </View>
@@ -428,12 +495,24 @@ export default function CounterOfferScreen() {
                     {/* Counter-Offer Form */}
                     {canNegotiate && !pendingOffer && (
                         <View style={[styles.formCard, { backgroundColor: colors.surface }]}>
-                            <Text style={[styles.formTitle, { color: colors.text, textAlign: rtlTextAlign(isRTL) }]}>{t('offers.makeCounter')}</Text>
+                            <Text style={[styles.formTitle, { color: colors.text, textAlign: rtlTextAlign(isRTL) }]}>
+                                {t('offers.makeCounter')}
+                            </Text>
 
                             <View style={styles.inputGroup}>
-                                <Text style={[styles.inputLabel, { textAlign: rtlTextAlign(isRTL) }]}>{t('offers.yourOffer')} ({t('common.currency')})</Text>
+                                <Text style={[styles.inputLabel, { textAlign: rtlTextAlign(isRTL) }]}>
+                                    {t('offers.yourOffer')} ({t('common.currency')})
+                                </Text>
                                 <TextInput
-                                    style={[styles.amountInput, { backgroundColor: colors.primary + '10', color: colors.primary, borderColor: colors.primary, textAlign: 'center' }]}
+                                    style={[
+                                        styles.amountInput,
+                                        {
+                                            backgroundColor: colors.primary + '10',
+                                            color: colors.primary,
+                                            borderColor: colors.primary,
+                                            textAlign: 'center'
+                                        }
+                                    ]}
                                     value={proposedAmount}
                                     onChangeText={setProposedAmount}
                                     placeholder={t('offers.enterAmount')}
@@ -443,9 +522,20 @@ export default function CounterOfferScreen() {
                             </View>
 
                             <View style={styles.inputGroup}>
-                                <Text style={[styles.inputLabel, { textAlign: rtlTextAlign(isRTL) }]}>{t('offers.messageOptional')}</Text>
+                                <Text style={[styles.inputLabel, { textAlign: rtlTextAlign(isRTL) }]}>
+                                    {t('offers.messageOptional')}
+                                </Text>
                                 <TextInput
-                                    style={[styles.input, styles.messageInput, { backgroundColor: colors.background, color: colors.text, borderColor: colors.border, textAlign: rtlTextAlign(isRTL) }]}
+                                    style={[
+                                        styles.input,
+                                        styles.messageInput,
+                                        {
+                                            backgroundColor: colors.background,
+                                            color: colors.text,
+                                            borderColor: colors.border,
+                                            textAlign: rtlTextAlign(isRTL)
+                                        }
+                                    ]}
                                     value={message}
                                     onChangeText={setMessage}
                                     placeholder={t('offers.explainOffer')}
@@ -460,10 +550,7 @@ export default function CounterOfferScreen() {
                                 onPress={handleSendCounterOffer}
                                 disabled={isSending}
                             >
-                                <LinearGradient
-                                    colors={['#22c55e', '#16a34a'] as const}
-                                    style={styles.sendGradient}
-                                >
+                                <LinearGradient colors={['#22c55e', '#16a34a'] as const} style={styles.sendGradient}>
                                     {isSending ? (
                                         <ActivityIndicator color="#fff" size="small" />
                                     ) : (
@@ -488,7 +575,9 @@ export default function CounterOfferScreen() {
                     {/* Negotiation History */}
                     {history.length > 0 && (
                         <View style={styles.historySection}>
-                            <Text style={[styles.historyTitle, { textAlign: rtlTextAlign(isRTL) }]}>{t('offers.historyTitle')}</Text>
+                            <Text style={[styles.historyTitle, { textAlign: rtlTextAlign(isRTL) }]}>
+                                {t('offers.historyTitle')}
+                            </Text>
                             {history.map(renderHistoryItem)}
                         </View>
                     )}
@@ -509,12 +598,12 @@ const styles = StyleSheet.create({
         padding: Spacing.lg,
         backgroundColor: '#fff',
         borderBottomWidth: 1,
-        borderBottomColor: '#F0F0F0',
+        borderBottomColor: '#F0F0F0'
     },
     backButton: {
         padding: Spacing.sm,
         backgroundColor: '#F5F5F5',
-        borderRadius: BorderRadius.md,
+        borderRadius: BorderRadius.md
     },
     backText: { color: Colors.primary, fontSize: FontSizes.md, fontWeight: '600' },
     headerTitle: { fontSize: FontSizes.xl, fontWeight: '800', color: '#1a1a1a', letterSpacing: -0.5 },
@@ -524,7 +613,7 @@ const styles = StyleSheet.create({
         borderRadius: BorderRadius.xl,
         padding: Spacing.lg,
         marginBottom: Spacing.lg,
-        ...Shadows.sm,
+        ...Shadows.sm
     },
     garageName: { fontSize: FontSizes.lg, fontWeight: '700', color: '#1a1a1a' },
     partName: { fontSize: FontSizes.md, color: '#525252', marginTop: Spacing.xs },
@@ -535,13 +624,13 @@ const styles = StyleSheet.create({
         marginTop: Spacing.md,
         paddingTop: Spacing.md,
         borderTopWidth: 1,
-        borderTopColor: '#F0F0F0',
+        borderTopColor: '#F0F0F0'
     },
     priceLabel: { fontSize: FontSizes.md, color: '#525252' },
     priceAmount: { fontSize: FontSizes.xxl, fontWeight: '800', color: Colors.primary },
     roundsInfo: {
         marginTop: Spacing.md,
-        alignItems: 'center',
+        alignItems: 'center'
     },
     roundsText: { fontSize: FontSizes.sm, color: '#525252' },
     roundsDots: { flexDirection: 'row', marginTop: Spacing.sm, gap: Spacing.sm },
@@ -549,7 +638,7 @@ const styles = StyleSheet.create({
         width: 14,
         height: 14,
         borderRadius: BorderRadius.sm,
-        backgroundColor: '#E8E8E8',
+        backgroundColor: '#E8E8E8'
     },
     roundDotActive: { backgroundColor: Colors.primary },
     pendingCard: {
@@ -558,25 +647,25 @@ const styles = StyleSheet.create({
         padding: Spacing.lg,
         marginBottom: Spacing.lg,
         borderWidth: 1.5,
-        borderColor: '#F59E0B',
+        borderColor: '#F59E0B'
     },
     pendingTitle: { fontSize: FontSizes.lg, fontWeight: '700', color: '#D97706' },
     pendingAmount: {
         fontSize: FontSizes.xxxl,
         fontWeight: '800',
         color: '#1a1a1a',
-        marginTop: Spacing.sm,
+        marginTop: Spacing.sm
     },
     pendingMessage: {
         fontSize: FontSizes.md,
         color: '#525252',
         fontStyle: 'italic',
-        marginTop: Spacing.sm,
+        marginTop: Spacing.sm
     },
     responseButtons: {
         flexDirection: 'row',
         marginTop: Spacing.lg,
-        gap: Spacing.sm,
+        gap: Spacing.sm
     },
     acceptOfferButton: { flex: 1, borderRadius: BorderRadius.lg, overflow: 'hidden', ...Shadows.sm },
     responseGradient: { paddingVertical: Spacing.md, alignItems: 'center' },
@@ -588,7 +677,7 @@ const styles = StyleSheet.create({
         paddingVertical: Spacing.md,
         alignItems: 'center',
         borderWidth: 1.5,
-        borderColor: Colors.primary,
+        borderColor: Colors.primary
     },
     counterButtonText: { fontSize: FontSizes.md, fontWeight: '700', color: Colors.primary },
     rejectOfferButton: {
@@ -596,7 +685,7 @@ const styles = StyleSheet.create({
         backgroundColor: '#FEE2E2',
         borderRadius: BorderRadius.lg,
         paddingVertical: Spacing.md,
-        alignItems: 'center',
+        alignItems: 'center'
     },
     rejectButtonText: { fontSize: FontSizes.md, fontWeight: '700', color: Colors.error },
     formCard: {
@@ -604,7 +693,7 @@ const styles = StyleSheet.create({
         borderRadius: BorderRadius.xl,
         padding: Spacing.lg,
         marginBottom: Spacing.lg,
-        ...Shadows.sm,
+        ...Shadows.sm
     },
     formTitle: { fontSize: FontSizes.lg, fontWeight: '700', color: '#1a1a1a', marginBottom: Spacing.lg },
     inputGroup: { marginBottom: Spacing.md },
@@ -612,7 +701,7 @@ const styles = StyleSheet.create({
         fontSize: FontSizes.sm,
         fontWeight: '600',
         color: '#525252',
-        marginBottom: Spacing.xs,
+        marginBottom: Spacing.xs
     },
     amountInput: {
         backgroundColor: Colors.primary + '10',
@@ -623,7 +712,7 @@ const styles = StyleSheet.create({
         color: Colors.primary,
         borderWidth: 2,
         borderColor: Colors.primary,
-        textAlign: 'center',
+        textAlign: 'center'
     },
     input: {
         backgroundColor: '#F8F9FA',
@@ -632,7 +721,7 @@ const styles = StyleSheet.create({
         fontSize: FontSizes.md,
         color: '#1a1a1a',
         borderWidth: 1,
-        borderColor: '#E8E8E8',
+        borderColor: '#E8E8E8'
     },
     messageInput: { minHeight: 80, textAlignVertical: 'top' },
     sendButton: { borderRadius: BorderRadius.lg, overflow: 'hidden', marginTop: Spacing.md, ...Shadows.sm },
@@ -645,7 +734,7 @@ const styles = StyleSheet.create({
         padding: Spacing.xl,
         alignItems: 'center',
         marginBottom: Spacing.lg,
-        ...Shadows.sm,
+        ...Shadows.sm
     },
     maxRoundsIcon: { fontSize: 48, marginBottom: Spacing.md },
     maxRoundsTitle: { fontSize: FontSizes.lg, fontWeight: '700', color: '#1a1a1a' },
@@ -653,36 +742,36 @@ const styles = StyleSheet.create({
         fontSize: FontSizes.md,
         color: '#525252',
         textAlign: 'center',
-        marginTop: Spacing.sm,
+        marginTop: Spacing.sm
     },
     historySection: { marginTop: Spacing.md },
     historyTitle: {
         fontSize: FontSizes.lg,
         fontWeight: '700',
         color: '#1a1a1a',
-        marginBottom: Spacing.md,
+        marginBottom: Spacing.md
     },
     historyItem: {
         borderRadius: BorderRadius.lg,
         padding: Spacing.md,
-        marginBottom: Spacing.sm,
+        marginBottom: Spacing.sm
     },
     customerOffer: {
         backgroundColor: Colors.primary + '10',
         marginLeft: Spacing.xl,
         borderLeftWidth: 3,
-        borderLeftColor: Colors.primary,
+        borderLeftColor: Colors.primary
     },
     garageOffer: {
         backgroundColor: '#F8F9FA',
         marginRight: Spacing.xl,
         borderLeftWidth: 3,
-        borderLeftColor: '#D1D5DB',
+        borderLeftColor: '#D1D5DB'
     },
     historyHeader: {
         flexDirection: 'row',
         justifyContent: 'space-between',
-        marginBottom: Spacing.xs,
+        marginBottom: Spacing.xs
     },
     historyRound: { fontSize: FontSizes.xs, color: '#737373', fontWeight: '600' },
     historyStatus: { fontSize: FontSizes.xs, fontWeight: '700' },
@@ -695,7 +784,7 @@ const styles = StyleSheet.create({
         fontSize: FontSizes.sm,
         color: '#737373',
         fontStyle: 'italic',
-        marginTop: Spacing.xs,
+        marginTop: Spacing.xs
     },
-    historyDate: { fontSize: FontSizes.xs, color: '#737373', marginTop: Spacing.xs },
+    historyDate: { fontSize: FontSizes.xs, color: '#737373', marginTop: Spacing.xs }
 });

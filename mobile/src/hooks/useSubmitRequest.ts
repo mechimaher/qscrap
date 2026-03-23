@@ -38,7 +38,7 @@ export function useSubmitRequest({
     carRearImage,
     t,
     toast,
-    navigation,
+    navigation
 }: SubmitParams) {
     const [isSubmitting, setIsSubmitting] = useState(false);
 
@@ -51,18 +51,14 @@ export function useSubmitRequest({
         }
 
         if (!selectedVehicle.vin_number) {
-            Alert.alert(
-                t('newRequest.vinRequired'),
-                t('newRequest.vinRequiredMessage'),
-                [
-                    { text: t('common.cancel'), style: 'cancel' },
-                    {
-                        text: t('newRequest.addVin'),
-                        onPress: () => navigation.navigate('MyVehicles'),
-                        style: 'default'
-                    }
-                ]
-            );
+            Alert.alert(t('newRequest.vinRequired'), t('newRequest.vinRequiredMessage'), [
+                { text: t('common.cancel'), style: 'cancel' },
+                {
+                    text: t('newRequest.addVin'),
+                    onPress: () => navigation.navigate('MyVehicles'),
+                    style: 'default'
+                }
+            ]);
             return;
         }
 
@@ -97,7 +93,7 @@ export function useSubmitRequest({
                 finalDescription += `\n${t('newRequest.position')}: ${sideLabels[side]}`;
             }
 
-                formData.append('part_description', finalDescription);
+            formData.append('part_description', finalDescription);
             if (partCategory) formData.append('part_category', partCategory);
             if (partSubCategory) formData.append('part_subcategory', partSubCategory);
             if (partNumber.trim()) formData.append('part_number', partNumber.trim());
@@ -115,7 +111,7 @@ export function useSubmitRequest({
                 formData.append('images', {
                     uri,
                     name: `part_${index}.${fileType}`,
-                    type: `image/${fileType}`,
+                    type: `image/${fileType}`
                 } as any);
             });
 
@@ -125,7 +121,7 @@ export function useSubmitRequest({
                 formData.append('car_front_image', {
                     uri: carFrontImage,
                     name: `car_front.${frontType}`,
-                    type: `image/${frontType}`,
+                    type: `image/${frontType}`
                 } as any);
             }
 
@@ -135,7 +131,7 @@ export function useSubmitRequest({
                 formData.append('car_rear_image', {
                     uri: carRearImage,
                     name: `car_rear.${rearType}`,
-                    type: `image/${rearType}`,
+                    type: `image/${rearType}`
                 } as any);
             }
 
@@ -145,7 +141,6 @@ export function useSubmitRequest({
             toast.success(t('newRequest.requestCreated'), t('newRequest.garagesReviewing'));
 
             navigation.replace('RequestDetail', { requestId: response.request_id });
-
         } catch (error: any) {
             logError('[NewRequest] Submit error:', error);
             handleApiError(error, toast);
@@ -156,6 +151,6 @@ export function useSubmitRequest({
 
     return {
         isSubmitting,
-        handleSubmit,
+        handleSubmit
     };
 }

@@ -10,7 +10,7 @@ import { Pool } from 'pg';
 // Mock the pool
 const mockPool = {
     query: jest.fn(),
-    connect: jest.fn(),
+    connect: jest.fn()
 } as unknown as Pool;
 
 describe('ReturnService', () => {
@@ -35,11 +35,11 @@ describe('ReturnService', () => {
                 total_amount: 100,
                 part_price: 80,
                 delivery_fee: 20,
-                customer_id: 'customer-1',
+                customer_id: 'customer-1'
             };
 
             const mockAbuseTracking = {
-                returns_count: 0,
+                returns_count: 0
             };
 
             (mockPool.query as jest.Mock)
@@ -65,7 +65,7 @@ describe('ReturnService', () => {
                 total_amount: 100,
                 part_price: 80,
                 delivery_fee: 20,
-                customer_id: 'customer-1',
+                customer_id: 'customer-1'
             };
 
             (mockPool.query as jest.Mock)
@@ -91,11 +91,11 @@ describe('ReturnService', () => {
                 total_amount: 100,
                 part_price: 80,
                 delivery_fee: 20,
-                customer_id: 'customer-1',
+                customer_id: 'customer-1'
             };
 
             const mockAbuseTracking = {
-                returns_count: 0,
+                returns_count: 0
             };
 
             (mockPool.query as jest.Mock)
@@ -125,11 +125,11 @@ describe('ReturnService', () => {
                 total_amount: 100,
                 part_price: 80,
                 delivery_fee: 20,
-                customer_id: 'customer-1',
+                customer_id: 'customer-1'
             };
 
             const mockAbuseTracking = {
-                returns_count: 3, // Already at limit
+                returns_count: 3 // Already at limit
             };
 
             (mockPool.query as jest.Mock)
@@ -148,7 +148,7 @@ describe('ReturnService', () => {
 describe('RETURN_POLICY Constants', () => {
     it('should have correct values per BRAIN spec', () => {
         expect(RETURN_POLICY.WINDOW_DAYS).toBe(7);
-        expect(RETURN_POLICY.FEE_PERCENTAGE).toBe(0.20);
+        expect(RETURN_POLICY.FEE_PERCENTAGE).toBe(0.2);
         expect(RETURN_POLICY.REQUIRED_PHOTOS).toBeGreaterThan(0);
     });
 });

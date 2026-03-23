@@ -4,18 +4,11 @@
  */
 
 import { Pool } from 'pg';
-import {
-    Payout,
-    PayoutFilters,
-    PayoutSummary,
-    PaginatedPayouts,
-    PayoutStatusDetail,
-    PaymentStats
-} from './types';
+import { Payout, PayoutFilters, PayoutSummary, PaginatedPayouts, PayoutStatusDetail, PaymentStats } from './types';
 import { PayoutNotFoundError } from './errors';
 
 export class PayoutQueryService {
-    constructor(private pool: Pool) { }
+    constructor(private pool: Pool) {}
 
     async getPayoutSummary(userId: string, userType: string): Promise<PayoutSummary> {
         let garageId: string | null = null;
@@ -28,8 +21,8 @@ export class PayoutQueryService {
             params.push(garageId);
         }
 
-
-        const statsResult = await this.pool.query(`
+        const statsResult = await this.pool.query(
+            `
             SELECT 
                 COALESCE(SUM(net_amount) FILTER (WHERE payout_status = 'completed' AND (payout_type IS NULL OR payout_type != 'reversal')), 0) as completed_payouts,
                 COALESCE(SUM(net_amount) FILTER (WHERE payout_status = 'confirmed' AND (payout_type IS NULL OR payout_type != 'reversal')), 0) as confirmed_payouts,
@@ -80,7 +73,9 @@ export class PayoutQueryService {
                 ) as in_warranty_count
             FROM garage_payouts
             ${whereClause}
-        `, params);
+        `,
+            params
+        );
 
         let totalRevenue = 0;
         if (userType === 'garage') {
@@ -103,7 +98,8 @@ export class PayoutQueryService {
 
         // CRITICAL: Only show payouts for orders delivered 7+ days ago (warranty window)
         // This is a Qatar B2B business rule - no early payouts
-        const pendingResult = await this.pool.query(`
+        const pendingResult = await this.pool.query(
+            `
             SELECT gp.*, g.garage_name, o.order_number, o.actual_delivery_at,
                    EXTRACT(DAY FROM NOW() - COALESCE(o.actual_delivery_at, o.completed_at, gp.created_at)) as days_since_delivery,
                    GREATEST(0, 7 - EXTRACT(DAY FROM NOW() - COALESCE(o.actual_delivery_at, o.completed_at, gp.created_at)))::int as days_until_eligible
@@ -116,7 +112,9 @@ export class PayoutQueryService {
             ${userType === 'garage' ? 'AND gp.garage_id = $1' : ''}
             ORDER BY gp.created_at ASC
             LIMIT 20
-        `, userType === 'garage' ? [garageId] : []);
+        `,
+            userType === 'garage' ? [garageId] : []
+        );
 
         return {
             stats: {
@@ -139,7 +137,8 @@ export class PayoutQueryService {
             params.push(userId);
         }
 
-        const result = await this.pool.query(`
+        const result = await this.pool.query(
+            `
             SELECT gp.*, g.garage_name, o.order_number, o.actual_delivery_at,
                    EXTRACT(DAY FROM NOW() - COALESCE(o.actual_delivery_at, o.completed_at, gp.created_at)) as days_since_delivery,
                    GREATEST(0, 7 - EXTRACT(DAY FROM NOW() - COALESCE(o.actual_delivery_at, o.completed_at, gp.created_at)))::int as days_until_eligible
@@ -149,7 +148,9 @@ export class PayoutQueryService {
             ${whereClause}
             ORDER BY o.actual_delivery_at ASC
             LIMIT 50
-        `, params);
+        `,
+            params
+        );
 
         return result.rows;
     }
@@ -256,8 +257,16 @@ export class PayoutQueryService {
         const timeline = [
             { status: 'created', timestamp: payout.created_at },
             payout.sent_at && { status: 'sent', timestamp: payout.sent_at, notes: payout.notes },
-            payout.confirmed_at && { status: 'confirmed', timestamp: payout.confirmed_at, notes: payout.confirmation_notes },
-            payout.disputed_at && { status: 'disputed', timestamp: payout.disputed_at, notes: payout.dispute_description },
+            payout.confirmed_at && {
+                status: 'confirmed',
+                timestamp: payout.confirmed_at,
+                notes: payout.confirmation_notes
+            },
+            payout.disputed_at && {
+                status: 'disputed',
+                timestamp: payout.disputed_at,
+                notes: payout.dispute_description
+            },
             payout.processed_at && { status: 'processed', timestamp: payout.processed_at }
         ].filter(Boolean) as Array<{ status: string; timestamp: Date; notes?: string }>;
 
@@ -308,7 +317,10 @@ export class PayoutQueryService {
             by_status: {
                 pending: { count: parseInt(stats.pending_count), amount: parseFloat(stats.pending_amount) },
                 processing: { count: parseInt(stats.processing_count), amount: parseFloat(stats.processing_amount) },
-                awaiting_confirmation: { count: parseInt(stats.awaiting_count), amount: parseFloat(stats.awaiting_amount) },
+                awaiting_confirmation: {
+                    count: parseInt(stats.awaiting_count),
+                    amount: parseFloat(stats.awaiting_amount)
+                },
                 confirmed: { count: parseInt(stats.confirmed_count), amount: parseFloat(stats.confirmed_amount) },
                 completed: { count: parseInt(stats.completed_count), amount: parseFloat(stats.completed_amount) },
                 held: { count: parseInt(stats.held_count), amount: parseFloat(stats.held_amount) },

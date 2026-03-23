@@ -10,7 +10,28 @@ export const CAR_DATA: CarMake[] = [
     // Japanese Brands (Most Popular in Qatar/GCC)
     {
         make: 'Toyota',
-        models: ['Camry', 'Corolla', 'Land Cruiser', 'Prado', 'RAV4', 'Hilux', 'Yaris', 'Avalon', 'Fortuner', 'Supra', 'Crown', '86', 'Sequoia', 'Tundra', 'Tacoma', 'Highlander', 'C-HR', 'Rush', 'Granvia', 'Venza']
+        models: [
+            'Camry',
+            'Corolla',
+            'Land Cruiser',
+            'Prado',
+            'RAV4',
+            'Hilux',
+            'Yaris',
+            'Avalon',
+            'Fortuner',
+            'Supra',
+            'Crown',
+            '86',
+            'Sequoia',
+            'Tundra',
+            'Tacoma',
+            'Highlander',
+            'C-HR',
+            'Rush',
+            'Granvia',
+            'Venza'
+        ]
     },
     {
         make: 'Lexus',
@@ -18,7 +39,26 @@ export const CAR_DATA: CarMake[] = [
     },
     {
         make: 'Nissan',
-        models: ['Patrol', 'Altima', 'Maxima', 'Sunny', 'Sentra', 'X-Trail', 'Pathfinder', 'Armada', 'Kicks', 'Juke', 'Versa', 'Murano', 'Rogue', 'Frontier', 'Titan', '370Z', 'GT-R', 'Navara']
+        models: [
+            'Patrol',
+            'Altima',
+            'Maxima',
+            'Sunny',
+            'Sentra',
+            'X-Trail',
+            'Pathfinder',
+            'Armada',
+            'Kicks',
+            'Juke',
+            'Versa',
+            'Murano',
+            'Rogue',
+            'Frontier',
+            'Titan',
+            '370Z',
+            'GT-R',
+            'Navara'
+        ]
     },
     {
         make: 'Infiniti',
@@ -34,7 +74,18 @@ export const CAR_DATA: CarMake[] = [
     },
     {
         make: 'Mitsubishi',
-        models: ['Pajero', 'Montero', 'ASX', 'Outlander', 'Eclipse Cross', 'L200', 'Attrage', 'Mirage', 'Xpander', 'Triton']
+        models: [
+            'Pajero',
+            'Montero',
+            'ASX',
+            'Outlander',
+            'Eclipse Cross',
+            'L200',
+            'Attrage',
+            'Mirage',
+            'Xpander',
+            'Triton'
+        ]
     },
     {
         make: 'Suzuki',
@@ -48,15 +99,79 @@ export const CAR_DATA: CarMake[] = [
     // German Brands (Luxury/Premium)
     {
         make: 'Mercedes-Benz',
-        models: ['A-Class', 'C-Class', 'E-Class', 'S-Class', 'GLA', 'GLB', 'GLC', 'GLE', 'GLS', 'G-Class', 'AMG GT', 'EQS', 'EQE', 'Maybach', 'CLA', 'CLS', 'SL']
+        models: [
+            'A-Class',
+            'C-Class',
+            'E-Class',
+            'S-Class',
+            'GLA',
+            'GLB',
+            'GLC',
+            'GLE',
+            'GLS',
+            'G-Class',
+            'AMG GT',
+            'EQS',
+            'EQE',
+            'Maybach',
+            'CLA',
+            'CLS',
+            'SL'
+        ]
     },
     {
         make: 'BMW',
-        models: ['1 Series', '2 Series', '3 Series', '4 Series', '5 Series', '6 Series', '7 Series', '8 Series', 'X1', 'X2', 'X3', 'X4', 'X5', 'X6', 'X7', 'XM', 'Z4', 'M2', 'M3', 'M4', 'M5', 'M8', 'iX', 'i4', 'i7']
+        models: [
+            '1 Series',
+            '2 Series',
+            '3 Series',
+            '4 Series',
+            '5 Series',
+            '6 Series',
+            '7 Series',
+            '8 Series',
+            'X1',
+            'X2',
+            'X3',
+            'X4',
+            'X5',
+            'X6',
+            'X7',
+            'XM',
+            'Z4',
+            'M2',
+            'M3',
+            'M4',
+            'M5',
+            'M8',
+            'iX',
+            'i4',
+            'i7'
+        ]
     },
     {
         make: 'Audi',
-        models: ['A1', 'A3', 'A4', 'A5', 'A6', 'A7', 'A8', 'Q2', 'Q3', 'Q5', 'Q7', 'Q8', 'e-tron', 'RS3', 'RS5', 'RS6', 'RS7', 'R8', 'TT']
+        models: [
+            'A1',
+            'A3',
+            'A4',
+            'A5',
+            'A6',
+            'A7',
+            'A8',
+            'Q2',
+            'Q3',
+            'Q5',
+            'Q7',
+            'Q8',
+            'e-tron',
+            'RS3',
+            'RS5',
+            'RS6',
+            'RS7',
+            'R8',
+            'TT'
+        ]
     },
     {
         make: 'Porsche',
@@ -64,17 +179,59 @@ export const CAR_DATA: CarMake[] = [
     },
     {
         make: 'Volkswagen',
-        models: ['Golf', 'Passat', 'Jetta', 'Tiguan', 'Touareg', 'Arteon', 'ID.4', 'Polo', 'T-Roc', 'T-Cross', 'Atlas', 'Teramont']
+        models: [
+            'Golf',
+            'Passat',
+            'Jetta',
+            'Tiguan',
+            'Touareg',
+            'Arteon',
+            'ID.4',
+            'Polo',
+            'T-Roc',
+            'T-Cross',
+            'Atlas',
+            'Teramont'
+        ]
     },
 
     // American Brands
     {
         make: 'Ford',
-        models: ['Mustang', 'F-150', 'Expedition', 'Explorer', 'Edge', 'Escape', 'Bronco', 'Ranger', 'Taurus', 'Fusion', 'Focus', 'EcoSport', 'Everest', 'Raptor']
+        models: [
+            'Mustang',
+            'F-150',
+            'Expedition',
+            'Explorer',
+            'Edge',
+            'Escape',
+            'Bronco',
+            'Ranger',
+            'Taurus',
+            'Fusion',
+            'Focus',
+            'EcoSport',
+            'Everest',
+            'Raptor'
+        ]
     },
     {
         make: 'Chevrolet',
-        models: ['Camaro', 'Corvette', 'Tahoe', 'Suburban', 'Silverado', 'Traverse', 'Blazer', 'Equinox', 'Trailblazer', 'Malibu', 'Impala', 'Colorado', 'Captiva']
+        models: [
+            'Camaro',
+            'Corvette',
+            'Tahoe',
+            'Suburban',
+            'Silverado',
+            'Traverse',
+            'Blazer',
+            'Equinox',
+            'Trailblazer',
+            'Malibu',
+            'Impala',
+            'Colorado',
+            'Captiva'
+        ]
     },
     {
         make: 'GMC',
@@ -86,7 +243,16 @@ export const CAR_DATA: CarMake[] = [
     },
     {
         make: 'Jeep',
-        models: ['Wrangler', 'Grand Cherokee', 'Cherokee', 'Compass', 'Renegade', 'Gladiator', 'Wagoneer', 'Grand Wagoneer']
+        models: [
+            'Wrangler',
+            'Grand Cherokee',
+            'Cherokee',
+            'Compass',
+            'Renegade',
+            'Gladiator',
+            'Wagoneer',
+            'Grand Wagoneer'
+        ]
     },
     {
         make: 'Dodge',
@@ -104,11 +270,41 @@ export const CAR_DATA: CarMake[] = [
     // Korean Brands
     {
         make: 'Hyundai',
-        models: ['Sonata', 'Elantra', 'Accent', 'Tucson', 'Santa Fe', 'Palisade', 'Kona', 'Venue', 'Creta', 'Grand Creta', 'Staria', 'Ioniq 5', 'Ioniq 6', 'Genesis (coupe)']
+        models: [
+            'Sonata',
+            'Elantra',
+            'Accent',
+            'Tucson',
+            'Santa Fe',
+            'Palisade',
+            'Kona',
+            'Venue',
+            'Creta',
+            'Grand Creta',
+            'Staria',
+            'Ioniq 5',
+            'Ioniq 6',
+            'Genesis (coupe)'
+        ]
     },
     {
         make: 'Kia',
-        models: ['Optima', 'Cerato', 'Rio', 'Sportage', 'Sorento', 'Telluride', 'Carnival', 'Seltos', 'Soul', 'Stinger', 'EV6', 'EV9', 'K5', 'K8']
+        models: [
+            'Optima',
+            'Cerato',
+            'Rio',
+            'Sportage',
+            'Sorento',
+            'Telluride',
+            'Carnival',
+            'Seltos',
+            'Soul',
+            'Stinger',
+            'EV6',
+            'EV9',
+            'K5',
+            'K8'
+        ]
     },
     {
         make: 'Genesis',
@@ -118,7 +314,15 @@ export const CAR_DATA: CarMake[] = [
     // British Brands
     {
         make: 'Land Rover',
-        models: ['Range Rover', 'Range Rover Sport', 'Range Rover Velar', 'Range Rover Evoque', 'Defender', 'Discovery', 'Discovery Sport']
+        models: [
+            'Range Rover',
+            'Range Rover Sport',
+            'Range Rover Velar',
+            'Range Rover Evoque',
+            'Defender',
+            'Discovery',
+            'Discovery Sport'
+        ]
     },
     {
         make: 'Jaguar',
@@ -226,11 +430,11 @@ export const CAR_DATA: CarMake[] = [
 
 // Helper functions
 export const getAllMakes = (): string[] => {
-    return CAR_DATA.map(item => item.make);
+    return CAR_DATA.map((item) => item.make);
 };
 
 export const getModelsForMake = (make: string): string[] => {
-    const found = CAR_DATA.find(item => item.make.toLowerCase() === make.toLowerCase());
+    const found = CAR_DATA.find((item) => item.make.toLowerCase() === make.toLowerCase());
     return found ? found.models : [];
 };
 

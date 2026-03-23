@@ -3,14 +3,14 @@ import { useRef, useEffect } from 'react';
 /**
  * Hook to get the previous value of a variable.
  * Useful for comparing current and previous values.
- * 
+ *
  * @example
  * const [count, setCount] = useState(0);
  * const prevCount = usePrevious(count);
- * 
+ *
  * useEffect(() => {
  *   if (prevCount !== undefined && count > prevCount) {
- *     console.log('Count increased!');
+ *     // Handle count increase
  *   }
  * }, [count, prevCount]);
  */

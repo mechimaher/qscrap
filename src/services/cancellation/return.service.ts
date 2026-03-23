@@ -1,7 +1,7 @@
 /**
  * Return Service
  * Handles 7-day return window processing per Qatar Law No. 8/2008 Article 26
- * 
+ *
  * Source: Cancellation-Refund-BRAIN.md v3.0 (Section: Return Policy)
  */
 
@@ -14,7 +14,7 @@ import { emitToOperations } from '../../utils/socketIO';
 import logger from '../../utils/logger';
 
 export class ReturnService {
-    constructor(private pool: Pool) { }
+    constructor(private pool: Pool) {}
 
     /**
      * Get return preview - calculate fees and check eligibility
@@ -39,10 +39,9 @@ export class ReturnService {
         const order = orderResult.rows[0];
 
         // Check if already returned
-        const existingReturn = await this.pool.query(
-            `SELECT return_id FROM return_requests WHERE order_id = $1`,
-            [orderId]
-        );
+        const existingReturn = await this.pool.query(`SELECT return_id FROM return_requests WHERE order_id = $1`, [
+            orderId
+        ]);
 
         if (existingReturn.rows.length > 0) {
             return {
@@ -152,7 +151,7 @@ export class ReturnService {
             delivery_fee: deliveryFee,
             return_fee: Math.round(returnFee * 100) / 100,
             delivery_fee_retained: deliveryFeeRetained,
-            refund_amount: Math.round(refundAmount * 100) / 100,
+            refund_amount: Math.round(refundAmount * 100) / 100
         };
     }
 
@@ -197,7 +196,10 @@ export class ReturnService {
                  VALUES ($1, $2, $3, $4, $5, $6, $7, $8, 'pending')
                  RETURNING return_id`,
                 [
-                    orderId, customerId, reason, photoUrls,
+                    orderId,
+                    customerId,
+                    reason,
+                    photoUrls,
                     conditionDescription || '',
                     preview.return_fee,
                     preview.delivery_fee_retained,
@@ -301,7 +303,11 @@ export class ReturnService {
 
             const returnReq = returnResult.rows[0];
 
-            if (returnReq.status !== 'pending' && returnReq.status !== 'picked_up' && returnReq.status !== 'inspected') {
+            if (
+                returnReq.status !== 'pending' &&
+                returnReq.status !== 'picked_up' &&
+                returnReq.status !== 'inspected'
+            ) {
                 throw new Error(`Cannot approve return with status: ${returnReq.status}`);
             }
 
@@ -332,10 +338,7 @@ export class ReturnService {
             );
 
             // Update order status
-            await client.query(
-                `UPDATE orders SET order_status = 'refunded' WHERE order_id = $1`,
-                [returnReq.order_id]
-            );
+            await client.query(`UPDATE orders SET order_status = 'refunded' WHERE order_id = $1`, [returnReq.order_id]);
 
             await client.query('COMMIT');
 

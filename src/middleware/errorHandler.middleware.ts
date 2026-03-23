@@ -22,13 +22,7 @@ export class ApiError extends Error {
     public details?: any;
     public isOperational: boolean;
 
-    constructor(
-        statusCode: number,
-        code: ErrorCode,
-        message: string,
-        details?: any,
-        isOperational = true
-    ) {
+    constructor(statusCode: number, code: ErrorCode, message: string, details?: any, isOperational = true) {
         super(message);
         this.statusCode = statusCode;
         this.code = code;
@@ -92,12 +86,7 @@ interface ErrorResponse {
  * Global Error Handler Middleware
  * Catches all errors and returns standardized JSON responses
  */
-export const errorHandler = (
-    err: Error | ApiError,
-    req: RequestWithContext,
-    res: Response,
-    _next: NextFunction
-) => {
+export const errorHandler = (err: Error | ApiError, req: RequestWithContext, res: Response, _next: NextFunction) => {
     const requestId = req.requestId || 'unknown';
     const isProduction = process.env.NODE_ENV === 'production';
 
@@ -173,9 +162,7 @@ export const errorHandler = (
  * Async Handler Wrapper
  * Wraps async route handlers to catch errors automatically
  */
-export const asyncHandler = (
-    fn: (req: RequestWithContext, res: Response, next: NextFunction) => Promise<any>
-) => {
+export const asyncHandler = (fn: (req: RequestWithContext, res: Response, next: NextFunction) => Promise<any>) => {
     return (req: RequestWithContext, res: Response, next: NextFunction) => {
         Promise.resolve(fn(req, res, next)).catch(next);
     };
@@ -194,11 +181,11 @@ export const notFoundHandler = (req: RequestWithContext, res: Response, _next: N
             requestId: req.requestId
         }
     };
-    
+
     // Check if this is an API request (expects JSON) or a page request (expects HTML)
     const acceptsHtml = req.accepts('html');
     const isApiRequest = req.path.startsWith('/api/') || req.xhr;
-    
+
     if (isApiRequest || !acceptsHtml) {
         // API request - return JSON
         res.status(404).json(errorResponse);

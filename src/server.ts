@@ -27,12 +27,7 @@ const server = http.createServer(app);
 // ============================================
 const allowedOrigins = process.env.CORS_ORIGINS
     ? process.env.CORS_ORIGINS.split(',')
-    : [
-        'http://localhost:3000',
-        'http://127.0.0.1:3000',
-        'https://qscrap.qa',
-        'https://www.qscrap.qa'
-    ];
+    : ['http://localhost:3000', 'http://127.0.0.1:3000', 'https://qscrap.qa', 'https://www.qscrap.qa'];
 
 // ============================================
 // SOCKET.IO SETUP (Multi-node ready)
@@ -40,7 +35,7 @@ const allowedOrigins = process.env.CORS_ORIGINS
 export const io = new Server(server, {
     cors: {
         origin: process.env.NODE_ENV === 'production' ? allowedOrigins : true,
-        methods: ["GET", "POST"],
+        methods: ['GET', 'POST'],
         credentials: true
     },
     // Optimized settings for scale
@@ -80,7 +75,9 @@ const SUPPORT_STAFF_ROLES = new Set(['support', 'cs_admin', 'customer_service'])
 const ADMIN_STAFF_ROLES = new Set(['admin', 'superadmin']);
 
 const normalizeClaim = (value: unknown): string | undefined => {
-    if (typeof value !== 'string') { return undefined; }
+    if (typeof value !== 'string') {
+        return undefined;
+    }
     const normalized = value.trim().toLowerCase();
     return normalized.length > 0 ? normalized : undefined;
 };
@@ -95,15 +92,20 @@ const parseSocketUser = (decoded: AuthTokenClaims): SocketUser | null => {
         id,
         userType: normalizeClaim(decoded.userType || decoded.user_type) || 'unknown',
         staffRole: normalizeClaim(decoded.staffRole || decoded.staff_role),
-        garageId: typeof (decoded.garageId || decoded.garage_id) === 'string'
-            ? (decoded.garageId || decoded.garage_id)
-            : undefined
+        garageId:
+            typeof (decoded.garageId || decoded.garage_id) === 'string'
+                ? decoded.garageId || decoded.garage_id
+                : undefined
     };
 };
 
 const getGarageRoomId = (user: SocketUser): string | undefined => {
-    if (user.garageId) { return user.garageId; }
-    if (user.userType === 'garage') { return user.id; }
+    if (user.garageId) {
+        return user.garageId;
+    }
+    if (user.userType === 'garage') {
+        return user.id;
+    }
     return undefined;
 };
 
@@ -346,15 +348,23 @@ io.on('connection', (socket) => {
     // Real-time Request Tracking (server-side authorization enforced)
     socket.on('track_request_view', async (payload: unknown) => {
         const user = socket.data.user as SocketUser | undefined;
-        if (!user) { return; }
+        if (!user) {
+            return;
+        }
 
         try {
             const request_id = getRequestIdFromPayload(payload);
-            if (!request_id) { return; }
+            if (!request_id) {
+                return;
+            }
 
             const allowed = await canTrackRequest(request_id, user);
             if (!allowed) {
-                logger.warn('Blocked unauthorized request tracking attempt', { socketId: socket.id, userId: user.id, requestId: request_id });
+                logger.warn('Blocked unauthorized request tracking attempt', {
+                    socketId: socket.id,
+                    userId: user.id,
+                    requestId: request_id
+                });
                 socket.emit('tracking_denied', { resource: 'request', request_id });
                 return;
             }
@@ -384,22 +394,32 @@ io.on('connection', (socket) => {
 
             const count = requestViewers.get(request_id)!.size;
             io.to(`request_${request_id}`).emit('viewer_count_update', { request_id, count });
-            if (count === 0) { requestViewers.delete(request_id); }
+            if (count === 0) {
+                requestViewers.delete(request_id);
+            }
         }
     });
 
     // Tracking for specific order (server-side authorization enforced)
     socket.on('track_order', async (data: unknown) => {
         const user = socket.data.user as SocketUser | undefined;
-        if (!user) { return; }
+        if (!user) {
+            return;
+        }
 
         try {
             const orderId = getOrderIdFromPayload(data);
-            if (!orderId) { return; }
+            if (!orderId) {
+                return;
+            }
 
             const allowed = await canTrackOrder(orderId, user);
             if (!allowed) {
-                logger.warn('Blocked unauthorized order tracking attempt', { socketId: socket.id, userId: user.id, orderId });
+                logger.warn('Blocked unauthorized order tracking attempt', {
+                    socketId: socket.id,
+                    userId: user.id,
+                    orderId
+                });
                 socket.emit('tracking_denied', { resource: 'order', order_id: orderId });
                 return;
             }
@@ -407,14 +427,17 @@ io.on('connection', (socket) => {
             socket.join(`tracking_${orderId}`);
 
             // Send last known driver location
-            const result = await pool.query(`
+            const result = await pool.query(
+                `
                 SELECT d.current_lat, d.current_lng, dl.heading, dl.speed, d.updated_at
                 FROM orders o
                 JOIN delivery_assignments da ON o.order_id = da.order_id
                 JOIN drivers d ON da.driver_id = d.driver_id
                 LEFT JOIN driver_locations dl ON d.driver_id = dl.driver_id
                 WHERE o.order_id = $1 AND da.status IN ('assigned', 'picked_up', 'in_transit')
-            `, [orderId]);
+            `,
+                [orderId]
+            );
 
             if (result.rows.length > 0) {
                 const loc = result.rows[0];
@@ -445,7 +468,9 @@ io.on('connection', (socket) => {
                 viewers.delete(socket.id);
                 const count = viewers.size;
                 io.to(`request_${requestId}`).emit('viewer_count_update', { request_id: requestId, count });
-                if (count === 0) { requestViewers.delete(requestId); }
+                if (count === 0) {
+                    requestViewers.delete(requestId);
+                }
             }
         });
     });
@@ -502,7 +527,9 @@ process.on('SIGINT', () => gracefulShutdown('SIGINT'));
 // SERVER STARTUP
 // ============================================
 server.listen(PORT, async () => {
-    logger.startup(`QScrap Server ${NODE_ID} starting on port ${PORT} (${process.env.NODE_ENV || 'development'}, PID: ${process.pid})`);
+    logger.startup(
+        `QScrap Server ${NODE_ID} starting on port ${PORT} (${process.env.NODE_ENV || 'development'}, PID: ${process.pid})`
+    );
 
     // Perform security validation before anything else
     performStartupSecurityChecks();
@@ -550,7 +577,7 @@ server.listen(PORT, async () => {
     startAutoCompleteJob();
     logger.startup('Auto-complete job scheduled (daily 2:00 AM)');
 
-    // Start delivery reminder job  
+    // Start delivery reminder job
     startDeliveryReminderJob();
     logger.startup('Delivery reminders scheduled (hourly)');
 
@@ -564,10 +591,18 @@ server.listen(PORT, async () => {
 
     // Periodic stats logging (every 5 minutes in production)
     if (process.env.NODE_ENV === 'production') {
-        setInterval(async () => {
-            const socketCount = await getGlobalSocketCount(io);
-            const db = getPoolStats();
-            logger.info('Server stats', { nodeId: NODE_ID, sockets: socketCount, dbConnections: db.primary.total, dbIdle: db.primary.idle });
-        }, 5 * 60 * 1000);
+        setInterval(
+            async () => {
+                const socketCount = await getGlobalSocketCount(io);
+                const db = getPoolStats();
+                logger.info('Server stats', {
+                    nodeId: NODE_ID,
+                    sockets: socketCount,
+                    dbConnections: db.primary.total,
+                    dbIdle: db.primary.idle
+                });
+            },
+            5 * 60 * 1000
+        );
     }
 });

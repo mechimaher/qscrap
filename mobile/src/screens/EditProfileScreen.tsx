@@ -11,7 +11,7 @@ import {
     TouchableOpacity,
     ScrollView,
     Alert,
-    ActivityIndicator,
+    ActivityIndicator
 } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { LinearGradient } from 'expo-linear-gradient';
@@ -84,12 +84,12 @@ export default function EditProfileScreen() {
                 method: 'PUT',
                 headers: {
                     'Content-Type': 'application/json',
-                    Authorization: `Bearer ${token}`,
+                    Authorization: `Bearer ${token}`
                 },
                 body: JSON.stringify({
                     full_name: fullName.trim(),
-                    email: email.trim() || null,
-                }),
+                    email: email.trim() || null
+                })
             });
 
             const data = await response.json();
@@ -137,12 +137,12 @@ export default function EditProfileScreen() {
                 method: 'POST',
                 headers: {
                     'Content-Type': 'application/json',
-                    Authorization: `Bearer ${token}`,
+                    Authorization: `Bearer ${token}`
                 },
                 body: JSON.stringify({
                     current_password: currentPassword,
-                    new_password: newPassword,
-                }),
+                    new_password: newPassword
+                })
             });
 
             if (response.ok) {
@@ -177,9 +177,24 @@ export default function EditProfileScreen() {
     return (
         <SafeAreaView style={[styles.container, { backgroundColor: colors.background }]} edges={['top']}>
             {/* Header */}
-            <View style={[styles.header, { backgroundColor: colors.surface, borderBottomColor: colors.border, flexDirection: rtlFlexDirection(isRTL) }]}>
-                <TouchableOpacity onPress={() => navigation.goBack()} style={[styles.backButton, { backgroundColor: colors.background }]} accessibilityRole="button" accessibilityLabel={t('common.back')}>
-                    <Ionicons name="arrow-back" size={20} color={Colors.primary} /> <Text style={styles.backText}>{t('common.back')}</Text>
+            <View
+                style={[
+                    styles.header,
+                    {
+                        backgroundColor: colors.surface,
+                        borderBottomColor: colors.border,
+                        flexDirection: rtlFlexDirection(isRTL)
+                    }
+                ]}
+            >
+                <TouchableOpacity
+                    onPress={() => navigation.goBack()}
+                    style={[styles.backButton, { backgroundColor: colors.background }]}
+                    accessibilityRole="button"
+                    accessibilityLabel={t('common.back')}
+                >
+                    <Ionicons name="arrow-back" size={20} color={Colors.primary} />{' '}
+                    <Text style={styles.backText}>{t('common.back')}</Text>
                 </TouchableOpacity>
                 <Text style={[styles.headerTitle, { color: colors.text }]}>{t('profile.editProfile')}</Text>
                 <View style={{ width: 60 }} />
@@ -189,15 +204,15 @@ export default function EditProfileScreen() {
                 {/* Simple Avatar - Display Only */}
                 <View style={styles.avatarSection}>
                     <View style={styles.avatar}>
-                        <Text style={styles.avatarText}>
-                            {fullName.charAt(0).toUpperCase() || '?'}
-                        </Text>
+                        <Text style={styles.avatarText}>{fullName.charAt(0).toUpperCase() || '?'}</Text>
                     </View>
                 </View>
 
                 {/* Personal Info Section */}
                 <View style={[styles.section, { backgroundColor: colors.surface, borderColor: colors.border }]}>
-                    <Text style={[styles.sectionTitle, { color: colors.text, textAlign: rtlTextAlign(isRTL) }]}>{t('profile.personalInfo')}</Text>
+                    <Text style={[styles.sectionTitle, { color: colors.text, textAlign: rtlTextAlign(isRTL) }]}>
+                        {t('profile.personalInfo')}
+                    </Text>
 
                     <View style={styles.inputGroup}>
                         <Text style={[styles.label, { textAlign: rtlTextAlign(isRTL) }]}>{t('profile.fullName')}</Text>
@@ -212,7 +227,9 @@ export default function EditProfileScreen() {
                     </View>
 
                     <View style={styles.inputGroup}>
-                        <Text style={[styles.label, { textAlign: rtlTextAlign(isRTL) }]}>{t('profile.phoneNumber')}</Text>
+                        <Text style={[styles.label, { textAlign: rtlTextAlign(isRTL) }]}>
+                            {t('profile.phoneNumber')}
+                        </Text>
                         <TextInput
                             style={[styles.input, styles.inputDisabled, { textAlign: rtlTextAlign(isRTL) }]}
                             value={phoneNumber}
@@ -222,11 +239,15 @@ export default function EditProfileScreen() {
                             accessibilityLabel={t('profile.phoneNumber')}
                             accessibilityState={{ disabled: true }}
                         />
-                        <Text style={[styles.inputHint, { textAlign: rtlTextAlign(isRTL) }]}>{t('profile.contactSupport')}</Text>
+                        <Text style={[styles.inputHint, { textAlign: rtlTextAlign(isRTL) }]}>
+                            {t('profile.contactSupport')}
+                        </Text>
                     </View>
 
                     <View style={styles.inputGroup}>
-                        <Text style={[styles.label, { textAlign: rtlTextAlign(isRTL) }]}>{t('profile.emailOptional')}</Text>
+                        <Text style={[styles.label, { textAlign: rtlTextAlign(isRTL) }]}>
+                            {t('profile.emailOptional')}
+                        </Text>
                         <TextInput
                             style={[styles.input, { textAlign: rtlTextAlign(isRTL) }]}
                             value={email}
@@ -247,10 +268,7 @@ export default function EditProfileScreen() {
                         accessibilityLabel={t('common.saveChanges')}
                         accessibilityState={{ disabled: isSaving }}
                     >
-                        <LinearGradient
-                            colors={['#22c55e', '#16a34a'] as const}
-                            style={styles.saveGradient}
-                        >
+                        <LinearGradient colors={['#22c55e', '#16a34a'] as const} style={styles.saveGradient}>
                             {isSaving ? (
                                 <ActivityIndicator color="#fff" size="small" />
                             ) : (
@@ -262,10 +280,14 @@ export default function EditProfileScreen() {
 
                 {/* Change Password Section */}
                 <View style={[styles.section, { backgroundColor: colors.surface, borderColor: colors.border }]}>
-                    <Text style={[styles.sectionTitle, { color: colors.text, textAlign: rtlTextAlign(isRTL) }]}>{t('profile.changePassword')}</Text>
+                    <Text style={[styles.sectionTitle, { color: colors.text, textAlign: rtlTextAlign(isRTL) }]}>
+                        {t('profile.changePassword')}
+                    </Text>
 
                     <View style={styles.inputGroup}>
-                        <Text style={[styles.label, { textAlign: rtlTextAlign(isRTL) }]}>{t('profile.currentPassword')}</Text>
+                        <Text style={[styles.label, { textAlign: rtlTextAlign(isRTL) }]}>
+                            {t('profile.currentPassword')}
+                        </Text>
                         <TextInput
                             style={[styles.input, { textAlign: rtlTextAlign(isRTL) }]}
                             value={currentPassword}
@@ -277,7 +299,9 @@ export default function EditProfileScreen() {
                     </View>
 
                     <View style={styles.inputGroup}>
-                        <Text style={[styles.label, { textAlign: rtlTextAlign(isRTL) }]}>{t('profile.newPassword')}</Text>
+                        <Text style={[styles.label, { textAlign: rtlTextAlign(isRTL) }]}>
+                            {t('profile.newPassword')}
+                        </Text>
                         <TextInput
                             style={[styles.input, { textAlign: rtlTextAlign(isRTL) }]}
                             value={newPassword}
@@ -289,7 +313,9 @@ export default function EditProfileScreen() {
                     </View>
 
                     <View style={styles.inputGroup}>
-                        <Text style={[styles.label, { textAlign: rtlTextAlign(isRTL) }]}>{t('profile.confirmNewPassword')}</Text>
+                        <Text style={[styles.label, { textAlign: rtlTextAlign(isRTL) }]}>
+                            {t('profile.confirmNewPassword')}
+                        </Text>
                         <TextInput
                             style={[styles.input, { textAlign: rtlTextAlign(isRTL) }]}
                             value={confirmPassword}
@@ -309,7 +335,6 @@ export default function EditProfileScreen() {
                     </TouchableOpacity>
                 </View>
 
-
                 <View style={{ height: 100 }} />
             </ScrollView>
         </SafeAreaView>
@@ -325,12 +350,12 @@ const styles = StyleSheet.create({
         padding: Spacing.lg,
         backgroundColor: '#fff',
         borderBottomWidth: 1,
-        borderBottomColor: '#F0F0F0',
+        borderBottomColor: '#F0F0F0'
     },
     backButton: {
         padding: Spacing.sm,
         backgroundColor: '#F5F5F5',
-        borderRadius: BorderRadius.md,
+        borderRadius: BorderRadius.md
     },
     backText: { color: Colors.primary, fontSize: FontSizes.md, fontWeight: '600' },
     headerTitle: { fontSize: FontSizes.xl, fontWeight: '800', color: '#1a1a1a' },
@@ -341,7 +366,7 @@ const styles = StyleSheet.create({
         backgroundColor: '#fff',
         padding: Spacing.xl,
         borderRadius: BorderRadius.xl,
-        ...Shadows.sm,
+        ...Shadows.sm
     },
     avatar: {
         width: 100,
@@ -352,12 +377,12 @@ const styles = StyleSheet.create({
         alignItems: 'center',
         borderWidth: 3,
         borderColor: Colors.primary,
-        overflow: 'hidden',
+        overflow: 'hidden'
     },
     avatarImage: {
         width: '100%',
         height: '100%',
-        borderRadius: 50,
+        borderRadius: 50
     },
     avatarText: { fontSize: 40, color: Colors.primary },
     changePhotoButton: {
@@ -365,7 +390,7 @@ const styles = StyleSheet.create({
         backgroundColor: Colors.primary + '10',
         paddingHorizontal: Spacing.lg,
         paddingVertical: Spacing.sm,
-        borderRadius: BorderRadius.full,
+        borderRadius: BorderRadius.full
     },
     changePhotoText: { color: Colors.primary, fontSize: FontSizes.md, fontWeight: '600' },
     section: {
@@ -375,20 +400,20 @@ const styles = StyleSheet.create({
         marginBottom: Spacing.lg,
         borderWidth: 1,
         borderColor: '#E8E8E8',
-        ...Shadows.sm,
+        ...Shadows.sm
     },
     sectionTitle: {
         fontSize: FontSizes.lg,
         fontWeight: '700',
         color: '#1a1a1a',
-        marginBottom: Spacing.lg,
+        marginBottom: Spacing.lg
     },
     inputGroup: { marginBottom: Spacing.md },
     label: {
         fontSize: FontSizes.sm,
         fontWeight: '600',
         color: '#525252',
-        marginBottom: Spacing.xs,
+        marginBottom: Spacing.xs
     },
     input: {
         backgroundColor: '#F8F9FA',
@@ -397,22 +422,22 @@ const styles = StyleSheet.create({
         fontSize: FontSizes.md,
         color: '#1a1a1a',
         borderWidth: 1,
-        borderColor: '#E8E8E8',
+        borderColor: '#E8E8E8'
     },
     inputDisabled: {
         opacity: 0.6,
-        backgroundColor: '#F0F0F0',
+        backgroundColor: '#F0F0F0'
     },
     inputHint: {
         fontSize: FontSizes.xs,
         color: '#737373',
-        marginTop: Spacing.xs,
+        marginTop: Spacing.xs
     },
     saveButton: {
         borderRadius: BorderRadius.lg,
         overflow: 'hidden',
         marginTop: Spacing.md,
-        ...Shadows.sm,
+        ...Shadows.sm
     },
     saveButtonDisabled: { opacity: 0.7 },
     saveGradient: { paddingVertical: Spacing.md, alignItems: 'center' },
@@ -424,7 +449,7 @@ const styles = StyleSheet.create({
         alignItems: 'center',
         borderWidth: 1,
         borderColor: Colors.primary,
-        marginTop: Spacing.md,
+        marginTop: Spacing.md
     },
     changePasswordText: { color: Colors.primary, fontSize: FontSizes.md, fontWeight: '600' },
     deleteAccountButton: {
@@ -433,13 +458,13 @@ const styles = StyleSheet.create({
         padding: Spacing.md,
         alignItems: 'center',
         borderWidth: 1,
-        borderColor: Colors.error,
+        borderColor: Colors.error
     },
     deleteAccountText: { color: Colors.error, fontSize: FontSizes.md, fontWeight: '600' },
     deleteHint: {
         fontSize: FontSizes.xs,
         color: '#737373',
         marginTop: Spacing.sm,
-        textAlign: 'center',
-    },
+        textAlign: 'center'
+    }
 });

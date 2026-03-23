@@ -19,7 +19,7 @@ import {
     validateAmount,
     validateForm,
     sanitizeInput,
-    cleanPhoneNumber,
+    cleanPhoneNumber
 } from '../utils/validation';
 
 describe('Validation Utilities', () => {
@@ -167,17 +167,11 @@ describe('Validation Utilities', () => {
 
     describe('validateForm', () => {
         it('should pass when all validations pass', () => {
-            const result = validateForm([
-                () => validateRequired('test'),
-                () => validateEmail('test@test.com'),
-            ]);
+            const result = validateForm([() => validateRequired('test'), () => validateEmail('test@test.com')]);
             expect(result.isValid).toBe(true);
         });
         it('should fail on first invalid validation', () => {
-            const result = validateForm([
-                () => validateRequired(''),
-                () => validateEmail('test@test.com'),
-            ]);
+            const result = validateForm([() => validateRequired(''), () => validateEmail('test@test.com')]);
             expect(result.isValid).toBe(false);
         });
     });
@@ -219,7 +213,7 @@ import {
     capitalize,
     formatOrderNumber,
     formatStatus,
-    formatDate,
+    formatDate
 } from '../utils/formatters';
 
 describe('Formatter Utilities', () => {
@@ -354,7 +348,7 @@ import {
     rtlScaleX,
     rtlStyle,
     rtlWritingDirection,
-    RTL,
+    RTL
 } from '../utils/rtl';
 
 describe('RTL Utilities', () => {
@@ -480,9 +474,6 @@ describe('RTL Utilities', () => {
     });
 });
 
-
-
-
 // ============================================================================
 // ERROR HANDLER TESTS
 // ============================================================================
@@ -499,21 +490,17 @@ describe('Error Handler Utilities', () => {
         });
 
         it('should extract from response.data.error string', () => {
-            expect(
-                extractErrorMessage({ response: { data: { error: 'API error' } } })
-            ).toBe('API error');
+            expect(extractErrorMessage({ response: { data: { error: 'API error' } } })).toBe('API error');
         });
 
         it('should extract from response.data.message', () => {
-            expect(
-                extractErrorMessage({ response: { data: { message: 'Not found' } } })
-            ).toBe('Not found');
+            expect(extractErrorMessage({ response: { data: { message: 'Not found' } } })).toBe('Not found');
         });
 
         it('should extract from nested error.message', () => {
             expect(
                 extractErrorMessage({
-                    response: { data: { error: { message: 'Nested error' } } },
+                    response: { data: { error: { message: 'Nested error' } } }
                 })
             ).toBe('Nested error');
         });

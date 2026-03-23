@@ -1,9 +1,9 @@
 /**
  * Swagger/OpenAPI Configuration
- * 
+ *
  * Provides OpenAPI 3.0 documentation for QScrap API.
  * Access interactive docs at: /api/docs
- * 
+ *
  * @module config/swagger
  */
 
@@ -209,8 +209,11 @@ Authorization: Bearer <your_jwt_token>
                     request_id: { type: 'string', format: 'uuid' },
                     garage_id: { type: 'string', format: 'uuid' },
                     garage_name: { type: 'string' },
-                    part_price: { type: 'number', example: 450.00 },
-                    part_condition: { type: 'string', enum: ['new', 'used_excellent', 'used_good', 'used_fair', 'refurbished'] },
+                    part_price: { type: 'number', example: 450.0 },
+                    part_condition: {
+                        type: 'string',
+                        enum: ['new', 'used_excellent', 'used_good', 'used_fair', 'refurbished']
+                    },
                     warranty_days: { type: 'integer', example: 30 },
                     notes: { type: 'string' },
                     status: { type: 'string', enum: ['pending', 'accepted', 'rejected', 'expired'] },
@@ -230,7 +233,23 @@ Authorization: Bearer <your_jwt_token>
                     total_amount: { type: 'number' },
                     order_status: {
                         type: 'string',
-                        enum: ['confirmed', 'preparing', 'ready_for_pickup', 'collected', 'qc_in_progress', 'qc_passed', 'qc_failed', 'in_transit', 'delivered', 'completed', 'cancelled_by_customer', 'cancelled_by_garage', 'cancelled_by_ops', 'disputed', 'refunded']
+                        enum: [
+                            'confirmed',
+                            'preparing',
+                            'ready_for_pickup',
+                            'collected',
+                            'qc_in_progress',
+                            'qc_passed',
+                            'qc_failed',
+                            'in_transit',
+                            'delivered',
+                            'completed',
+                            'cancelled_by_customer',
+                            'cancelled_by_garage',
+                            'cancelled_by_ops',
+                            'disputed',
+                            'refunded'
+                        ]
                     },
                     delivery_address: { type: 'string' },
                     created_at: { type: 'string', format: 'date-time' }
@@ -261,7 +280,10 @@ Authorization: Bearer <your_jwt_token>
                 content: {
                     'application/json': {
                         schema: { $ref: '#/components/schemas/Error' },
-                        example: { error: 'Validation failed', details: [{ field: 'password', message: 'Password must be at least 8 characters' }] }
+                        example: {
+                            error: 'Validation failed',
+                            details: [{ field: 'password', message: 'Password must be at least 8 characters' }]
+                        }
                     }
                 }
             }
@@ -483,7 +505,9 @@ if (generatedPathsData && generatedPathsData.paths) {
         ...swaggerSpec.paths // Manual paths override generated ones
     };
 
-    logger.info(`OpenAPI spec loaded: ${Object.keys(swaggerSpec.paths).length} paths, ${generatedPathsData.metadata?.totalOperations || 0} operations`);
+    logger.info(
+        `OpenAPI spec loaded: ${Object.keys(swaggerSpec.paths).length} paths, ${generatedPathsData.metadata?.totalOperations || 0} operations`
+    );
 }
 
 // ============================================
@@ -492,7 +516,7 @@ if (generatedPathsData && generatedPathsData.paths) {
 
 /**
  * Sets up Swagger UI at /api/docs
- * 
+ *
  * @param app Express application instance
  */
 export const setupSwagger = (app: Express): void => {
@@ -503,20 +527,24 @@ export const setupSwagger = (app: Express): void => {
     });
 
     // Swagger UI
-    app.use('/api/docs', swaggerUi.serve, swaggerUi.setup(swaggerSpec, {
-        customCss: `
+    app.use(
+        '/api/docs',
+        swaggerUi.serve,
+        swaggerUi.setup(swaggerSpec, {
+            customCss: `
             .swagger-ui .topbar { display: none }
             .swagger-ui .info { margin-bottom: 20px }
         `,
-        customSiteTitle: 'QScrap API Documentation',
-        customfavIcon: '/assets/favicon.ico',
-        swaggerOptions: {
-            persistAuthorization: true,
-            displayRequestDuration: true,
-            filter: true,
-            showExtensions: true
-        }
-    }));
+            customSiteTitle: 'QScrap API Documentation',
+            customfavIcon: '/assets/favicon.ico',
+            swaggerOptions: {
+                persistAuthorization: true,
+                displayRequestDuration: true,
+                filter: true,
+                showExtensions: true
+            }
+        })
+    );
 
     logger.startup('Swagger UI available at /api/docs');
 };

@@ -46,7 +46,13 @@ export const exportAnalytics = async (req: AuthRequest, res: Response) => {
             AnalyticsService.getBidPerformance(garageId),
             AnalyticsService.getPopularParts(garageId)
         ]);
-        res.json({ sales_trend: salesTrend, bid_performance: bidPerformance, popular_parts: popularParts, export_format: 'json', generated_at: new Date().toISOString() });
+        res.json({
+            sales_trend: salesTrend,
+            bid_performance: bidPerformance,
+            popular_parts: popularParts,
+            export_format: 'json',
+            generated_at: new Date().toISOString()
+        });
     } catch (err: any) {
         if (err.message?.includes('requires')) {
             return res.status(403).json({ error: err.message });
@@ -80,7 +86,9 @@ export const getCustomerInsights = async (req: AuthRequest, res: Response) => {
 
 export const getPlanFeatures = async (req: AuthRequest, res: Response) => {
     // Returns static plan feature information
-    res.json({ features: { analytics: true, export: true, comparison: true, popular_parts: true, bid_performance: true } });
+    res.json({
+        features: { analytics: true, export: true, comparison: true, popular_parts: true, bid_performance: true }
+    });
 };
 
 export const getMarketInsights = async (req: AuthRequest, res: Response) => {

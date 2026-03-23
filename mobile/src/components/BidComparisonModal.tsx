@@ -1,14 +1,6 @@
 // QScrap Bid Comparison Modal - Premium Design
 import React, { useState } from 'react';
-import {
-    View,
-    Text,
-    Modal,
-    TouchableOpacity,
-    ScrollView,
-    StyleSheet,
-    Dimensions,
-} from 'react-native';
+import { View, Text, Modal, TouchableOpacity, ScrollView, StyleSheet, Dimensions } from 'react-native';
 import { LinearGradient } from 'expo-linear-gradient';
 import * as Haptics from 'expo-haptics';
 import { Bid } from '../services/api';
@@ -27,12 +19,7 @@ interface BidComparisonModalProps {
 
 type SortKey = 'price' | 'rating' | 'warranty';
 
-export const BidComparisonModal: React.FC<BidComparisonModalProps> = ({
-    visible,
-    bids,
-    onAccept,
-    onClose,
-}) => {
+export const BidComparisonModal: React.FC<BidComparisonModalProps> = ({ visible, bids, onAccept, onClose }) => {
     const { t } = useTranslation();
     const [sortBy, setSortBy] = useState<SortKey>('price');
 
@@ -54,9 +41,9 @@ export const BidComparisonModal: React.FC<BidComparisonModalProps> = ({
         }
     });
 
-    const lowestPrice = Math.min(...bids.map(b => Number(b.bid_amount)));
-    const highestRating = Math.max(...bids.map(b => b.rating_average || 0));
-    const longestWarranty = Math.max(...bids.map(b => b.warranty_days || 0));
+    const lowestPrice = Math.min(...bids.map((b) => Number(b.bid_amount)));
+    const highestRating = Math.max(...bids.map((b) => b.rating_average || 0));
+    const longestWarranty = Math.max(...bids.map((b) => b.warranty_days || 0));
 
     const handleAccept = (bid: Bid) => {
         Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success);
@@ -64,12 +51,7 @@ export const BidComparisonModal: React.FC<BidComparisonModalProps> = ({
     };
 
     return (
-        <Modal
-            visible={visible}
-            animationType="slide"
-            transparent={true}
-            onRequestClose={onClose}
-        >
+        <Modal visible={visible} animationType="slide" transparent={true} onRequestClose={onClose}>
             <View style={styles.modalOverlay}>
                 <View style={styles.modalContainer}>
                     {/* Header */}
@@ -121,19 +103,15 @@ export const BidComparisonModal: React.FC<BidComparisonModalProps> = ({
                             const isBestWarranty = bid.warranty_days === longestWarranty;
 
                             return (
-                                <View
-                                    key={bid.bid_id}
-                                    style={[
-                                        styles.bidRow,
-                                        isBestPrice && styles.bidRowHighlight,
-                                    ]}
-                                >
+                                <View key={bid.bid_id} style={[styles.bidRow, isBestPrice && styles.bidRowHighlight]}>
                                     {/* Garage Name */}
                                     <View style={styles.bidColumn}>
                                         <Text style={styles.garageName}>{bid.garage_name}</Text>
                                         {isBestPrice && (
                                             <View style={styles.bestBadge}>
-                                                <Text style={styles.bestBadgeText}>{t('bidComparison.bestPriceBadge')}</Text>
+                                                <Text style={styles.bestBadgeText}>
+                                                    {t('bidComparison.bestPriceBadge')}
+                                                </Text>
                                             </View>
                                         )}
                                     </View>
@@ -141,10 +119,7 @@ export const BidComparisonModal: React.FC<BidComparisonModalProps> = ({
                                     {/* Price */}
                                     <View style={styles.bidColumn}>
                                         <Text style={styles.columnLabel}>{t('bidComparison.price')}</Text>
-                                        <Text style={[
-                                            styles.priceText,
-                                            isBestPrice && styles.priceTextBest
-                                        ]}>
+                                        <Text style={[styles.priceText, isBestPrice && styles.priceTextBest]}>
                                             {bid.bid_amount} {t('common.currency')}
                                         </Text>
                                     </View>
@@ -153,11 +128,13 @@ export const BidComparisonModal: React.FC<BidComparisonModalProps> = ({
                                     <View style={styles.bidColumn}>
                                         <Text style={styles.columnLabel}>{t('bidComparison.rating')}</Text>
                                         <View style={styles.ratingRow}>
-                                            <Ionicons name="star" size={14} color="#F59E0B" style={{ marginRight: 4 }} />
-                                            <Text style={[
-                                                styles.ratingText,
-                                                isBestRating && styles.ratingTextBest
-                                            ]}>
+                                            <Ionicons
+                                                name="star"
+                                                size={14}
+                                                color="#F59E0B"
+                                                style={{ marginRight: 4 }}
+                                            />
+                                            <Text style={[styles.ratingText, isBestRating && styles.ratingTextBest]}>
                                                 {bid.rating_average?.toFixed(1) || '-'}
                                             </Text>
                                         </View>
@@ -166,19 +143,13 @@ export const BidComparisonModal: React.FC<BidComparisonModalProps> = ({
                                     {/* Warranty */}
                                     <View style={styles.bidColumn}>
                                         <Text style={styles.columnLabel}>{t('bidComparison.warranty')}</Text>
-                                        <Text style={[
-                                            styles.warrantyText,
-                                            isBestWarranty && styles.warrantyTextBest
-                                        ]}>
+                                        <Text style={[styles.warrantyText, isBestWarranty && styles.warrantyTextBest]}>
                                             {bid.warranty_days > 0 ? `${bid.warranty_days}d` : t('bidComparison.none')}
                                         </Text>
                                     </View>
 
                                     {/* Accept Button */}
-                                    <TouchableOpacity
-                                        onPress={() => handleAccept(bid)}
-                                        style={styles.acceptButton}
-                                    >
+                                    <TouchableOpacity onPress={() => handleAccept(bid)} style={styles.acceptButton}>
                                         <LinearGradient
                                             colors={['#22C55E', '#16A34A'] as any}
                                             style={styles.acceptGradient}
@@ -200,14 +171,14 @@ const styles = StyleSheet.create({
     modalOverlay: {
         flex: 1,
         backgroundColor: 'rgba(0,0,0,0.7)',
-        justifyContent: 'flex-end',
+        justifyContent: 'flex-end'
     },
     modalContainer: {
         backgroundColor: '#FFFFFF',
         borderTopLeftRadius: BorderRadius.xxl,
         borderTopRightRadius: BorderRadius.xxl,
         maxHeight: height * 0.85,
-        ...Shadows.xl,
+        ...Shadows.xl
     },
     header: {
         flexDirection: 'row',
@@ -215,12 +186,12 @@ const styles = StyleSheet.create({
         justifyContent: 'space-between',
         padding: Spacing.xl,
         borderTopLeftRadius: BorderRadius.xxl,
-        borderTopRightRadius: BorderRadius.xxl,
+        borderTopRightRadius: BorderRadius.xxl
     },
     headerTitle: {
         fontSize: FontSizes.xxl,
         fontWeight: '700',
-        color: '#FFFFFF',
+        color: '#FFFFFF'
     },
     closeButton: {
         width: 32,
@@ -228,19 +199,19 @@ const styles = StyleSheet.create({
         borderRadius: 16,
         backgroundColor: 'rgba(255,255,255,0.2)',
         alignItems: 'center',
-        justifyContent: 'center',
+        justifyContent: 'center'
     },
     closeText: {
         fontSize: FontSizes.xl,
         color: '#FFFFFF',
-        fontWeight: '600',
+        fontWeight: '600'
     },
     sortTabs: {
         flexDirection: 'row',
         padding: Spacing.md,
         gap: Spacing.sm,
         borderBottomWidth: 1,
-        borderBottomColor: '#E8E8E8',
+        borderBottomColor: '#E8E8E8'
     },
     sortTab: {
         flex: 1,
@@ -248,21 +219,21 @@ const styles = StyleSheet.create({
         paddingHorizontal: Spacing.md,
         borderRadius: BorderRadius.full,
         backgroundColor: '#F5F5F5',
-        alignItems: 'center',
+        alignItems: 'center'
     },
     sortTabActive: {
-        backgroundColor: Colors.theme.primary + '15',
+        backgroundColor: Colors.theme.primary + '15'
     },
     sortTabText: {
         fontSize: FontSizes.sm,
         fontWeight: '600',
-        color: Colors.theme.textSecondary,
+        color: Colors.theme.textSecondary
     },
     sortTabTextActive: {
-        color: Colors.theme.primary,
+        color: Colors.theme.primary
     },
     scrollView: {
-        padding: Spacing.lg,
+        padding: Spacing.lg
     },
     bidRow: {
         backgroundColor: '#F9F9F9',
@@ -270,85 +241,85 @@ const styles = StyleSheet.create({
         padding: Spacing.lg,
         marginBottom: Spacing.md,
         borderWidth: 1,
-        borderColor: '#E8E8E8',
+        borderColor: '#E8E8E8'
     },
     bidRowHighlight: {
         borderColor: '#22C55E',
         borderWidth: 2,
-        backgroundColor: '#F0FDF4',
+        backgroundColor: '#F0FDF4'
     },
     bidColumn: {
-        marginBottom: Spacing.sm,
+        marginBottom: Spacing.sm
     },
     garageName: {
         fontSize: FontSizes.lg,
         fontWeight: '700',
         color: Colors.theme.text,
-        marginBottom: Spacing.xs,
+        marginBottom: Spacing.xs
     },
     bestBadge: {
         alignSelf: 'flex-start',
         backgroundColor: '#22C55E',
         paddingHorizontal: Spacing.sm,
         paddingVertical: 2,
-        borderRadius: BorderRadius.sm,
+        borderRadius: BorderRadius.sm
     },
     bestBadgeText: {
         fontSize: FontSizes.xs,
         fontWeight: '700',
-        color: '#FFFFFF',
+        color: '#FFFFFF'
     },
     columnLabel: {
         fontSize: FontSizes.xs,
         color: Colors.theme.textSecondary,
-        marginBottom: 2,
+        marginBottom: 2
     },
     priceText: {
         fontSize: FontSizes.xl,
         fontWeight: '700',
-        color: Colors.theme.primary,
+        color: Colors.theme.primary
     },
     priceTextBest: {
-        color: '#22C55E',
+        color: '#22C55E'
     },
     ratingRow: {
         flexDirection: 'row',
-        alignItems: 'center',
+        alignItems: 'center'
     },
     ratingStar: {
         fontSize: FontSizes.sm,
-        marginRight: 4,
+        marginRight: 4
     },
     ratingText: {
         fontSize: FontSizes.md,
         fontWeight: '600',
-        color: Colors.theme.text,
+        color: Colors.theme.text
     },
     ratingTextBest: {
-        color: '#F59E0B',
+        color: '#F59E0B'
     },
     warrantyText: {
         fontSize: FontSizes.md,
         fontWeight: '600',
-        color: Colors.theme.text,
+        color: Colors.theme.text
     },
     warrantyTextBest: {
-        color: '#6366F1',
+        color: '#6366F1'
     },
     acceptButton: {
         marginTop: Spacing.sm,
         borderRadius: BorderRadius.lg,
-        overflow: 'hidden',
+        overflow: 'hidden'
     },
     acceptGradient: {
         paddingVertical: Spacing.md,
-        alignItems: 'center',
+        alignItems: 'center'
     },
     acceptText: {
         fontSize: FontSizes.md,
         fontWeight: '700',
-        color: '#FFFFFF',
-    },
+        color: '#FFFFFF'
+    }
 });
 
 export default BidComparisonModal;

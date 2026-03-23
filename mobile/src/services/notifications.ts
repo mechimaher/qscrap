@@ -1,12 +1,13 @@
 import { log, warn, error as logError } from '../utils/logger';
 /**
  * Push Notification Service for QScrap Mobile App
- * 
+ *
  * Handles push notification registration, permissions, and handling.
  * Uses Expo Notifications API.
  */
 
 import { Platform } from 'react-native';
+import * as Application from 'expo-application';
 import * as Notifications from 'expo-notifications';
 import * as Device from 'expo-device';
 import { api } from './api';
@@ -20,8 +21,8 @@ Notifications.setNotificationHandler({
         shouldPlaySound: true,
         shouldSetBadge: true,
         shouldShowBanner: true,
-        shouldShowList: true,
-    }),
+        shouldShowList: true
+    })
 });
 
 export interface NotificationData {
@@ -62,7 +63,7 @@ export const registerForPushNotifications = async (): Promise<string | null> => 
 
         // Get Expo push token
         const tokenData = await Notifications.getExpoPushTokenAsync({
-            projectId: '47b26c9d-3bd0-4470-8543-dd303a49b287',
+            projectId: '47b26c9d-3bd0-4470-8543-dd303a49b287'
         });
         const token = tokenData.data;
 
@@ -81,7 +82,7 @@ export const registerForPushNotifications = async (): Promise<string | null> => 
                 vibrationPattern: [0, 400, 200, 400],
                 lightColor: '#8D1B3D',
                 enableLights: true,
-                enableVibrate: true,
+                enableVibrate: true
             });
 
             // Orders channel - HIGH priority with strong vibration
@@ -91,7 +92,7 @@ export const registerForPushNotifications = async (): Promise<string | null> => 
                 importance: Notifications.AndroidImportance.MAX,
                 vibrationPattern: [0, 500, 250, 500],
                 enableVibrate: true,
-                lockscreenVisibility: Notifications.AndroidNotificationVisibility.PUBLIC,
+                lockscreenVisibility: Notifications.AndroidNotificationVisibility.PUBLIC
             });
 
             // Delivery channel - CRITICAL for real-time tracking
@@ -103,7 +104,7 @@ export const registerForPushNotifications = async (): Promise<string | null> => 
                 enableVibrate: true,
                 enableLights: true,
                 lightColor: '#22c55e',
-                lockscreenVisibility: Notifications.AndroidNotificationVisibility.PUBLIC,
+                lockscreenVisibility: Notifications.AndroidNotificationVisibility.PUBLIC
             });
 
             // Bids channel - MAX priority for heads-up alerts
@@ -113,7 +114,7 @@ export const registerForPushNotifications = async (): Promise<string | null> => 
                 importance: Notifications.AndroidImportance.MAX,
                 vibrationPattern: [0, 300, 150, 300],
                 enableVibrate: true,
-                lockscreenVisibility: Notifications.AndroidNotificationVisibility.PUBLIC,
+                lockscreenVisibility: Notifications.AndroidNotificationVisibility.PUBLIC
             });
 
             // Messages channel - for chat with drivers/garages
@@ -124,7 +125,7 @@ export const registerForPushNotifications = async (): Promise<string | null> => 
                 vibrationPattern: [0, 200, 100, 200],
                 enableVibrate: true,
                 enableLights: true,
-                lightColor: '#4A90D9',
+                lightColor: '#4A90D9'
             });
 
             log('[Notifications] Android channels configured');
@@ -136,39 +137,39 @@ export const registerForPushNotifications = async (): Promise<string | null> => 
                 {
                     identifier: 'view',
                     buttonTitle: t('notifications.iosActions.viewBid'),
-                    options: { opensAppToForeground: true },
+                    options: { opensAppToForeground: true }
                 },
                 {
                     identifier: 'ignore',
                     buttonTitle: t('notifications.iosActions.ignore'),
-                    options: { isDestructive: true },
-                },
+                    options: { isDestructive: true }
+                }
             ]);
 
             await Notifications.setNotificationCategoryAsync('orders', [
                 {
                     identifier: 'track',
                     buttonTitle: t('notifications.iosActions.trackOrder'),
-                    options: { opensAppToForeground: true },
+                    options: { opensAppToForeground: true }
                 },
                 {
                     identifier: 'details',
                     buttonTitle: t('notifications.iosActions.viewDetails'),
-                    options: { opensAppToForeground: true },
-                },
+                    options: { opensAppToForeground: true }
+                }
             ]);
 
             await Notifications.setNotificationCategoryAsync('counter_offer', [
                 {
                     identifier: 'accept',
                     buttonTitle: t('notifications.iosActions.accept'),
-                    options: { opensAppToForeground: true },
+                    options: { opensAppToForeground: true }
                 },
                 {
                     identifier: 'view',
                     buttonTitle: t('notifications.iosActions.viewDetails'),
-                    options: { opensAppToForeground: true },
-                },
+                    options: { opensAppToForeground: true }
+                }
             ]);
         }
 
@@ -185,7 +186,12 @@ export const registerForPushNotifications = async (): Promise<string | null> => 
 export const registerTokenWithBackend = async (token: string): Promise<boolean> => {
     try {
         const platform = Platform.OS as 'ios' | 'android';
-        await api.registerPushToken(token, platform);
+        const deviceId =
+            platform === 'ios'
+                ? await (Application.getIosIdForVendorAsync?.() ?? Promise.resolve(null))
+                : Application.androidId || null;
+
+        await api.registerPushToken(token, platform, deviceId || 'unknown');
         log('[Notifications] Token registered with backend');
         return true;
     } catch (error) {
@@ -247,9 +253,9 @@ export const scheduleLocalNotification = async (
             data,
             sound: true,
             // Android requires channelId for proper sound/alert behavior
-            ...(Platform.OS === 'android' && { channelId: channelId || getChannelFromType(data?.type) || 'default' }),
+            ...(Platform.OS === 'android' && { channelId: channelId || getChannelFromType(data?.type) || 'default' })
         },
-        trigger: trigger || null, // null = immediate
+        trigger: trigger || null // null = immediate
     });
 
     return id;
@@ -323,5 +329,5 @@ export default {
     setBadgeCount,
     clearBadge,
     getNotificationPermissions,
-    areNotificationsEnabled,
+    areNotificationsEnabled
 };

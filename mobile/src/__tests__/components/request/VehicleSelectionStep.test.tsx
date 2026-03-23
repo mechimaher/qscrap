@@ -11,13 +11,24 @@ import { View, TouchableOpacity, Text } from 'react-native';
 
 // Mock MyVehiclesSelector
 jest.mock('../../../components/MyVehiclesSelector', () => {
-    return function MockMyVehiclesSelector({ onSelect, selectedVehicleId, onVehiclesLoaded }: any) {
+    const React = require('react');
+    const { View, TouchableOpacity, Text } = require('react-native');
+    return function MockMyVehiclesSelector({ onSelect, selectedVehicleId, onVehiclesLoaded }) {
         return (
             <View testID="my-vehicles-selector">
-                <TouchableOpacity onPress={() => onSelect({ vehicle_id: 'v1', car_make: 'Toyota', car_model: 'Camry', car_year: 2024 })}>
+                <TouchableOpacity
+                    testID="select-vehicle-btn"
+                    onPress={() =>
+                        onSelect({ vehicle_id: 'v1', car_make: 'Toyota', car_model: 'Camry', car_year: 2024 })
+                    }
+                >
                     <Text>Select Vehicle</Text>
                 </TouchableOpacity>
-                <TouchableOpacity onPress={() => onVehiclesLoaded([{ vehicle_id: 'v1', car_make: 'Toyota', car_model: 'Camry', car_year: 2024 }])}>
+                <TouchableOpacity
+                    onPress={() =>
+                        onVehiclesLoaded([{ vehicle_id: 'v1', car_make: 'Toyota', car_model: 'Camry', car_year: 2024 }])
+                    }
+                >
                     <Text>Load Vehicles</Text>
                 </TouchableOpacity>
                 {selectedVehicleId && <Text testID="selected-id">{selectedVehicleId}</Text>}
@@ -31,23 +42,23 @@ describe('VehicleSelectionStep', () => {
         colors: {
             surface: '#FFFFFF',
             text: '#1F2937',
-            textSecondary: '#6B7280',
+            textSecondary: '#6B7280'
         },
-        t: (key: string) => {
+        t: (key: string, params?: any) => {
             const translations: Record<string, string> = {
                 'newRequest.selectVehicle': 'Select Vehicle',
                 'newRequest.chooseFromCars': 'Choose from your saved vehicles',
-                'newRequest.vinVerified': 'VIN {{vin}} verified',
+                'newRequest.vinVerified': `VIN ${params?.vin} verified`
             };
             return translations[key] || key;
         },
         isRTL: false,
-        rtlFlexDirection: (isRTL: boolean) => isRTL ? "row-reverse" : "row",
-        rtlTextAlign: (isRTL: boolean) => isRTL ? "right" : "left",
+        rtlFlexDirection: (isRTL: boolean) => (isRTL ? 'row-reverse' : 'row'),
+        rtlTextAlign: (isRTL: boolean) => (isRTL ? 'right' : 'left'),
         selectedVehicle: null,
         handleVehicleSelect: jest.fn(),
         handleVehiclesLoaded: jest.fn(),
-        navigation: { navigate: jest.fn() },
+        navigation: { navigate: jest.fn() }
     };
 
     beforeEach(() => {
@@ -57,7 +68,7 @@ describe('VehicleSelectionStep', () => {
     it('should render step header with title', () => {
         render(<VehicleSelectionStep {...defaultProps} />);
 
-        expect(screen.getByText('Select Vehicle')).toBeTruthy();
+        expect(screen.getAllByText('Select Vehicle')[0]).toBeTruthy();
     });
 
     it('should render step subtitle', () => {
@@ -82,14 +93,14 @@ describe('VehicleSelectionStep', () => {
         const handleVehicleSelectMock = jest.fn();
         render(<VehicleSelectionStep {...defaultProps} handleVehicleSelect={handleVehicleSelectMock} />);
 
-        const selectButton = screen.getByText('Select Vehicle');
+        const selectButton = screen.getByTestId('select-vehicle-btn');
         fireEvent.press(selectButton);
 
         expect(handleVehicleSelectMock).toHaveBeenCalledWith({
             vehicle_id: 'v1',
             car_make: 'Toyota',
             car_model: 'Camry',
-            car_year: 2024,
+            car_year: 2024
         });
     });
 
@@ -101,7 +112,7 @@ describe('VehicleSelectionStep', () => {
         fireEvent.press(loadButton);
 
         expect(handleVehiclesLoadedMock).toHaveBeenCalledWith([
-            { vehicle_id: 'v1', car_make: 'Toyota', car_model: 'Camry', car_year: 2024 },
+            { vehicle_id: 'v1', car_make: 'Toyota', car_model: 'Camry', car_year: 2024 }
         ]);
     });
 
@@ -110,7 +121,7 @@ describe('VehicleSelectionStep', () => {
             vehicle_id: 'v1',
             car_make: 'Toyota',
             car_model: 'Camry',
-            car_year: 2024,
+            car_year: 2024
         };
         render(<VehicleSelectionStep {...defaultProps} selectedVehicle={selectedVehicle} />);
 
@@ -123,7 +134,7 @@ describe('VehicleSelectionStep', () => {
             car_make: 'Toyota',
             car_model: 'Camry',
             car_year: 2024,
-            vin_number: '1234567890',
+            vin_number: '1234567890'
         };
         render(<VehicleSelectionStep {...defaultProps} selectedVehicle={selectedVehicle} />);
 
@@ -135,7 +146,7 @@ describe('VehicleSelectionStep', () => {
             vehicle_id: 'v1',
             car_make: 'Toyota',
             car_model: 'Camry',
-            car_year: 2024,
+            car_year: 2024
         };
         render(<VehicleSelectionStep {...defaultProps} selectedVehicle={selectedVehicle} />);
 
@@ -144,10 +155,10 @@ describe('VehicleSelectionStep', () => {
 
     it('should support RTL layout', () => {
         const { rerender } = render(<VehicleSelectionStep {...defaultProps} />);
-        expect(screen.getByText('Select Vehicle')).toBeTruthy();
+        expect(screen.getAllByText('Select Vehicle')[0]).toBeTruthy();
 
         rerender(<VehicleSelectionStep {...defaultProps} />);
-        expect(screen.getByText('Select Vehicle')).toBeTruthy();
+        expect(screen.getAllByText('Select Vehicle')[0]).toBeTruthy();
     });
 
     it('should pass selectedVehicleId to MyVehiclesSelector', () => {

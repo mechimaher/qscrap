@@ -10,15 +10,52 @@ export const securityMiddleware = helmet({
     contentSecurityPolicy: {
         directives: {
             defaultSrc: ["'self'"],
-            styleSrc: ["'self'", "'unsafe-inline'", "https://fonts.googleapis.com", "https://cdn.jsdelivr.net", "https://unpkg.com"],
-            fontSrc: ["'self'", "https://fonts.gstatic.com", "https://cdn.jsdelivr.net"],
+            styleSrc: [
+                "'self'",
+                "'unsafe-inline'",
+                'https://fonts.googleapis.com',
+                'https://cdn.jsdelivr.net',
+                'https://unpkg.com'
+            ],
+            fontSrc: ["'self'", 'https://fonts.gstatic.com', 'https://cdn.jsdelivr.net'],
             // TODO: Remove 'unsafe-inline' after dashboard inline <script> refactor
-            scriptSrc: ["'self'", "'unsafe-inline'", "https://unpkg.com", "https://cdn.jsdelivr.net", "https://cdn.socket.io", "https://static.cloudflareinsights.com", "https://maps.googleapis.com", "https://js.stripe.com", "https://browser.sentry-cdn.com", "https://qscrap.qa", "https://www.qscrap.qa", "https://challenges.cloudflare.com"],
+            scriptSrc: [
+                "'self'",
+                "'unsafe-inline'",
+                'https://unpkg.com',
+                'https://cdn.jsdelivr.net',
+                'https://cdn.socket.io',
+                'https://static.cloudflareinsights.com',
+                'https://maps.googleapis.com',
+                'https://js.stripe.com',
+                'https://browser.sentry-cdn.com',
+                'https://qscrap.qa',
+                'https://www.qscrap.qa',
+                'https://challenges.cloudflare.com'
+            ],
             // TODO: Remove 'unsafe-inline' after dashboard onclick refactor (150+ handlers)
             scriptSrcAttr: ["'unsafe-inline'"],
-            imgSrc: ["'self'", "data:", "blob:", "https:"],
-            connectSrc: ["'self'", "ws:", "wss:", "https://cdn.socket.io", "https://unpkg.com", "https://cdn.jsdelivr.net", "https://*.tile.openstreetmap.org", "https://*.basemaps.cartocdn.com", "https://maps.googleapis.com", "https://api.stripe.com", "https://*.sentry.io", "https://browser.sentry-cdn.com", "https://fonts.googleapis.com", "https://fonts.gstatic.com", "https://quickchart.io", "https://static.cloudflareinsights.com", "https://js.stripe.com"],
-            frameSrc: ["https://js.stripe.com", "https://hooks.stripe.com"],
+            imgSrc: ["'self'", 'data:', 'blob:', 'https:'],
+            connectSrc: [
+                "'self'",
+                'ws:',
+                'wss:',
+                'https://cdn.socket.io',
+                'https://unpkg.com',
+                'https://cdn.jsdelivr.net',
+                'https://*.tile.openstreetmap.org',
+                'https://*.basemaps.cartocdn.com',
+                'https://maps.googleapis.com',
+                'https://api.stripe.com',
+                'https://*.sentry.io',
+                'https://browser.sentry-cdn.com',
+                'https://fonts.googleapis.com',
+                'https://fonts.gstatic.com',
+                'https://quickchart.io',
+                'https://static.cloudflareinsights.com',
+                'https://js.stripe.com'
+            ],
+            frameSrc: ['https://js.stripe.com', 'https://hooks.stripe.com'],
             objectSrc: ["'none'"],
             // Only enable upgrade-insecure-requests when HTTPS is configured
             upgradeInsecureRequests: process.env.HTTPS_ENABLED === 'true' ? [] : null
@@ -27,23 +64,21 @@ export const securityMiddleware = helmet({
     // Cross-Origin Embedder Policy
     crossOriginEmbedderPolicy: false, // Disable for compatibility with external resources
     // Cross-Origin Opener Policy
-    crossOriginOpenerPolicy: { policy: "same-origin-allow-popups" },
+    crossOriginOpenerPolicy: { policy: 'same-origin-allow-popups' },
     // Cross-Origin Resource Policy
-    crossOriginResourcePolicy: { policy: "cross-origin" },
+    crossOriginResourcePolicy: { policy: 'cross-origin' },
     // DNS Prefetch Control
     dnsPrefetchControl: { allow: true },
     // Frame Options - Prevent clickjacking
-    frameguard: { action: "deny" },
+    frameguard: { action: 'deny' },
     // Hide X-Powered-By header
     hidePoweredBy: true,
     // HTTP Strict Transport Security (production only)
-    hsts: process.env.NODE_ENV === 'production'
-        ? { maxAge: 31536000, includeSubDomains: true, preload: true }
-        : false,
+    hsts: process.env.NODE_ENV === 'production' ? { maxAge: 31536000, includeSubDomains: true, preload: true } : false,
     // Prevent MIME type sniffing
     noSniff: true,
     // Referrer Policy
-    referrerPolicy: { policy: "strict-origin-when-cross-origin" },
+    referrerPolicy: { policy: 'strict-origin-when-cross-origin' },
     // XSS Filter
     xssFilter: true
 });

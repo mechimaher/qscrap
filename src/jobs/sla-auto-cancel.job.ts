@@ -1,10 +1,10 @@
 /**
  * SLA Auto-Cancel Job (HR-03)
  * Automatically cancels orders stuck in preparing state for too long
- * 
+ *
  * Runs: Every 6 hours
  * Target: Orders in preparing > 72 hours (3 days)
- * 
+ *
  * Source: Cancellation Audit Jan 30, 2026 - HR-03 fix
  */
 
@@ -80,11 +80,14 @@ export async function runSLAAutoCancel(): Promise<{
                 });
 
                 // Flag garage for review
-                await pool.query(`
+                await pool.query(
+                    `
                     INSERT INTO garage_penalties 
                     (garage_id, order_id, penalty_type, amount, status, notes)
                     VALUES ($1, $2, 'sla_breach', 0, 'warning', 'Auto-flagged: Order stuck in preparing > 72h')
-                `, [order.garage_id, order.order_id]);
+                `,
+                    [order.garage_id, order.order_id]
+                );
 
                 cancelledOrders.push(order.order_number);
                 logger.info(`[SLA-CANCEL] Cancelled order ${order.order_number} (garage: ${order.garage_name})`);

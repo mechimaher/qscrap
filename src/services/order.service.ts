@@ -1,6 +1,6 @@
 /**
  * Order Service
- * 
+ *
  * Centralized business logic for order operations.
  * Extracted from operations.controller.ts and order.controller.ts
  */
@@ -63,41 +63,50 @@ export async function createOrderFromBid(params: CreateOrderParams): Promise<{ o
         await client.query('BEGIN ISOLATION LEVEL SERIALIZABLE');
 
         // 1. Lock and Validate Bid
-        const bidResult = await client.query(
-            'SELECT * FROM bids WHERE bid_id = $1 FOR UPDATE',
-            [bidId]
-        );
-        if (bidResult.rows.length === 0) {throw new Error('Bid not found');}
+        const bidResult = await client.query('SELECT * FROM bids WHERE bid_id = $1 FOR UPDATE', [bidId]);
+        if (bidResult.rows.length === 0) {
+            throw new Error('Bid not found');
+        }
         const bid = bidResult.rows[0];
 
-        if (bid.status !== 'pending') {throw new Error('Bid no longer available');}
+        if (bid.status !== 'pending') {
+            throw new Error('Bid no longer available');
+        }
 
         // 2. Lock and Validate Request
-        const reqResult = await client.query(
-            'SELECT * FROM part_requests WHERE request_id = $1 FOR UPDATE',
-            [bid.request_id]
-        );
-        if (reqResult.rows.length === 0) {throw new Error('Request not found');}
+        const reqResult = await client.query('SELECT * FROM part_requests WHERE request_id = $1 FOR UPDATE', [
+            bid.request_id
+        ]);
+        if (reqResult.rows.length === 0) {
+            throw new Error('Request not found');
+        }
         const request = reqResult.rows[0];
 
-        if (request.customer_id !== customerId) {throw new Error('Access denied');}
-        if (request.status !== 'active') {throw new Error('Request already processed');}
+        if (request.customer_id !== customerId) {
+            throw new Error('Access denied');
+        }
+        if (request.status !== 'active') {
+            throw new Error('Request already processed');
+        }
 
         // 2b. TURN VALIDATION: Customer cannot accept if they have a pending counter-offer
         // (meaning it's garage's turn to respond)
-        const pendingCustomerOffer = await client.query(`
+        const pendingCustomerOffer = await client.query(
+            `
             SELECT counter_offer_id FROM counter_offers 
             WHERE bid_id = $1 AND offered_by_type = 'customer' AND status = 'pending'
-        `, [bidId]);
+        `,
+            [bidId]
+        );
 
         if (pendingCustomerOffer.rows.length > 0) {
             throw new Error('Cannot accept bid - waiting for garage response to your counter-offer');
         }
 
-
         // 3. Calculate Commission (Logic moved inline for transaction safety, ideally in GarageService)
         // Check demo/subscription status
-        const garageRateResult = await client.query(`
+        const garageRateResult = await client.query(
+            `
             SELECT 
                 g.approval_status,
                 sp.commission_rate
@@ -106,7 +115,9 @@ export async function createOrderFromBid(params: CreateOrderParams): Promise<{ o
             LEFT JOIN subscription_plans sp ON gs.plan_id = sp.plan_id
             WHERE g.garage_id = $1
             ORDER BY gs.created_at DESC LIMIT 1
-        `, [bid.garage_id]);
+        `,
+            [bid.garage_id]
+        );
 
         const garageStats = garageRateResult.rows[0];
         let commissionRate = 0.15; // Default
@@ -153,9 +164,21 @@ export async function createOrderFromBid(params: CreateOrderParams): Promise<{ o
              VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13, 'pending_payment', $8, 'pending',
                      NOW() + INTERVAL '30 seconds')
              RETURNING order_id, order_number, order_status, undo_deadline`,
-            [bid.request_id, bidId, customerId, bid.garage_id, partPrice, commissionRate,
-                platformFee, params.deliveryFee, totalAmount, garagePayout,
-            params.paymentMethod || 'card', params.deliveryAddress, params.deliveryNotes]
+            [
+                bid.request_id,
+                bidId,
+                customerId,
+                bid.garage_id,
+                partPrice,
+                commissionRate,
+                platformFee,
+                params.deliveryFee,
+                totalAmount,
+                garagePayout,
+                params.paymentMethod || 'card',
+                params.deliveryAddress,
+                params.deliveryNotes
+            ]
         );
         const order = orderResult.rows[0];
 
@@ -165,7 +188,9 @@ export async function createOrderFromBid(params: CreateOrderParams): Promise<{ o
             "UPDATE bids SET status = 'rejected', updated_at = NOW() WHERE request_id = $1 AND bid_id != $2 AND status = 'pending'",
             [bid.request_id, bidId]
         );
-        await client.query("UPDATE part_requests SET status = 'accepted', updated_at = NOW() WHERE request_id = $1", [bid.request_id]);
+        await client.query("UPDATE part_requests SET status = 'accepted', updated_at = NOW() WHERE request_id = $1", [
+            bid.request_id
+        ]);
 
         // 7. Log History
         await client.query(
@@ -194,7 +219,6 @@ export async function createOrderFromBid(params: CreateOrderParams): Promise<{ o
     }
 }
 
-
 /**
  * CRITICAL FIX: Customer-only notification for order creation
  * Garage is NOT notified here - they are notified by Stripe webhook after payment
@@ -202,18 +226,20 @@ export async function createOrderFromBid(params: CreateOrderParams): Promise<{ o
  */
 async function notifyCustomerOrderPending(order: any, customerId: string, totalAmount: number) {
     // Create in-app notification for customer only
-    await import('../services/notification.service').then(ns => ns.createNotification({
-        userId: customerId,
-        type: 'order_pending_payment',
-        title: 'Order Reserved ⏳',
-        message: `Order #${order.order_number} reserved. Complete payment to confirm your order.`,
-        data: {
-            order_id: order.order_id,
-            order_number: order.order_number,
-            total_amount: totalAmount
-        },
-        target_role: 'customer'
-    }));
+    await import('../services/notification.service').then((ns) =>
+        ns.createNotification({
+            userId: customerId,
+            type: 'order_pending_payment',
+            title: 'Order Reserved ⏳',
+            message: `Order #${order.order_number} reserved. Complete payment to confirm your order.`,
+            data: {
+                order_id: order.order_id,
+                order_number: order.order_number,
+                total_amount: totalAmount
+            },
+            target_role: 'customer'
+        })
+    );
 
     // Emit socket event to customer
     emitToUser(customerId, 'order_reserved', {
@@ -235,7 +261,7 @@ async function notifyRejectedBidders(requestId: string, winningBidId: string) {
             userId: r.garage_id,
             type: 'bid_rejected',
             title: 'Bid Update',
-            message: "Another bid was selected for this request.",
+            message: 'Another bid was selected for this request.',
             data: { request_id: requestId },
             target_role: 'garage'
         });
@@ -247,11 +273,14 @@ export async function updateOrderStatus(update: OrderStatusUpdate): Promise<Orde
         await client.query('BEGIN');
 
         // Get current order state
-        const orderResult = await client.query(`
+        const orderResult = await client.query(
+            `
             SELECT o.order_id, o.order_status, o.customer_id, o.garage_id, o.order_number,
                    o.part_price, o.platform_fee, o.garage_payout_amount, o.driver_id
             FROM orders o WHERE o.order_id = $1 FOR UPDATE
-        `, [update.orderId]);
+        `,
+            [update.orderId]
+        );
 
         if (orderResult.rows.length === 0) {
             throw new Error('Order not found');
@@ -275,10 +304,20 @@ export async function updateOrderStatus(update: OrderStatusUpdate): Promise<Orde
         await client.query(updateQuery, updateParams);
 
         // Record in history
-        await client.query(`
+        await client.query(
+            `
             INSERT INTO order_status_history (order_id, old_status, new_status, changed_by, reason, changed_by_type)
             VALUES ($1, $2, $3, $4, $5, $6)
-        `, [update.orderId, oldStatus, update.newStatus, update.changedBy, update.reason || 'Status updated', update.changedByType]);
+        `,
+            [
+                update.orderId,
+                oldStatus,
+                update.newStatus,
+                update.changedBy,
+                update.reason || 'Status updated',
+                update.changedByType
+            ]
+        );
 
         let payoutCreated = false;
         let driverReleased = false;
@@ -286,7 +325,8 @@ export async function updateOrderStatus(update: OrderStatusUpdate): Promise<Orde
         // If completing the order, create payout and free driver
         if (update.newStatus === 'completed') {
             // Create payout record (skip if exists)
-            const payoutResult = await client.query(`
+            const payoutResult = await client.query(
+                `
                 INSERT INTO garage_payouts 
                 (garage_id, order_id, gross_amount, commission_amount, net_amount, scheduled_for)
                 SELECT garage_id, order_id, part_price, platform_fee, garage_payout_amount, 
@@ -294,12 +334,15 @@ export async function updateOrderStatus(update: OrderStatusUpdate): Promise<Orde
                 FROM orders o WHERE o.order_id = $1
                 AND NOT EXISTS (SELECT 1 FROM garage_payouts gp WHERE gp.order_id = o.order_id)
                 RETURNING payout_id
-            `, [update.orderId]);
+            `,
+                [update.orderId]
+            );
             payoutCreated = (payoutResult.rowCount || 0) > 0;
 
             // Free up the driver
             if (order.driver_id) {
-                const driverResult = await client.query(`
+                const driverResult = await client.query(
+                    `
                     UPDATE drivers 
                     SET status = 'available', updated_at = NOW()
                     WHERE driver_id = $1
@@ -309,7 +352,9 @@ export async function updateOrderStatus(update: OrderStatusUpdate): Promise<Orde
                         AND status IN ('assigned', 'picked_up', 'in_transit')
                         AND order_id != $2
                     )
-                `, [order.driver_id, update.orderId]);
+                `,
+                    [order.driver_id, update.orderId]
+                );
                 driverReleased = (driverResult.rowCount || 0) > 0;
             }
         }
@@ -342,7 +387,13 @@ export async function updateOrderStatus(update: OrderStatusUpdate): Promise<Orde
  * Sends push notification, in-app record, and WebSocket events
  */
 function notifyOrderStatusChange(
-    order: { order_id: string; customer_id: string; garage_id: string; order_number: string; garage_payout_amount?: number },
+    order: {
+        order_id: string;
+        customer_id: string;
+        garage_id: string;
+        order_number: string;
+        garage_payout_amount?: number;
+    },
     oldStatus: string,
     newStatus: string,
     payoutCreated: boolean
@@ -355,26 +406,25 @@ function notifyOrderStatusChange(
         : `Order #${order.order_number} status updated to ${newStatus}`;
 
     // Push notification to customer (async, fire-and-forget)
-    import('./push.service').then(({ pushService }) => {
-        pushService.sendOrderStatusNotification(
-            order.customer_id,
-            order.order_number,
-            newStatus,
-            order.order_id
-        );
-    }).catch(err => logger.error('Order status push failed', { error: err }));
+    import('./push.service')
+        .then(({ pushService }) => {
+            pushService.sendOrderStatusNotification(order.customer_id, order.order_number, newStatus, order.order_id);
+        })
+        .catch((err) => logger.error('Order status push failed', { error: err }));
 
     // In-app notification record for customer
-    import('../services/notification.service').then(ns => {
-        ns.createNotification({
-            userId: order.customer_id,
-            type: 'order_status',
-            title: isCompleted ? '✅ Order Completed' : `Order #${order.order_number} Update`,
-            message: customerMsg,
-            data: { order_id: order.order_id, order_number: order.order_number, new_status: newStatus },
-            target_role: 'customer'
-        });
-    }).catch(err => logger.error('Order status in-app notification failed', { error: err }));
+    import('../services/notification.service')
+        .then((ns) => {
+            ns.createNotification({
+                userId: order.customer_id,
+                type: 'order_status',
+                title: isCompleted ? '✅ Order Completed' : `Order #${order.order_number} Update`,
+                message: customerMsg,
+                data: { order_id: order.order_id, order_number: order.order_number, new_status: newStatus },
+                target_role: 'customer'
+            });
+        })
+        .catch((err) => logger.error('Order status in-app notification failed', { error: err }));
 
     // WebSocket to customer
     emitToUser(order.customer_id, 'order_status_updated', {
@@ -416,7 +466,8 @@ function notifyOrderStatusChange(
  * Get order with all related details
  */
 export async function getOrderWithDetails(orderId: string): Promise<unknown | null> {
-    const result = await pool.query(`
+    const result = await pool.query(
+        `
         SELECT o.*, 
                pr.car_make, pr.car_model, pr.car_year, pr.part_description, pr.part_category, pr.part_subcategory, pr.vin_number,
                u.full_name as customer_name, u.phone_number as customer_phone,
@@ -429,7 +480,9 @@ export async function getOrderWithDetails(orderId: string): Promise<unknown | nu
         JOIN users gu ON g.garage_id = gu.user_id
         LEFT JOIN bids b ON o.bid_id = b.bid_id
         WHERE o.order_id = $1
-    `, [orderId]);
+    `,
+        [orderId]
+    );
 
     return result.rows[0] || null;
 }
@@ -438,13 +491,16 @@ export async function getOrderWithDetails(orderId: string): Promise<unknown | nu
  * Get order status history
  */
 export async function getOrderHistory(orderId: string): Promise<unknown[]> {
-    const result = await pool.query(`
+    const result = await pool.query(
+        `
         SELECT history_id, order_id, old_status, new_status as status, 
                changed_by, reason, created_at as changed_at
         FROM order_status_history
         WHERE order_id = $1
         ORDER BY created_at ASC
-    `, [orderId]);
+    `,
+        [orderId]
+    );
 
     return result.rows;
 }
@@ -509,11 +565,19 @@ export async function undoOrder(
         const deadline = new Date(order.undo_deadline);
         if (now > deadline) {
             // Log expired attempt
-            await client.query(`
+            await client.query(
+                `
                 INSERT INTO undo_audit_log (order_id, action, actor_id, actor_type, reason, metadata)
                 VALUES ($1, 'undo_expired', $2, $3, $4, $5)
-            `, [orderId, actorId, actorType, reason || 'Grace window expired',
-                JSON.stringify({ deadline: order.undo_deadline, attempted_at: now.toISOString() })]);
+            `,
+                [
+                    orderId,
+                    actorId,
+                    actorType,
+                    reason || 'Grace window expired',
+                    JSON.stringify({ deadline: order.undo_deadline, attempted_at: now.toISOString() })
+                ]
+            );
 
             await client.query('COMMIT');
             return {
@@ -535,7 +599,8 @@ export async function undoOrder(
         }
 
         // Revert order status
-        await client.query(`
+        await client.query(
+            `
             UPDATE orders SET 
                 order_status = 'cancelled_by_undo',
                 undo_used = TRUE,
@@ -543,25 +608,36 @@ export async function undoOrder(
                 undo_reason = $2,
                 updated_at = NOW()
             WHERE order_id = $1
-        `, [orderId, reason || 'User initiated undo']);
+        `,
+            [orderId, reason || 'User initiated undo']
+        );
 
         // Revert bid status back to pending
-        await client.query(`
+        await client.query(
+            `
             UPDATE bids SET status = 'pending', updated_at = NOW() 
             WHERE bid_id = $1
-        `, [order.bid_id]);
+        `,
+            [order.bid_id]
+        );
 
         // Revert other rejected bids for this request back to pending
-        await client.query(`
+        await client.query(
+            `
             UPDATE bids SET status = 'pending', updated_at = NOW()
             WHERE request_id = $1 AND status = 'rejected'
-        `, [order.request_id]);
+        `,
+            [order.request_id]
+        );
 
         // Revert request status back to active
-        await client.query(`
+        await client.query(
+            `
             UPDATE part_requests SET status = 'active', updated_at = NOW()
             WHERE request_id = $1
-        `, [order.request_id]);
+        `,
+            [order.request_id]
+        );
 
         // Attempt to cancel payment intents (best-effort)
         try {
@@ -577,21 +653,32 @@ export async function undoOrder(
         }
 
         // Record in order history
-        await client.query(`
+        await client.query(
+            `
             INSERT INTO order_status_history (order_id, old_status, new_status, changed_by, changed_by_type, reason)
             VALUES ($1, $2, 'cancelled_by_undo', $3, $4, $5)
-        `, [orderId, order.order_status, actorId, actorType, reason || 'Order undone within grace window']);
+        `,
+            [orderId, order.order_status, actorId, actorType, reason || 'Order undone within grace window']
+        );
 
         // Create audit log entry
-        await client.query(`
+        await client.query(
+            `
             INSERT INTO undo_audit_log (order_id, action, actor_id, actor_type, reason, metadata)
             VALUES ($1, 'undo_completed', $2, $3, $4, $5)
-        `, [orderId, actorId, actorType, reason || 'User initiated undo',
-            JSON.stringify({
-                original_status: order.order_status,
-                deadline: order.undo_deadline,
-                undone_at: now.toISOString()
-            })]);
+        `,
+            [
+                orderId,
+                actorId,
+                actorType,
+                reason || 'User initiated undo',
+                JSON.stringify({
+                    original_status: order.order_status,
+                    deadline: order.undo_deadline,
+                    undone_at: now.toISOString()
+                })
+            ]
+        );
 
         await client.query('COMMIT');
 
@@ -619,7 +706,6 @@ export async function undoOrder(
             message: 'Order undone successfully',
             order_status: 'cancelled_by_undo'
         };
-
     } catch (err) {
         await client.query('ROLLBACK');
         logger.error('Undo order failed', { orderId, error: getErrorMessage(err) });

@@ -24,7 +24,7 @@ const LoyaltyBanner = ({ navigation }: { navigation: any }) => {
     useEffect(() => {
         Animated.parallel([
             Animated.timing(fadeAnim, { toValue: 1, duration: 300, useNativeDriver: true }),
-            Animated.timing(slideAnim, { toValue: 0, duration: 300, useNativeDriver: true }),
+            Animated.timing(slideAnim, { toValue: 0, duration: 300, useNativeDriver: true })
         ]).start();
     }, []);
 
@@ -34,25 +34,31 @@ const LoyaltyBanner = ({ navigation }: { navigation: any }) => {
 
     const shimmerTranslate = shimmerAnim.interpolate({
         inputRange: [0, 1],
-        outputRange: [-200, 200],
+        outputRange: [-200, 200]
     });
 
     const getTierConfig = (tier: string) => {
         switch (tier) {
-            case 'silver': return { icon: 'medal-outline' as const, color: '#94A3B8', bg: ['#E2E8F0', '#F1F5F9'] };
-            case 'gold': return { icon: 'trophy-outline' as const, color: '#D4AF37', bg: ['#FEF3C7', '#FFFBEB'] };
-            case 'platinum': return { icon: 'diamond-outline' as const, color: '#8B5CF6', bg: ['#EDE9FE', '#F5F3FF'] };
-            default: return { icon: 'ribbon-outline' as const, color: '#CD7F32', bg: ['#FFEDD5', '#FFF7ED'] };
+            case 'silver':
+                return { icon: 'medal-outline' as const, color: '#94A3B8', bg: ['#E2E8F0', '#F1F5F9'] };
+            case 'gold':
+                return { icon: 'trophy-outline' as const, color: '#D4AF37', bg: ['#FEF3C7', '#FFFBEB'] };
+            case 'platinum':
+                return { icon: 'diamond-outline' as const, color: '#8B5CF6', bg: ['#EDE9FE', '#F5F3FF'] };
+            default:
+                return { icon: 'ribbon-outline' as const, color: '#CD7F32', bg: ['#FFEDD5', '#FFF7ED'] };
         }
     };
 
     const tierConfig = getTierConfig(loyalty?.tier || 'bronze');
 
     return (
-        <Animated.View style={[
-            { opacity: fadeAnim, transform: [{ translateY: slideAnim }, { scale: scaleAnim }] },
-            { paddingHorizontal: Spacing.lg, marginBottom: Spacing.md }
-        ]}>
+        <Animated.View
+            style={[
+                { opacity: fadeAnim, transform: [{ translateY: slideAnim }, { scale: scaleAnim }] },
+                { paddingHorizontal: Spacing.lg, marginBottom: Spacing.md }
+            ]}
+        >
             <TouchableOpacity
                 onPress={handlePress}
                 onPressIn={() => Animated.spring(scaleAnim, { toValue: 0.98, useNativeDriver: true }).start()}
@@ -66,15 +72,17 @@ const LoyaltyBanner = ({ navigation }: { navigation: any }) => {
                     style={styles.bannerGradient}
                 >
                     {/* Shimmer effect */}
-                    <Animated.View style={{
-                        position: 'absolute',
-                        top: 0,
-                        left: 0,
-                        width: 100,
-                        height: '100%',
-                        backgroundColor: 'rgba(255,255,255,0.4)',
-                        transform: [{ translateX: shimmerTranslate }, { skewX: '-20deg' }],
-                    }} />
+                    <Animated.View
+                        style={{
+                            position: 'absolute',
+                            top: 0,
+                            left: 0,
+                            width: 100,
+                            height: '100%',
+                            backgroundColor: 'rgba(255,255,255,0.4)',
+                            transform: [{ translateX: shimmerTranslate }, { skewX: '-20deg' }]
+                        }}
+                    />
 
                     <View style={styles.tierIconContainer}>
                         <Ionicons name={tierConfig.icon} size={22} color={tierConfig.color} />
@@ -82,7 +90,9 @@ const LoyaltyBanner = ({ navigation }: { navigation: any }) => {
 
                     <View style={{ flex: 1 }}>
                         <Text style={[styles.tierLabel, { color: tierConfig.color, textAlign: rtlTextAlign(isRTL) }]}>
-                            {t('loyalty.tierLabel', { tier: t(`loyalty.${(loyalty?.tier || 'bronze').toLowerCase()}`) })}
+                            {t('loyalty.tierLabel', {
+                                tier: t(`loyalty.${(loyalty?.tier || 'bronze').toLowerCase()}`)
+                            })}
                         </Text>
                         <Text style={[styles.pointsText, { textAlign: rtlTextAlign(isRTL) }]}>
                             {loyalty?.points?.toLocaleString() || '0'} {t('home.pts')}
@@ -104,7 +114,7 @@ const styles = StyleSheet.create({
         alignItems: 'center',
         padding: Spacing.md,
         borderRadius: BorderRadius.lg,
-        overflow: 'hidden',
+        overflow: 'hidden'
     },
     tierIconContainer: {
         width: 44,
@@ -113,29 +123,29 @@ const styles = StyleSheet.create({
         backgroundColor: 'rgba(255,255,255,0.8)',
         alignItems: 'center',
         justifyContent: 'center',
-        marginRight: Spacing.md,
+        marginRight: Spacing.md
     },
     tierLabel: {
         fontSize: FontSizes.sm,
         fontWeight: '600',
-        textTransform: 'uppercase',
+        textTransform: 'uppercase'
     },
     pointsText: {
         fontSize: FontSizes.xl,
         fontWeight: '800',
-        color: Colors.primary,
+        color: Colors.primary
     },
     rewardsButton: {
         backgroundColor: Colors.primary,
         paddingHorizontal: Spacing.md,
         paddingVertical: Spacing.xs,
-        borderRadius: BorderRadius.full,
+        borderRadius: BorderRadius.full
     },
     rewardsButtonText: {
         color: '#fff',
         fontSize: FontSizes.xs,
-        fontWeight: '700',
-    },
+        fontWeight: '700'
+    }
 });
 
 export default LoyaltyBanner;

@@ -24,21 +24,30 @@ describe('Payout Service', () => {
         await pool.query('DELETE FROM users WHERE user_id IN ($1, $2)', [testCustomerId, testGarageId]);
         await pool.query('DELETE FROM garages WHERE garage_id = $1', [testGarageId]);
 
-        await pool.query(`
+        await pool.query(
+            `
             INSERT INTO users (user_id, full_name, phone_number, user_type, password_hash)
             VALUES ($1, 'Test Customer Payout', '+97430000021', 'customer', '$2b$10$dummyhashfortesting123'),
                    ($2, 'Test Garage Payout', '+97430000022', 'garage', '$2b$10$dummyhashfortesting123')
-        `, [testCustomerId, testGarageId]);
+        `,
+            [testCustomerId, testGarageId]
+        );
 
-        await pool.query(`
+        await pool.query(
+            `
             INSERT INTO garages (garage_id, garage_name, approval_status, location_lat, location_lng)
             VALUES ($1, 'Test Payout Garage LLC', 'approved', 25.276987, 51.520008)
-        `, [testGarageId]);
+        `,
+            [testGarageId]
+        );
 
-        await pool.query(`
+        await pool.query(
+            `
             INSERT INTO garage_subscriptions (garage_id, plan_id, status, billing_cycle_start, billing_cycle_end)
             VALUES ($1, (SELECT plan_id FROM subscription_plans WHERE plan_code = 'starter' LIMIT 1), 'active', NOW(), NOW() + INTERVAL '30 days')
-        `, [testGarageId]);
+        `,
+            [testGarageId]
+        );
     });
 
     afterAll(async () => {
@@ -57,38 +66,50 @@ describe('Payout Service', () => {
      */
     async function createTestOrderAndPayout(warrantyDaysAgo: number = 8) {
         // Create part request
-        const requestResult = await pool.query(`
+        const requestResult = await pool.query(
+            `
             INSERT INTO part_requests (request_id, customer_id, car_make, car_model, car_year, part_description, status)
             VALUES (gen_random_uuid(), $1, 'Toyota', 'Camry', 2022, 'Test Part for Payout', 'active')
             RETURNING request_id
-        `, [testCustomerId]);
+        `,
+            [testCustomerId]
+        );
 
         const testRequestId = requestResult.rows[0].request_id;
 
         // Create bid
-        const bidResult = await pool.query(`
+        const bidResult = await pool.query(
+            `
             INSERT INTO bids (bid_id, request_id, garage_id, bid_amount, status, part_condition)
             VALUES (gen_random_uuid(), $1, $2, 150.00, 'accepted', 'new')
             RETURNING bid_id
-        `, [testRequestId, testGarageId]);
+        `,
+            [testRequestId, testGarageId]
+        );
 
         const testBidId = bidResult.rows[0].bid_id;
 
         // Create completed order
-        const orderResult = await pool.query(`
+        const orderResult = await pool.query(
+            `
             INSERT INTO orders (order_id, bid_id, customer_id, garage_id, request_id, total_amount, part_price, commission_rate, platform_fee, delivery_fee, order_status, payment_status, deposit_status, garage_payout_amount, actual_delivery_at, completed_at)
             VALUES (gen_random_uuid(), $1, $2, $3, $4, 170.00, 150.00, 0.05, 8.50, 20.00, 'completed', 'paid', 'paid', 141.50, NOW() - INTERVAL '${warrantyDaysAgo} days', NOW() - INTERVAL '${warrantyDaysAgo} days')
             RETURNING order_id
-        `, [testBidId, testCustomerId, testGarageId, testRequestId]);
+        `,
+            [testBidId, testCustomerId, testGarageId, testRequestId]
+        );
 
         const orderId = orderResult.rows[0].order_id;
 
         // Create garage payout record
-        const payoutResult = await pool.query(`
+        const payoutResult = await pool.query(
+            `
             INSERT INTO garage_payouts (payout_id, garage_id, order_id, gross_amount, commission_amount, net_amount, payout_status, payout_type)
             VALUES (gen_random_uuid(), $1, $2, 150.00, 8.50, 141.50, 'pending', NULL)
             RETURNING payout_id, order_id
-        `, [testGarageId, orderId]);
+        `,
+            [testGarageId, orderId]
+        );
 
         return {
             payoutId: payoutResult.rows[0].payout_id,
@@ -112,7 +133,7 @@ describe('Payout Service', () => {
                 expect(summary).toBeDefined();
                 expect(summary.stats).toBeDefined();
                 expect(summary.pending_payouts).toBeDefined();
-                expect(parseFloat(summary.stats.total_revenue as unknown as string)).toBeGreaterThanOrEqual(141.50);
+                expect(parseFloat(summary.stats.total_revenue as unknown as string)).toBeGreaterThanOrEqual(141.5);
 
                 // Cleanup
                 await pool.query('DELETE FROM garage_payouts WHERE payout_id = $1', [payoutId]);
@@ -148,9 +169,7 @@ describe('Payout Service', () => {
             });
 
             it('should throw error for non-existent payout', async () => {
-                await expect(
-                    queryService.getPayoutStatus('00000000-0000-0000-0000-000000000000')
-                ).rejects.toThrow();
+                await expect(queryService.getPayoutStatus('00000000-0000-0000-0000-000000000000')).rejects.toThrow();
             });
         });
 
@@ -184,7 +203,7 @@ describe('Payout Service', () => {
                 });
 
                 expect(result.payouts).toBeDefined();
-                result.payouts.forEach(payout => {
+                result.payouts.forEach((payout) => {
                     expect(payout.garage_id.toLowerCase()).toBe(testGarageId.toLowerCase());
                 });
 
@@ -239,10 +258,13 @@ describe('Payout Service', () => {
             const { payoutId, orderId } = await createTestOrderAndPayout(8);
 
             // Create dispute on the order (reason must match CHECK constraint enum)
-            await pool.query(`
+            await pool.query(
+                `
                 INSERT INTO disputes (dispute_id, order_id, customer_id, garage_id, reason, description, order_amount, refund_percent, refund_amount, status)
                 VALUES (gen_random_uuid(), $1, $2, $3, 'wrong_part', 'Received wrong part', 170.00, 100, 170.00, 'pending')
-            `, [orderId, testCustomerId, testGarageId]);
+            `,
+                [orderId, testCustomerId, testGarageId]
+            );
 
             // Try to send payout - should fail
             await expect(
@@ -281,14 +303,17 @@ describe('Payout Service', () => {
         it('should confirm payment successfully', async () => {
             // Create payout already in 'awaiting_confirmation' status (sent by ops)
             const { payoutId } = await createTestOrderAndPayout(8);
-            await pool.query(`
+            await pool.query(
+                `
                 UPDATE garage_payouts SET payout_status = 'awaiting_confirmation', sent_at = NOW()
                 WHERE payout_id = $1
-            `, [payoutId]);
+            `,
+                [payoutId]
+            );
 
             const result = await lifecycleService.confirmPayment(payoutId, testGarageId, {
                 received_at: new Date(),
-                received_amount: 141.50,
+                received_amount: 141.5,
                 confirmation_notes: 'Received in full'
             });
 
@@ -305,16 +330,17 @@ describe('Payout Service', () => {
 
         it('should reject confirmation from wrong garage', async () => {
             const { payoutId } = await createTestOrderAndPayout(8);
-            await pool.query(`
+            await pool.query(
+                `
                 UPDATE garage_payouts SET payout_status = 'awaiting_confirmation', sent_at = NOW()
                 WHERE payout_id = $1
-            `, [payoutId]);
+            `,
+                [payoutId]
+            );
 
             const wrongGarageId = '00000000-0000-0000-0000-000000000001';
 
-            await expect(
-                lifecycleService.confirmPayment(payoutId, wrongGarageId, {})
-            ).rejects.toThrow();
+            await expect(lifecycleService.confirmPayment(payoutId, wrongGarageId, {})).rejects.toThrow();
 
             // Cleanup
             await pool.query('DELETE FROM garage_payouts WHERE payout_id = $1', [payoutId]);
@@ -322,15 +348,16 @@ describe('Payout Service', () => {
 
         it('should reject confirmation of already confirmed payout', async () => {
             const { payoutId } = await createTestOrderAndPayout(8);
-            await pool.query(`
+            await pool.query(
+                `
                 UPDATE garage_payouts SET payout_status = 'confirmed', sent_at = NOW(), confirmed_at = NOW()
                 WHERE payout_id = $1
-            `, [payoutId]);
+            `,
+                [payoutId]
+            );
 
             // Try to confirm again - should fail
-            await expect(
-                lifecycleService.confirmPayment(payoutId, testGarageId, {})
-            ).rejects.toThrow();
+            await expect(lifecycleService.confirmPayment(payoutId, testGarageId, {})).rejects.toThrow();
 
             // Cleanup
             await pool.query('DELETE FROM garage_payouts WHERE payout_id = $1', [payoutId]);
@@ -344,10 +371,13 @@ describe('Payout Service', () => {
 
         it('should dispute payment successfully', async () => {
             const { payoutId } = await createTestOrderAndPayout(8);
-            await pool.query(`
+            await pool.query(
+                `
                 UPDATE garage_payouts SET payout_status = 'awaiting_confirmation', sent_at = NOW()
                 WHERE payout_id = $1
-            `, [payoutId]);
+            `,
+                [payoutId]
+            );
 
             const result = await lifecycleService.disputePayment(payoutId, testGarageId, {
                 issue_type: 'amount_mismatch',
@@ -367,10 +397,13 @@ describe('Payout Service', () => {
 
         it('should reject dispute from non-owner', async () => {
             const { payoutId } = await createTestOrderAndPayout(8);
-            await pool.query(`
+            await pool.query(
+                `
                 UPDATE garage_payouts SET payout_status = 'awaiting_confirmation', sent_at = NOW()
                 WHERE payout_id = $1
-            `, [payoutId]);
+            `,
+                [payoutId]
+            );
 
             const wrongGarageId = '00000000-0000-0000-0000-000000000001';
 
@@ -393,10 +426,13 @@ describe('Payout Service', () => {
 
         it('should resolve dispute with confirmed status', async () => {
             const { payoutId } = await createTestOrderAndPayout(8);
-            await pool.query(`
+            await pool.query(
+                `
                 UPDATE garage_payouts SET payout_status = 'disputed', sent_at = NOW()
                 WHERE payout_id = $1
-            `, [payoutId]);
+            `,
+                [payoutId]
+            );
 
             const result = await lifecycleService.resolveDispute(payoutId, {
                 resolution: 'confirmed',
@@ -415,14 +451,17 @@ describe('Payout Service', () => {
 
         it('should resolve dispute with corrected amount', async () => {
             const { payoutId } = await createTestOrderAndPayout(8);
-            await pool.query(`
+            await pool.query(
+                `
                 UPDATE garage_payouts SET payout_status = 'disputed', sent_at = NOW()
                 WHERE payout_id = $1
-            `, [payoutId]);
+            `,
+                [payoutId]
+            );
 
             const result = await lifecycleService.resolveDispute(payoutId, {
                 resolution: 'corrected',
-                new_amount: 150.00,
+                new_amount: 150.0,
                 resolution_notes: 'Adjusted to correct amount'
             });
 

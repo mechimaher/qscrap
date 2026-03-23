@@ -9,18 +9,18 @@ jest.mock('expo-image-picker', () => ({
     requestCameraPermissionsAsync: jest.fn(),
     launchImageLibraryAsync: jest.fn(),
     launchCameraAsync: jest.fn(),
-    MediaTypeOptions: { Images: 'Images' },
+    MediaTypeOptions: { Images: 'Images' }
 }));
 
 jest.mock('../../utils/imageCompressor', () => ({
-    compressImage: jest.fn(),
+    compressImage: jest.fn()
 }));
 
 jest.mock('expo-haptics', () => ({
     impactAsync: jest.fn(),
     notificationAsync: jest.fn(),
     ImpactFeedbackStyle: { Light: 'Light' },
-    NotificationFeedbackType: { Success: 'Success', Error: 'Error' },
+    NotificationFeedbackType: { Success: 'Success', Error: 'Error' }
 }));
 
 describe('useRequestImages', () => {
@@ -56,7 +56,7 @@ describe('useRequestImages', () => {
         (ImagePicker.requestMediaLibraryPermissionsAsync as jest.Mock).mockResolvedValue({ status: 'granted' });
         (ImagePicker.launchImageLibraryAsync as jest.Mock).mockResolvedValue({
             canceled: false,
-            assets: [{ uri: 'file://original.jpg' }, { uri: 'file://original_2.jpg' }],
+            assets: [{ uri: 'file://original.jpg' }, { uri: 'file://original_2.jpg' }]
         });
         (compressImage as jest.Mock).mockImplementation((uri) => Promise.resolve(`${uri}_compressed`));
 
@@ -67,7 +67,10 @@ describe('useRequestImages', () => {
         });
 
         await waitFor(() => {
-            expect(result.current.images).toEqual(['file://original.jpg_compressed', 'file://original_2.jpg_compressed']);
+            expect(result.current.images).toEqual([
+                'file://original.jpg_compressed',
+                'file://original_2.jpg_compressed'
+            ]);
             expect(Haptics.notificationAsync).toHaveBeenCalledWith('Success');
         });
     });
@@ -76,7 +79,7 @@ describe('useRequestImages', () => {
         (ImagePicker.requestMediaLibraryPermissionsAsync as jest.Mock).mockResolvedValue({ status: 'granted' });
         (ImagePicker.launchImageLibraryAsync as jest.Mock).mockResolvedValue({
             canceled: false,
-            assets: [{ uri: 'file://uncompressible.jpg' }],
+            assets: [{ uri: 'file://uncompressible.jpg' }]
         });
         (compressImage as jest.Mock).mockRejectedValue(new Error('Compression error'));
 
@@ -95,7 +98,7 @@ describe('useRequestImages', () => {
         (ImagePicker.requestMediaLibraryPermissionsAsync as jest.Mock).mockResolvedValue({ status: 'granted' });
         (ImagePicker.launchImageLibraryAsync as jest.Mock).mockResolvedValue({
             canceled: false,
-            assets: Array(6).fill({ uri: 'file://test.jpg' }),
+            assets: Array(6).fill({ uri: 'file://test.jpg' })
         });
         (compressImage as jest.Mock).mockImplementation((uri) => Promise.resolve(uri));
 
@@ -114,7 +117,7 @@ describe('useRequestImages', () => {
         (ImagePicker.requestCameraPermissionsAsync as jest.Mock).mockResolvedValue({ status: 'granted' });
         (ImagePicker.launchCameraAsync as jest.Mock).mockResolvedValue({
             canceled: false,
-            assets: [{ uri: 'file://photo.jpg' }],
+            assets: [{ uri: 'file://photo.jpg' }]
         });
         (compressImage as jest.Mock).mockImplementation((uri) => Promise.resolve(`${uri}_compressed`));
 
@@ -134,7 +137,7 @@ describe('useRequestImages', () => {
 
         act(() => {
             // Internal state manipulation to test remove since setter isn't exposed directly for images array
-            result.current.handlePickImage = async () => { }; // Mock to prevent error
+            result.current.handlePickImage = async () => {}; // Mock to prevent error
         });
 
         // Let's directly test the removal by mocking the initial state
@@ -149,7 +152,7 @@ describe('useRequestImages', () => {
         (ImagePicker.requestCameraPermissionsAsync as jest.Mock).mockResolvedValue({ status: 'granted' });
         (ImagePicker.launchCameraAsync as jest.Mock).mockResolvedValue({
             canceled: false,
-            assets: [{ uri: 'file://front_car.jpg' }],
+            assets: [{ uri: 'file://front_car.jpg' }]
         });
         (compressImage as jest.Mock).mockImplementation((uri) => Promise.resolve(uri));
 
@@ -168,7 +171,7 @@ describe('useRequestImages', () => {
         (ImagePicker.requestMediaLibraryPermissionsAsync as jest.Mock).mockResolvedValue({ status: 'granted' });
         (ImagePicker.launchImageLibraryAsync as jest.Mock).mockResolvedValue({
             canceled: false,
-            assets: [{ uri: 'file://rear_car.jpg' }],
+            assets: [{ uri: 'file://rear_car.jpg' }]
         });
         (compressImage as jest.Mock).mockImplementation((uri) => Promise.resolve(uri));
 

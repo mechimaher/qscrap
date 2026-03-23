@@ -1,33 +1,21 @@
 module.exports = {
     testMatch: ['**/__tests__/**/*.test.(ts|tsx)'],
     transform: {
-        '^.+\\.tsx?$': ['ts-jest', {
-            tsconfig: {
-                jsx: 'react-jsx',
-                esModuleInterop: true,
-                allowJs: true,
-                strict: true,
-                moduleResolution: 'node',
-                resolveJsonModule: true,
-                isolatedModules: true,
-            },
-        }],
+        '^.+\\.(js|jsx|ts|tsx)$': 'babel-jest'
     },
     transformIgnorePatterns: [
-        'node_modules/(?!(expo-secure-store|expo-haptics|expo-image|expo-linear-gradient|expo-location|expo-notifications|expo-linking|expo-device|expo-font|expo-status-bar|expo-file-system)/)',
+        'node_modules/(?!(expo.*|@expo/.*|react-native|@react-native|@react-navigation|@stripe/.*|@sentry/.*)/)'
     ],
     moduleNameMapper: {
+        '^src/(.*)$': '<rootDir>/src/$1',
         '\\.png$': '<rootDir>/src/__tests__/__mocks__/fileMock.js',
-        '\\.jpg$': '<rootDir>/src/__tests__/__mocks__/fileMock.js',
+        '\\.jpg$': '<rootDir>/src/__tests__/__mocks__/fileMock.js'
     },
+    moduleDirectories: ['node_modules', '<rootDir>/src'],
     setupFiles: ['./jest.setup.js'],
-    collectCoverageFrom: [
-        'src/**/*.{ts,tsx}',
-        '!src/**/*.d.ts',
-        '!src/**/__tests__/**',
-    ],
+    collectCoverageFrom: ['src/**/*.{ts,tsx}', '!src/**/*.d.ts', '!src/**/__tests__/**'],
     testEnvironment: 'node',
     globals: {
-        __DEV__: true,
-    },
+        __DEV__: true
+    }
 };

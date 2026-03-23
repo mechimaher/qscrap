@@ -5,7 +5,7 @@ import { api } from '../../services/api';
 jest.mock('../../services/api', () => ({
     api: {
         createFullPaymentIntent: jest.fn(),
-        createDeliveryFeeIntent: jest.fn(),
+        createDeliveryFeeIntent: jest.fn()
     }
 }));
 jest.mock('../../utils/logger');
@@ -35,7 +35,7 @@ describe('usePaymentIntent', () => {
                 discountOnPart: 0,
                 deliveryFee: 20,
                 t: mockT,
-                toast: mockToast,
+                toast: mockToast
             })
         );
 
@@ -54,7 +54,7 @@ describe('usePaymentIntent', () => {
                 discountOnPart: 0,
                 deliveryFee: 20,
                 t: mockT,
-                toast: mockToast,
+                toast: mockToast
             })
         );
 
@@ -74,7 +74,7 @@ describe('usePaymentIntent', () => {
     it('should call createFullPaymentIntent when paymentType is full', async () => {
         (api.createFullPaymentIntent as jest.Mock).mockResolvedValue({
             intent: { clientSecret: 'secret_full' },
-            breakdown: { total: 100 },
+            breakdown: { total: 100 }
         });
 
         const { result } = renderHook(() =>
@@ -87,7 +87,7 @@ describe('usePaymentIntent', () => {
                 discountOnPart: 0,
                 deliveryFee: 20,
                 t: mockT,
-                toast: mockToast,
+                toast: mockToast
             })
         );
 
@@ -105,7 +105,7 @@ describe('usePaymentIntent', () => {
     it('should call createDeliveryFeeIntent when paymentType is delivery_only', async () => {
         (api.createDeliveryFeeIntent as jest.Mock).mockResolvedValue({
             intent: { clientSecret: 'secret_delivery' },
-            breakdown: { total: 20 },
+            breakdown: { total: 20 }
         });
 
         const { result } = renderHook(() =>
@@ -118,7 +118,7 @@ describe('usePaymentIntent', () => {
                 discountOnPart: 0,
                 deliveryFee: 20,
                 t: mockT,
-                toast: mockToast,
+                toast: mockToast
             })
         );
 

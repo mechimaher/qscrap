@@ -18,7 +18,7 @@ import logger from '../../utils/logger';
 import { getIO } from '../../utils/socketIO';
 
 export class OrderLifecycleService {
-    constructor(private pool: Pool) { }
+    constructor(private pool: Pool) {}
 
     /**
      * Get commission rate based on garage's subscription status
@@ -27,23 +27,25 @@ export class OrderLifecycleService {
      */
     async getGarageCommissionRate(garageId: string): Promise<number> {
         // Check if garage is in demo mode
-        const garageResult = await this.pool.query(
-            'SELECT approval_status FROM garages WHERE garage_id = $1',
-            [garageId]
-        );
+        const garageResult = await this.pool.query('SELECT approval_status FROM garages WHERE garage_id = $1', [
+            garageId
+        ]);
 
         if (garageResult.rows.length > 0 && garageResult.rows[0].approval_status === 'demo') {
             return 0; // Demo = 0% commission
         }
 
         // Check for active subscription with custom commission rate
-        const result = await this.pool.query(`
+        const result = await this.pool.query(
+            `
             SELECT sp.commission_rate 
             FROM garage_subscriptions gs
             JOIN subscription_plans sp ON gs.plan_id = sp.plan_id
             WHERE gs.garage_id = $1 AND gs.status IN ('active', 'trial')
             ORDER BY gs.created_at DESC LIMIT 1
-        `, [garageId]);
+        `,
+            [garageId]
+        );
 
         return result.rows.length > 0 ? parseFloat(result.rows[0].commission_rate) : 0.15;
     }
@@ -83,8 +85,8 @@ export class OrderLifecycleService {
 
             // Validate transition
             const allowedTransitions: Record<string, string[]> = {
-                'confirmed': ['preparing'],
-                'preparing': ['ready_for_pickup']
+                confirmed: ['preparing'],
+                preparing: ['ready_for_pickup']
             };
 
             const allowed = allowedTransitions[oldStatus] || [];
@@ -93,17 +95,20 @@ export class OrderLifecycleService {
             }
 
             // Update order
-            await client.query(
-                'UPDATE orders SET order_status = $1, updated_at = NOW() WHERE order_id = $2',
-                [newStatus, orderId]
-            );
+            await client.query('UPDATE orders SET order_status = $1, updated_at = NOW() WHERE order_id = $2', [
+                newStatus,
+                orderId
+            ]);
 
             // Log status change
-            await client.query(`
+            await client.query(
+                `
                 INSERT INTO order_status_history 
                 (order_id, old_status, new_status, changed_by, changed_by_type, reason)
                 VALUES ($1, $2, $3, $4, 'garage', $5)
-            `, [orderId, oldStatus, newStatus, garageId, notes]);
+            `,
+                [orderId, oldStatus, newStatus, garageId, notes]
+            );
 
             await client.query('COMMIT');
 
@@ -128,7 +133,8 @@ export class OrderLifecycleService {
         try {
             await client.query('BEGIN');
 
-            const result = await client.query(`
+            const result = await client.query(
+                `
                 UPDATE orders 
                 SET order_status = 'completed', 
                     completed_at = NOW(),
@@ -136,7 +142,9 @@ export class OrderLifecycleService {
                     updated_at = NOW()
                 WHERE order_id = $1 AND customer_id = $2 AND order_status = 'delivered'
                 RETURNING garage_id, order_number, garage_payout_amount, part_price, delivery_fee, customer_id
-            `, [orderId, customerId]);
+            `,
+                [orderId, customerId]
+            );
 
             if (result.rows.length === 0) {
                 throw new OrderNotDeliveredError(orderId);
@@ -145,11 +153,14 @@ export class OrderLifecycleService {
             const order = result.rows[0];
 
             // Log status change
-            await client.query(`
+            await client.query(
+                `
                 INSERT INTO order_status_history 
                 (order_id, old_status, new_status, changed_by, changed_by_type, reason)
                 VALUES ($1, 'delivered', 'completed', $2, 'customer', 'Customer confirmed receipt')
-            `, [orderId, customerId]);
+            `,
+                [orderId, customerId]
+            );
 
             // Create payout record
             await this.createPayoutForOrder(orderId, client);
@@ -174,7 +185,11 @@ export class OrderLifecycleService {
                         orderId,
                         `Earned ${pointsToAward} points for order #${order.order_number}`
                     );
-                    logger.info('Loyalty points awarded', { points: pointsToAward, customerId: order.customer_id, orderId });
+                    logger.info('Loyalty points awarded', {
+                        points: pointsToAward,
+                        customerId: order.customer_id,
+                        orderId
+                    });
                 }
             } catch (loyaltyErr) {
                 logger.error('Failed to award loyalty points', { error: (loyaltyErr as Error).message });
@@ -206,14 +221,17 @@ export class OrderLifecycleService {
             await client.query('BEGIN');
 
             // Verify driver assignment - must be in_transit
-            const assignmentCheck = await client.query(`
+            const assignmentCheck = await client.query(
+                `
                 SELECT da.assignment_id, da.driver_id, d.user_id
                 FROM delivery_assignments da
                 JOIN drivers d ON da.driver_id = d.driver_id
                 WHERE da.order_id = $1 
                   AND d.user_id = $2
                   AND da.status = 'in_transit'
-            `, [orderId, driverId]);
+            `,
+                [orderId, driverId]
+            );
 
             if (assignmentCheck.rows.length === 0) {
                 throw new Error('No active delivery assignment found for this driver');
@@ -223,7 +241,8 @@ export class OrderLifecycleService {
 
             // Update order status: in_transit → delivered (NOT completed)
             // Customer confirmation or 48h auto-complete will mark as completed
-            const result = await client.query(`
+            const result = await client.query(
+                `
                 UPDATE orders 
                 SET order_status = 'delivered', 
                     delivered_at = NOW(),
@@ -232,7 +251,9 @@ export class OrderLifecycleService {
                 WHERE order_id = $1 
                   AND order_status = 'in_transit'
                 RETURNING garage_id, customer_id, order_number, payment_method, part_price, delivery_fee, loyalty_discount
-            `, [orderId, podPhotoUrl]);
+            `,
+                [orderId, podPhotoUrl]
+            );
 
             if (result.rows.length === 0) {
                 throw new Error('Order not found or not in in_transit status');
@@ -259,49 +280,69 @@ export class OrderLifecycleService {
             }
 
             if (codAmount > 0) {
-                const walletRes = await client.query(`
+                const walletRes = await client.query(
+                    `
                     INSERT INTO driver_wallets (driver_id, cash_collected, balance)
                     VALUES ($1, $2, 0)
                     ON CONFLICT (driver_id) DO UPDATE SET
                         cash_collected = driver_wallets.cash_collected + $2,
                         last_updated = NOW()
                     RETURNING wallet_id
-                `, [assignment.driver_id, codAmount]);
+                `,
+                    [assignment.driver_id, codAmount]
+                );
 
                 const walletId = walletRes.rows[0].wallet_id;
 
-                await client.query(`
+                await client.query(
+                    `
                     INSERT INTO driver_transactions (wallet_id, amount, type, reference_id, description)
                     VALUES ($1, $2, 'cash_collection', $3, 'Cash collected from customer')
-                `, [walletId, codAmount, orderId]);
+                `,
+                    [walletId, codAmount, orderId]
+                );
 
-                logger.info('Recorded driver COD collection', { driver_id: assignment.driver_id, order_id: orderId, codAmount, walletId });
+                logger.info('Recorded driver COD collection', {
+                    driver_id: assignment.driver_id,
+                    order_id: orderId,
+                    codAmount,
+                    walletId
+                });
             }
             // -------------------------------------------------------------
 
             // Update delivery assignment status
-            await client.query(`
+            await client.query(
+                `
                 UPDATE delivery_assignments
                 SET status = 'delivered',
                     delivered_at = NOW(),
                     delivery_photo_url = $1
                 WHERE assignment_id = $2
-            `, [podPhotoUrl, assignment.assignment_id]);
+            `,
+                [podPhotoUrl, assignment.assignment_id]
+            );
 
             // Log status change
-            await client.query(`
+            await client.query(
+                `
                 INSERT INTO order_status_history 
                 (order_id, old_status, new_status, changed_by, changed_by_type, reason)
                 VALUES ($1, 'in_transit', 'delivered', $2, 'driver', 'Driver confirmed delivery with POD')
-            `, [orderId, driverId]);
+            `,
+                [orderId, driverId]
+            );
 
             // Increment delivery count for driver stats
-            await client.query(`
+            await client.query(
+                `
                 UPDATE drivers SET 
                     total_deliveries = COALESCE(total_deliveries, 0) + 1,
                     updated_at = NOW()
                 WHERE driver_id = $1
-            `, [assignment.driver_id]);
+            `,
+                [assignment.driver_id]
+            );
 
             logger.info('Delivery completed via POD', {
                 driver_id: assignment.driver_id,
@@ -368,7 +409,6 @@ export class OrderLifecycleService {
                 order_number: order.order_number,
                 pod_photo_url: podPhotoUrl
             });
-
         } catch (err) {
             await client.query('ROLLBACK');
             throw err;
@@ -405,7 +445,8 @@ export class OrderLifecycleService {
 
             for (const order of eligibleOrders.rows) {
                 // Mark as completed
-                await client.query(`
+                await client.query(
+                    `
                     UPDATE orders 
                     SET order_status = 'completed',
                         completed_at = NOW(),
@@ -413,14 +454,19 @@ export class OrderLifecycleService {
                         auto_completed = TRUE,
                         updated_at = NOW()
                     WHERE order_id = $1
-                `, [order.order_id]);
+                `,
+                    [order.order_id]
+                );
 
                 // Log status change
-                await client.query(`
+                await client.query(
+                    `
                     INSERT INTO order_status_history 
                     (order_id, old_status, new_status, changed_by, changed_by_type, reason)
                     VALUES ($1, 'delivered', 'completed', NULL, 'system', 'Auto-completed after 48h timeout')
-                `, [order.order_id]);
+                `,
+                    [order.order_id]
+                );
 
                 // Create payout
                 await this.createPayoutForOrder(order.order_id, client);
@@ -446,7 +492,11 @@ export class OrderLifecycleService {
                     type: 'order_completed',
                     title: 'Order Completed ✅',
                     message: `Order #${order.order_number} auto-completed. Payment of ${order.garage_payout_amount} QAR will be processed soon.`,
-                    data: { order_id: order.order_id, order_number: order.order_number, payout_amount: order.garage_payout_amount },
+                    data: {
+                        order_id: order.order_id,
+                        order_number: order.order_number,
+                        payout_amount: order.garage_payout_amount
+                    },
                     target_role: 'garage'
                 });
 
@@ -462,7 +512,11 @@ export class OrderLifecycleService {
                             order.order_id,
                             `Earned ${pointsToAward} points for order #${order.order_number} (auto-completed)`
                         );
-                        logger.info('Loyalty points awarded for auto-complete', { points: pointsToAward, customerId: order.customer_id, orderId: order.order_id });
+                        logger.info('Loyalty points awarded for auto-complete', {
+                            points: pointsToAward,
+                            customerId: order.customer_id,
+                            orderId: order.order_id
+                        });
                     }
                 } catch (loyaltyErr) {
                     logger.error('Failed to award points for auto-complete', { error: (loyaltyErr as Error).message });
@@ -478,7 +532,6 @@ export class OrderLifecycleService {
                 completed_count: completedOrders.length,
                 order_numbers: completedOrders
             };
-
         } catch (err) {
             await client.query('ROLLBACK');
             logger.error('Auto-complete error', { error: (err as Error).message });
@@ -488,19 +541,21 @@ export class OrderLifecycleService {
         }
     }
 
-
     /**
      * Create payout record for garage (7-day schedule)
      */
     private async createPayoutForOrder(orderId: string, client: PoolClient): Promise<void> {
-        await client.query(`
+        await client.query(
+            `
             INSERT INTO garage_payouts 
             (garage_id, order_id, gross_amount, commission_amount, net_amount, scheduled_for)
             SELECT garage_id, order_id, part_price, platform_fee, garage_payout_amount, 
                    CURRENT_DATE + INTERVAL '7 days'
             FROM orders o WHERE o.order_id = $1
             AND NOT EXISTS (SELECT 1 FROM garage_payouts gp WHERE gp.order_id = o.order_id)
-        `, [orderId]);
+        `,
+            [orderId]
+        );
     }
 
     /**
@@ -508,9 +563,12 @@ export class OrderLifecycleService {
      */
     private async releaseDriver(orderId: string, client: PoolClient): Promise<void> {
         // Get driver_id from delivery_assignments (not orders.driver_id which may be null)
-        const driverResult = await client.query(`
+        const driverResult = await client.query(
+            `
             SELECT driver_id FROM delivery_assignments WHERE order_id = $1 LIMIT 1
-        `, [orderId]);
+        `,
+            [orderId]
+        );
 
         if (driverResult.rows.length === 0) {
             return; // No driver assigned
@@ -519,21 +577,27 @@ export class OrderLifecycleService {
         const driverId = driverResult.rows[0].driver_id;
 
         // Check if driver has other active assignments
-        const activeCheck = await client.query(`
+        const activeCheck = await client.query(
+            `
             SELECT 1 FROM delivery_assignments 
             WHERE driver_id = $1 
             AND status IN ('assigned', 'picked_up', 'in_transit')
             AND order_id != $2
             LIMIT 1
-        `, [driverId, orderId]);
+        `,
+            [driverId, orderId]
+        );
 
         if (activeCheck.rows.length === 0) {
             // No other active assignments, release driver
-            await client.query(`
+            await client.query(
+                `
                 UPDATE drivers 
                 SET status = 'available', updated_at = NOW()
                 WHERE driver_id = $1
-            `, [driverId]);
+            `,
+                [driverId]
+            );
         }
     }
 
@@ -542,20 +606,17 @@ export class OrderLifecycleService {
      */
     private async notifyStatusChange(order: any, newStatus: string, garageId: string): Promise<void> {
         const statusMessages: Record<string, string> = {
-            'preparing': '🔧 Your order is being prepared',
-            'ready_for_pickup': '📦 Your order is ready and waiting for pickup'
+            preparing: '🔧 Your order is being prepared',
+            ready_for_pickup: '📦 Your order is ready and waiting for pickup'
         };
 
         const pushTitles: Record<string, string> = {
-            'preparing': 'Order Preparing 🔧',
-            'ready_for_pickup': 'Ready for Pickup 📦'
+            preparing: 'Order Preparing 🔧',
+            ready_for_pickup: 'Ready for Pickup 📦'
         };
 
         // Get garage name
-        const garageResult = await this.pool.query(
-            'SELECT garage_name FROM garages WHERE garage_id = $1',
-            [garageId]
-        );
+        const garageResult = await this.pool.query('SELECT garage_name FROM garages WHERE garage_id = $1', [garageId]);
         const garageName = garageResult.rows[0]?.garage_name || 'Garage';
 
         // Notify customer
@@ -581,7 +642,12 @@ export class OrderLifecycleService {
                 order.customer_id,
                 pushTitles[newStatus] || 'Order Update 🔔',
                 `Order #${order.order_number}: ${statusMessages[newStatus] || `Status: ${newStatus}`}`,
-                { type: 'order_status_updated', order_id: order.order_id, order_number: order.order_number, new_status: newStatus },
+                {
+                    type: 'order_status_updated',
+                    order_id: order.order_id,
+                    order_number: order.order_number,
+                    new_status: newStatus
+                },
                 { channelId: 'orders', sound: true }
             );
         } catch (pushErr) {
@@ -665,7 +731,9 @@ export class OrderLifecycleService {
         );
 
         const partName = partDescResult.rows[0]?.part_description;
-        if (!partName) { return; }
+        if (!partName) {
+            return;
+        }
 
         const suggestions = predictiveService.getSuggestions(partName);
         if (suggestions.length > 0) {

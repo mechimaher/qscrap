@@ -15,7 +15,7 @@ const ShimmerPlaceholder: React.FC<{ style?: any }> = ({ style }) => {
             Animated.timing(animatedValue, {
                 toValue: 1,
                 duration: 1000, // Faster, snappier feel (Premium Standard)
-                useNativeDriver: true,
+                useNativeDriver: true
             })
         );
         animation.start();
@@ -24,17 +24,12 @@ const ShimmerPlaceholder: React.FC<{ style?: any }> = ({ style }) => {
 
     const translateX = animatedValue.interpolate({
         inputRange: [0, 1],
-        outputRange: [-screenWidth, screenWidth],
+        outputRange: [-screenWidth, screenWidth]
     });
 
     return (
         <View style={[styles.shimmerContainer, style]}>
-            <Animated.View
-                style={[
-                    styles.shimmer,
-                    { transform: [{ translateX }] },
-                ]}
-            >
+            <Animated.View style={[styles.shimmer, { transform: [{ translateX }] }]}>
                 <LinearGradient
                     colors={['transparent', 'rgba(255,255,255,0.15)', 'transparent']}
                     start={{ x: 0, y: 0 }}
@@ -113,14 +108,14 @@ const styles = StyleSheet.create({
     shimmerContainer: {
         backgroundColor: Colors.dark.surface,
         overflow: 'hidden',
-        borderRadius: BorderRadius.sm,
+        borderRadius: BorderRadius.sm
     },
     shimmer: {
-        ...StyleSheet.absoluteFillObject,
+        ...StyleSheet.absoluteFillObject
     },
     shimmerGradient: {
         flex: 1,
-        width: screenWidth * 2,
+        width: screenWidth * 2
     },
 
     // Stat card skeleton
@@ -129,24 +124,24 @@ const styles = StyleSheet.create({
         backgroundColor: Colors.dark.surface,
         borderRadius: BorderRadius.lg,
         padding: Spacing.lg,
-        marginBottom: Spacing.md,
+        marginBottom: Spacing.md
     },
     wideStatCard: {
         width: '100%',
         backgroundColor: Colors.dark.surface,
         borderRadius: BorderRadius.lg,
-        padding: Spacing.lg,
+        padding: Spacing.lg
     },
     statNumber: {
         width: 60,
         height: 36,
         borderRadius: BorderRadius.md,
-        marginBottom: Spacing.sm,
+        marginBottom: Spacing.sm
     },
     statLabel: {
         width: 100,
         height: 14,
-        borderRadius: BorderRadius.sm,
+        borderRadius: BorderRadius.sm
     },
 
     // List item skeleton
@@ -155,35 +150,35 @@ const styles = StyleSheet.create({
         backgroundColor: Colors.dark.surface,
         borderRadius: BorderRadius.lg,
         padding: Spacing.md,
-        marginBottom: Spacing.md,
+        marginBottom: Spacing.md
     },
     listItemLeft: {
-        marginRight: Spacing.md,
+        marginRight: Spacing.md
     },
     listItemCircle: {
         width: 50,
         height: 50,
-        borderRadius: 25,
+        borderRadius: 25
     },
     listItemContent: {
-        flex: 1,
+        flex: 1
     },
     listItemTitle: {
         width: '70%',
         height: 18,
         borderRadius: BorderRadius.sm,
-        marginBottom: Spacing.sm,
+        marginBottom: Spacing.sm
     },
     listItemSubtitle: {
         width: '90%',
         height: 14,
         borderRadius: BorderRadius.sm,
-        marginBottom: Spacing.xs,
+        marginBottom: Spacing.xs
     },
     listItemMeta: {
         width: '40%',
         height: 12,
-        borderRadius: BorderRadius.sm,
+        borderRadius: BorderRadius.sm
     },
 
     // Notification skeleton
@@ -192,27 +187,27 @@ const styles = StyleSheet.create({
         backgroundColor: Colors.dark.surface,
         borderRadius: BorderRadius.lg,
         padding: Spacing.md,
-        marginBottom: Spacing.md,
+        marginBottom: Spacing.md
     },
     notificationIcon: {
         width: 48,
         height: 48,
         borderRadius: 24,
-        marginRight: Spacing.md,
+        marginRight: Spacing.md
     },
     notificationContent: {
-        flex: 1,
+        flex: 1
     },
     notificationTitle: {
         width: '60%',
         height: 16,
         borderRadius: BorderRadius.sm,
-        marginBottom: Spacing.sm,
+        marginBottom: Spacing.sm
     },
     notificationMessage: {
         width: '80%',
         height: 12,
-        borderRadius: BorderRadius.sm,
+        borderRadius: BorderRadius.sm
     },
 
     // Profile header skeleton
@@ -220,36 +215,36 @@ const styles = StyleSheet.create({
         alignItems: 'center',
         padding: Spacing.xl,
         backgroundColor: Colors.dark.surface,
-        borderRadius: BorderRadius.xl,
+        borderRadius: BorderRadius.xl
     },
     profileAvatar: {
         width: 100,
         height: 100,
         borderRadius: 50,
-        marginBottom: Spacing.md,
+        marginBottom: Spacing.md
     },
     profileName: {
         width: 150,
         height: 24,
         borderRadius: BorderRadius.sm,
-        marginBottom: Spacing.sm,
+        marginBottom: Spacing.sm
     },
     profilePhone: {
         width: 120,
         height: 16,
-        borderRadius: BorderRadius.sm,
+        borderRadius: BorderRadius.sm
     },
 
     // Loading containers
     loadingList: {
-        padding: Spacing.lg,
+        padding: Spacing.lg
     },
     loadingStats: {
         flexDirection: 'row',
         flexWrap: 'wrap',
         justifyContent: 'space-between',
-        padding: Spacing.lg,
-    },
+        padding: Spacing.lg
+    }
 });
 
 export default ShimmerPlaceholder;

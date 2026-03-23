@@ -20,20 +20,40 @@ router.use(authenticate);
 // ============================================
 
 // Customer creates a counter-offer on a garage's bid
-router.post('/bids/:bid_id/counter-offer', requireRole('customer'), validateParams(bidIdParamSchema), createCounterOffer);
+router.post(
+    '/bids/:bid_id/counter-offer',
+    requireRole('customer'),
+    validateParams(bidIdParamSchema),
+    createCounterOffer
+);
 
 // Customer responds to garage's counter-offer (accept/reject/counter)
-router.post('/counter-offers/:counter_offer_id/customer-respond', requireRole('customer'), validateParams(counterOfferIdParamSchema), customerRespondToCounter);
+router.post(
+    '/counter-offers/:counter_offer_id/customer-respond',
+    requireRole('customer'),
+    validateParams(counterOfferIdParamSchema),
+    customerRespondToCounter
+);
 
 // Customer accepts garage's last counter-offer (even after negotiation rounds ended)
-router.post('/bids/:bid_id/accept-last-offer', requireRole('customer'), validateParams(bidIdParamSchema), acceptLastGarageOffer);
+router.post(
+    '/bids/:bid_id/accept-last-offer',
+    requireRole('customer'),
+    validateParams(bidIdParamSchema),
+    acceptLastGarageOffer
+);
 
 // ============================================
 // GARAGE ROUTES
 // ============================================
 
 // Garage responds to customer's counter-offer (accept/reject/counter)
-router.post('/counter-offers/:counter_offer_id/garage-respond', requireRole('garage'), validateParams(counterOfferIdParamSchema), respondToCounterOffer);
+router.post(
+    '/counter-offers/:counter_offer_id/garage-respond',
+    requireRole('garage'),
+    validateParams(counterOfferIdParamSchema),
+    respondToCounterOffer
+);
 
 // Get pending counter-offers for garage (offers awaiting response)
 router.get('/pending-offers', requireRole('garage'), getPendingCounterOffers);
