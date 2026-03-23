@@ -119,6 +119,9 @@ export const ar = {
         networkError: 'خطأ في الاتصال. يرجى التحقق من الإنترنت.',
         saveChanges: 'حفظ التغييرات',
         yourDriver: 'سائقك',
+        you: 'أنت',
+        increase: 'زيادة',
+        decrease: 'نقصان',
         unexpectedError: 'حدث خطأ غير متوقع',
         invalidDate: 'تاريخ غير صالح',
         invalidTime: 'وقت غير صالح',
@@ -266,6 +269,7 @@ export const ar = {
         verifying: 'جاري التحقق...',
         resendCode: 'إعادة إرسال الرمز',
         resendWait: 'يرجى الانتظار {{seconds}} ثانية',
+        resendIn: 'إعادة الإرسال خلال {{seconds}}ث',
         wrongEmail: 'البريد خاطئ؟ ارجع وقم بتغييره',
         // المصادقة البيومترية
         quickLogin: 'تسجيل سريع',
@@ -457,6 +461,7 @@ export const ar = {
         selectVehicle: 'اختر السيارة',
         chooseFromCars: 'اختر من سياراتك المحفوظة',
         addNewVehicle: '+ إضافة سيارة جديدة',
+        manageVehicles: 'إدارة',
         vinRequired: 'رقم الشاسيه مطلوب',
         vinRequiredMessage:
             'تتطلب كراجات قطر رقم الشاسيه من الاستمارة للحصول على مطابقة دقيقة للقطع.\n\nهل تريد إضافة رقم الشاسيه لهذه السيارة الآن؟',
@@ -636,7 +641,7 @@ export const ar = {
         otpExpiresIn: 'يتجدد خلال {{time}}',
         otpExpiresSoon: 'سينتهي قريباً',
         otpLoadFailed: 'تعذر تحميل رمز التوصيل.',
-        visualGuarantee: 'ضمان بصري: تم توفير 3 صور عالية الدقة للقطعة.',
+        visualGuarantee: 'ضمان بصري: تم توفير صور عالية الدقة للقطعة.',
         sanitizationPromise: 'تنظيف وضغط حراري قبل تحميل الشاحنة.',
         escrowShield: 'درع الأمان 48 ساعة مفعل',
         escrowExpiresIn: 'إطلاق تلقائي خلال {{time}}',
@@ -906,9 +911,11 @@ export const ar = {
         privacyPolicy: 'سياسة الخصوصية',
         biometrics: 'تسجيل الدخول بالبصمة',
         biometricsDesc: 'حفظ بيانات الدخول لتسجيل أسرع وآمن',
+        biometricsEnabled: 'تم تفعيل {{type}} لتسجيل الدخول السريع',
         clearBiometrics: 'مسح بيانات البصمة المحفوظة',
         sentryScreenshots: 'السماح بلقطات الشاشة للأعطال',
         sentryScreenshotsDesc: 'تضمين لقطات مشوشة في تقارير الأعطال (مع مراعاة الخصوصية)',
+        sentryScreenshotsOffByDefault: 'لحماية خصوصيتك، لقطات شاشة الأعطال معطلة افتراضياً. فعّلها فقط عند الحاجة للتنقيح.',
         // VVIP 2026 - الوضع الداكن
         theme: 'السمة',
         light: 'فاتح',
@@ -1080,7 +1087,12 @@ export const ar = {
         sendFailed: 'فشل إرسال الرسالة',
         connecting: 'جارٍ الاتصال...',
         noMessages: 'لا توجد رسائل بعد',
-        sendMessageTo: 'أرسل رسالة إلى {{name}}'
+        sendMessageTo: 'أرسل رسالة إلى {{name}}',
+        sending: 'جارٍ الإرسال...',
+        failed: 'فشل',
+        retry: 'إعادة المحاولة',
+        retryAttempt: 'محاولة {{count}}',
+        retryAttempt_plural: 'محاولات {{count}}'
     },
 
     // =============================================

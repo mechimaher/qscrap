@@ -95,7 +95,15 @@ export default function PartDetailsStep({
                     numberOfLines={4}
                     textAlignVertical="top"
                 />
-                <Text style={[styles.charCount, { color: colors.textMuted }]}>{partDescription.length}/500</Text>
+                <Text
+                    style={[
+                        styles.charCount,
+                        { color: partDescription.length >= 450 ? '#EF4444' : (partDescription.length >= 400 ? '#F59E0B' : colors.textMuted) },
+                        partDescription.length >= 450 && styles.charCountWarning
+                    ]}
+                >
+                    {partDescription.length}/500
+                </Text>
             </View>
 
             <PartSpecsCard
@@ -152,6 +160,10 @@ const styles = StyleSheet.create({
     charCount: {
         fontSize: FontSizes.xs,
         marginTop: Spacing.xs,
-        textAlign: 'right'
+        textAlign: 'right',
+        fontWeight: '600'
+    },
+    charCountWarning: {
+        fontWeight: '700'
     }
 });

@@ -80,6 +80,9 @@ function PartSpecsCard({
                                 styles.stepperBtn,
                                 { backgroundColor: quantity > 1 ? Colors.primary + '15' : colors.border }
                             ]}
+                            accessibilityRole="button"
+                            accessibilityLabel={t('common.decrease')}
+                            accessibilityState={{ disabled: quantity <= 1 }}
                         >
                             <Text
                                 style={[
@@ -104,6 +107,9 @@ function PartSpecsCard({
                                 styles.stepperBtn,
                                 { backgroundColor: quantity < 10 ? Colors.primary + '15' : colors.border }
                             ]}
+                            accessibilityRole="button"
+                            accessibilityLabel={t('common.increase')}
+                            accessibilityState={{ disabled: quantity >= 10 }}
                         >
                             <Text
                                 style={[
@@ -139,6 +145,9 @@ function PartSpecsCard({
                                     borderWidth: side === opt.value ? 2 : 1
                                 }
                             ]}
+                            accessibilityRole="button"
+                            accessibilityLabel={opt.label}
+                            accessibilityState={{ selected: side === opt.value }}
                         >
                             <Ionicons
                                 name={opt.icon}
@@ -198,6 +207,9 @@ function PartSpecsCard({
                                 borderWidth: condition === opt.value ? 2 : 1
                             }
                         ]}
+                        accessibilityRole="button"
+                        accessibilityLabel={opt.label}
+                        accessibilityState={{ selected: condition === opt.value }}
                     >
                         <Ionicons
                             name={opt.icon as any}

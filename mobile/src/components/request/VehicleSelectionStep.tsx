@@ -52,6 +52,18 @@ export default function VehicleSelectionStep({
                         {t('newRequest.chooseFromCars')}
                     </Text>
                 </View>
+                {/* VIN Helper Link */}
+                <TouchableOpacity
+                    onPress={() => navigation.navigate('MyVehicles')}
+                    style={[styles.vinHelperLink, isRTL && { marginLeft: 0, marginRight: Spacing.sm }]}
+                    accessibilityRole="button"
+                    accessibilityLabel={t('newRequest.manageVehicles')}
+                >
+                    <Ionicons name="car-outline" size={18} color={Colors.primary} />
+                    <Text style={[styles.vinHelperText, { color: Colors.primary }]}>
+                        {t('newRequest.manageVehicles')}
+                    </Text>
+                </TouchableOpacity>
             </View>
 
             <MyVehiclesSelector
@@ -116,6 +128,16 @@ const styles = StyleSheet.create({
     stepNumber: { fontSize: FontSizes.md, fontWeight: '800' },
     sectionTitle: { fontSize: FontSizes.lg, fontWeight: '700' },
     sectionSubtitle: { fontSize: FontSizes.sm, marginTop: 2 },
+    vinHelperLink: {
+        flexDirection: 'row',
+        alignItems: 'center',
+        gap: 4,
+        paddingHorizontal: Spacing.sm,
+        paddingVertical: Spacing.xs,
+        backgroundColor: Colors.primary + '10',
+        borderRadius: BorderRadius.md
+    },
+    vinHelperText: { fontSize: FontSizes.xs, fontWeight: '600' },
     selectedVehicleBadge: {
         flexDirection: 'row',
         alignItems: 'center',

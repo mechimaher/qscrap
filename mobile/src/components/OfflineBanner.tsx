@@ -9,18 +9,24 @@ import { View, Text, StyleSheet, Animated } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
 import { useOffline } from '../hooks/useOffline';
 import { useSocketContext } from '../hooks/useSocket';
+import { useAuth } from '../contexts/AuthContext';
+import { useTranslation } from '../contexts/LanguageContext';
 import { Colors, Spacing, FontSizes, Shadows } from '../constants/theme';
 
 export const OfflineBanner: React.FC = () => {
     const { isOffline } = useOffline();
     const { isConnected, isRealtimeDegraded } = useSocketContext();
+    const { isAuthenticated } = useAuth();
+    const { t } = useTranslation();
     const fadeAnim = React.useRef(new Animated.Value(0)).current;
     const [show, setShow] = React.useState(false);
     const timer = React.useRef<ReturnType<typeof setTimeout> | null>(null);
 
-    // Show banner when network is offline OR socket disconnected/degraded for >30s
+    // Show banner when network is offline OR (if logged in) socket disconnected/degraded for >30s
     React.useEffect(() => {
-        const shouldTrigger = isOffline || isRealtimeDegraded || !isConnected;
+        // Only care about socket connection if we are logged in
+        const socketIssue = isAuthenticated && (isRealtimeDegraded || !isConnected);
+        const shouldTrigger = isOffline || socketIssue;
 
         if (shouldTrigger) {
             if (!timer.current) {
@@ -42,7 +48,7 @@ export const OfflineBanner: React.FC = () => {
                 timer.current = null;
             }
         };
-    }, [isOffline, isConnected, isRealtimeDegraded]);
+    }, [isOffline, isConnected, isRealtimeDegraded, isAuthenticated]);
 
     React.useEffect(() => {
         Animated.timing(fadeAnim, {
@@ -76,7 +82,7 @@ export const OfflineBanner: React.FC = () => {
             <View style={styles.content}>
                 <Ionicons name="cloud-offline" size={20} color="#fff" />
                 <Text style={styles.text}>
-                    You're offline. Reconnecting… Some features may be limited.
+                    {isOffline ? t('errors.network') : t('errors.networkRetry')}
                 </Text>
             </View>
         </Animated.View>

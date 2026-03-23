@@ -312,11 +312,6 @@ const PremiumOrderCard = ({
                                     {item.total_amount} {t('common.currency')}
                                 </Text>
                             </View>
-                            {/* Escrow Protection Badge */}
-                            <View style={styles.escrowBadge}>
-                                <Ionicons name="shield-checkmark" size={12} color="#2E7D32" />
-                                <Text style={styles.escrowText}>{t('common.protected')}</Text>
-                            </View>
                             <View style={styles.dateSection}>
                                 <Text style={[styles.dateLabel, { textAlign: rtlTextAlign(isRTL) }]}>
                                     {t('orders.ordered')}

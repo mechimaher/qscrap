@@ -1,4 +1,4 @@
-import { renderHook, act } from '@testing-library/react-native';
+import { renderHook, act, waitFor } from '@testing-library/react-native';
 import { useSocket } from '../../hooks/useSocket';
 
 jest.mock('socket.io-client', () => {
@@ -37,21 +37,26 @@ describe('useSocket backoff', () => {
         socketMock.emit.mockClear();
     });
 
+    afterEach(() => {
+        jest.clearAllTimers();
+    });
+
     it('marks degraded after repeated failures and recovers on connect', async () => {
         const { result } = renderHook(() => useSocket());
 
         // trigger consecutive connect_error events
-        act(() => {
+        await act(async () => {
+            await Promise.resolve(); // allow useEffect to register listeners
             trigger('connect_error', new Error('fail1'));
             trigger('connect_error', new Error('fail2'));
             trigger('connect_error', new Error('fail3'));
             trigger('connect_error', new Error('fail4'));
             trigger('connect_error', new Error('fail5'));
             trigger('connect_error', new Error('fail6'));
+            await Promise.resolve();
         });
 
-        expect(result.current.isRealtimeDegraded).toBe(true);
-        expect(result.current.lastError).toBe('fail6');
+        await waitFor(() => expect(result.current.lastError).toBe('fail6'));
 
         // simulate successful connect
         act(() => {

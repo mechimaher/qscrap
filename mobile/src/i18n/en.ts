@@ -118,6 +118,9 @@ export const en = {
         networkError: 'Network error. Please check your connection.',
         saveChanges: 'Save Changes',
         yourDriver: 'Your Driver',
+        you: 'You',
+        increase: 'Increase',
+        decrease: 'Decrease',
         unexpectedError: 'An unexpected error occurred',
         invalidDate: 'Invalid date',
         invalidTime: 'Invalid time',
@@ -265,6 +268,7 @@ export const en = {
         verifying: 'Verifying...',
         resendCode: 'Resend Code',
         resendWait: 'Please wait {{seconds}}s',
+        resendIn: 'Resend in {{seconds}}s',
         wrongEmail: 'Wrong email? Go back and change it',
         // Biometric Authentication
         quickLogin: 'Quick Login',
@@ -455,6 +459,7 @@ export const en = {
         selectVehicle: 'Select Vehicle',
         chooseFromCars: 'Choose from your saved cars',
         addNewVehicle: '+ Add New Vehicle',
+        manageVehicles: 'Manage',
         vinRequired: 'VIN Required',
         vinRequiredMessage:
             'Qatar garages require VIN/Chassis number from your Istimara for accurate part matching.\n\nWould you like to add VIN to this vehicle now?',
@@ -634,7 +639,7 @@ export const en = {
         otpExpiresIn: 'Refreshes in {{time}}',
         otpExpiresSoon: 'OTP expiring soon',
         otpLoadFailed: 'Could not load your delivery code.',
-        visualGuarantee: 'Visual Guarantee: Garage provided 3 HD photos for this part.',
+        visualGuarantee: 'Visual Guarantee: Garage provided high-quality photos for this part.',
         sanitizationPromise: 'Power-washed and shrink-wrapped before loading the van.',
         escrowShield: '48-Hour Escrow Shield active',
         escrowExpiresIn: 'Auto-release in {{time}}',
@@ -922,9 +927,11 @@ export const en = {
         privacyPolicy: 'Privacy Policy',
         biometrics: 'Biometric unlock',
         biometricsDesc: 'Store credentials for faster, secure sign-in',
+        biometricsEnabled: '{{type}} enabled for quick login',
         clearBiometrics: 'Clear biometric credentials',
         sentryScreenshots: 'Allow crash screenshots',
         sentryScreenshotsDesc: 'Include blurred screenshots in crash reports (privacy aware)',
+        sentryScreenshotsOffByDefault: 'For your privacy, crash screenshots are disabled by default. Enable only if needed for debugging.',
         // VVIP 2026 - Dark Mode
         theme: 'Theme',
         light: 'Light',
@@ -1096,7 +1103,12 @@ export const en = {
         sendFailed: 'Failed to send message',
         connecting: 'Connecting...',
         noMessages: 'No messages yet',
-        sendMessageTo: 'Send a message to {{name}}'
+        sendMessageTo: 'Send a message to {{name}}',
+        sending: 'Sending...',
+        failed: 'Failed',
+        retry: 'Retry',
+        retryAttempt: 'Retry {{count}}',
+        retryAttempt_plural: 'Retry {{count}}'
     },
 
     // =============================================

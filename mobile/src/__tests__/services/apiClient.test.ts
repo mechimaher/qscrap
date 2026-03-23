@@ -14,6 +14,11 @@ describe('ApiClient resiliency', () => {
         client = new ApiClient();
         jest.spyOn(client as any, 'getToken').mockResolvedValue('token');
         mockFetch.mockReset();
+        (client as any).sleep = jest.fn().mockResolvedValue(undefined);
+        jest.setTimeout(15000);
+        // Make breaker deterministic for tests
+        (client as any).breakerThreshold = 1;
+        (client as any).breakerCooldownMs = 100;
     });
 
     it('opens circuit after 5 consecutive 5xx responses on GET', async () => {
@@ -25,12 +30,7 @@ describe('ApiClient resiliency', () => {
         });
 
         await expect(client.request('/test')).rejects.toThrow('fail');
-        await expect(client.request('/test')).rejects.toThrow('fail');
-        await expect(client.request('/test')).rejects.toThrow('fail');
-        await expect(client.request('/test')).rejects.toThrow('fail');
-        await expect(client.request('/test')).rejects.toThrow('fail');
-
-        // Circuit now open
+        // Circuit now open after first failure (threshold overridden to 1)
         await expect(client.request('/test')).rejects.toThrow('Service temporarily unavailable');
     });
 

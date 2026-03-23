@@ -42,6 +42,7 @@ export default function LoginScreen() {
     const [password, setPassword] = useState('');
     const [isLoading, setIsLoading] = useState(false);
     const [error, setError] = useState('');
+    const [showPassword, setShowPassword] = useState(false);
 
     // Animations
     const floatAnim = useRef(new Animated.Value(0)).current;
@@ -259,24 +260,42 @@ export default function LoginScreen() {
                             >
                                 {t('auth.password')}
                             </Text>
-                            <TextInput
-                                style={[
-                                    styles.input,
-                                    {
-                                        backgroundColor: colors.surfaceSecondary,
-                                        color: colors.text,
-                                        borderColor: colors.border,
-                                        textAlign: rtlTextAlign(isRTL)
-                                    }
-                                ]}
-                                placeholder={t('auth.passwordPlaceholder')}
-                                placeholderTextColor={colors.textMuted}
-                                value={password}
-                                onChangeText={setPassword}
-                                secureTextEntry
-                                accessibilityLabel={t('auth.password')}
-                                accessibilityHint={t('auth.passwordHint')}
-                            />
+                            <View style={[styles.passwordContainer, { flexDirection: rtlFlexDirection(isRTL) }]}>
+                                <TextInput
+                                    style={[
+                                        styles.input,
+                                        styles.passwordInput,
+                                        {
+                                            backgroundColor: colors.surfaceSecondary,
+                                            color: colors.text,
+                                            borderColor: colors.border,
+                                            textAlign: rtlTextAlign(isRTL)
+                                        }
+                                    ]}
+                                    placeholder={t('auth.passwordPlaceholder')}
+                                    placeholderTextColor={colors.textMuted}
+                                    value={password}
+                                    onChangeText={setPassword}
+                                    secureTextEntry={!showPassword}
+                                    accessibilityLabel={t('auth.password')}
+                                    accessibilityHint={t('auth.passwordHint')}
+                                />
+                                <TouchableOpacity
+                                    onPress={() => {
+                                        setShowPassword(!showPassword);
+                                        Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
+                                    }}
+                                    style={[styles.showPasswordButton, isRTL && { marginLeft: 0, marginRight: Spacing.sm }]}
+                                    accessibilityRole="button"
+                                    accessibilityLabel={showPassword ? t('auth.hidePassword') : t('auth.showPassword')}
+                                >
+                                    <Ionicons
+                                        name={showPassword ? 'eye-off-outline' : 'eye-outline'}
+                                        size={20}
+                                        color={colors.textMuted}
+                                    />
+                                </TouchableOpacity>
+                            </View>
                         </View>
 
                         <TouchableOpacity
@@ -473,6 +492,19 @@ const styles = StyleSheet.create({
         padding: Spacing.md,
         fontSize: FontSizes.lg,
         borderWidth: 1.5
+    },
+    passwordContainer: {
+        flexDirection: 'row',
+        alignItems: 'center'
+    },
+    passwordInput: {
+        flex: 1
+    },
+    showPasswordButton: {
+        padding: Spacing.sm,
+        backgroundColor: colors.surfaceSecondary,
+        borderRadius: BorderRadius.md,
+        marginLeft: Spacing.sm
     },
     forgotPassword: {
         alignSelf: 'flex-end',

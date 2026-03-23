@@ -55,7 +55,13 @@ export function useSocket() {
 
     // Connect to socket server
     const scheduleReconnect = useCallback(() => {
-        if (reconnectTimeout.current) return;
+        if (reconnectTimeout.current) {
+            reconnectAttempts.current += 1;
+            if (reconnectAttempts.current >= maxReconnectAttempts) {
+                setIsRealtimeDegraded(true);
+            }
+            return;
+        }
         const delay = Math.min(1000 * 2 ** reconnectAttempts.current, 30_000) + Math.random() * 500;
         reconnectTimeout.current = setTimeout(() => {
             reconnectTimeout.current = null;

@@ -42,6 +42,15 @@ interface Message {
     is_read: boolean;
 }
 
+interface PendingMessage {
+    temp_id: string;
+    order_id: string;
+    message: string;
+    created_at: string;
+    status: 'sending' | 'failed';
+    retryCount: number;
+}
+
 interface ChatParams {
     orderId: string;
     orderNumber: string;
@@ -62,11 +71,14 @@ export default function ChatScreen() {
     const pollingInterval = useRef<ReturnType<typeof setInterval> | null>(null);
 
     const [messages, setMessages] = useState<Message[]>([]);
+    const [pendingMessages, setPendingMessages] = useState<PendingMessage[]>([]);
     const [newMessage, setNewMessage] = useState('');
     const [isLoading, setIsLoading] = useState(true);
     const [isSending, setIsSending] = useState(false);
     const [isConnected, setIsConnected] = useState(false);
     const [userId, setUserId] = useState<string>('');
+
+    const MAX_RETRIES = 3;
 
     // Play notification feedback for incoming messages (using haptics + vibration)
     const playMessageNotification = () => {
@@ -194,8 +206,34 @@ export default function ChatScreen() {
     const sendMessage = useCallback(async () => {
         if (!newMessage.trim() || isSending) return;
 
+        // In-flight guard: prevent double-send on flaky networks
+        if (pendingMessages.some((m) => m.status === 'sending')) {
+            log('[Chat] Message send in progress, ignoring duplicate tap');
+            return;
+        }
+
         setIsSending(true);
         Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
+
+        // Create optimistic pending message
+        const tempId = `temp_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`;
+        const pendingMsg: PendingMessage = {
+            temp_id: tempId,
+            order_id: orderId,
+            message: newMessage.trim(),
+            created_at: new Date().toISOString(),
+            status: 'sending',
+            retryCount: 0
+        };
+
+        // Optimistically add to UI
+        setPendingMessages((prev) => [...prev, pendingMsg]);
+        setNewMessage('');
+
+        // Scroll to bottom to show optimistic message
+        setTimeout(() => {
+            flatListRef.current?.scrollToEnd({ animated: true });
+        }, 100);
 
         try {
             // Send via API
@@ -212,17 +250,74 @@ export default function ChatScreen() {
             });
 
             if (response.ok) {
-                setNewMessage('');
-                // Message will come back via socket
+                // Remove from pending - real message will arrive via socket
+                setPendingMessages((prev) => prev.filter((m) => m.temp_id !== tempId));
             } else {
                 throw new Error('Failed to send');
             }
         } catch (error) {
-            handleApiError(error, toast, t('chat.sendFailed'));
+            log('[Chat] Send failed, marking as retryable:', error);
+            // Mark as failed with retry capability
+            setPendingMessages((prev) =>
+                prev.map((m) => (m.temp_id === tempId ? { ...m, status: 'failed' as const } : m))
+            );
+            // Don't show toast yet - let user retry
         } finally {
             setIsSending(false);
         }
-    }, [orderId, newMessage, isSending, toast, t]);
+    }, [orderId, newMessage, isSending, pendingMessages, toast, t]);
+
+    // Retry failed message
+    const retryMessage = useCallback(
+        async (pendingMsg: PendingMessage) => {
+            if (pendingMsg.retryCount >= MAX_RETRIES) {
+                // Max retries exceeded, remove and show error
+                setPendingMessages((prev) => prev.filter((m) => m.temp_id !== pendingMsg.temp_id));
+                handleApiError(new Error('Max retries exceeded'), toast, t('chat.sendFailed'));
+                return;
+            }
+
+            Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
+
+            // Update status to sending
+            setPendingMessages((prev) =>
+                prev.map((m) =>
+                    m.temp_id === pendingMsg.temp_id
+                        ? { ...m, status: 'sending' as const, retryCount: m.retryCount + 1 }
+                        : m
+                )
+            );
+
+            try {
+                const response = await fetch(`${SOCKET_URL}/api/chat/messages`, {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                        Authorization: `Bearer ${await api.getToken()}`
+                    },
+                    body: JSON.stringify({
+                        order_id: orderId,
+                        message: pendingMsg.message
+                    })
+                });
+
+                if (response.ok) {
+                    setPendingMessages((prev) => prev.filter((m) => m.temp_id !== pendingMsg.temp_id));
+                } else {
+                    throw new Error('Retry failed');
+                }
+            } catch (error) {
+                log('[Chat] Retry failed:', error);
+                setPendingMessages((prev) =>
+                    prev.map((m) =>
+                        m.temp_id === pendingMsg.temp_id ? { ...m, status: 'failed' as const } : m
+                    )
+                );
+                handleApiError(error, toast, t('chat.sendFailed'));
+            }
+        },
+        [orderId, toast, t]
+    );
 
     const formatTime = useCallback((dateString: string) => {
         const date = new Date(dateString);
@@ -275,6 +370,60 @@ export default function ChatScreen() {
             </View>
         );
     };
+
+    const renderPendingMessage = ({ item }: { item: PendingMessage }) => {
+        const isFailed = item.status === 'failed';
+
+        return (
+            <View
+                style={[
+                    styles.messageBubble,
+                    styles.myMessage,
+                    isFailed && styles.failedMessage,
+                    isRTL ? { alignSelf: 'flex-start' } : { alignSelf: 'flex-end' }
+                ]}
+            >
+                <Text style={[styles.messageText, styles.myMessageText, { textAlign: rtlTextAlign(isRTL) }]}>
+                    {item.message}
+                </Text>
+                <View style={[styles.pendingFooter, { flexDirection: rtlFlexDirection(isRTL) }]}>
+                    <Text style={[styles.messageTime, styles.myMessageTime, { textAlign: rtlTextAlign(isRTL) }]}>
+                        {isFailed
+                            ? t('chat.failed')
+                            : item.retryCount > 0
+                              ? t('chat.retryAttempt', { count: item.retryCount })
+                              : t('chat.sending')}
+                    </Text>
+                    {isFailed && (
+                        <TouchableOpacity
+                            onPress={() => retryMessage(item)}
+                            style={styles.retryButton}
+                            accessibilityRole="button"
+                            accessibilityLabel={t('chat.retry')}
+                        >
+                            <Ionicons name="refresh" size={14} color="#fff" />
+                            <Text style={styles.retryButtonText}>{t('chat.retry')}</Text>
+                        </TouchableOpacity>
+                    )}
+                </View>
+            </View>
+        );
+    };
+
+    // Combine messages and pending messages for display
+    const allMessages = [...messages, ...pendingMessages.map((p) => ({
+        message_id: p.temp_id,
+        order_id: p.order_id,
+        sender_id: userId,
+        sender_type: 'customer' as const,
+        sender_name: t('common.you'),
+        message: p.message,
+        created_at: p.created_at,
+        is_read: true,
+        isPending: true,
+        status: p.status,
+        retryCount: p.retryCount
+    }))];
 
     const handleQuickReply = (text: string) => {
         setNewMessage(text);
@@ -334,8 +483,12 @@ export default function ChatScreen() {
                 ) : (
                     <FlatList
                         ref={flatListRef}
-                        data={messages}
-                        renderItem={renderMessage}
+                        data={allMessages}
+                        renderItem={(item) =>
+                            (item.item as any).isPending
+                                ? renderPendingMessage(item as any)
+                                : renderMessage(item as any)
+                        }
                         keyExtractor={(item) => item.message_id}
                         contentContainerStyle={styles.messagesList}
                         showsVerticalScrollIndicator={false}
@@ -519,6 +672,30 @@ const styles = StyleSheet.create({
     },
     myMessageTime: {
         color: 'rgba(255,255,255,0.7)'
+    },
+    failedMessage: {
+        backgroundColor: '#EF4444',
+        opacity: 0.9
+    },
+    pendingFooter: {
+        flexDirection: 'row',
+        alignItems: 'center',
+        marginTop: 4,
+        gap: Spacing.xs
+    },
+    retryButton: {
+        flexDirection: 'row',
+        alignItems: 'center',
+        gap: 4,
+        paddingHorizontal: 6,
+        paddingVertical: 2,
+        backgroundColor: 'rgba(255,255,255,0.2)',
+        borderRadius: 4
+    },
+    retryButtonText: {
+        color: '#fff',
+        fontSize: FontSizes.xs,
+        fontWeight: '600'
     },
     quickActions: {
         flexDirection: 'row',

@@ -10,7 +10,8 @@ import {
     Alert,
     TextInput,
     Modal,
-    ActivityIndicator
+    ActivityIndicator,
+    Platform
 } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import * as Haptics from 'expo-haptics';
@@ -163,14 +164,22 @@ export default function SettingsScreen() {
             if (!next) {
                 await authService.clearBiometricCredentials();
                 await authService.setBiometricEnabled(false);
+                setBiometricEnabled(false);
             } else {
                 await authService.setBiometricEnabled(true);
+                setBiometricEnabled(true);
+                // Show confirmation toast when enabling
+                Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success);
+                Alert.alert(
+                    t('common.success'),
+                    t('settings.biometricsEnabled', { type: Platform.OS === 'ios' ? 'Face ID' : 'Fingerprint' }),
+                    [{ text: t('common.ok') }]
+                );
             }
-            setBiometricEnabled(next);
         } catch (error) {
             warn('Failed to update biometrics toggle', error);
         }
-    }, [biometricEnabled]);
+    }, [biometricEnabled, t]);
 
     const handleSentryToggle = useCallback(async () => {
         const next = !sentryScreenshots;
@@ -453,6 +462,23 @@ export default function SettingsScreen() {
                         onToggle={handleBiometricToggle}
                     />
 
+                    <View style={[styles.sentryInfoContainer, { flexDirection: rtlFlexDirection(isRTL) }]}>
+                        <Ionicons
+                            name="shield-checkmark-outline"
+                            size={20}
+                            color={colors.textSecondary}
+                            style={isRTL ? { marginRight: 0, marginLeft: Spacing.sm } : { marginRight: Spacing.sm }}
+                        />
+                        <Text
+                            style={[
+                                styles.sentryInfoText,
+                                { color: colors.textSecondary, textAlign: rtlTextAlign(isRTL) }
+                            ]}
+                        >
+                            {t('settings.sentryScreenshotsOffByDefault')}
+                        </Text>
+                    </View>
+
                     <SettingRow
                         icon="image-outline"
                         title={t('settings.sentryScreenshots')}
@@ -566,5 +592,17 @@ const styles = StyleSheet.create({
         color: '#737373',
         marginRight: Spacing.sm
     },
-    chevron: { fontSize: 24, color: '#737373' }
+    chevron: { fontSize: 24, color: '#737373' },
+    sentryInfoContainer: {
+        flexDirection: 'row',
+        alignItems: 'center',
+        padding: Spacing.md,
+        paddingTop: 0,
+        marginBottom: Spacing.xs
+    },
+    sentryInfoText: {
+        fontSize: FontSizes.xs,
+        lineHeight: 16,
+        flex: 1
+    }
 });

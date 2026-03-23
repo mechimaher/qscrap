@@ -35,6 +35,7 @@ export default function VerifyOTPScreen() {
 
     const [otp, setOTP] = useState(['', '', '', '', '', '']);
     const [timer, setTimer] = useState(600); // 10 minutes
+    const [resendTimer, setResendTimer] = useState(30); // 30 seconds resend cooldown
     const [canResend, setCanResend] = useState(false);
     const [isVerifying, setIsVerifying] = useState(false);
     const [isResending, setIsResending] = useState(false);
@@ -53,12 +54,21 @@ export default function VerifyOTPScreen() {
             });
         }, 1000);
 
-        // Enable resend after 30 seconds
-        const resendTimer = setTimeout(() => setCanResend(true), 30000);
+        // Resend cooldown timer
+        const resendInterval = setInterval(() => {
+            setResendTimer((prev) => {
+                if (prev <= 1) {
+                    clearInterval(resendInterval);
+                    setCanResend(true);
+                    return 0;
+                }
+                return prev - 1;
+            });
+        }, 1000);
 
         return () => {
             clearInterval(interval);
-            clearTimeout(resendTimer);
+            clearInterval(resendInterval);
         };
     }, []);
 
@@ -139,10 +149,10 @@ export default function VerifyOTPScreen() {
 
             Alert.alert(t('auth.codeSent'), t('auth.codeSentMsg'));
 
-            // Reset timer
+            // Reset timers
             setTimer(600);
+            setResendTimer(30);
             setCanResend(false);
-            setTimeout(() => setCanResend(true), 30000);
         } catch (error: any) {
             setIsResending(false);
             Haptics.notificationAsync(Haptics.NotificationFeedbackType.Error);
@@ -221,18 +231,26 @@ export default function VerifyOTPScreen() {
                         </View>
                     )}
 
-                    {/* Resend */}
+                    {/* Resend with Countdown Timer */}
                     <TouchableOpacity
                         style={[styles.resendButton, (!canResend || isResending) && styles.resendButtonDisabled]}
                         onPress={handleResend}
                         disabled={!canResend || isResending}
+                        accessibilityRole="button"
+                        accessibilityLabel={canResend ? t('auth.resendCode') : t('auth.resendWait', { seconds: resendTimer })}
+                        accessibilityState={{ disabled: !canResend || isResending }}
                     >
                         {isResending ? (
                             <ActivityIndicator color="#fff" size="small" />
+                        ) : canResend ? (
+                            <Text style={styles.resendText}>{t('auth.resendCode')}</Text>
                         ) : (
-                            <Text style={styles.resendText}>
-                                {canResend ? t('auth.resendCode') : t('auth.resendWait', { seconds: 30 })}
-                            </Text>
+                            <View style={[styles.resendCountdown, { flexDirection: rtlFlexDirection(isRTL) }]}>
+                                <Ionicons name="time-outline" size={16} color="rgba(255,255,255,0.7)" />
+                                <Text style={styles.resendCountdownText}>
+                                    {t('auth.resendIn', { seconds: resendTimer })}
+                                </Text>
+                            </View>
                         )}
                     </TouchableOpacity>
 
@@ -358,6 +376,16 @@ const styles = StyleSheet.create({
         fontSize: FontSizes.md,
         fontWeight: '700',
         textAlign: 'center'
+    },
+    resendCountdown: {
+        flexDirection: 'row',
+        alignItems: 'center',
+        gap: Spacing.xs
+    },
+    resendCountdownText: {
+        color: 'rgba(255, 255, 255, 0.7)',
+        fontSize: FontSizes.sm,
+        fontWeight: '600'
     },
     helpButton: {
         paddingVertical: Spacing.sm,

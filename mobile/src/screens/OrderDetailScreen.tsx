@@ -454,24 +454,6 @@ export default function OrderDetailScreen() {
                 {/* Timeline */}
                 <VisualTimeline status={order.order_status} colors={colors} t={t} />
 
-                {/* Sanitization Promise */}
-                <View style={[styles.sanitizationCard, { backgroundColor: colors.surfaceSecondary }]}>
-                    <Ionicons
-                        name="sparkles-outline"
-                        size={18}
-                        color={Colors.success}
-                        style={{ marginRight: Spacing.sm }}
-                    />
-                    <Text
-                        style={[
-                            styles.sanitizationText,
-                            { color: colors.textSecondary, textAlign: rtlTextAlign(isRTL) }
-                        ]}
-                    >
-                        {t('order.sanitizationPromise')}
-                    </Text>
-                </View>
-
                 {/* Delivery OTP */}
                 {(deliveryOtp || isOtpLoading) && (
                     <View style={[styles.otpCard, { backgroundColor: colors.surface }]}>
@@ -646,23 +628,6 @@ export default function OrderDetailScreen() {
                         </Text>
                     </View>
 
-                    <View style={[styles.detailRow, { flexDirection: rtlFlexDirection(isRTL) }]}>
-                        <Ionicons
-                            name="images-outline"
-                            size={18}
-                            color={Colors.primary}
-                            style={{ marginRight: Spacing.xs }}
-                        />
-                        <Text
-                            style={[
-                                styles.detailValue,
-                                { color: colors.textSecondary, textAlign: rtlTextAlign(isRTL), flex: 1 }
-                            ]}
-                        >
-                            {t('order.visualGuarantee')}
-                        </Text>
-                    </View>
-
                     {order.order_status === 'completed' && (
                         <>
                             <TouchableOpacity
@@ -787,26 +752,6 @@ export default function OrderDetailScreen() {
                     </TouchableOpacity>
                 )}
 
-                {/* Escrow shield + Report Issue */}
-                {escrowStatus?.status === 'held' && (
-                    <View style={[styles.escrowCard, { backgroundColor: colors.surface }]}>
-                        <View style={{ flex: 1 }}>
-                            <Text style={[styles.escrowTitle, { color: colors.text }]}>{t('order.escrowShield')}</Text>
-                            <Text style={[styles.escrowSubtitle, { color: colors.textSecondary }]}>
-                                {getEscrowCountdown() || t('order.escrowExpiresFallback')}
-                            </Text>
-                        </View>
-                        <TouchableOpacity
-                            style={[styles.freezeButton, isFreezingEscrow && { opacity: 0.7 }]}
-                            onPress={() => setShowEscrowModal(true)}
-                            disabled={isFreezingEscrow}
-                        >
-                            {isFreezingEscrow ? (
-                                <ActivityIndicator color="#fff" />
-                            ) : (
-                                <Text style={styles.freezeButtonText}>{t('order.freezeFunds')}</Text>
-                            )}
-                        </TouchableOpacity>
                     </View>
                 )}
 
