@@ -264,7 +264,7 @@ jobs:
     if: github.event_name == 'workflow_dispatch'
     steps:
       - name: Cleanup VPS resources
-        uses: appleboy/ssh-action@v1.0.3
+        uses: appleboy/ssh-action@v1.2.5
         with:
           host: ${{ secrets.VPS_HOST }}
           username: ${{ secrets.VPS_USER }}
