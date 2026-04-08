@@ -58,7 +58,7 @@
     "@types/react": "~19.1.0",
     "@types/react-native-maps": "^0.24.2",
     "babel-preset-expo": "^54.0.9",
-    "eas-cli": "^16.31.0",
+    "eas-cli": "^18.0.5",
     "jest-expo": "^55.0.9",
     "typescript": "~5.9.2"
   },
