@@ -262,6 +262,10 @@ class ApiService {
         return this.request(API_ENDPOINTS.MY_ORDERS);
     }
 
+    async getOrderDetails(orderId: string): Promise<{ order: Order }> {
+        return this.request(API_ENDPOINTS.ORDER_DETAILS(orderId));
+    }
+
     async acceptBid(bidId: string, paymentMethod = 'cash'): Promise<any> {
         return this.request(API_ENDPOINTS.ACCEPT_BID(bidId), {
             method: 'POST',

@@ -50,9 +50,8 @@ export default function OrderDetailScreen() {
 
     const loadOrderDetails = useCallback(async () => {
         try {
-            const data = await api.getMyOrders();
-            const foundOrder = data.orders?.find((o: Order) => o.order_id === orderId);
-            setOrder(foundOrder || null);
+            const data = await api.getOrderDetails(orderId);
+            setOrder(data.order || null);
         } catch (error) {
             console.log('Failed to load order:', error);
             Alert.alert('Error', 'Failed to load order details');

@@ -29,6 +29,7 @@ export const API_ENDPOINTS = {
 
     // Orders - FIXED: matches backend /orders/accept-bid/:bid_id
     MY_ORDERS: '/orders/my',
+    ORDER_DETAILS: (orderId: string) => `/orders/${orderId}`,
     ACCEPT_BID: (bidId: string) => `/orders/accept-bid/${bidId}`,
     CONFIRM_DELIVERY: (orderId: string) => `/orders/${orderId}/confirm-delivery`,
     SUBMIT_REVIEW: (orderId: string) => `/orders/${orderId}/review`,
