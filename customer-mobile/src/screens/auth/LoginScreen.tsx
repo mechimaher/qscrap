@@ -303,12 +303,12 @@ export default function LoginScreen() {
                         </TouchableOpacity>
                     </View>
 
-                    {/* Footer */}
+                    {/* Footer — Legal consent with tappable links */}
                     <View style={styles.footer}>
                         <Text style={styles.footerText}>
                             {t('auth.agreeTerms')}{' '}
-                            <Text style={styles.footerLink}>{t('auth.terms')}</Text> {t('auth.and')}{' '}
-                            <Text style={styles.footerLink}>{t('auth.privacyPolicy')}</Text>
+                            <Text style={styles.footerLink} onPress={() => Linking.openURL('https://qscrap.qa/terms')}>{t('auth.terms')}</Text> {t('auth.and')}{' '}
+                            <Text style={styles.footerLink} onPress={() => Linking.openURL('https://qscrap.qa/privacy')}>{t('auth.privacyPolicy')}</Text>
                         </Text>
                     </View>
                 </ScrollView>

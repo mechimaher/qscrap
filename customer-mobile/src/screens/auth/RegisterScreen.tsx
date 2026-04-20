@@ -10,6 +10,7 @@ import {
     Platform,
     ScrollView,
     ActivityIndicator,
+    Linking,
 } from 'react-native';
 import { Image } from 'expo-image';
 import { LinearGradient } from 'expo-linear-gradient';
@@ -243,6 +244,15 @@ export default function RegisterScreen() {
                         </View>
                     </View>
 
+                    {/* Legal Consent */}
+                    <View style={styles.legalFooter}>
+                        <Text style={styles.legalText}>
+                            {t('auth.agreeTerms')}{' '}
+                            <Text style={styles.legalLink} onPress={() => Linking.openURL('https://qscrap.qa/terms')}>{t('auth.terms')}</Text> {t('auth.and')}{' '}
+                            <Text style={styles.legalLink} onPress={() => Linking.openURL('https://qscrap.qa/privacy')}>{t('auth.privacyPolicy')}</Text>
+                        </Text>
+                    </View>
+
                     {/* Login Section */}
                     <View style={[styles.loginSection, { flexDirection: rtlFlexDirection(isRTL) }]}>
                         <Text style={styles.loginText}>{t('auth.alreadyHaveAccount')}</Text>
@@ -399,5 +409,19 @@ const styles = StyleSheet.create({
         fontWeight: '700',
         color: '#ffffff',
         marginLeft: Spacing.xs,
+    },
+    legalFooter: {
+        marginTop: Spacing.lg,
+        alignItems: 'center',
+    },
+    legalText: {
+        fontSize: FontSizes.xs,
+        color: 'rgba(255, 255, 255, 0.6)',
+        textAlign: 'center',
+        lineHeight: 18,
+    },
+    legalLink: {
+        color: '#fff',
+        fontWeight: '600',
     },
 });
