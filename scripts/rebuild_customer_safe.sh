@@ -1,0 +1,31 @@
+#!/bin/bash
+set -e
+
+# Navigate to project root
+cd "$(dirname "$0")/.."
+
+echo "🚀 Starting Safe Customer App Rebuild..."
+
+cd customer-mobile
+
+# 1. Install Dependencies
+echo "[1/4] Installing dependencies..."
+npm install
+
+# 2. Prebuild (Clean native folders)
+echo "[2/4] Exo Prebuild (Clean)..."
+npx expo prebuild --clean --platform android
+
+# 3. Build APK
+echo "[3/4] Gradle Build..."
+cd android
+chmod +x gradlew
+./gradlew assembleRelease
+
+# 4. Copy Output
+echo "[4/4] Copying APK..."
+cd ../..
+TIMESTAMP=$(date +%Y%m%d_%H%M)
+cp customer-mobile/android/app/build/outputs/apk/release/app-release.apk "QScrapCustomer_VVIP_${TIMESTAMP}.apk"
+
+echo "✅ Build Complete: QScrapCustomer_VVIP_${TIMESTAMP}.apk"

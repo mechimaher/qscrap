@@ -1,0 +1,33 @@
+#!/bin/bash
+set -e
+
+# Navigate to project root
+cd "$(dirname "$0")/.."
+
+echo "🚀 Starting Safe Driver App Rebuild..."
+
+cd driver-mobile
+
+# 1. Install Dependencies
+echo "[1/4] Installing dependencies..."
+npm install
+
+# 2. Prebuild (Clean native folders to link AsyncStorage)
+echo "[2/4] Exo Prebuild (Clean)..."
+yes | npx expo prebuild --clean --platform android --no-install
+
+# 2.5. Note: package attribute is now set via namespace in build.gradle, no patching needed
+
+# 3. Build APK
+echo "[3/4] Gradle Build..."
+cd android
+chmod +x gradlew
+./gradlew assembleRelease
+
+# 4. Copy Output
+echo "[4/4] Copying APK..."
+cd ../..
+TIMESTAMP=$(date +%Y%m%d_%H%M)
+cp driver-mobile/android/app/build/outputs/apk/release/app-release.apk "QScrapDriver_HOTFIX_${TIMESTAMP}.apk"
+
+echo "✅ Build Complete: QScrapDriver_HOTFIX_${TIMESTAMP}.apk"

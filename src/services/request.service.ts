@@ -6,12 +6,12 @@
  */
 
 import pool from '../config/db';
-import { vinService } from './vin.service';
 import { createBatchNotifications } from './notification.service';
 import { autoSaveVehicle } from '../controllers/vehicle.controller';
 import fs from 'fs/promises';
 import logger from '../utils/logger';
 import { getIO } from '../utils/socketIO';
+import * as vinService from './vin.service';
 
 // ============================================
 // TYPES
@@ -121,7 +121,6 @@ export async function createRequest(params: CreateRequestParams): Promise<Reques
             if (!carYear && decoded.year) {carYear = decoded.year;}
         }
     }
-
     // 2. Validation
     if (!carMake || !carModel || !carYear || !partDescription) {
         throw new Error('Missing required fields: car_make, car_model, car_year, part_description');
@@ -255,7 +254,8 @@ async function notifyRelevantGarages(
             WHERE deleted_at IS NULL 
             AND (approval_status = 'approved' OR approval_status = 'demo')
             AND (${conditionFilter})
-        `);
+            AND (all_brands = true OR $1 = ANY(specialized_brands))
+        `, [carMake]);
 
         const notificationsToCreate: any[] = [];
         const io = getIO();

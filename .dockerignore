@@ -7,9 +7,11 @@ server.log
 debug_log.txt
 
 # Exclude large projects not needed for backend
-mobile/
+customer-mobile/
 driver-mobile/
 *.apk
 docs/
+migrations/
+*.sql
 dist/
 coverage/

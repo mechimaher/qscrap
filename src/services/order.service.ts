@@ -109,6 +109,18 @@ export async function createOrderFromBid(params: CreateOrderParams): Promise<{ o
         `, [bid.garage_id]);
 
         const garageStats = garageRateResult.rows[0];
+        if (!garageStats) throw new Error('Garage record not found');
+
+        // VVIP: Suspension Shield
+        // Block order creation if garage is not in a healthy state
+        const validStatuses = ['approved', 'demo'];
+        if (!validStatuses.includes(garageStats.approval_status)) {
+            let errorMsg = 'This garage is currently unable to accept new orders.';
+            if (garageStats.approval_status === 'suspended') errorMsg = 'This garage has been temporarily suspended.';
+            if (garageStats.approval_status === 'expired') errorMsg = 'This garage\'s trial period has expired.';
+            throw new Error(errorMsg);
+        }
+
         let commissionRate = 0.15; // Default
 
         if (garageStats) {

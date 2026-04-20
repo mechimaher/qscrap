@@ -49,20 +49,20 @@
 ### **Frontend Files Created/Modified**
 
 #### 1. API Service
-**File:** `/mobile/src/services/api.ts` (Modified)
+**File:** `/customer-mobile/src/services/api.ts` (Modified)
 - `registerWithEmail()` - Call registration API
 - `verifyEmailOTP()` - Verify code and auto-login
 - `resendOTP()` - Request new code
 
 #### 2. RegisterScreen
-**File:** `/mobile/src/screens/auth/RegisterScreen.tsx` (Modified)
+**File:** `/customer-mobile/src/screens/auth/RegisterScreen.tsx` (Modified)
 - Added email input field
 - Email validation (regex)
 - Updated to use new Email OTP flow
 - Navigates to VerifyOTP on success
 
 #### 3. VerifyOTPScreen
-**File:** `/mobile/src/screens/auth/VerifyOTPScreen.tsx` (NEW)
+**File:** `/customer-mobile/src/screens/auth/VerifyOTPScreen.tsx` (NEW)
 - 6-digit OTP input with auto-advance
 - 10-minute countdown timer
 - Auto-submit when code complete
@@ -71,7 +71,7 @@
 - Auto-login after verification
 
 #### 4. Navigation
-**File:** `/mobile/App.tsx` (Modified)
+**File:** `/customer-mobile/App.tsx` (Modified)
 - Added VerifyOTP screen to AuthStack
 - Updated AuthStackParamList types
 

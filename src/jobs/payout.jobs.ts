@@ -6,6 +6,7 @@
 import { Pool } from 'pg';
 import logger from '../utils/logger';
 import { getIO } from '../utils/socketIO';
+import { logAuditEntry } from '../middleware/auditLog.middleware';
 
 export async function schedulePendingPayouts(pool: Pool): Promise<number> {
     try {
@@ -52,6 +53,108 @@ export async function schedulePendingPayouts(pool: Pool): Promise<number> {
     }
 }
 
+/**
+ * Apply pending reversals to new payouts (deduct owed amounts)
+ * Deducts up to 20% of each payout to recover refunded amounts
+ */
+export async function applyPendingReversals(pool: Pool): Promise<{ applied: number; amount: number }> {
+    const client = await pool.connect();
+    let appliedCount = 0;
+    let totalDeducted = 0;
+
+    try {
+        await client.query('BEGIN');
+
+        // Get all pending reversals grouped by garage
+        const reversals = await client.query(`
+            SELECT pr.*, gp.payout_id as target_payout_id, gp.net_amount as payout_amount
+            FROM payout_reversals pr
+            JOIN garage_payouts gp ON pr.garage_id = gp.garage_id
+            WHERE pr.status = 'pending'
+            AND gp.payout_status = 'pending'
+            AND gp.net_amount > 10
+            ORDER BY pr.created_at ASC
+        `);
+
+        for (const reversal of reversals.rows) {
+            // Deduct max 20% of payout to avoid bankrupting garage
+            const maxDeduction = reversal.payout_amount * 0.20;
+            const deductionAmount = Math.min(reversal.amount, maxDeduction);
+
+            // Update payout with deduction
+            await client.query(`
+                UPDATE garage_payouts 
+                SET net_amount = net_amount - $1,
+                    adjustment_reason = COALESCE(adjustment_reason, '') || 
+                        'Reversal deduction: ' || $1 || ' QAR for refund on order. ',
+                    updated_at = NOW()
+                WHERE payout_id = $2
+            `, [deductionAmount, reversal.target_payout_id]);
+
+            // Update reversal
+            if (deductionAmount >= reversal.amount) {
+                // Fully applied
+                await client.query(`
+                    UPDATE payout_reversals 
+                    SET status = 'applied', 
+                        deducted_from_payout_id = $1,
+                        applied_at = NOW()
+                    WHERE reversal_id = $2
+                `, [reversal.target_payout_id, reversal.reversal_id]);
+            } else {
+                // Partially applied - reduce remaining amount
+                await client.query(`
+                    UPDATE payout_reversals 
+                    SET amount = amount - $1,
+                        notes = COALESCE(notes, '') || 'Partial deduction: ' || $1 || ' QAR. '
+                    WHERE reversal_id = $2
+                `, [deductionAmount, reversal.reversal_id]);
+            }
+
+            // VVIP: Create System Audit Log for this financial adjustment
+            try {
+                await logAuditEntry({
+                    user_id: null, // System Action
+                    user_type: 'system',
+                    action: 'payout_clawback',
+                    resource_type: 'garage_payouts',
+                    resource_id: reversal.target_payout_id,
+                    method: 'JOB',
+                    path: 'payout.jobs.ts:applyPendingReversals',
+                    ip_address: '127.0.0.1',
+                    user_agent: 'QScrap-Financial-Engine/2026',
+                    request_body: {
+                        reversal_id: reversal.reversal_id,
+                        deduction_amount: deductionAmount,
+                        remaining_reversal_balance: deductionAmount >= reversal.amount ? 0 : reversal.amount - deductionAmount,
+                        reason: 'Automatic debt recovery from previous refund'
+                    },
+                    status_code: 200,
+                    duration_ms: 0
+                });
+            } catch (auditErr) {
+                logger.error('Failed to log system audit for clawback', { error: (auditErr as Error).message });
+            }
+
+            appliedCount++;
+            totalDeducted += deductionAmount;
+        }
+
+        await client.query('COMMIT');
+
+        if (appliedCount > 0) {
+            logger.jobComplete('applyPendingReversals', { applied: appliedCount, amount: totalDeducted });
+        }
+
+    } catch (err) {
+        await client.query('ROLLBACK');
+        logger.error('applyPendingReversals failed', { error: (err as Error).message });
+    } finally {
+        client.release();
+    }
+
+    return { applied: appliedCount, amount: totalDeducted };
+}
 export async function autoProcessPayouts(pool: Pool): Promise<{ processed: number; held: number }> {
     const client = await pool.connect();
     try {

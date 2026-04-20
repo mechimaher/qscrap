@@ -1,8 +1,9 @@
 /**
- * VIN Decoding Service
- * Implements simplified WMI (World Manufacturer Identifier) decoding for common cars in Qatar.
+ * VIN Service (DEPRECATED)
+ * 
+ * The platform no longer implements VIN decoding logic.
+ * VIN numbers are stored as-is without decoding.
  */
-
 interface VehicleDetails {
     make: string;
     model?: string;
@@ -12,23 +13,17 @@ interface VehicleDetails {
 }
 
 export class VINService {
-
     // Common WMI Mapping (Qatar Market Focus)
     private static wmiMap: Record<string, string> = {
         'JT': 'Toyota', 'JN': 'Nissan', 'JM': 'Mazda', 'JH': 'Honda',
         'JF': 'Subaru', 'JS': 'Suzuki', 'JA': 'Isuzu', 'JD': 'Daihatsu',
         'J8': 'Lexus',
-
         'WBA': 'BMW', 'WBS': 'BMW M', 'WDB': 'Mercedes-Benz', 'WDD': 'Mercedes-Benz',
         'WAU': 'Audi', 'WVW': 'Volkswagen', 'WP0': 'Porsche',
-
         '1F': 'Ford', '1J': 'Jeep', '1C': 'Chrysler', '1G': 'General Motors',
         '1L': 'Lincoln', '1M': 'Mercury', '1N': 'Nissan USA', '1T': 'Toyota USA',
-
         '2T': 'Toyota Canada', '3N': 'Nissan Mexico', '3V': 'Volkswagen Mexico',
-
         'KNA': 'Kia', 'KM': 'Hyundai',
-
         'L': 'China (Generic)',
         'M': 'India (Generic)', 'MA': 'Tata', 'MR': 'Mahindra'
     };
@@ -40,12 +35,11 @@ export class VINService {
         if (!vin || vin.length !== 17) {return null;}
 
         const normalizedVin = vin.toUpperCase();
-        const wmi = normalizedVin.substring(0, 2); // First 2 chars usually enough for major make group
-        const wmi3 = normalizedVin.substring(0, 3); // First 3 for specificity
+        const wmi = normalizedVin.substring(0, 2); 
+        const wmi3 = normalizedVin.substring(0, 3); 
 
         let make = VINService.wmiMap[wmi3] || VINService.wmiMap[wmi];
         if (!make) {
-            // Geographic Fallback
             if (normalizedVin.startsWith('J')) {make = 'Japanese Make';}
             else if (normalizedVin.startsWith('K')) {make = 'Korean Make';}
             else if (normalizedVin.startsWith('W')) {make = 'German Make';}
@@ -53,7 +47,6 @@ export class VINService {
             else {return null;}
         }
 
-        // Year decoding (10th character)
         const yearChar = normalizedVin[9];
         const year = this.decodeYear(yearChar);
 

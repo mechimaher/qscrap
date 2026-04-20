@@ -8,35 +8,60 @@ export class SearchService {
     constructor(private pool: Pool) { }
 
     async universalSearch(userId: string, userType: string, query: string, searchType?: string, maxResults: number = 10) {
-        const searchTerm = `%${query.trim()}%`;
+        // Clean query for FTS (convert spaces to & for mandatory match, or use websearch_to_tsquery)
         const results: Record<string, unknown> = {};
 
-        // Orders search
+        // Orders search - FTS Hardened
         if (!searchType || searchType === 'orders') {
-            let orderQuery = `SELECT o.order_id, o.order_number, o.order_status, o.part_price, o.created_at, pr.part_description, pr.car_make, pr.car_model, g.garage_name, u.full_name as customer_name FROM orders o JOIN part_requests pr ON o.request_id = pr.request_id JOIN garages g ON o.garage_id = g.garage_id JOIN users u ON o.customer_id = u.user_id WHERE (o.order_number ILIKE $1 OR pr.part_description ILIKE $1 OR pr.car_make ILIKE $1 OR pr.car_model ILIKE $1 OR g.garage_name ILIKE $1 OR u.full_name ILIKE $1)`;
-            const params: unknown[] = [searchTerm];
-            if (userType === 'customer') { orderQuery += ` AND o.customer_id = $2`; params.push(userId); }
-            else if (userType === 'garage') { orderQuery += ` AND o.garage_id = $2`; params.push(userId); }
-            orderQuery += ` ORDER BY o.created_at DESC LIMIT $${params.length + 1}`;
+            let orderQuery = `
+                SELECT o.order_id, o.order_number, o.order_status, o.part_price, o.created_at, 
+                       pr.part_description, pr.car_make, pr.car_model, g.garage_name, 
+                       u.full_name as customer_name,
+                       ts_rank(o.search_vector, websearch_to_tsquery('english', $1)) as rank
+                FROM orders o 
+                JOIN part_requests pr ON o.request_id = pr.request_id 
+                JOIN garages g ON o.garage_id = g.garage_id 
+                JOIN users u ON o.customer_id = u.user_id 
+                WHERE o.search_vector @@ websearch_to_tsquery('english', $1)
+            `;
+            const params: unknown[] = [query];
+            if (userType === 'customer') { orderQuery += ` AND o.customer_id = $${params.length + 1}`; params.push(userId); }
+            else if (userType === 'garage') { orderQuery += ` AND o.garage_id = $${params.length + 1}`; params.push(userId); }
+            
+            orderQuery += ` ORDER BY rank DESC, o.created_at DESC LIMIT $${params.length + 1}`;
             params.push(maxResults);
+            
             const orderResult = await this.pool.query(orderQuery, params);
             if (orderResult.rows.length > 0) {results.orders = orderResult.rows;}
         }
 
-        // Users search - admin only
+        // Users search - admin only (Keep ILIKE for small identifiers like email/phone)
         if (userType === 'admin' && (!searchType || searchType === 'users')) {
+            const searchTerm = `%${query.trim()}%`;
             const userResult = await this.pool.query(`SELECT user_id, full_name, email, phone_number, user_type, is_active, created_at FROM users WHERE (full_name ILIKE $1 OR email ILIKE $1 OR phone_number ILIKE $1) ORDER BY created_at DESC LIMIT $2`, [searchTerm, maxResults]);
             if (userResult.rows.length > 0) {results.users = userResult.rows;}
         }
 
-        // Requests search
+        // Requests search - FTS Hardened (Mission Critical)
         if (!searchType || searchType === 'requests') {
-            let requestQuery = `SELECT pr.request_id, pr.part_description, pr.car_make, pr.car_model, pr.car_year, pr.status, pr.created_at, u.full_name as customer_name FROM part_requests pr JOIN users u ON pr.customer_id = u.user_id WHERE (pr.part_description ILIKE $1 OR pr.car_make ILIKE $1 OR pr.car_model ILIKE $1 OR pr.vin_number ILIKE $1)`;
-            const params: unknown[] = [searchTerm];
-            if (userType === 'customer') { requestQuery += ` AND pr.customer_id = $2`; params.push(userId); }
-            else if (userType === 'garage') { requestQuery += ` AND (pr.status = 'pending' OR EXISTS (SELECT 1 FROM bids b WHERE b.request_id = pr.request_id AND b.garage_id = $2))`; params.push(userId); }
-            requestQuery += ` ORDER BY pr.created_at DESC LIMIT $${params.length + 1}`;
+            let requestQuery = `
+                SELECT pr.request_id, pr.part_description, pr.car_make, pr.car_model, pr.car_year, pr.status, pr.created_at, 
+                       u.full_name as customer_name,
+                       ts_rank(pr.search_vector, websearch_to_tsquery('english', $1)) as rank
+                FROM part_requests pr 
+                JOIN users u ON pr.customer_id = u.user_id 
+                WHERE pr.search_vector @@ websearch_to_tsquery('english', $1)
+            `;
+            const params: unknown[] = [query];
+            if (userType === 'customer') { requestQuery += ` AND pr.customer_id = $${params.length + 1}`; params.push(userId); }
+            else if (userType === 'garage') { 
+                requestQuery += ` AND (pr.status = 'active' OR EXISTS (SELECT 1 FROM bids b WHERE b.request_id = pr.request_id AND b.garage_id = $${params.length + 1}))`; 
+                params.push(userId); 
+            }
+            
+            requestQuery += ` ORDER BY rank DESC, pr.created_at DESC LIMIT $${params.length + 1}`;
             params.push(maxResults);
+            
             const requestResult = await this.pool.query(requestQuery, params);
             if (requestResult.rows.length > 0) {results.requests = requestResult.rows;}
         }

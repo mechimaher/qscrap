@@ -355,15 +355,45 @@ async function showDashboard() {
 
     // Connection handlers for data freshness
     socket.on('connect', () => {
+<<<<<<< HEAD
         // console.log('[Socket] Connected - refreshing data');
+=======
+        console.log('[Socket] Connected - refreshing data');
+        const dot = document.getElementById('systemStatusDot');
+        const text = document.getElementById('systemStatusText');
+        if (dot) {
+            dot.style.background = '#22C55E'; // Success Green
+            dot.classList.remove('pulse-warning');
+        }
+        if (text) text.textContent = 'Live System Active';
+        
+        // Graceful Sync
+>>>>>>> 06c3dc41 (feat(enterprise): surgical audit & hardening v3.0 - GOLD CERTIFIED)
         loadStats();
         loadRequests();
         loadBids();
         loadOrders();
+        loadBadgeCounts();
     });
 
     socket.on('disconnect', () => {
+<<<<<<< HEAD
         // console.log('[Socket] Disconnected');
+=======
+        console.log('[Socket] Disconnected');
+        const dot = document.getElementById('systemStatusDot');
+        const text = document.getElementById('systemStatusText');
+        if (dot) {
+            dot.style.background = '#EF4444'; // Danger Red
+            dot.classList.add('pulse-warning');
+        }
+        if (text) text.textContent = 'System Offline - Reconnecting...';
+    });
+
+    socket.on('reconnect_attempt', () => {
+        const dot = document.getElementById('systemStatusDot');
+        if (dot) dot.style.background = '#F59E0B'; // Warning Amber
+>>>>>>> 06c3dc41 (feat(enterprise): surgical audit & hardening v3.0 - GOLD CERTIFIED)
     });
 
     socket.on('new_request', (data) => {

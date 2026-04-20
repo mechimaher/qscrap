@@ -52,11 +52,15 @@ export const validateBidAmount = (amount: unknown): { valid: boolean; value: num
     return { valid: true, value: numAmount };
 };
 
-export const validateWarrantyDays = (days: unknown): number | null => {
-    if (days === undefined || days === null || days === '') { return null; }
+export const validateWarrantyDays = (days: unknown): { valid: boolean; value: number; message?: string } => {
+    if (days === undefined || days === null || days === '') {
+        return { valid: false, value: 0, message: 'Warranty period is required (use 0 for no warranty)' };
+    }
     const numDays = parseInt(String(days), 10);
-    if (isNaN(numDays) || numDays < 0 || numDays > 365) { return null; }
-    return numDays;
+    if (isNaN(numDays) || numDays < 0 || numDays > 365) {
+        return { valid: false, value: 0, message: 'Warranty must be between 0 and 365 days' };
+    }
+    return { valid: true, value: numDays };
 };
 
 // ============================================
@@ -88,7 +92,11 @@ export async function submitBid(params: SubmitBidParams): Promise<BidResult> {
         throw new Error(amountCheck.message);
     }
 
-    const validatedWarranty = validateWarrantyDays(warrantyDays);
+    const warrantyCheck = validateWarrantyDays(warrantyDays);
+    if (!warrantyCheck.valid) {
+        throw new Error(warrantyCheck.message);
+    }
+    const validatedWarranty = warrantyCheck.value;
 
     if (!partCondition || !VALID_PART_CONDITIONS.includes(partCondition)) {
         throw new Error(`Part condition is required. Must be one of: ${VALID_PART_CONDITIONS.join(', ')}`);

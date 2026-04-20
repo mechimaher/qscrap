@@ -15,20 +15,44 @@ export interface AddressData {
 export class AddressService {
     constructor(private pool: Pool) { }
 
-    async getAddresses(userId: string) {
-        const result = await this.pool.query(`SELECT * FROM user_addresses WHERE user_id = $1 ORDER BY is_default DESC, created_at DESC`, [userId]);
+    async getAddresses(customerId: string) {
+        const result = await this.pool.query(
+            `SELECT address_id, label, address_line, area, city, location_lat, location_lng, delivery_notes, is_default, created_at, updated_at 
+             FROM customer_addresses 
+             WHERE customer_id = $1 
+             ORDER BY is_default DESC, created_at DESC`, 
+            [customerId]
+        );
         return result.rows;
     }
 
-    async addAddress(userId: string, data: AddressData) {
+    async addAddress(customerId: string, data: AddressData & { area?: string; city?: string; delivery_notes?: string }) {
         const client = await this.pool.connect();
         try {
             await client.query('BEGIN');
-            const countResult = await client.query('SELECT COUNT(*) FROM user_addresses WHERE user_id = $1', [userId]);
+            const countResult = await client.query('SELECT COUNT(*) FROM customer_addresses WHERE customer_id = $1', [customerId]);
             const isFirst = parseInt(countResult.rows[0].count) === 0;
             const shouldBeDefault = data.is_default || isFirst;
-            if (shouldBeDefault) {await client.query(`UPDATE user_addresses SET is_default = FALSE WHERE user_id = $1`, [userId]);}
-            const result = await client.query(`INSERT INTO user_addresses (user_id, label, address_text, latitude, longitude, is_default) VALUES ($1, $2, $3, $4, $5, $6) RETURNING *`, [userId, data.label, data.address_text, data.latitude || null, data.longitude || null, shouldBeDefault]);
+            if (shouldBeDefault) {
+                await client.query(`UPDATE customer_addresses SET is_default = FALSE WHERE customer_id = $1`, [customerId]);
+            }
+
+            const result = await client.query(
+                `INSERT INTO customer_addresses (customer_id, label, address_line, area, city, location_lat, location_lng, delivery_notes, is_default) 
+                 VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9) 
+                 RETURNING *`, 
+                [
+                    customerId, 
+                    data.label, 
+                    data.address_text, 
+                    data.area || null, 
+                    data.city || 'Doha', 
+                    data.latitude || null, 
+                    data.longitude || null, 
+                    data.delivery_notes || null, 
+                    shouldBeDefault
+                ]
+            );
             await client.query('COMMIT');
             return result.rows[0];
         } catch (err) {
@@ -39,14 +63,46 @@ export class AddressService {
         }
     }
 
-    async updateAddress(userId: string, addressId: string, data: AddressData) {
+    async updateAddress(customerId: string, addressId: string, data: Partial<AddressData & { area?: string; city?: string; delivery_notes?: string }>) {
         const client = await this.pool.connect();
         try {
             await client.query('BEGIN');
-            const check = await client.query('SELECT 1 FROM user_addresses WHERE address_id = $1 AND user_id = $2', [addressId, userId]);
-            if (check.rowCount === 0) { await client.query('ROLLBACK'); return null; }
-            if (data.is_default) {await client.query(`UPDATE user_addresses SET is_default = FALSE WHERE user_id = $1`, [userId]);}
-            const result = await client.query(`UPDATE user_addresses SET label = $1, address_text = $2, latitude = $3, longitude = $4, is_default = COALESCE($5, is_default), updated_at = NOW() WHERE address_id = $6 AND user_id = $7 RETURNING *`, [data.label, data.address_text, data.latitude || null, data.longitude || null, data.is_default, addressId, userId]);
+            const check = await client.query('SELECT 1 FROM customer_addresses WHERE address_id = $1 AND customer_id = $2', [addressId, customerId]);
+            if (check.rowCount === 0) { 
+                await client.query('ROLLBACK'); 
+                return null; 
+            }
+
+            if (data.is_default) {
+                await client.query(`UPDATE customer_addresses SET is_default = FALSE WHERE customer_id = $1`, [customerId]);
+            }
+
+            const result = await client.query(
+                `UPDATE customer_addresses 
+                 SET label = COALESCE($1, label), 
+                     address_line = COALESCE($2, address_line), 
+                     area = COALESCE($3, area),
+                     city = COALESCE($4, city),
+                     location_lat = COALESCE($5, location_lat), 
+                     location_lng = COALESCE($6, location_lng), 
+                     delivery_notes = COALESCE($7, delivery_notes),
+                     is_default = COALESCE($8, is_default), 
+                     updated_at = NOW() 
+                 WHERE address_id = $9 AND customer_id = $10 
+                 RETURNING *`, 
+                [
+                    data.label, 
+                    data.address_text, 
+                    data.area,
+                    data.city,
+                    data.latitude, 
+                    data.longitude, 
+                    data.delivery_notes,
+                    data.is_default, 
+                    addressId, 
+                    customerId
+                ]
+            );
             await client.query('COMMIT');
             return result.rows[0];
         } catch (err) {
@@ -57,19 +113,25 @@ export class AddressService {
         }
     }
 
-    async deleteAddress(userId: string, addressId: string) {
-        const result = await this.pool.query(`DELETE FROM user_addresses WHERE address_id = $1 AND user_id = $2 RETURNING *`, [addressId, userId]);
-        return result.rowCount! > 0;
+    async deleteAddress(customerId: string, addressId: string) {
+        const result = await this.pool.query(
+            `DELETE FROM customer_addresses WHERE address_id = $1 AND customer_id = $2 RETURNING *`, 
+            [addressId, customerId]
+        );
+        return (result.rowCount || 0) > 0;
     }
 
-    async setDefaultAddress(userId: string, addressId: string) {
+    async setDefaultAddress(customerId: string, addressId: string) {
         const client = await this.pool.connect();
         try {
             await client.query('BEGIN');
-            const check = await client.query('SELECT 1 FROM user_addresses WHERE address_id = $1 AND user_id = $2', [addressId, userId]);
-            if (check.rowCount === 0) { await client.query('ROLLBACK'); return false; }
-            await client.query(`UPDATE user_addresses SET is_default = FALSE WHERE user_id = $1`, [userId]);
-            await client.query(`UPDATE user_addresses SET is_default = TRUE WHERE address_id = $1`, [addressId]);
+            const check = await client.query('SELECT 1 FROM customer_addresses WHERE address_id = $1 AND customer_id = $2', [addressId, customerId]);
+            if (check.rowCount === 0) { 
+                await client.query('ROLLBACK'); 
+                return false; 
+            }
+            await client.query(`UPDATE customer_addresses SET is_default = FALSE WHERE customer_id = $1`, [customerId]);
+            await client.query(`UPDATE customer_addresses SET is_default = TRUE WHERE address_id = $1`, [addressId]);
             await client.query('COMMIT');
             return true;
         } catch (err) {

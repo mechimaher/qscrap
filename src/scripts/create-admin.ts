@@ -46,7 +46,7 @@ async function createAdmin() {
         console.log('Email:', email);
         console.log('=================================');
         console.log('');
-        console.log('Login at: http://localhost:3000/admin-dashboard.html');
+        console.log('Login at: http://localhost:3000/dashboards/admin-dashboard.html');
 
     } catch (err: any) {
         console.error('Error creating admin:', err.message);

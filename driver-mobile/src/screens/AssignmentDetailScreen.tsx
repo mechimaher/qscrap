@@ -553,118 +553,76 @@ export default function AssignmentDetailScreen() {
 
 
             {/* Bottom Action Bar - Only for active orders */}
-            {
-                isActive && nextAction && (
-                    <View style={[styles.bottomBar, { backgroundColor: colors.surface }]}>
-                        <TouchableOpacity
-                            style={styles.failButton}
-                            onPress={() => {
-                                Alert.alert(
-                                    t('confirm_failed_title'),
-                                    t('confirm_failed_message'),
-                                    [
-                                        { text: t('cancel'), style: 'cancel' },
-                                        {
-                                            text: t('confirm'),
-                                            style: 'destructive',
-                                            onPress: async () => {
-                                                setIsUpdating(true);
-                                                try {
-                                                    // 1. Optimistic Update
-                                                    updateLocalStatus(assignment.assignment_id, 'failed');
+            {isActive && nextAction && (
+                <View style={[styles.bottomBar, { backgroundColor: colors.surface }]}>
+                    <TouchableOpacity
+                        style={styles.failButton}
+                        onPress={() => {
+                            Alert.alert(
+                                'Mark as Failed',
+                                'Are you sure this delivery cannot be completed?',
+                                [
+                                    { text: 'Cancel', style: 'cancel' },
+                                    { 
+                                        text: 'Call Dispatch', 
+                                        onPress: () => Linking.openURL('tel:+97444000000').catch(() => Alert.alert('Error', 'Could not call dispatch')) 
+                                    },
+                                    { 
+                                        text: 'CALL 999', 
+                                        style: 'destructive', 
+                                        onPress: () => Linking.openURL('tel:999').catch(() => Alert.alert('Error', 'Could not call 999')) 
+                                    },
+                                    {
+                                        text: 'Confirm Failed',
+                                        style: 'destructive',
+                                        onPress: async () => {
+                                            setIsUpdating(true);
+                                            try {
+                                                // 1. Optimistic Update
+                                                updateLocalStatus(assignment.assignment_id, 'failed');
 
-                                                    // 2. Hybrid Sync
-                                                    await executeWithOfflineFallback(
-                                                        async () => api.updateAssignmentStatus(assignment.assignment_id, 'failed'),
-                                                        {
-                                                            endpoint: API_ENDPOINTS.UPDATE_ASSIGNMENT_STATUS(assignment.assignment_id),
-                                                            method: 'PATCH',
-                                                            body: { status: 'failed' }
-                                                        },
-                                                        { successMessage: 'Marked as failed' }
-                                                    );
+                                                // 2. Hybrid Sync
+                                                await executeWithOfflineFallback(
+                                                    async () => api.updateAssignmentStatus(assignment.assignment_id, 'failed'),
+                                                    {
+                                                        endpoint: API_ENDPOINTS.UPDATE_ASSIGNMENT_STATUS(assignment.assignment_id),
+                                                        method: 'PATCH',
+                                                        body: { status: 'failed' }
+                                                    },
+                                                    { successMessage: 'Marked as failed' }
+                                                );
 
-                                                    Haptics.notificationAsync(Haptics.NotificationFeedbackType.Warning);
-                                                    navigation.goBack();
-                                                } catch (err: any) {
-                                                    Alert.alert(t('error'), err.message);
-                                                } finally {
-                                                    setIsUpdating(false);
-                                                }
-                                            },
+                                                Haptics.notificationAsync(Haptics.NotificationFeedbackType.Warning);
+                                                navigation.goBack();
+                                            } catch (err: any) {
+                                                Alert.alert(t('error'), err.message);
+                                            } finally {
+                                                setIsUpdating(false);
+                                            }
                                         },
-                                    ]
-                                );
-                            }}
-                            disabled={isUpdating}
-                        >
-                            <Ionicons name="close-circle" size={20} color="#EF4444" />
-                        </TouchableOpacity>
-                        <View style={styles.swipeContainer}>
-                            <SwipeToComplete
-                                onComplete={async () => {
-                                    setIsUpdating(true);
-                                    try {
-                                        // 1. Determine if we need specialized flow
-                                        if (nextAction.status === 'picked_up') {
-                                            // SIMPLIFIED: Direct pickup confirmation (no inspection)
-                                            Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Medium);
-
-                                            // Optimistic update
-                                            updateLocalStatus(assignment.assignment_id, 'picked_up');
-
-                                            // Sync to backend
-                                            await executeWithOfflineFallback(
-                                                async () => api.updateAssignmentStatus(assignment.assignment_id, 'picked_up'),
-                                                {
-                                                    endpoint: API_ENDPOINTS.UPDATE_ASSIGNMENT_STATUS(assignment.assignment_id),
-                                                    method: 'PATCH',
-                                                    body: { status: 'picked_up' }
-                                                },
-                                                { successMessage: 'Part picked up!' }
-                                            );
-
-                                            Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success);
-                                            setIsUpdating(false);
-                                            return;
-                                        }
-
-                                        if (nextAction.status === 'delivered') {
-                                            Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Medium);
-                                            // Navigate to POD
-                                            navigation.navigate('ProofOfDelivery', {
-                                                assignmentId: assignment.assignment_id,
-                                                orderId: assignment.order_id
-                                            });
-                                            setIsUpdating(false);
-                                            return;
-                                        }
-
-                                        // 2. Default Optimistic Update (e.g. Start Delivery -> In Transit)
-                                        // Update store first so UI reflects change immediately
-                                        updateLocalStatus(assignment.assignment_id, nextAction.status);
-
-                                        // 3. Hybrid Sync
-                                        await executeWithOfflineFallback(
-                                            async () => api.updateAssignmentStatus(assignment.assignment_id, nextAction.status),
-                                            {
-                                                endpoint: API_ENDPOINTS.UPDATE_ASSIGNMENT_STATUS(assignment.assignment_id),
-                                                method: 'PATCH',
-                                                body: { status: nextAction.status }
-                                            },
-                                            { successMessage: 'Status updated' }
-                                        );
-
-                                        Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success);
-                                    } catch (err: any) {
-                                        Haptics.notificationAsync(Haptics.NotificationFeedbackType.Error);
-                                        Alert.alert(t('error'), err.message || t('something_went_wrong'));
-                                    } finally {
-                                        setIsUpdating(false);
-                                    }
-                                }}
-                                label={nextAction.label}
-                                type={nextAction.status === 'delivered' ? 'success' : 'primary'}
+                                    },
+                                ]
+                            );
+                        }}
+                        disabled={isUpdating}
+                    >
+                        <Text style={styles.failButtonText}>❌</Text>
+                    </TouchableOpacity>
+                    <View style={styles.swipeContainer}>
+                        <SwipeToComplete
+                            onComplete={async () => {
+                                setIsUpdating(true);
+                                try {
+                                    // 1. Determine if we need specialized flow
+                                    if (nextAction.status === 'picked_up') {
+                                        Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Medium);
+                                        // VVIP FIX: Navigate to PartInspection to enforce QC Photo Gate
+                                        navigation.navigate('PartInspection', {
+                                            assignmentId: assignment.assignment_id,
+                                            orderId: assignment.order_id,
+                                            orderNumber: assignment.order_number,
+                                            partDescription: assignment.part_category || 'Auto Part'
+                                        });
                                 icon="→"
                                 completeIcon="✓"
                                 disabled={isUpdating}

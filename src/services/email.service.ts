@@ -708,7 +708,7 @@ export class EmailService {
         planName: string = 'Pay-Per-Sale'
     ): Promise<boolean> {
         const subject = '🎉 Welcome to QScrap Partner Network - Account Approved!';
-        const portalUrl = 'https://qscrap.qa/garage-dashboard.html';
+        const portalUrl = 'https://qscrap.qa/dashboards/garage-dashboard.html';
         const html = this.getGarageApprovalTemplate(garageName, phoneNumber, portalUrl, planName);
         return this.send(email, subject, html);
     }
@@ -836,7 +836,7 @@ export class EmailService {
                                                 <td align="center" style="padding: 20px;">
                                                     <p style="margin: 0 0 12px 0; color: rgba(255,255,255,0.7); font-size: 13px; text-transform: uppercase; letter-spacing: 1px;">Partner Dashboard URL</p>
                                                     <a href="${portalUrl}" target="_blank" style="display: inline-block; background: linear-gradient(135deg, #C9A227 0%, #E8D48A 50%, #C9A227 100%); color: #0D0D0D !important; font-size: 15px; font-weight: 700; text-decoration: none; padding: 14px 32px; border-radius: 8px; letter-spacing: 0.5px;">
-                                                        🚀 qscrap.qa/garage-dashboard
+                                                        🚀 qscrap.qa/dashboards/garage-dashboard
                                                     </a>
                                                 </td>
                                             </tr>

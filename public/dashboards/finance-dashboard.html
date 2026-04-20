@@ -1,0 +1,1143 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>QScrap Finance Center</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="/assets/bootstrap-icons/bootstrap-icons.css">
+<<<<<<< HEAD:public/finance-dashboard.html
+    <link rel="stylesheet" href="css/shared.min.css">
+    <link rel="stylesheet" href="css/operations-dashboard.css?v=2.3">
+=======
+    <link rel="stylesheet" href="/css/shared.css">
+    <link rel="stylesheet" href="/css/operations-dashboard.css?v=2.3">
+>>>>>>> 06c3dc41 (feat(enterprise): surgical audit & hardening v3.0 - GOLD CERTIFIED):public/dashboards/finance-dashboard.html
+    <script>
+        window.toggleSidebar = function () {
+            const sidebar = document.querySelector('.sidebar');
+            const overlay = document.getElementById('appOverlay');
+            if (sidebar) sidebar.classList.toggle('active');
+            if (overlay) overlay.classList.toggle('is-visible');
+        };
+    </script>
+    <style>
+        /* Compensation payout row styling */
+        .compensation-row {
+            background: rgba(245, 158, 11, 0.08) !important;
+        }
+
+        .compensation-row:hover {
+            background: rgba(245, 158, 11, 0.15) !important;
+        }
+
+        .badge-warning {
+            background: #f59e0b;
+            color: white;
+        }
+
+        .badge-info {
+            background: #3b82f6;
+            color: white;
+        }
+    </style>
+</head>
+
+<body>
+    <a href="#main-content" class="skip-link">Skip to main content</a>
+
+    <!-- Login Screen -->
+    <div class="login-screen" id="loginScreen">
+        <div class="login-card">
+            <div class="login-header">
+                <img src="/assets/images/qscrap-logo.png?v=2026" alt="QScrap" class="login-logo">
+                <h1 class="login-title">Finance Center</h1>
+                <p class="login-subtitle">Payout & Revenue</p>
+            </div>
+            <form id="loginForm" autocomplete="off">
+                <div class="form-group">
+                    <label>Email / Phone</label>
+                    <input type="text" class="form-control" id="loginEmail" placeholder="Enter credentials" required>
+                </div>
+                <div class="form-group">
+                    <label>Password</label>
+                    <input type="password" class="form-control" id="loginPassword" placeholder="••••••••" required>
+                </div>
+                <button type="submit" class="btn-login">
+                    <i class="bi bi-box-arrow-in-right"></i> Sign In
+                </button>
+            </form>
+        </div>
+    </div>
+
+    <!-- Main App -->
+    <div class="app-container" id="app" style="display: none;">
+        <div class="app-overlay" id="appOverlay" onclick="toggleSidebar()"></div>
+
+        <!-- Sidebar -->
+        <aside class="sidebar">
+            <div class="sidebar-header">
+                <div class="sidebar-logo">
+                    <img src="/assets/images/qscrap-logo.png?v=2026" alt="QScrap" class="sidebar-logo-img">
+                    <div class="logo-subtitle">Finance</div>
+                </div>
+            </div>
+
+            <nav class="nav-menu">
+                <div class="nav-section">
+                    <div class="nav-section-title">Dashboard</div>
+                    <a class="nav-item active" data-section="overview">
+                        <i class="bi bi-grid-1x2-fill"></i> Overview
+                    </a>
+                </div>
+
+                <div class="nav-section">
+                    <div class="nav-section-title">Payouts</div>
+                    <a class="nav-item" data-section="pending">
+                        <i class="bi bi-clock-history"></i> Pending
+                        <span class="nav-badge" id="pendingBadge" style="display: none;">0</span>
+                    </a>
+                    <a class="nav-item" data-section="inwarranty">
+                        <i class="bi bi-shield-exclamation"></i> In Warranty
+                        <span class="nav-badge" id="inWarrantyBadge"
+                            style="display: none; background: #f59e0b;">0</span>
+                    </a>
+                    <a class="nav-item" data-section="awaiting">
+                        <i class="bi bi-hourglass-split"></i> Awaiting Confirmation
+                        <span class="nav-badge" id="awaitingBadge" style="display: none;">0</span>
+                    </a>
+                    <a class="nav-item" data-section="disputed">
+                        <i class="bi bi-exclamation-triangle"></i> Disputed
+                        <span class="nav-badge" id="disputedBadge" style="display: none;">0</span>
+                    </a>
+                    <a class="nav-item" data-section="completed">
+                        <i class="bi bi-check-circle"></i> Completed
+                    </a>
+                </div>
+
+                <div class="nav-section">
+                    <div class="nav-section-title">Reports</div>
+                    <a class="nav-item" data-section="revenue">
+                        <i class="bi bi-graph-up-arrow"></i> Revenue
+                    </a>
+                    <a class="nav-item" data-section="pendingRefunds">
+                        <i class="bi bi-hourglass-bottom"></i> Pending Refunds
+                        <span class="nav-badge" id="pendingRefundsBadge"
+                            style="display: none; background: #ef4444;">0</span>
+                    </a>
+                    <a class="nav-item" data-section="refunds">
+                        <i class="bi bi-arrow-return-left"></i> Refund History
+                    </a>
+                    <a class="nav-item" data-section="compensationReviews">
+                        <i class="bi bi-clipboard-check"></i> Compensation Reviews
+                        <span class="nav-badge" id="reviewsBadge" style="display: none; background: #f59e0b;">0</span>
+                    </a>
+                </div>
+            </nav>
+
+            <div class="sidebar-footer">
+                <div class="user-info">
+                    <div class="user-avatar" id="userAvatar">F</div>
+                    <div>
+                        <div class="user-name" id="userName">Finance</div>
+                        <div class="user-role">Accountant</div>
+                    </div>
+                </div>
+                <button class="btn btn-logout" onclick="logout()">
+                    <i class="bi bi-box-arrow-right"></i> Logout
+                </button>
+            </div>
+        </aside>
+
+        <!-- Top Header -->
+        <header class="top-header">
+            <div class="header-left" style="display: flex; align-items: center;">
+                <button class="menu-toggle" onclick="toggleSidebar()" style="margin-right: 12px;">
+                    <i class="bi bi-list"></i>
+                </button>
+                <div class="header-greeting">
+                    <span id="greetingText">Finance Center</span>
+                </div>
+                <div class="header-datetime" id="headerDateTime">Loading...</div>
+            </div>
+            <div class="header-right">
+                <button class="header-btn" onclick="refreshCurrentSection()" title="Refresh">
+                    <i class="bi bi-arrow-clockwise"></i>
+                </button>
+                <div class="header-status">
+                    <span class="status-dot"></span>
+                    <span>Online</span>
+                </div>
+            </div>
+        </header>
+
+        <!-- Main Content -->
+        <main class="main-content" id="main-content">
+            <!-- Overview Section -->
+            <section class="section active" id="sectionOverview">
+                <div class="page-header">
+                    <h1 class="page-title"><i class="bi bi-cash-stack"></i> Finance Overview</h1>
+                    <div class="live-indicator">
+                        <span class="live-dot"></span> Real-time
+                    </div>
+                </div>
+
+                <div class="stats-grid" style="grid-template-columns: repeat(4, 1fr);">
+                    <div class="stat-card highlight">
+                        <div class="stat-icon" style="background: rgba(255,255,255,0.2); color: white;">
+                            <i class="bi bi-currency-dollar"></i>
+                        </div>
+                        <div class="stat-content">
+                            <div class="stat-value" id="statTotalRevenue">0 QAR</div>
+                            <div class="stat-label">Platform Revenue (30d)</div>
+                        </div>
+                    </div>
+                    <div class="stat-card">
+                        <div class="stat-icon" style="background: linear-gradient(135deg, #f59e0b, #d97706);">
+                            <i class="bi bi-clock-history"></i>
+                        </div>
+                        <div class="stat-content">
+                            <div class="stat-value" id="statPendingPayouts">0 QAR</div>
+                            <div class="stat-label">Pending Payouts</div>
+                        </div>
+                    </div>
+                    <div class="stat-card">
+                        <div class="stat-icon" style="background: linear-gradient(135deg, #8D1B3D, #A82050);">
+                            <i class="bi bi-hourglass-split"></i>
+                        </div>
+                        <div class="stat-content">
+                            <div class="stat-value" id="statAwaitingConfirm">0 QAR</div>
+                            <div class="stat-label">Awaiting Confirmation</div>
+                        </div>
+                    </div>
+                    <div class="stat-card">
+                        <div class="stat-icon" style="background: linear-gradient(135deg, #10b981, #059669);">
+                            <i class="bi bi-check-circle"></i>
+                        </div>
+                        <div class="stat-content">
+                            <div class="stat-value" id="statCompletedPayouts">0 QAR</div>
+                            <div class="stat-label">Completed (30d)</div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Loyalty Program Impact Card (Financial Transparency) -->
+                <div class="content-card"
+                    style="margin-top: 20px; background: linear-gradient(135deg, #fef3c7, #fde68a); border: 1px solid #f59e0b;">
+                    <div style="display: flex; align-items: center; gap: 12px; margin-bottom: 16px;">
+                        <div
+                            style="width: 40px; height: 40px; border-radius: 10px; background: #f59e0b; display: flex; align-items: center; justify-content: center;">
+                            <i class="bi bi-gift" style="color: white; font-size: 20px;"></i>
+                        </div>
+                        <div>
+                            <h3 style="margin: 0; color: #92400e; font-size: 16px;">Loyalty Program Impact</h3>
+                            <p style="margin: 0; color: #b45309; font-size: 12px;">Discounts given to loyal customers
+                                (platform absorbs cost)</p>
+                        </div>
+                    </div>
+                    <div class="stats-grid" style="gap: 12px; grid-template-columns: repeat(4, 1fr);">
+                        <div
+                            style="background: white; border-radius: 12px; padding: 16px; text-align: center; border: 1px solid #fcd34d;">
+                            <div
+                                style="color: #92400e; font-size: 11px; text-transform: uppercase; font-weight: 600; margin-bottom: 4px;">
+                                Today</div>
+                            <div id="statLoyaltyToday" style="font-size: 20px; font-weight: 700; color: #d97706;">0 QAR
+                            </div>
+                            <div id="statLoyaltyCount" style="font-size: 11px; color: #b45309;">0 orders</div>
+                        </div>
+                        <div
+                            style="background: white; border-radius: 12px; padding: 16px; text-align: center; border: 1px solid #fcd34d;">
+                            <div
+                                style="color: #92400e; font-size: 11px; text-transform: uppercase; font-weight: 600; margin-bottom: 4px;">
+                                This Week</div>
+                            <div id="statLoyaltyWeek" style="font-size: 20px; font-weight: 700; color: #d97706;">0 QAR
+                            </div>
+                        </div>
+                        <div
+                            style="background: white; border-radius: 12px; padding: 16px; text-align: center; border: 1px solid #fcd34d;">
+                            <div
+                                style="color: #92400e; font-size: 11px; text-transform: uppercase; font-weight: 600; margin-bottom: 4px;">
+                                This Month</div>
+                            <div id="statLoyaltyMonth" style="font-size: 20px; font-weight: 700; color: #d97706;">0 QAR
+                            </div>
+                        </div>
+                        <div
+                            style="background: white; border-radius: 12px; padding: 16px; text-align: center; border: 1px solid #fcd34d;">
+                            <div
+                                style="color: #92400e; font-size: 11px; text-transform: uppercase; font-weight: 600; margin-bottom: 4px;">
+                                Impact</div>
+                            <div style="font-size: 12px; color: #b45309;">Garages receive full price</div>
+                            <div style="font-size: 11px; color: #92400e;">Platform absorbs discount</div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Quick Actions -->
+                <div class="content-card" style="margin-top: 24px;">
+                    <h3 style="margin-bottom: 20px;"><i class="bi bi-lightning-charge"></i> Quick Actions</h3>
+                    <div style="display: grid; grid-template-columns: repeat(4, 1fr); gap: 15px;">
+                        <button class="btn btn-primary" onclick="switchSection('pending')"
+                            style="padding: 20px; flex-direction: column; gap: 10px;">
+                            <i class="bi bi-send" style="font-size: 24px;"></i>
+                            <span>Process Payouts</span>
+                        </button>
+                        <button class="btn btn-warning" onclick="switchSection('disputed')"
+                            style="padding: 20px; flex-direction: column; gap: 10px;">
+                            <i class="bi bi-exclamation-triangle" style="font-size: 24px;"></i>
+                            <span>Resolve Disputes</span>
+                        </button>
+                        <button class="btn btn-secondary" onclick="switchSection('revenue')"
+                            style="padding: 20px; flex-direction: column; gap: 10px;">
+                            <i class="bi bi-file-earmark-bar-graph" style="font-size: 24px;"></i>
+                            <span>Revenue Report</span>
+                        </button>
+                        <button class="btn btn-ghost" onclick="exportPayouts()"
+                            style="padding: 20px; flex-direction: column; gap: 10px; border: 1px solid var(--border);">
+                            <i class="bi bi-download" style="font-size: 24px;"></i>
+                            <span>Export CSV</span>
+                        </button>
+                    </div>
+                </div>
+
+                <!-- Recent Payouts -->
+                <div class="content-card" style="margin-top: 24px;">
+                    <div class="content-header">
+                        <h3 class="content-title">Recent Payouts</h3>
+                        <button class="btn btn-ghost btn-sm" onclick="switchSection('pending')">View All</button>
+                    </div>
+                    <table class="data-table">
+                        <thead>
+                            <tr>
+                                <th>Garage</th>
+                                <th>Order</th>
+                                <th>Amount</th>
+                                <th>Status</th>
+                                <th>Date</th>
+                            </tr>
+                        </thead>
+                        <tbody id="recentPayoutsTable">
+                            <tr>
+                                <td colspan="5" class="empty-state">Loading...</td>
+                            </tr>
+                        </tbody>
+                    </table>
+                </div>
+            </section>
+
+            <!-- Pending Payouts Section -->
+            <section class="section" id="sectionPending">
+                <div class="page-header">
+                    <h1 class="page-title"><i class="bi bi-clock-history"></i> Pending Payouts</h1>
+                    <div style="color: var(--text-secondary); font-size: 14px;">
+                        <i class="bi bi-info-circle"></i> Use batch payment to process multiple payouts efficiently
+                    </div>
+                </div>
+
+                <!-- Batch Payment Toolbar -->
+                <div class="content-card" style="margin-bottom: 16px; padding: 16px;">
+                    <div
+                        style="display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 12px;">
+                        <!-- Garage Filter -->
+                        <div style="display: flex; gap: 12px; align-items: center;">
+                            <label style="font-weight: 500; color: var(--text-primary);">Filter by Garage:</label>
+                            <select id="garageFilter" class="form-select"
+                                style="min-width: 220px; padding: 8px 12px; border-radius: 8px; border: 1px solid var(--border);">
+                                <option value="">All Garages</option>
+                            </select>
+                            <button class="btn btn-secondary" onclick="applyGarageFilter()" style="padding: 8px 16px;">
+                                <i class="bi bi-funnel"></i> Apply
+                            </button>
+                            <button class="btn btn-ghost" onclick="clearGarageFilter()" style="padding: 8px 12px;"
+                                title="Clear filter">
+                                <i class="bi bi-x-circle"></i>
+                            </button>
+                        </div>
+
+                        <!-- Batch Actions -->
+                        <div style="display: flex; gap: 8px; align-items: center;">
+                            <span id="pendingTotalInfo"
+                                style="color: var(--text-secondary); font-size: 14px; margin-right: 8px;">
+                                <strong id="pendingCountDisplay">0</strong> payouts • <strong
+                                    id="pendingAmountDisplay">0 QAR</strong>
+                            </span>
+                            <button class="btn btn-primary" onclick="openBatchPaymentFlow()" id="btnBatchSend"
+                                style="padding: 10px 20px; font-weight: 600;">
+                                <i class="bi bi-send-fill"></i> Send All Filtered
+                            </button>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="content-card">
+                    <table class="data-table">
+                        <thead>
+                            <tr>
+                                <th style="width: 40px;">
+                                    <input type="checkbox" id="selectAllPending" onchange="toggleSelectAllPending()"
+                                        title="Select all visible payouts">
+                                </th>
+                                <th>Type</th>
+                                <th>Garage</th>
+                                <th>Order #</th>
+                                <th>Part Amount</th>
+                                <th>Platform Fee</th>
+                                <th>Net Payout</th>
+                                <th>Created</th>
+                                <th>Actions</th>
+                            </tr>
+                        </thead>
+                        <tbody id="pendingPayoutsTable">
+                            <tr>
+                                <td colspan="9" class="empty-state">Loading...</td>
+                            </tr>
+                        </tbody>
+                    </table>
+                </div>
+                
+                <!-- Batch Action Bar (P1 UX Feature) -->
+                <div id="batchActionBar" class="batch-action-bar" style="display: none;">
+                    <div class="batch-action-info">
+                        <i class="bi bi-check2-square"></i>
+                        <span id="selectedPayoutCount">0</span> payouts selected
+                        <span id="selectedPayoutTotal" style="margin-left: 12px; font-weight: 700; color: var(--accent);">0 QAR</span>
+                    </div>
+                    <div class="batch-action-buttons">
+                        <button class="btn btn-primary" onclick="openBatchPaymentModal()" id="batchSendBtn">
+                            <i class="bi bi-send"></i> Send Batch Payment
+                        </button>
+                        <button class="btn btn-ghost" onclick="clearBatchSelection()">
+                            <i class="bi bi-x-circle"></i> Clear Selection
+                        </button>
+                    </div>
+                </div>
+                
+                <!-- Payment Templates Section (P1 UX Feature) -->
+                <div class="content-card" style="margin-top: 20px; background: rgba(16, 185, 129, 0.05); border: 1px solid var(--success);">
+                    <div class="content-header">
+                        <h3 class="content-title"><i class="bi bi-file-earmark-check" style="color: var(--success);"></i> Saved Payment Templates</h3>
+                        <button class="btn btn-sm btn-success" onclick="openNewTemplateModal()">
+                            <i class="bi bi-plus-circle"></i> New Template
+                        </button>
+                    </div>
+                    <div id="templatesList" style="padding: 16px;">
+                        <div style="text-align: center; color: var(--text-muted); padding: 20px;">
+                            <i class="bi bi-inbox" style="font-size: 32px; margin-bottom: 12px;"></i>
+                            <p>No saved templates yet</p>
+                            <p style="font-size: 12px;">Save garage payment details to auto-fill future payments</p>
+                        </div>
+                    </div>
+                </div>
+                
+                <div id="pendingPagination"></div>
+            </section>
+
+            <!-- In Warranty Section (Orders < 7 days from delivery) -->
+            <section class="section" id="sectionInwarranty">
+                <div class="page-header">
+                    <h1 class="page-title"><i class="bi bi-shield-exclamation" style="color: #f59e0b;"></i> In Warranty
+                        Period</h1>
+                    <div style="color: var(--text-secondary); font-size: 14px;">
+                        <i class="bi bi-info-circle"></i> Orders within 7-day warranty window - customer may still
+                        request refund
+                    </div>
+                </div>
+
+                <div class="content-card"
+                    style="background: linear-gradient(135deg, #fef3c7, #fde68a); border: 1px solid #f59e0b; margin-bottom: 20px;">
+                    <div style="display: flex; align-items: center; gap: 12px;">
+                        <div
+                            style="width: 50px; height: 50px; border-radius: 12px; background: #f59e0b; display: flex; align-items: center; justify-content: center;">
+                            <i class="bi bi-shield-exclamation" style="color: white; font-size: 24px;"></i>
+                        </div>
+                        <div>
+                            <div style="font-weight: 700; color: #92400e; font-size: 18px;">Business Rule: 7-Day Payout
+                                Hold</div>
+                            <div style="color: #b45309; font-size: 13px;">
+                                Garages receive payment <strong>7 days after delivery</strong> to allow customer
+                                return/refund window.<br>
+                                This is aligned with QScrap invoice warranty terms and Qatar B2B standards.
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="content-card">
+                    <table class="data-table">
+                        <thead>
+                            <tr>
+                                <th>Garage</th>
+                                <th>Order #</th>
+                                <th>Delivered</th>
+                                <th>Days Until Eligible</th>
+                                <th>Net Payout</th>
+                                <th>Status</th>
+                            </tr>
+                        </thead>
+                        <tbody id="inWarrantyPayoutsTable">
+                            <tr>
+                                <td colspan="6" class="empty-state">Loading...</td>
+                            </tr>
+                        </tbody>
+                    </table>
+                </div>
+            </section>
+
+            <!-- Awaiting Confirmation Section -->
+            <section class="section" id="sectionAwaiting">
+                <div class="page-header">
+                    <h1 class="page-title"><i class="bi bi-hourglass-split"></i> Awaiting Garage Confirmation</h1>
+                    <p style="color: var(--text-secondary);">Payments sent to garages, waiting for them to confirm
+                        receipt</p>
+                </div>
+
+                <div class="content-card">
+                    <table class="data-table">
+                        <thead>
+                            <tr>
+                                <th>Garage</th>
+                                <th>Order #</th>
+                                <th>Amount</th>
+                                <th>Sent At</th>
+                                <th>Days Waiting</th>
+                                <th>Actions</th>
+                            </tr>
+                        </thead>
+                        <tbody id="awaitingPayoutsTable">
+                            <tr>
+                                <td colspan="6" class="empty-state">Loading...</td>
+                            </tr>
+                        </tbody>
+                    </table>
+                </div>
+            </section>
+
+            <!-- Disputed Section -->
+            <section class="section" id="sectionDisputed">
+                <div class="page-header">
+                    <h1 class="page-title"><i class="bi bi-exclamation-triangle" style="color: var(--danger);"></i>
+                        Payment Disputes</h1>
+                    <p style="color: var(--text-secondary);">Garages reporting issues with payment receipts</p>
+                </div>
+
+                <div class="content-card">
+                    <table class="data-table">
+                        <thead>
+                            <tr>
+                                <th>Garage</th>
+                                <th>Order #</th>
+                                <th>Amount</th>
+                                <th>Issue</th>
+                                <th>Disputed At</th>
+                                <th>Actions</th>
+                            </tr>
+                        </thead>
+                        <tbody id="disputedPayoutsTable">
+                            <tr>
+                                <td colspan="6" class="empty-state">Loading...</td>
+                            </tr>
+                        </tbody>
+                    </table>
+                </div>
+            </section>
+
+            <!-- Completed Section -->
+            <section class="section" id="sectionCompleted">
+                <div class="page-header">
+                    <h1 class="page-title"><i class="bi bi-check-circle" style="color: var(--success);"></i> Completed
+                        Payouts</h1>
+                    <div style="display: flex; gap: 10px; align-items: center;">
+                        <input type="date" id="completedFromDate" class="form-control" style="width: auto;">
+                        <span>to</span>
+                        <input type="date" id="completedToDate" class="form-control" style="width: auto;">
+                        <button class="btn btn-secondary" onclick="loadCompletedPayouts()">Filter</button>
+                        <button class="btn btn-ghost" onclick="exportCompletedPayouts()"><i class="bi bi-download"></i>
+                            Export</button>
+                    </div>
+                </div>
+
+                <!-- Tax Invoice Download Toolbar -->
+                <div class="content-card"
+                    style="background: linear-gradient(135deg, #e8f5e9 0%, #f1f8e9 100%); border: 1px solid #4caf50; margin-bottom: 15px;">
+                    <div
+                        style="display: flex; align-items: center; justify-content: space-between; flex-wrap: wrap; gap: 15px;">
+                        <div style="display: flex; align-items: center; gap: 8px;">
+                            <i class="bi bi-file-earmark-text" style="font-size: 20px; color: #2e7d32;"></i>
+                            <div>
+                                <strong style="color: #1b5e20;">Download Tax Invoice</strong>
+                                <div style="font-size: 11px; color: #558b2f;">فاتورة ضريبية - Qatar MOC Compliant</div>
+                            </div>
+                        </div>
+                        <div style="display: flex; gap: 10px; align-items: center; flex-wrap: wrap;">
+                            <select id="invoiceGarageSelect" class="form-control" style="min-width: 180px;">
+                                <option value="">Select Garage</option>
+                            </select>
+                            <input type="date" id="invoiceFromDate" class="form-control" style="width: auto;">
+                            <span>to</span>
+                            <input type="date" id="invoiceToDate" class="form-control" style="width: auto;">
+                            <button class="btn btn-success" onclick="downloadTaxInvoice('pdf')">
+                                <i class="bi bi-file-pdf"></i> PDF
+                            </button>
+                            <button class="btn btn-ghost" onclick="downloadTaxInvoice('html')">
+                                <i class="bi bi-code-slash"></i> HTML
+                            </button>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="content-card">
+                    <table class="data-table">
+                        <thead>
+                            <tr>
+                                <th>Garage</th>
+                                <th>Order #</th>
+                                <th>Amount</th>
+                                <th>Method</th>
+                                <th>Reference</th>
+                                <th>Confirmed At</th>
+                            </tr>
+                        </thead>
+                        <tbody id="completedPayoutsTable">
+                            <tr>
+                                <td colspan="6" class="empty-state">Loading...</td>
+                            </tr>
+                        </tbody>
+                    </table>
+                </div>
+                <div id="completedPagination"></div>
+            </section>
+
+            <!-- Revenue Section -->
+            <section class="section" id="sectionRevenue">
+                <div class="page-header">
+                    <h1 class="page-title"><i class="bi bi-graph-up-arrow"></i> Revenue Report</h1>
+                </div>
+
+                <div class="tabs" id="periodTabs">
+                    <div class="tab active" data-period="7d">Last 7 Days</div>
+                    <div class="tab" data-period="30d">Last 30 Days</div>
+                    <div class="tab" data-period="90d">Last 90 Days</div>
+                </div>
+
+                <div class="stats-grid" style="grid-template-columns: repeat(4, 1fr); margin-top: 20px;">
+                    <div class="stat-card">
+                        <div class="stat-value" id="revTotalOrders">0</div>
+                        <div class="stat-label">Total Orders</div>
+                    </div>
+                    <div class="stat-card highlight">
+                        <div class="stat-value" id="revTotalRevenue">0 QAR</div>
+                        <div class="stat-label">Gross Revenue</div>
+                    </div>
+                    <div class="stat-card">
+                        <div class="stat-value" id="revPlatformFees">0 QAR</div>
+                        <div class="stat-label">Platform Fees</div>
+                    </div>
+                    <div class="stat-card"
+                        style="background: rgba(16, 185, 129, 0.08); border-left: 4px solid rgba(16, 185, 129, 0.5);">
+                        <div class="stat-value" id="revNetRevenue" style="color: #059669;">0 QAR</div>
+                        <div class="stat-label">Net Revenue</div>
+                    </div>
+                </div>
+
+                <!-- Revenue Breakdown -->
+                <div class="content-card" style="margin-top: 16px; padding: 16px 20px;">
+                    <div style="display: flex; gap: 32px; flex-wrap: wrap; font-size: 14px;">
+                        <div style="display: flex; align-items: center; gap: 6px;">
+                            <i class="bi bi-truck" style="color: var(--accent);"></i>
+                            <span style="color: var(--text-secondary);">Delivery Fees:</span>
+                            <strong id="revDeliveryFees" style="color: var(--text-primary);">0 QAR</strong>
+                        </div>
+                        <div style="display: flex; align-items: center; gap: 6px;">
+                            <i class="bi bi-arrow-return-left" style="color: var(--danger);"></i>
+                            <span style="color: var(--text-secondary);">Refunds Deducted:</span>
+                            <strong id="revRefunds" style="color: var(--danger);">0 QAR</strong>
+                        </div>
+                        <div style="display: flex; align-items: center; gap: 6px;">
+                            <i class="bi bi-receipt" style="color: var(--text-secondary);"></i>
+                            <span style="color: var(--text-secondary);">Avg. Order Value:</span>
+                            <strong id="revAvgOrder" style="color: var(--text-primary);">0 QAR</strong>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Revenue Trend Chart -->
+                <div class="content-card" style="margin-top: 16px;">
+                    <div
+                        style="display: flex; align-items: center; justify-content: space-between; margin-bottom: 16px;">
+                        <h3 style="margin: 0; font-size: 15px; font-weight: 600;"><i class="bi bi-bar-chart"
+                                style="color: var(--accent); margin-right: 6px;"></i>Daily Revenue Trend</h3>
+                        <span style="font-size: 12px; color: var(--text-secondary);" id="revTrendPeriod"></span>
+                    </div>
+                    <div id="revenueTrendChart" style="display: flex; align-items: flex-end; gap: 4px; height: 120px;">
+                    </div>
+                </div>
+            </section>
+
+            <!-- Pending Refunds Section (Finance Approval Queue) -->
+            <section class="section" id="sectionPendingRefunds">
+                <div class="page-header">
+                    <h1 class="page-title"><i class="bi bi-hourglass-bottom" style="color: #ef4444;"></i> Pending Refund
+                        Requests</h1>
+                    <div style="color: var(--text-secondary); font-size: 14px;">
+                        <i class="bi bi-info-circle"></i> Refunds submitted by Support team - pending Finance approval
+                    </div>
+                </div>
+
+                <div class="content-card"
+                    style="background: linear-gradient(135deg, #fef2f2, #fee2e2); border: 1px solid #fca5a5; margin-bottom: 20px;">
+                    <div style="display: flex; align-items: center; gap: 12px;">
+                        <div
+                            style="width: 50px; height: 50px; border-radius: 12px; background: #ef4444; display: flex; align-items: center; justify-content: center;">
+                            <i class="bi bi-shield-check" style="color: white; font-size: 24px;"></i>
+                        </div>
+                        <div>
+                            <div style="font-weight: 700; color: #991b1b; font-size: 18px;">Finance Approval Required
+                            </div>
+                            <div style="color: #b91c1c; font-size: 13px;">
+                                Review each refund request and approve to process via Stripe, or reject with reason.
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="content-card">
+                    <table class="data-table">
+                        <thead>
+                            <tr>
+                                <th>Order #</th>
+                                <th>Customer</th>
+                                <th>Amount</th>
+                                <th>Reason</th>
+                                <th>Requested By</th>
+                                <th>Date</th>
+                                <th>Actions</th>
+                            </tr>
+                        </thead>
+                        <tbody id="pendingRefundsTable">
+                            <tr>
+                                <td colspan="7" class="empty-state">Loading...</td>
+                            </tr>
+                        </tbody>
+                    </table>
+                </div>
+            </section>
+
+            <!-- Refunds Section -->
+            <section class="section" id="sectionRefunds">
+                <div class="page-header">
+                    <h1 class="page-title"><i class="bi bi-arrow-return-left"></i> Refunds</h1>
+                    <button class="btn btn-primary" onclick="openRefundModal()">
+                        <i class="bi bi-plus-lg"></i> New Refund
+                    </button>
+                </div>
+
+                <div class="content-card">
+                    <table class="data-table">
+                        <thead>
+                            <tr>
+                                <th>Order #</th>
+                                <th>Customer</th>
+                                <th>Amount</th>
+                                <th>Reason</th>
+                                <th>Status</th>
+                                <th>Processed By</th>
+                                <th>Date</th>
+                            </tr>
+                        </thead>
+                        <tbody id="refundsTable">
+                            <tr>
+                                <td colspan="6" class="empty-state">Loading...</td>
+                            </tr>
+                        </tbody>
+                    </table>
+                </div>
+                <div id="refundsPagination"></div>
+            </section>
+
+            <!-- Compensation Reviews Section -->
+            <section class="section" id="sectionCompensationReviews">
+                <div class="page-header">
+                    <h1 class="page-title"><i class="bi bi-clipboard-check"></i> Compensation Reviews</h1>
+                    <div class="live-indicator">
+                        <span class="live-dot"></span> Customer Cancellation Review Queue
+                    </div>
+                </div>
+
+                <div class="content-card"
+                    style="margin-bottom: 20px; background: linear-gradient(135deg, rgba(245, 158, 11, 0.1), rgba(217, 119, 6, 0.1)); border-left: 4px solid #f59e0b;">
+                    <div style="display: flex; gap: 15px; align-items: center;">
+                        <i class="bi bi-info-circle" style="font-size: 24px; color: #f59e0b;"></i>
+                        <div>
+                            <strong>Manual Review Required</strong>
+                            <p style="margin: 5px 0 0; color: var(--text-secondary);">
+                                When a customer cancels during preparation or delivery, garage compensation is NOT
+                                automatic.
+                                Review each case to decide if the garage deserves compensation or if the cancellation
+                                was their fault (wrong part, defective, etc).
+                            </p>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="content-card">
+                    <table class="data-table">
+                        <thead>
+                            <tr>
+                                <th>Order #</th>
+                                <th>Garage</th>
+                                <th>Customer</th>
+                                <th>Reason Code</th>
+                                <th>Details</th>
+                                <th>Potential Compensation</th>
+                                <th>Date</th>
+                                <th>Actions</th>
+                            </tr>
+                        </thead>
+                        <tbody id="compensationReviewsTable">
+                            <tr>
+                                <td colspan="8" class="empty-state">Loading...</td>
+                            </tr>
+                        </tbody>
+                    </table>
+                </div>
+            </section>
+        </main>
+    </div>
+
+    <!-- Send Payment Modal -->
+    <div class="modal-overlay" id="sendPaymentModal">
+        <div class="modal-container" style="max-width: 450px;">
+            <div class="modal-header" style="background: linear-gradient(135deg, #10b981, #059669); color: white;">
+                <h2><i class="bi bi-send-check"></i> Send Payment</h2>
+                <button class="modal-close" onclick="closeSendPaymentModal()" style="color: white;">&times;</button>
+            </div>
+            <div class="modal-body">
+                <div style="background: var(--bg-secondary); padding: 15px; border-radius: 8px; margin-bottom: 15px;">
+                    <div style="display: flex; justify-content: space-between; margin-bottom: 10px;">
+                        <span style="color: var(--text-secondary);">Garage:</span>
+                        <strong id="spGarageName">-</strong>
+                    </div>
+                    <div style="display: flex; justify-content: space-between;">
+                        <span style="color: var(--text-secondary);">Amount:</span>
+                        <strong id="spAmount" style="color: var(--accent); font-size: 18px;">0 QAR</strong>
+                    </div>
+                </div>
+
+                <div class="form-group" style="margin-bottom: 15px;">
+                    <label>Payment Method *</label>
+                    <select id="spPaymentMethod" class="form-control" required>
+                        <option value="">Select method...</option>
+                        <option value="bank_transfer">Bank Transfer</option>
+                        <option value="cash">Cash</option>
+                        <option value="check">Check</option>
+                        <option value="mobile_transfer">Mobile Transfer</option>
+                    </select>
+                </div>
+
+                <div class="form-group" style="margin-bottom: 15px;">
+                    <label>Reference Number *</label>
+                    <input type="text" id="spReference" class="form-control" placeholder="Bank ref / Receipt #"
+                        required>
+                </div>
+
+                <div class="form-group" style="margin-bottom: 15px;">
+                    <label>Notes (Optional)</label>
+                    <textarea id="spNotes" class="form-control" rows="2" placeholder="Additional notes..."></textarea>
+                </div>
+
+                <input type="hidden" id="spPayoutId">
+
+                <div
+                    style="background: var(--bg-secondary); padding: 12px; border-radius: 8px; font-size: 13px; color: var(--text-secondary);">
+                    <i class="bi bi-info-circle"></i> Garage will be notified and must confirm receipt within 7 days.
+                </div>
+            </div>
+            <div class="modal-footer">
+                <button class="btn btn-ghost" onclick="closeSendPaymentModal()">Cancel</button>
+                <button class="btn btn-success" onclick="submitSendPayment()">
+                    <i class="bi bi-send-check"></i> Mark as Sent
+                </button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Batch Payment Modal -->
+    <div class="modal-overlay" id="batchPaymentModal">
+        <div class="modal-container" style="max-width: 550px;">
+            <div class="modal-header" style="background: linear-gradient(135deg, #6366f1, #4f46e5); color: white;">
+                <h2><i class="bi bi-lightning-charge-fill"></i> Batch Payment</h2>
+                <button class="modal-close" onclick="closeBatchPaymentModal()" style="color: white;">&times;</button>
+            </div>
+            <div class="modal-body">
+                <!-- Preview Summary -->
+                <div
+                    style="background: linear-gradient(135deg, #dbeafe, #bfdbfe); padding: 16px; border-radius: 12px; margin-bottom: 16px; border: 1px solid #93c5fd;">
+                    <div style="display: flex; justify-content: space-between; align-items: center;">
+                        <div>
+                            <div style="font-size: 14px; color: #1e40af;">Total Payouts</div>
+                            <div style="font-size: 28px; font-weight: 700; color: #1e3a8a;" id="bpPayoutCount">0</div>
+                        </div>
+                        <div style="text-align: right;">
+                            <div style="font-size: 14px; color: #1e40af;">Total Amount</div>
+                            <div style="font-size: 28px; font-weight: 700; color: #1e3a8a;" id="bpTotalAmount">0 QAR
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Garage Breakdown (collapsible) -->
+                <details
+                    style="margin-bottom: 16px; background: var(--bg-secondary); border-radius: 8px; padding: 12px;">
+                    <summary style="cursor: pointer; font-weight: 600; color: var(--text-primary);">
+                        <i class="bi bi-building"></i> Garage Breakdown (<span id="bpGarageCount">0</span> garages)
+                    </summary>
+                    <div id="bpGarageList" style="margin-top: 12px; max-height: 200px; overflow-y: auto;">
+                        <!-- Populated dynamically -->
+                    </div>
+                </details>
+
+                <!-- Reference Input -->
+                <div class="form-group" style="margin-bottom: 15px;">
+                    <label style="font-weight: 600;">Reference Number / Batch ID *</label>
+                    <input type="text" id="bpReference" class="form-control" placeholder="e.g., BATCH-2024-01-27-001"
+                        required style="font-size: 15px; padding: 12px;">
+                    <small style="color: var(--text-secondary);">This reference will be applied to all payouts in this
+                        batch</small>
+                </div>
+
+                <div class="form-group" style="margin-bottom: 15px;">
+                    <label>Notes (Optional)</label>
+                    <textarea id="bpNotes" class="form-control" rows="2"
+                        placeholder="Additional notes for this batch..."></textarea>
+                </div>
+
+                <!-- Hidden fields for batch mode -->
+                <input type="hidden" id="bpMode" value="">
+                <input type="hidden" id="bpGarageId" value="">
+                <input type="hidden" id="bpPayoutIds" value="">
+
+                <div
+                    style="background: #fef3c7; padding: 12px; border-radius: 8px; font-size: 13px; color: #92400e; border: 1px solid #fcd34d;">
+                    <i class="bi bi-exclamation-triangle-fill"></i>
+                    <strong>Warning:</strong> This action will mark all <span id="bpCountWarning">0</span> payouts as
+                    sent.
+                    Each garage will receive a notification.
+                </div>
+            </div>
+            <div class="modal-footer" style="display: flex; justify-content: space-between;">
+                <button class="btn btn-ghost" onclick="closeBatchPaymentModal()">Cancel</button>
+                <button class="btn btn-success" onclick="submitBatchPayment()" id="btnSubmitBatch"
+                    style="padding: 12px 24px;">
+                    <i class="bi bi-send-fill"></i> Send All Payments
+                </button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Refund Modal -->
+    <div class="modal-overlay" id="refundModal">
+        <div class="modal-container" style="max-width: 500px;">
+            <div class="modal-header" style="background: linear-gradient(135deg, #ef4444, #dc2626); color: white;">
+                <h2><i class="bi bi-arrow-return-left"></i> Create Refund</h2>
+                <button class="modal-close" onclick="closeRefundModal()" style="color: white;">&times;</button>
+            </div>
+            <div class="modal-body">
+                <!-- Order Search -->
+                <div class="form-group" style="margin-bottom: 15px;">
+                    <label>Order Number *</label>
+                    <div style="display: flex; gap: 10px;">
+                        <input type="text" id="refundOrderNumber" class="form-control" placeholder="e.g. ORD-12345">
+                        <button class="btn btn-secondary" onclick="searchOrderForRefund()">
+                            <i class="bi bi-search"></i> Find
+                        </button>
+                    </div>
+                </div>
+
+                <!-- Order Details (initially hidden) -->
+                <div id="refundOrderDetails" style="display: none;">
+                    <div
+                        style="background: var(--bg-secondary); padding: 15px; border-radius: 8px; margin-bottom: 15px;">
+                        <div style="display: flex; justify-content: space-between; margin-bottom: 8px;">
+                            <span style="color: var(--text-secondary);">Order:</span>
+                            <strong id="refundOrderId">#-</strong>
+                        </div>
+                        <div style="display: flex; justify-content: space-between; margin-bottom: 8px;">
+                            <span style="color: var(--text-secondary);">Customer:</span>
+                            <span id="refundCustomerName">-</span>
+                        </div>
+                        <div style="display: flex; justify-content: space-between; margin-bottom: 8px;">
+                            <span style="color: var(--text-secondary);">Garage:</span>
+                            <span id="refundGarageName">-</span>
+                        </div>
+                        <div style="display: flex; justify-content: space-between;">
+                            <span style="color: var(--text-secondary);">Order Amount:</span>
+                            <strong id="refundOrderAmount" style="color: var(--accent);">0 QAR</strong>
+                        </div>
+                    </div>
+
+                    <div class="form-group" style="margin-bottom: 15px;">
+                        <label>Refund Amount *</label>
+                        <div style="position: relative;">
+                            <input type="number" id="refundAmount" class="form-control" placeholder="0" min="1"
+                                step="0.01">
+                            <span
+                                style="position: absolute; right: 12px; top: 50%; transform: translateY(-50%); color: var(--text-secondary);">QAR</span>
+                        </div>
+                        <small style="color: var(--text-secondary);">Enter partial or full refund amount</small>
+                    </div>
+
+                    <div class="form-group" style="margin-bottom: 15px;">
+                        <label>Refund Reason *</label>
+                        <select id="refundReason" class="form-control">
+                            <option value="">Select reason...</option>
+                            <option value="Part damaged during delivery">Part damaged during delivery</option>
+                            <option value="Wrong part sent">Wrong part sent</option>
+                            <option value="Part defective/not working">Part defective/not working</option>
+                            <option value="Order cancelled by customer">Order cancelled by customer</option>
+                            <option value="Order not delivered">Order not delivered</option>
+                            <option value="Duplicate order">Duplicate order</option>
+                            <option value="Other">Other (specify in notes)</option>
+                        </select>
+                    </div>
+
+                    <div class="form-group" style="margin-bottom: 15px;">
+                        <label>Refund Method</label>
+                        <select id="refundMethod" class="form-control">
+                            <option value="original_payment">Return to Original Payment</option>
+                            <option value="wallet_credit">Wallet Credit</option>
+                            <option value="bank_transfer">Bank Transfer</option>
+                        </select>
+                    </div>
+
+                    <div class="form-group" style="margin-bottom: 15px;">
+                        <label>Notes (Optional)</label>
+                        <textarea id="refundNotes" class="form-control" rows="2"
+                            placeholder="Additional notes..."></textarea>
+                    </div>
+
+                    <input type="hidden" id="refundOrderIdHidden">
+
+                    <div
+                        style="background: rgba(239, 68, 68, 0.1); padding: 12px; border-radius: 8px; font-size: 13px; color: var(--danger); border: 1px solid rgba(239, 68, 68, 0.3);">
+                        <i class="bi bi-exclamation-triangle"></i> <strong>Warning:</strong> This action will
+                        automatically adjust or cancel the garage payout. The garage will be notified.
+                    </div>
+                </div>
+            </div>
+            <div class="modal-footer">
+                <button class="btn btn-ghost" onclick="closeRefundModal()">Cancel</button>
+                <button class="btn btn-danger" onclick="submitRefund()" id="submitRefundBtn" disabled>
+                    <i class="bi bi-arrow-return-left"></i> Process Refund
+                </button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Resolve Dispute Modal -->
+    <div class="modal-overlay" id="resolveDisputeModal">
+        <div class="modal-container" style="max-width: 500px;">
+            <div class="modal-header" style="background: linear-gradient(135deg, #f59e0b, #d97706); color: white;">
+                <h2><i class="bi bi-shield-check"></i> Resolve Payment Dispute</h2>
+                <button class="modal-close" onclick="closeResolveDisputeModal()" style="color: white;">&times;</button>
+            </div>
+            <div class="modal-body">
+                <div style="background: var(--bg-secondary); padding: 15px; border-radius: 8px; margin-bottom: 15px;">
+                    <div style="display: flex; justify-content: space-between; margin-bottom: 8px;">
+                        <span style="color: var(--text-secondary);">Garage:</span>
+                        <strong id="rdGarageName">-</strong>
+                    </div>
+                    <div style="display: flex; justify-content: space-between; margin-bottom: 8px;">
+                        <span style="color: var(--text-secondary);">Amount:</span>
+                        <strong id="rdAmount" style="color: var(--accent);">0 QAR</strong>
+                    </div>
+                    <div style="display: flex; justify-content: space-between;">
+                        <span style="color: var(--text-secondary);">Issue:</span>
+                        <span id="rdReason" style="color: var(--danger);">-</span>
+                    </div>
+                </div>
+
+                <div class="form-group" style="margin-bottom: 15px;">
+                    <label>Resolution Type *</label>
+                    <select id="rdResolutionType" class="form-control" required onchange="toggleAmountCorrection()">
+                        <option value="">Select resolution...</option>
+                        <option value="confirmed">Confirmed - Garage received payment (dispute invalid)</option>
+                        <option value="corrected">Corrected - Resend with fix</option>
+                        <option value="resent">Resent - Payment resent</option>
+                        <option value="cancelled">Cancelled - Cancel payout (order cancelled)</option>
+                    </select>
+                </div>
+
+                <div class="form-group" style="margin-bottom: 15px; display: none;" id="rdAmountCorrectionGroup">
+                    <label>Corrected Amount (if different)</label>
+                    <div style="position: relative;">
+                        <input type="number" id="rdNewAmount" class="form-control" placeholder="Leave blank if same"
+                            min="1" step="0.01">
+                        <span
+                            style="position: absolute; right: 12px; top: 50%; transform: translateY(-50%); color: var(--text-secondary);">QAR</span>
+                    </div>
+                </div>
+
+                <div class="form-group" style="margin-bottom: 15px;">
+                    <label>Payment Method (for resend)</label>
+                    <select id="rdPaymentMethod" class="form-control">
+                        <option value="">Same as before</option>
+                        <option value="bank_transfer">Bank Transfer</option>
+                        <option value="cash">Cash</option>
+                        <option value="mobile_transfer">Mobile Transfer</option>
+                    </select>
+                </div>
+
+                <div class="form-group" style="margin-bottom: 15px;">
+                    <label>New Reference (optional)</label>
+                    <input type="text" id="rdNewReference" class="form-control" placeholder="New payment reference">
+                </div>
+
+                <div class="form-group" style="margin-bottom: 15px;">
+                    <label>Resolution Notes *</label>
+                    <textarea id="rdNotes" class="form-control" rows="3" placeholder="Explain how this was resolved..."
+                        required></textarea>
+                </div>
+
+                <input type="hidden" id="rdPayoutId">
+
+                <div
+                    style="background: rgba(245, 158, 11, 0.1); padding: 12px; border-radius: 8px; font-size: 13px; color: #d97706; border: 1px solid rgba(245, 158, 11, 0.3);">
+                    <i class="bi bi-info-circle"></i> The garage will be notified of the resolution.
+                </div>
+            </div>
+            <div class="modal-footer">
+                <button class="btn btn-ghost" onclick="closeResolveDisputeModal()">Cancel</button>
+                <button class="btn btn-warning" onclick="submitDisputeResolution()">
+                    <i class="bi bi-shield-check"></i> Resolve Dispute
+                </button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Toast Container -->
+    <div class="toast-container" id="toastContainer"></div>
+
+    <script src="https://cdn.socket.io/4.6.0/socket.io.min.js"></script>
+<<<<<<< HEAD:public/finance-dashboard.html
+    <script src="js/shared/utils.js?v=20260115d"></script>
+    <script src="js/shared/toast.js?v=20260115d"></script>
+    <script src="js/shared/modal.js?v=20260115d"></script>
+    <script src="js/pagination-utils.js?v=20260115d"></script>
+    <script src="js/finance-dashboard.js?v=20260213b"></script>
+
+    <!-- Service Worker for Offline Support & Caching -->
+    <script src="/js/register-sw.min.js" defer></script>
+
+    <!-- Service Worker for Offline Support & Caching -->
+    <script src="/js/register-sw.min.js" defer></script>
+=======
+    <script src="/js/shared/utils.js?v=20260115d"></script>
+    <script src="/js/shared/toast.js?v=20260115d"></script>
+    <script src="/js/shared/modal.js?v=20260115d"></script>
+    <script src="/js/pagination-utils.js?v=20260115d"></script>
+    <script src="/js/finance-dashboard.js?v=20260208b"></script>
+>>>>>>> 06c3dc41 (feat(enterprise): surgical audit & hardening v3.0 - GOLD CERTIFIED):public/dashboards/finance-dashboard.html
+</body>
+
+</html>

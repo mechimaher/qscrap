@@ -98,23 +98,26 @@ qscrap/
 │   ├── routes/            # API endpoints
 │   ├── middleware/        # Auth, validation, rate limiting
 │   └── utils/             # Helper functions
-├── mobile/                # Customer mobile app
+├── customer-mobile/        # Customer mobile app (renamed from mobile)
 │   ├── src/
 │   │   ├── screens/      # App screens
 │   │   ├── components/   # Reusable components
 │   │   ├── services/     # API clients
 │   │   └── navigation/   # App navigation
-│   └── build_customer_apk.sh
-├── driver-mobile/        # Driver mobile app
-├── public/               # Web dashboards & website
-│   ├── admin-dashboard.html
-│   ├── garage-dashboard.html
-│   ├── operations-dashboard.html
-│   ├── finance-dashboard.html
-│   ├── support-dashboard.html
-│   └── css/
-├── uploads/              # User uploads
-└── tests/               # Automated tests
+│   └── build_apk.sh
+├── driver-mobile/          # Driver mobile app
+├── scripts/                # Infrastructure & build scripts
+│   ├── rebuild_customer_safe.sh
+│   └── rebuild_driver_safe.sh
+├── migrations/             # Database migrations & SQL fixes
+├── docs/                   # Detailed documentation
+│   ├── brain/             # Strategy & architecture docs (Single Source of Truth)
+│   └── assets/            # Project-level media & showcase
+├── public/                 # Web Dashboards & Assets
+│   ├── dashboards/        # Private internal SaaS (Admin, Finance, Garage, Support)
+│   └── assets/            # Global UI assets (images, css, js)
+├── tests/                  # Automated tests
+└── uploads/                # User-generated content (photos, PODs)
 
 ```
 
@@ -198,9 +201,11 @@ npm test -- loyalty.service.test
 npm run build
 npm start
 
-# Mobile App
-cd mobile
-./build_customer_apk.sh
+# Mobile App (Customer)
+./scripts/rebuild_customer_safe.sh
+
+# Mobile App (Driver)
+./scripts/rebuild_driver_safe.sh
 ```
 
 ### VPS Deployment (Docker Compose)
