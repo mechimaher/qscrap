@@ -14,7 +14,8 @@ import {
 } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { log } from '../utils/helpers';
-import MapView, { Marker, Polyline, PROVIDER_GOOGLE } from 'react-native-maps';
+import MapView, { Marker, Polyline } from 'react-native-maps';
+import { GOOGLE_MAPS_API_KEY } from '../config/api';
 import { log } from '../utils/helpers';
 import { LinearGradient } from 'expo-linear-gradient';
 import { log } from '../utils/helpers';
@@ -317,12 +318,13 @@ export default function TrackingScreen() {
             <MapView
                 ref={mapRef}
                 style={styles.map}
-                provider={PROVIDER_GOOGLE}
                 initialRegion={defaultRegion}
                 showsUserLocation={false}
                 showsMyLocationButton={false}
                 showsCompass={false}
                 customMapStyle={darkMapStyle}
+                // Google Maps is used by default on Android, Apple Maps on iOS
+                // provider={PROVIDER_GOOGLE} // Removed: Use platform default or configure via app.json
             >
                 {/* Driver Marker */}
                 {driverLocation && (
