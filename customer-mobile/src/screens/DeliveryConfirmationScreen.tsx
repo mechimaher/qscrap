@@ -97,7 +97,9 @@ export default function DeliveryConfirmationScreen() {
     };
 
     const navigateDispute = (reason: string) => {
-        navigation.navigate('Dispute', { order_id: order?.order_id, reason, photos });
+        // Navigate to Support with pre-filled dispute context
+        // (Dispute screen not yet implemented — uses Support as fallback)
+        navigation.navigate('Support', { prefillSubject: reason, orderId: order?.order_id });
     };
 
     // Success State
