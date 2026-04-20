@@ -1,0 +1,139 @@
+"use strict";
+var __importDefault = (this && this.__importDefault) || function (mod) {
+    return (mod && mod.__esModule) ? mod : { "default": mod };
+};
+Object.defineProperty(exports, "__esModule", { value: true });
+exports.setDefaultAddress = exports.updateAddress = exports.deleteAddress = exports.addAddress = exports.getAddresses = void 0;
+const db_1 = __importDefault(require("../config/db"));
+// ============================================
+// ADDRESS CONTROLLER
+// ============================================
+const getAddresses = async (req, res) => {
+    const userId = req.user.userId;
+    try {
+        const result = await db_1.default.query(`SELECT * FROM user_addresses WHERE user_id = $1 ORDER BY is_default DESC, created_at DESC`, [userId]);
+        res.json({ addresses: result.rows });
+    }
+    catch (err) {
+        console.error('[ADDRESS] Get addresses error:', err);
+        res.status(500).json({ error: 'Failed to fetch addresses' });
+    }
+};
+exports.getAddresses = getAddresses;
+const addAddress = async (req, res) => {
+    const userId = req.user.userId;
+    const { label, address_text, latitude, longitude, is_default } = req.body;
+    if (!label || !address_text) {
+        return res.status(400).json({ error: 'Label and address text are required' });
+    }
+    const client = await db_1.default.connect();
+    try {
+        await client.query('BEGIN');
+        // If this is the first address, make it default automatically
+        const countResult = await client.query('SELECT COUNT(*) FROM user_addresses WHERE user_id = $1', [userId]);
+        const isFirst = parseInt(countResult.rows[0].count) === 0;
+        const shouldBeDefault = is_default || isFirst;
+        // If setting as default, unset others first
+        if (shouldBeDefault) {
+            await client.query(`UPDATE user_addresses SET is_default = FALSE WHERE user_id = $1`, [userId]);
+        }
+        const result = await client.query(`INSERT INTO user_addresses 
+             (user_id, label, address_text, latitude, longitude, is_default)
+             VALUES ($1, $2, $3, $4, $5, $6)
+             RETURNING *`, [userId, label, address_text, latitude || null, longitude || null, shouldBeDefault]);
+        await client.query('COMMIT');
+        res.status(201).json({ address: result.rows[0] });
+    }
+    catch (err) {
+        await client.query('ROLLBACK');
+        console.error('[ADDRESS] Add address error:', err);
+        res.status(500).json({ error: 'Failed to add address' });
+    }
+    finally {
+        client.release();
+    }
+};
+exports.addAddress = addAddress;
+const deleteAddress = async (req, res) => {
+    const userId = req.user.userId;
+    const { address_id } = req.params;
+    try {
+        const result = await db_1.default.query(`DELETE FROM user_addresses WHERE address_id = $1 AND user_id = $2 RETURNING *`, [address_id, userId]);
+        if (result.rowCount === 0) {
+            return res.status(404).json({ error: 'Address not found' });
+        }
+        res.json({ message: 'Address deleted' });
+    }
+    catch (err) {
+        console.error('[ADDRESS] Delete address error:', err);
+        res.status(500).json({ error: 'Failed to delete address' });
+    }
+};
+exports.deleteAddress = deleteAddress;
+const updateAddress = async (req, res) => {
+    const userId = req.user.userId;
+    const { address_id } = req.params;
+    const { label, address_text, latitude, longitude, is_default } = req.body;
+    if (!label || !address_text) {
+        return res.status(400).json({ error: 'Label and address text are required' });
+    }
+    const client = await db_1.default.connect();
+    try {
+        await client.query('BEGIN');
+        // Verify ownership
+        const check = await client.query('SELECT 1 FROM user_addresses WHERE address_id = $1 AND user_id = $2', [address_id, userId]);
+        if (check.rowCount === 0) {
+            await client.query('ROLLBACK');
+            return res.status(404).json({ error: 'Address not found' });
+        }
+        // If setting as default, unset others first
+        if (is_default) {
+            await client.query(`UPDATE user_addresses SET is_default = FALSE WHERE user_id = $1`, [userId]);
+        }
+        // Update the address
+        const result = await client.query(`UPDATE user_addresses 
+             SET label = $1, address_text = $2, latitude = $3, longitude = $4, is_default = COALESCE($5, is_default), updated_at = NOW()
+             WHERE address_id = $6 AND user_id = $7
+             RETURNING *`, [label, address_text, latitude || null, longitude || null, is_default, address_id, userId]);
+        await client.query('COMMIT');
+        res.json({ address: result.rows[0] });
+    }
+    catch (err) {
+        await client.query('ROLLBACK');
+        console.error('[ADDRESS] Update address error:', err);
+        res.status(500).json({ error: 'Failed to update address' });
+    }
+    finally {
+        client.release();
+    }
+};
+exports.updateAddress = updateAddress;
+const setDefaultAddress = async (req, res) => {
+    const userId = req.user.userId;
+    const { address_id } = req.params;
+    const client = await db_1.default.connect();
+    try {
+        await client.query('BEGIN');
+        // Validate own address
+        const check = await client.query('SELECT 1 FROM user_addresses WHERE address_id = $1 AND user_id = $2', [address_id, userId]);
+        if (check.rowCount === 0) {
+            await client.query('ROLLBACK');
+            return res.status(404).json({ error: 'Address not found' });
+        }
+        // Unset all
+        await client.query(`UPDATE user_addresses SET is_default = FALSE WHERE user_id = $1`, [userId]);
+        // Set new default
+        await client.query(`UPDATE user_addresses SET is_default = TRUE WHERE address_id = $1`, [address_id]);
+        await client.query('COMMIT');
+        res.json({ success: true });
+    }
+    catch (err) {
+        await client.query('ROLLBACK');
+        console.error('[ADDRESS] Set default error:', err);
+        res.status(500).json({ error: 'Failed to update default address' });
+    }
+    finally {
+        client.release();
+    }
+};
+exports.setDefaultAddress = setDefaultAddress;
