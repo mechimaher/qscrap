@@ -22,12 +22,9 @@ import * as Haptics from 'expo-haptics';
 import { log } from '../utils/helpers';
 import * as Location from 'expo-location';
 import { log } from '../utils/helpers';
-import { useNavigation, useRoute } from '@react-navigation/native';
-import { log } from '../utils/helpers';
+import { useNavigation, useRoute, RouteProp } from '@react-navigation/native';
 import { NativeStackNavigationProp } from '@react-navigation/native-stack';
-import { log } from '../utils/helpers';
 import { RootStackParamList } from '../../App';
-import { log } from '../utils/helpers';
 import { io, Socket } from 'socket.io-client';
 import { log } from '../utils/helpers';
 import { SOCKET_URL } from '../config/api';
@@ -54,8 +51,8 @@ type NavigationProp = NativeStackNavigationProp<RootStackParamList>;
 
 export default function TrackingScreen() {
     const navigation = useNavigation<NavigationProp>();
-    const route = useRoute();
-    const { orderId, orderNumber, deliveryAddress } = route.params as any;
+    const route = useRoute<RouteProp<RootStackParamList, 'Tracking'>>();
+    const { orderId, orderNumber, deliveryAddress } = route.params;
 
     const mapRef = useRef<MapView>(null);
     const socket = useRef<Socket | null>(null);

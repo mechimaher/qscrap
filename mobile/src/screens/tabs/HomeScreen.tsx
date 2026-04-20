@@ -40,6 +40,10 @@ import FeaturedProductsSection from '../../components/FeaturedProductsSection';
 import { log } from '../utils/helpers';
 
 type HomeScreenNavigationProp = NativeStackNavigationProp<RootStackParamList>;
+
+// Helper type for tab navigation
+type MainTabScreen = 'Home' | 'Requests' | 'Orders' | 'Profile';
+
 const { width } = Dimensions.get('window');
 const cardWidth = (width - Spacing.lg * 3) / 2;
 
@@ -134,7 +138,7 @@ export default function HomeScreen() {
                     </View>
                     <TouchableOpacity
                         style={[styles.notificationBtn, { backgroundColor: colors.surface }]}
-                        onPress={() => navigation.navigate('Notifications' as any)}
+                        onPress={() => navigation.navigate('Notifications')}
                     >
                         <Text style={styles.notificationIcon}>🔔</Text>
                         <View style={styles.notificationBadge} />
@@ -189,7 +193,7 @@ export default function HomeScreen() {
                         <View style={styles.statsRow}>
                             <TouchableOpacity
                                 style={styles.statCard}
-                                onPress={() => navigation.navigate('Main', { screen: 'Requests' } as any)}
+                                onPress={() => navigation.navigate('Main', { screen: 'Requests' })}
                                 activeOpacity={0.8}
                             >
                                 <LinearGradient
@@ -206,7 +210,7 @@ export default function HomeScreen() {
 
                             <TouchableOpacity
                                 style={styles.statCard}
-                                onPress={() => navigation.navigate('Main', { screen: 'Orders' } as any)}
+                                onPress={() => navigation.navigate('Main', { screen: 'Orders' })}
                                 activeOpacity={0.8}
                             >
                                 <LinearGradient
@@ -225,7 +229,7 @@ export default function HomeScreen() {
                         {/* Row 2: Full width card */}
                         <TouchableOpacity
                             style={styles.statCardWide}
-                            onPress={() => navigation.navigate('Main', { screen: 'Orders' } as any)}
+                            onPress={() => navigation.navigate('Main', { screen: 'Orders' })}
                             activeOpacity={0.8}
                         >
                             <LinearGradient
@@ -255,7 +259,7 @@ export default function HomeScreen() {
                 <View style={styles.actionsGrid}>
                     <TouchableOpacity
                         style={styles.actionCard}
-                        onPress={() => navigation.navigate('Main', { screen: 'Requests' } as any)}
+                        onPress={() => navigation.navigate('Main', { screen: 'Requests' })}
                         activeOpacity={0.8}
                     >
                         <View style={[styles.actionIconBg, { backgroundColor: '#FFF3E0' }]}>
@@ -266,7 +270,7 @@ export default function HomeScreen() {
 
                     <TouchableOpacity
                         style={styles.actionCard}
-                        onPress={() => navigation.navigate('Main', { screen: 'Orders' } as any)}
+                        onPress={() => navigation.navigate('Main', { screen: 'Orders' })}
                         activeOpacity={0.8}
                     >
                         <View style={[styles.actionIconBg, { backgroundColor: '#E3F2FD' }]}>
@@ -288,7 +292,7 @@ export default function HomeScreen() {
 
                     <TouchableOpacity
                         style={styles.actionCard}
-                        onPress={() => navigation.navigate('Main', { screen: 'Profile' } as any)}
+                        onPress={() => navigation.navigate('Main', { screen: 'Profile' })}
                         activeOpacity={0.8}
                     >
                         <View style={[styles.actionIconBg, { backgroundColor: '#F3E5F5' }]}>

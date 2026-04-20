@@ -185,7 +185,7 @@ export default function OrdersScreen() {
             <Text style={styles.emptyText}>Your orders will appear here once you accept a bid from a garage</Text>
             <TouchableOpacity
                 style={styles.emptyButton}
-                onPress={() => navigation.navigate('Main', { screen: 'Home' } as any)}
+                onPress={() => navigation.navigate('Main', { screen: 'Home' })}
             >
                 <Text style={styles.emptyButtonText}>Browse Requests</Text>
             </TouchableOpacity>

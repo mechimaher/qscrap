@@ -1,12 +1,12 @@
-```gitignore
+```
 # Dependencies
 node_modules/
 
 # Build outputs
 dist/
 build/
-*.js.map
-*.ts.map
+*.bundle.js
+*.bundle.css
 
 # Environment variables
 .env
@@ -36,20 +36,12 @@ __pycache__/
 *.pyo
 *.pyd
 
-# Package manager caches
-.npm/
-.yarn/
-.pnpm-store/
-
-# OS generated files
-.DS_Store
-Thumbs.db
-
 # Mobile app specific
-*.apk
 *.ipa
+*.apk
 *.aab
-android/build/
-ios/build/
-ios/Pods/
+
+# Lock files
+yarn.lock
+package-lock.json
 ```
