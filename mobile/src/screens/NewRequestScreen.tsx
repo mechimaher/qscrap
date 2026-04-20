@@ -161,7 +161,7 @@ export default function NewRequestScreen() {
                     Alert.alert('Note', 'Address has no coordinates. Using standard delivery fee (25 QAR)');
                 }
             }
-        } as any);
+        });
     };
 
     const handlePickImage = async () => {
@@ -247,7 +247,7 @@ export default function NewRequestScreen() {
                     uri,
                     name: `image_${index}.jpg`,
                     type: 'image/jpeg',
-                } as any);
+                } as any); // TypeScript FormData type limitation in React Native
             });
 
             const result = await api.createRequest(formData);

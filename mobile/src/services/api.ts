@@ -58,6 +58,12 @@ export interface Bid {
     garage_counter_message?: string;
     garage_counter_id?: string;
     plan_code?: string;
+    // Additional counter-offer negotiation fields
+    last_garage_offer_amount?: number;
+    negotiation_rounds?: number | string;
+    original_bid_amount?: number;
+    customer_counter_amount?: number;
+    customer_counter_status?: string;
 }
 
 export interface Order {

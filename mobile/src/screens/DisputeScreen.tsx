@@ -115,7 +115,7 @@ const DisputeScreen: React.FC = () => {
                     uri,
                     name: filename,
                     type,
-                } as any);
+                } as any); // TypeScript FormData type limitation in React Native
             });
 
             await disputeApi.create(formData);

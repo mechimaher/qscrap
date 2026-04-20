@@ -1,8 +1,8 @@
-```
+```gitignore
 # Dependencies
 node_modules/
 
-# Build artifacts
+# Build outputs
 dist/
 build/
 *.js.map
@@ -18,16 +18,38 @@ build/
 .idea/
 *.swp
 *.swo
-*.tmp
 
 # Logs
 *.log
 
+# Temp files
+*.tmp
+
 # Coverage reports
 coverage/
 htmlcov/
-.coverage
+*.coverage
 
-# TypeScript cache
-*.tsbuildinfo
+# Python cache
+__pycache__/
+*.pyc
+*.pyo
+*.pyd
+
+# Package manager caches
+.npm/
+.yarn/
+.pnpm-store/
+
+# OS generated files
+.DS_Store
+Thumbs.db
+
+# Mobile app specific
+*.apk
+*.ipa
+*.aab
+android/build/
+ios/build/
+ios/Pods/
 ```

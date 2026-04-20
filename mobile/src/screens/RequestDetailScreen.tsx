@@ -1,6 +1,5 @@
 // QScrap Request Detail Screen - Full Featured with Bid Viewing
 import React, { useState, useEffect } from 'react';
-import { log } from '../utils/helpers';
 import {
     View,
     Text,
@@ -12,27 +11,16 @@ import {
     Image,
 } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
-import { log } from '../utils/helpers';
 import { LinearGradient } from 'expo-linear-gradient';
-import { log } from '../utils/helpers';
 import * as Haptics from 'expo-haptics';
-import { log } from '../utils/helpers';
 import { useNavigation, useRoute } from '@react-navigation/native';
-import { log } from '../utils/helpers';
 import { NativeStackNavigationProp } from '@react-navigation/native-stack';
-import { log } from '../utils/helpers';
 import { api, Request, Bid } from '../services/api';
-import { log } from '../utils/helpers';
 import { Colors, Spacing, BorderRadius, FontSizes, Shadows } from '../constants/theme';
-import { log } from '../utils/helpers';
 import { useTheme } from '../contexts/ThemeContext';
-import { log } from '../utils/helpers';
 import { API_BASE_URL } from '../config/api';
-import { log } from '../utils/helpers';
 import { RootStackParamList } from '../../App';
-import { log } from '../utils/helpers';
 import ImageViewerModal from '../components/ImageViewerModal';
-import { log } from '../utils/helpers';
 import { useSocketContext } from '../hooks/useSocket';
 import { log } from '../utils/helpers';
 
@@ -214,17 +202,17 @@ export default function RequestDetailScreen() {
         const isAccepted = bid.status === 'accepted';
 
         // Check for garage counter-offer (pending response from customer) or last garage offer
-        const hasGarageCounterOffer = !!(bid as any).garage_counter_amount;
-        const garageCounterAmount = (bid as any).garage_counter_amount;
-        const lastGarageOfferAmount = (bid as any).last_garage_offer_amount;
-        const negotiationRounds = parseInt((bid as any).negotiation_rounds) || 0;
+        const hasGarageCounterOffer = !!bid.garage_counter_amount;
+        const garageCounterAmount = bid.garage_counter_amount;
+        const lastGarageOfferAmount = bid.last_garage_offer_amount;
+        const negotiationRounds = parseInt(String(bid.negotiation_rounds || 0));
 
         // Original bid amount (before any negotiation) - for strikethrough display
-        const originalBidAmount = (bid as any).original_bid_amount || bid.bid_amount;
+        const originalBidAmount = bid.original_bid_amount || bid.bid_amount;
 
         // Customer's last counter-offer
-        const customerCounterAmount = (bid as any).customer_counter_amount;
-        const customerCounterStatus = (bid as any).customer_counter_status;
+        const customerCounterAmount = bid.customer_counter_amount;
+        const customerCounterStatus = bid.customer_counter_status;
 
         // Check if garage accepted the customer's counter-offer (negotiation complete, waiting for customer to finalize)
         const isNegotiationAgreed = customerCounterStatus === 'accepted';
@@ -435,7 +423,7 @@ export default function RequestDetailScreen() {
                                     currentAmount: displayPrice,
                                     partDescription: request.part_description,
                                     // Pass garage counter ID if responding to a pending offer
-                                    garageCounterId: (bid as any).garage_counter_id || null,
+                                    garageCounterId: bid.garage_counter_id || null,
                                 })}
                             >
                                 <Text style={styles.counterText}>↩ Counter</Text>
