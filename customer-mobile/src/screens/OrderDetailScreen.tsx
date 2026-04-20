@@ -430,13 +430,7 @@ export default function OrderDetailScreen() {
                 {/* Timeline */}
                 <VisualTimeline status={order.order_status} colors={colors} t={t} />
 
-                {/* Sanitization Promise */}
-                <View style={[styles.sanitizationCard, { backgroundColor: colors.surfaceSecondary }]}>
-                    <Ionicons name="sparkles-outline" size={18} color={Colors.success} style={{ marginRight: Spacing.sm }} />
-                    <Text style={[styles.sanitizationText, { color: colors.textSecondary, textAlign: rtlTextAlign(isRTL) }]}>
-                        {t('order.sanitizationPromise')}
-                    </Text>
-                </View>
+
 
                 {/* Delivery OTP */}
                 {(deliveryOtp || isOtpLoading) && (
@@ -562,12 +556,7 @@ export default function OrderDetailScreen() {
                         <Text style={[styles.totalValue, { color: statusConfig.color, textAlign: rtlTextAlign(isRTL) }]}>{order.total_amount} {t('common.currency')}</Text>
                     </View>
 
-                    <View style={[styles.detailRow, { flexDirection: rtlFlexDirection(isRTL) }]}>
-                        <Ionicons name="images-outline" size={18} color={Colors.primary} style={{ marginRight: Spacing.xs }} />
-                        <Text style={[styles.detailValue, { color: colors.textSecondary, textAlign: rtlTextAlign(isRTL), flex: 1 }]}>
-                            {t('order.visualGuarantee')}
-                        </Text>
-                    </View>
+
 
                     {order.order_status === 'completed' && (
                         <>
