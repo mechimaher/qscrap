@@ -73,7 +73,7 @@ export default function AddressBookScreen() {
             setIsAdding(false);
             loadAddresses();
         } catch (error: any) {
-            console.log('Add address error:', error);
+            log.debug('Add address error:', error);
             let errorMessage = 'Failed to save address';
             if (error?.message) {
                 errorMessage = error.message;
@@ -111,7 +111,7 @@ export default function AddressBookScreen() {
             setIsAdding(false);
             loadAddresses();
         } catch (error: any) {
-            console.log('Update address error:', error);
+            log.debug('Update address error:', error);
             let errorMessage = 'Failed to update address';
             if (error?.message) {
                 errorMessage = error.message;
@@ -167,7 +167,7 @@ export default function AddressBookScreen() {
                 setAddressText(`${a.street || ''} ${a.city || ''}, Qatar`.trim());
             }
         } catch (error) {
-            console.log('Location error', error);
+            log.debug('Location error', error);
         }
     };
 

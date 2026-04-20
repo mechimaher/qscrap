@@ -1,5 +1,6 @@
 // QScrap Orders Screen - Premium VIP Design
 import React, { useState, useCallback, useEffect } from 'react';
+import { log } from '../utils/helpers';
 import {
     View,
     Text,
@@ -10,16 +11,27 @@ import {
     Dimensions,
 } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
+import { log } from '../utils/helpers';
 import { useNavigation, useFocusEffect } from '@react-navigation/native';
+import { log } from '../utils/helpers';
 import { NativeStackNavigationProp } from '@react-navigation/native-stack';
+import { log } from '../utils/helpers';
 import { LinearGradient } from 'expo-linear-gradient';
+import { log } from '../utils/helpers';
 import * as Haptics from 'expo-haptics';
+import { log } from '../utils/helpers';
 import { api, Order } from '../../services/api';
+import { log } from '../utils/helpers';
 import { useTheme } from '../../contexts/ThemeContext';
+import { log } from '../utils/helpers';
 import { Colors, Spacing, BorderRadius, FontSizes, Shadows } from '../../constants/theme';
+import { log } from '../utils/helpers';
 import { RootStackParamList } from '../../../App';
+import { log } from '../utils/helpers';
 import { LoadingList } from '../../components/SkeletonLoading';
+import { log } from '../utils/helpers';
 import { useSocketContext } from '../../hooks/useSocket';
+import { log } from '../utils/helpers';
 
 type OrdersScreenNavigationProp = NativeStackNavigationProp<RootStackParamList>;
 const { width } = Dimensions.get('window');
@@ -37,7 +49,7 @@ export default function OrdersScreen() {
             const data = await api.getMyOrders();
             setOrders(data.orders || []);
         } catch (error) {
-            console.log('Failed to load orders:', error);
+            log.debug('Failed to load orders:', error);
         } finally {
             setIsLoading(false);
             setIsRefreshing(false);
@@ -54,7 +66,7 @@ export default function OrdersScreen() {
     // Real-time: Reload when socket receives order status update
     useEffect(() => {
         if (orderUpdates.length > 0) {
-            console.log('[OrdersScreen] Socket order update received, refreshing...');
+            log.debug('[OrdersScreen] Socket order update received, refreshing...');
             loadOrders();
         }
     }, [orderUpdates, loadOrders]);

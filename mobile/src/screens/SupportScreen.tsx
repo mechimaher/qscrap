@@ -1,5 +1,6 @@
 // QScrap Support Screen - Ticket Management System
 import React, { useState, useEffect, useCallback } from 'react';
+import { log } from '../utils/helpers';
 import {
     View,
     Text,
@@ -15,12 +16,19 @@ import {
     Platform,
 } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
+import { log } from '../utils/helpers';
 import { useNavigation } from '@react-navigation/native';
+import { log } from '../utils/helpers';
 import { LinearGradient } from 'expo-linear-gradient';
+import { log } from '../utils/helpers';
 import * as Haptics from 'expo-haptics';
+import { log } from '../utils/helpers';
 import { api } from '../services/api';
+import { log } from '../utils/helpers';
 import { useTheme } from '../contexts/ThemeContext';
+import { log } from '../utils/helpers';
 import { Colors, Spacing, BorderRadius, FontSizes, Shadows } from '../constants/theme';
+import { log } from '../utils/helpers';
 
 interface Ticket {
     ticket_id: string;
@@ -48,7 +56,7 @@ export default function SupportScreen() {
             const data = await api.getTickets();
             setTickets(data.tickets || []);
         } catch (error) {
-            console.log('Failed to load tickets:', error);
+            log.debug('Failed to load tickets:', error);
         } finally {
             setIsLoading(false);
             setIsRefreshing(false);

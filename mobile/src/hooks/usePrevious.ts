@@ -10,7 +10,7 @@ import { useRef, useEffect } from 'react';
  * 
  * useEffect(() => {
  *   if (prevCount !== undefined && count > prevCount) {
- *     console.log('Count increased!');
+ *     // Count increased!
  *   }
  * }, [count, prevCount]);
  */

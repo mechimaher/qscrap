@@ -1,5 +1,6 @@
 // QScrap Chat Screen - Real-time messaging with Driver/Garage
 import React, { useState, useEffect, useRef } from 'react';
+import { log } from '../utils/helpers';
 import {
     View,
     Text,
@@ -14,13 +15,21 @@ import {
     Vibration,
 } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
+import { log } from '../utils/helpers';
 import { LinearGradient } from 'expo-linear-gradient';
+import { log } from '../utils/helpers';
 import * as Haptics from 'expo-haptics';
+import { log } from '../utils/helpers';
 import { useNavigation, useRoute } from '@react-navigation/native';
+import { log } from '../utils/helpers';
 import { io, Socket } from 'socket.io-client';
+import { log } from '../utils/helpers';
 import { SOCKET_URL } from '../config/api';
+import { log } from '../utils/helpers';
 import { api } from '../services/api';
+import { log } from '../utils/helpers';
 import { Colors, Spacing, BorderRadius, FontSizes, Shadows } from '../constants/theme';
+import { log } from '../utils/helpers';
 
 interface Message {
     message_id: string;
@@ -63,7 +72,7 @@ export default function ChatScreen() {
             // Short vibration pattern for additional feedback
             Vibration.vibrate([0, 100, 50, 100]);
         } catch (error) {
-            console.log('Notification feedback error:', error);
+            log.debug('Notification feedback error:', error);
         }
     };
 
@@ -94,7 +103,7 @@ export default function ChatScreen() {
                 setMessages(data.messages || []);
             }
         } catch (error) {
-            console.log('Failed to load messages:', error);
+            log.debug('Failed to load messages:', error);
         } finally {
             setIsLoading(false);
         }
@@ -147,7 +156,7 @@ export default function ChatScreen() {
             });
 
         } catch (error) {
-            console.log('Socket connection error:', error);
+            log.debug('Socket connection error:', error);
         }
     };
 

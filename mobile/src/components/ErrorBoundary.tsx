@@ -1,4 +1,5 @@
 import React, { Component, ErrorInfo, ReactNode } from 'react';
+import { log } from '../utils/helpers';
 import {
     View,
     Text,
@@ -7,7 +8,9 @@ import {
     ScrollView,
 } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
+import { log } from '../utils/helpers';
 import { Colors, Spacing, BorderRadius, FontSize } from '../constants';
+import { log } from '../utils/helpers';
 
 interface Props {
     children: ReactNode;
@@ -42,7 +45,7 @@ export class ErrorBoundary extends Component<Props, State> {
 
     componentDidCatch(error: Error, errorInfo: ErrorInfo) {
         // Log error to console (in production, send to error reporting service)
-        console.error('ErrorBoundary caught an error:', error, errorInfo);
+        log.error('ErrorBoundary caught an error:', error, errorInfo);
         this.setState({ errorInfo });
 
         // TODO: Send to crash reporting service (Sentry, Crashlytics, etc.)

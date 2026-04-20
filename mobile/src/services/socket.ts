@@ -1,6 +1,9 @@
 import { io, Socket } from 'socket.io-client';
+import { log } from '../utils/helpers';
 import AsyncStorage from '@react-native-async-storage/async-storage';
+import { log } from '../utils/helpers';
 import { API_CONFIG } from '../constants';
+import { log } from '../utils/helpers';
 
 let socket: Socket | null = null;
 
@@ -19,7 +22,7 @@ export const initSocket = async (): Promise<Socket | null> => {
     });
 
     socket.on('connect', async () => {
-        console.log('Socket connected:', socket?.id);
+        log.debug('Socket connected:', socket?.id);
         // Join user room
         const userJson = await AsyncStorage.getItem('user');
         if (userJson) {
@@ -29,11 +32,11 @@ export const initSocket = async (): Promise<Socket | null> => {
     });
 
     socket.on('disconnect', (reason) => {
-        console.log('Socket disconnected:', reason);
+        log.debug('Socket disconnected:', reason);
     });
 
     socket.on('connect_error', (error) => {
-        console.error('Socket connection error:', error);
+        log.error('Socket connection error:', error);
     });
 
     return socket;

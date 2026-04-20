@@ -1,4 +1,5 @@
 import React, { useState, useEffect, useRef } from 'react';
+import { log } from '../utils/helpers';
 import {
     View,
     Text,
@@ -10,12 +11,19 @@ import {
     Dimensions
 } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
+import { log } from '../utils/helpers';
 import { Ionicons } from '@expo/vector-icons';
+import { log } from '../utils/helpers';
 import { useNavigation, useRoute } from '@react-navigation/native';
+import { log } from '../utils/helpers';
 import MapView, { Marker, PROVIDER_GOOGLE } from 'react-native-maps';
+import { log } from '../utils/helpers';
 import { useTheme } from '../contexts';
+import { log } from '../utils/helpers';
 import { orderApi, getSocket } from '../services';
+import { log } from '../utils/helpers';
 import { Spacing, BorderRadius, FontSize, Shadows, ORDER_STATUS } from '../constants';
+import { log } from '../utils/helpers';
 
 const { width, height } = Dimensions.get('window');
 
@@ -74,7 +82,7 @@ const DeliveryTrackingScreen: React.FC = () => {
                 });
             }
         } catch (error) {
-            console.error('Failed to load order:', error);
+            log.error('Failed to load order:', error);
             Alert.alert('Error', 'Failed to load tracking data');
         } finally {
             setLoading(false);

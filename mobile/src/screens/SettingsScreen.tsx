@@ -1,5 +1,6 @@
 // QScrap Settings Screen - App Preferences and Notifications
 import React, { useState, useEffect } from 'react';
+import { log } from '../utils/helpers';
 import {
     View,
     Text,
@@ -11,12 +12,19 @@ import {
     Linking,
 } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
+import { log } from '../utils/helpers';
 import * as Haptics from 'expo-haptics';
+import { log } from '../utils/helpers';
 import AsyncStorage from '@react-native-async-storage/async-storage';
+import { log } from '../utils/helpers';
 import { useNavigation } from '@react-navigation/native';
+import { log } from '../utils/helpers';
 import { Colors, Spacing, BorderRadius, FontSizes, Shadows } from '../constants/theme';
+import { log } from '../utils/helpers';
 import { useTheme } from '../contexts/ThemeContext';
+import { log } from '../utils/helpers';
 import { useLanguage } from '../contexts/LanguageContext';
+import { log } from '../utils/helpers';
 
 interface SettingsState {
     pushNotifications: boolean;
@@ -57,7 +65,7 @@ export default function SettingsScreen() {
                 setSettings({ ...defaultSettings, ...JSON.parse(saved) });
             }
         } catch (error) {
-            console.log('Failed to load settings:', error);
+            log.debug('Failed to load settings:', error);
         }
     };
 
@@ -70,7 +78,7 @@ export default function SettingsScreen() {
         try {
             await AsyncStorage.setItem('qscrap_settings', JSON.stringify(newSettings));
         } catch (error) {
-            console.log('Failed to save settings:', error);
+            log.debug('Failed to save settings:', error);
         }
     };
 

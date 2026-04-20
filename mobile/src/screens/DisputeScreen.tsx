@@ -1,4 +1,5 @@
 import React, { useState } from 'react';
+import { log } from '../utils/helpers';
 import {
     View,
     Text,
@@ -11,12 +12,19 @@ import {
     ScrollView
 } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
+import { log } from '../utils/helpers';
 import { Ionicons } from '@expo/vector-icons';
+import { log } from '../utils/helpers';
 import { useNavigation, useRoute } from '@react-navigation/native';
+import { log } from '../utils/helpers';
 import * as ImagePicker from 'expo-image-picker';
+import { log } from '../utils/helpers';
 import { useTheme } from '../contexts';
+import { log } from '../utils/helpers';
 import { disputeApi } from '../services';
+import { log } from '../utils/helpers';
 import { Spacing, BorderRadius, FontSize, Shadows } from '../constants';
+import { log } from '../utils/helpers';
 
 const DISPUTE_REASONS = [
     { id: 'wrong_item', label: 'Wrong Item Received', icon: 'swap-horizontal-outline', refund: '100%' },

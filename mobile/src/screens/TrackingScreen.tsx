@@ -1,5 +1,6 @@
 // QScrap Live Tracking Screen - Premium Real-time Map Experience
 import React, { useState, useEffect, useRef } from 'react';
+import { log } from '../utils/helpers';
 import {
     View,
     Text,
@@ -12,17 +13,29 @@ import {
     Alert,
 } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
+import { log } from '../utils/helpers';
 import MapView, { Marker, Polyline, PROVIDER_GOOGLE } from 'react-native-maps';
+import { log } from '../utils/helpers';
 import { LinearGradient } from 'expo-linear-gradient';
+import { log } from '../utils/helpers';
 import * as Haptics from 'expo-haptics';
+import { log } from '../utils/helpers';
 import * as Location from 'expo-location';
+import { log } from '../utils/helpers';
 import { useNavigation, useRoute } from '@react-navigation/native';
+import { log } from '../utils/helpers';
 import { NativeStackNavigationProp } from '@react-navigation/native-stack';
+import { log } from '../utils/helpers';
 import { RootStackParamList } from '../../App';
+import { log } from '../utils/helpers';
 import { io, Socket } from 'socket.io-client';
+import { log } from '../utils/helpers';
 import { SOCKET_URL } from '../config/api';
+import { log } from '../utils/helpers';
 import { api } from '../services/api';
+import { log } from '../utils/helpers';
 import { Colors, Spacing, BorderRadius, FontSizes, Shadows } from '../constants/theme';
+import { log } from '../utils/helpers';
 
 const { width, height } = Dimensions.get('window');
 const ASPECT_RATIO = width / height;
@@ -156,7 +169,7 @@ export default function TrackingScreen() {
                 }
             }
         } catch (error) {
-            console.log('Failed to load order data:', error);
+            log.debug('Failed to load order data:', error);
         }
     };
 
@@ -189,7 +202,7 @@ export default function TrackingScreen() {
                     }
                 );
             } catch (error) {
-                console.log('Location error:', error);
+                log.debug('Location error:', error);
             }
         };
 

@@ -1,5 +1,6 @@
 // QScrap Home Screen - Premium VIP Dashboard
 import React, { useState, useCallback, useEffect } from 'react';
+import { log } from '../utils/helpers';
 import {
     View,
     Text,
@@ -12,18 +13,31 @@ import {
     Image,
 } from 'react-native';
 import { LinearGradient } from 'expo-linear-gradient';
+import { log } from '../utils/helpers';
 import { SafeAreaView } from 'react-native-safe-area-context';
+import { log } from '../utils/helpers';
 import { useNavigation, useFocusEffect } from '@react-navigation/native';
+import { log } from '../utils/helpers';
 import { NativeStackNavigationProp } from '@react-navigation/native-stack';
+import { log } from '../utils/helpers';
 import * as Haptics from 'expo-haptics';
+import { log } from '../utils/helpers';
 import { useAuth } from '../../contexts/AuthContext';
+import { log } from '../utils/helpers';
 import { useTheme } from '../../contexts/ThemeContext';
+import { log } from '../utils/helpers';
 import { api, Stats } from '../../services/api';
+import { log } from '../utils/helpers';
 import { Colors, Spacing, BorderRadius, FontSizes, Shadows } from '../../constants/theme';
+import { log } from '../utils/helpers';
 import { RootStackParamList } from '../../../App';
+import { log } from '../utils/helpers';
 import { LoadingStats } from '../../components/SkeletonLoading';
+import { log } from '../utils/helpers';
 import { useSocketContext } from '../../hooks/useSocket';
+import { log } from '../utils/helpers';
 import FeaturedProductsSection from '../../components/FeaturedProductsSection';
+import { log } from '../utils/helpers';
 
 type HomeScreenNavigationProp = NativeStackNavigationProp<RootStackParamList>;
 const { width } = Dimensions.get('window');
@@ -43,7 +57,7 @@ export default function HomeScreen() {
             const data = await api.getStats();
             setStats(data.stats);
         } catch (error) {
-            console.log('Failed to load stats:', error);
+            log.debug('Failed to load stats:', error);
         } finally {
             setIsLoading(false);
             setIsRefreshing(false);
@@ -60,7 +74,7 @@ export default function HomeScreen() {
     // Real-time: Reload stats when socket receives new bids or order updates
     useEffect(() => {
         if (newBids.length > 0 || orderUpdates.length > 0) {
-            console.log('[HomeScreen] Socket event received, refreshing stats...');
+            log.debug('[HomeScreen] Socket event received, refreshing stats...');
             loadStats();
         }
     }, [newBids, orderUpdates, loadStats]);
@@ -158,7 +172,7 @@ export default function HomeScreen() {
                 <FeaturedProductsSection
                     onProductPress={(product) => {
                         // TODO: Open product detail modal or navigate to catalog
-                        console.log('Product pressed:', product.title);
+                        log.debug('Product pressed:', product.title);
                     }}
                 />
 

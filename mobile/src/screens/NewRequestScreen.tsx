@@ -1,5 +1,6 @@
 // QScrap New Request Screen - Premium "Excellence" Edition
 import React, { useState, useEffect } from 'react';
+import { log } from '../utils/helpers';
 import {
     View,
     Text,
@@ -14,21 +15,36 @@ import {
     Platform,
 } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
+import { log } from '../utils/helpers';
 import { LinearGradient } from 'expo-linear-gradient';
+import { log } from '../utils/helpers';
 import * as ImagePicker from 'expo-image-picker';
+import { log } from '../utils/helpers';
 import * as Location from 'expo-location';
+import { log } from '../utils/helpers';
 import * as Haptics from 'expo-haptics';
+import { log } from '../utils/helpers';
 import { useNavigation } from '@react-navigation/native';
+import { log } from '../utils/helpers';
 import { NativeStackNavigationProp } from '@react-navigation/native-stack';
+import { log } from '../utils/helpers';
 import { RootStackParamList } from '../../App';
+import { log } from '../utils/helpers';
 import { api } from '../services/api';
+import { log } from '../utils/helpers';
 import { Colors, Spacing, BorderRadius, FontSizes, Shadows } from '../constants/theme';
+import { log } from '../utils/helpers';
 import SearchableDropdown from '../components/SearchableDropdown';
+import { log } from '../utils/helpers';
 
 import ImageViewerModal from '../components/ImageViewerModal';
+import { log } from '../utils/helpers';
 import { CAR_MAKES, CAR_MODELS, YEARS } from '../constants/carData';
+import { log } from '../utils/helpers';
 import { Address } from '../services/api';
+import { log } from '../utils/helpers';
 import { PART_CATEGORIES, PART_SUBCATEGORIES } from '../constants/categoryData';
+import { log } from '../utils/helpers';
 
 type NavigationProp = NativeStackNavigationProp<RootStackParamList>;
 
@@ -109,7 +125,7 @@ export default function NewRequestScreen() {
                 setDeliveryAddress(`${a.street || ''} ${a.city || ''}, Qatar`.trim());
             }
         } catch (error) {
-            console.log('Location error:', error);
+            log.debug('Location error:', error);
             Alert.alert('Error', 'Failed to get location');
         }
     };
@@ -117,7 +133,7 @@ export default function NewRequestScreen() {
     const handleSelectAddress = async () => {
         navigation.navigate('Addresses', {
             onSelect: async (address: Address) => {
-                console.log('[NewRequest] Address selected:', address);
+                log.debug('[NewRequest] Address selected:', address);
                 setDeliveryAddress(address.address_text);
 
                 // Calculate delivery fee if coordinates available
@@ -125,7 +141,7 @@ export default function NewRequestScreen() {
                     setLocation({ lat: address.latitude, lng: address.longitude });
                     try {
                         const res = await api.calculateDeliveryFee(address.latitude, address.longitude);
-                        console.log('[NewRequest] Fee calculated:', res);
+                        log.debug('[NewRequest] Fee calculated:', res);
                         if (res.success) {
                             setDeliveryFee(res.delivery_fee);
                             Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success);
@@ -135,7 +151,7 @@ export default function NewRequestScreen() {
                             Alert.alert('Note', 'Using standard delivery fee (25 QAR)');
                         }
                     } catch (error) {
-                        console.log('[NewRequest] Fee calculation error:', error);
+                        log.debug('[NewRequest] Fee calculation error:', error);
                         setDeliveryFee(25);
                         Alert.alert('Note', 'Using standard delivery fee (25 QAR)');
                     }

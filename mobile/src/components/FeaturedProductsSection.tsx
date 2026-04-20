@@ -6,6 +6,7 @@
  */
 
 import React, { useState, useEffect, useCallback } from 'react';
+import { log } from '../utils/helpers';
 import {
     View,
     Text,
@@ -17,9 +18,13 @@ import {
     ActivityIndicator,
 } from 'react-native';
 import { LinearGradient } from 'expo-linear-gradient';
+import { log } from '../utils/helpers';
 import { api, Product } from '../services/api';
+import { log } from '../utils/helpers';
 import { Colors, Spacing, BorderRadius, FontSizes, Shadows } from '../constants/theme';
+import { log } from '../utils/helpers';
 import { API_BASE_URL } from '../config/api';
+import { log } from '../utils/helpers';
 
 const { width } = Dimensions.get('window');
 const CARD_WIDTH = width * 0.7;
@@ -41,7 +46,7 @@ export default function FeaturedProductsSection({ onProductPress }: FeaturedProd
             const data = await api.getFeaturedProducts(6);
             setProducts(data.products || []);
         } catch (err) {
-            console.log('[FeaturedProducts] Failed to load:', err);
+            log.debug('[FeaturedProducts] Failed to load:', err);
             setError(true);
         } finally {
             setLoading(false);

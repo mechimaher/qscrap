@@ -1,5 +1,6 @@
 // QScrap Edit Profile Screen - Full Profile Management
 import React, { useState, useEffect } from 'react';
+import { log } from '../utils/helpers';
 import {
     View,
     Text,
@@ -12,15 +13,25 @@ import {
     Image,
 } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
+import { log } from '../utils/helpers';
 import { LinearGradient } from 'expo-linear-gradient';
+import { log } from '../utils/helpers';
 import * as Haptics from 'expo-haptics';
+import { log } from '../utils/helpers';
 import * as ImagePicker from 'expo-image-picker';
+import { log } from '../utils/helpers';
 import { useNavigation } from '@react-navigation/native';
+import { log } from '../utils/helpers';
 import { api } from '../services/api';
+import { log } from '../utils/helpers';
 import { API_BASE_URL, API_ENDPOINTS } from '../config/api';
+import { log } from '../utils/helpers';
 import { useAuth } from '../contexts/AuthContext';
+import { log } from '../utils/helpers';
 import { useTheme } from '../contexts/ThemeContext';
+import { log } from '../utils/helpers';
 import { Colors, Spacing, BorderRadius, FontSizes, Shadows } from '../constants/theme';
+import { log } from '../utils/helpers';
 
 export default function EditProfileScreen() {
     const navigation = useNavigation();
@@ -51,7 +62,7 @@ export default function EditProfileScreen() {
                 setEmail(data.profile.email || '');
             }
         } catch (error) {
-            console.log('Failed to load profile:', error);
+            log.debug('Failed to load profile:', error);
         } finally {
             setIsLoading(false);
         }

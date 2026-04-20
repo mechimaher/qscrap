@@ -24,6 +24,7 @@ import { Colors, Spacing, BorderRadius, FontSizes, Shadows } from '../constants/
 import { useTheme } from '../contexts/ThemeContext';
 import { RootStackParamList } from '../../App';
 import { useSocketContext } from '../hooks/useSocket';
+import { log } from '../utils/helpers';
 
 type NavigationProp = NativeStackNavigationProp<RootStackParamList>;
 
@@ -53,7 +54,7 @@ export default function OrderDetailScreen() {
             const data = await api.getOrderDetails(orderId);
             setOrder(data.order || null);
         } catch (error) {
-            console.log('Failed to load order:', error);
+            log.error('Failed to load order:', error);
             Alert.alert('Error', 'Failed to load order details');
         } finally {
             setIsLoading(false);
@@ -73,7 +74,7 @@ export default function OrderDetailScreen() {
             // Check if any update is for this order
             const relevantUpdate = orderUpdates.find((u: any) => u.order_id === orderId);
             if (relevantUpdate) {
-                console.log('[OrderDetail] Socket order update received for this order, refreshing...');
+                log.debug('[OrderDetail] Socket order update received for this order, refreshing...');
                 loadOrderDetails();
             }
         }
@@ -216,7 +217,7 @@ export default function OrderDetailScreen() {
 
             Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success);
         } catch (error: any) {
-            console.log('Invoice download error:', error);
+            log.error('Invoice download error:', error);
             Alert.alert('Error', error.message || 'Failed to download invoice');
             Haptics.notificationAsync(Haptics.NotificationFeedbackType.Error);
         } finally {

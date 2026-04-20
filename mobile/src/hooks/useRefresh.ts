@@ -1,6 +1,9 @@
 import { useState, useCallback } from 'react';
+import { log } from '../utils/helpers';
 import * as Haptics from 'expo-haptics';
+import { log } from '../utils/helpers';
 import { Platform } from 'react-native';
+import { log } from '../utils/helpers';
 
 interface UseRefreshOptions {
     onRefresh: () => Promise<void>;
@@ -59,7 +62,7 @@ export const useRefresh = ({
         try {
             await refreshCallback();
         } catch (error) {
-            console.error('Refresh failed:', error);
+            log.error('Refresh failed:', error);
         } finally {
             // Ensure minimum duration for better UX
             const elapsed = Date.now() - startTime;

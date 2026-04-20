@@ -1,5 +1,6 @@
 // QScrap Request Detail Screen - Full Featured with Bid Viewing
 import React, { useState, useEffect } from 'react';
+import { log } from '../utils/helpers';
 import {
     View,
     Text,
@@ -11,17 +12,29 @@ import {
     Image,
 } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
+import { log } from '../utils/helpers';
 import { LinearGradient } from 'expo-linear-gradient';
+import { log } from '../utils/helpers';
 import * as Haptics from 'expo-haptics';
+import { log } from '../utils/helpers';
 import { useNavigation, useRoute } from '@react-navigation/native';
+import { log } from '../utils/helpers';
 import { NativeStackNavigationProp } from '@react-navigation/native-stack';
+import { log } from '../utils/helpers';
 import { api, Request, Bid } from '../services/api';
+import { log } from '../utils/helpers';
 import { Colors, Spacing, BorderRadius, FontSizes, Shadows } from '../constants/theme';
+import { log } from '../utils/helpers';
 import { useTheme } from '../contexts/ThemeContext';
+import { log } from '../utils/helpers';
 import { API_BASE_URL } from '../config/api';
+import { log } from '../utils/helpers';
 import { RootStackParamList } from '../../App';
+import { log } from '../utils/helpers';
 import ImageViewerModal from '../components/ImageViewerModal';
+import { log } from '../utils/helpers';
 import { useSocketContext } from '../hooks/useSocket';
+import { log } from '../utils/helpers';
 
 type NavigationProp = NativeStackNavigationProp<RootStackParamList>;
 
@@ -64,7 +77,7 @@ export default function RequestDetailScreen() {
         if (!socket) return;
 
         const handleCounterOfferEvent = (data: any) => {
-            console.log('[RequestDetail] Counter-offer event received:', data);
+            log.debug('[RequestDetail] Counter-offer event received:', data);
             loadRequestDetails();
         };
 
@@ -89,7 +102,7 @@ export default function RequestDetailScreen() {
             const sortedBids = (data.bids || []).sort((a: Bid, b: Bid) => a.bid_amount - b.bid_amount);
             setBids(sortedBids);
         } catch (error) {
-            console.log('Failed to load request:', error);
+            log.debug('Failed to load request:', error);
             Alert.alert('Error', 'Failed to load request details');
         } finally {
             setIsLoading(false);
