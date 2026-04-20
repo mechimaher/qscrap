@@ -1,6 +1,5 @@
 // QScrap Customer App - Premium React Native with Full Features
 import React from 'react';
-import * as Sentry from '@sentry/react-native';
 import { StatusBar } from 'expo-status-bar';
 import { NavigationContainer, createNavigationContainerRef } from '@react-navigation/native';
 import { createNativeStackNavigator } from '@react-navigation/native-stack';
@@ -29,28 +28,6 @@ import OfflineBanner from './src/components/OfflineBanner';
 import { Address } from './src/services/api';
 import { BadgeCountsProvider, useBadgeCounts } from './src/hooks/useBadgeCounts';
 
-// Initialize Sentry — must be called before any React rendering
-Sentry.init({
-  dsn: 'https://0acc3f0a5f3bfffa51705b265d7ca596@o4510826572873728.ingest.de.sentry.io/4510890998825040',
-  // Performance monitoring — sample 20% of transactions in production
-  tracesSampleRate: __DEV__ ? 1.0 : 0.2,
-  // Only send errors in production builds
-  enabled: !__DEV__,
-  // Attach screenshots to error reports for visual context
-  attachScreenshot: true,
-  // Environment tag
-  environment: __DEV__ ? 'development' : 'production',
-  // Enrich errors with device context
-  enableAutoSessionTracking: true,
-  // Filter out noisy network errors that aren't real bugs
-  beforeSend(event) {
-    const message = event.exception?.values?.[0]?.value || '';
-    if (message.includes('Network request failed') || message.includes('AbortError')) {
-      return null;
-    }
-    return event;
-  },
-});
 
 // Import Auth screens
 import LoginScreen from './src/screens/auth/LoginScreen';

@@ -72,6 +72,7 @@ module.exports = ({ config }) => {
                 'android.permission.SCHEDULE_EXACT_ALARM',
                 'android.permission.POST_NOTIFICATIONS',
             ],
+            useNextNotificationsApi: true,
             config: {
                 googleMaps: {
                     // Read from environment variable, fallback to existing key for backwards compatibility
@@ -124,16 +125,12 @@ module.exports = ({ config }) => {
             'expo-localization',
             [
                 '@stripe/stripe-react-native',
-                {},
-            ],
-            'expo-font',
-            [
-                '@sentry/react-native',
                 {
-                    organization: 'qscrap',
-                    project: 'qscrap-customer',
+                    merchantIdentifier: 'merchant.qa.qscrap.app',
+                    enableGooglePay: true,
                 },
             ],
+            'expo-font',
         ],
         extra: {
             privacyPolicyUrl: 'https://qscrap.qa/privacy',

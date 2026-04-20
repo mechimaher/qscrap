@@ -1,7 +1,7 @@
 import { log, warn, error as logError } from '../utils/logger';
 // Auth Context - Manages authentication state across the app
 import React, { createContext, useContext, useState, useEffect, ReactNode } from 'react';
-import * as Sentry from '@sentry/react-native';
+
 import { api, User } from '../services/api';
 import { initializePushNotifications } from '../services/notifications';
 import { t } from '../utils/i18nHelper';
@@ -33,7 +33,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
                 const savedUser = await api.getUser();
                 if (savedUser) {
                     setUser(savedUser);
-                    Sentry.setUser({ id: savedUser.user_id, username: savedUser.full_name });
+
                     // Initialize push notifications when checking auth
                     initializePushNotifications();
                 }
@@ -97,7 +97,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
 
             return { success: true };
         } catch (error: any) {
-            Sentry.captureException(error, { tags: { action: 'login' } });
+            logError('[Auth] Login error:', error);
             return { success: false, error: error.message || t('auth.loginFailed') };
         }
     };
@@ -129,7 +129,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
             await AsyncStorage.multiRemove(keysToRemove);
 
             // Reset user state
-            Sentry.setUser(null);
+
             setUser(null);
 
             log('[Auth] Logout complete - all data cleared');
