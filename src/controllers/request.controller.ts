@@ -68,7 +68,8 @@ export const createRequest = async (req: AuthRequest, res: Response) => {
         condition_required,
         delivery_address_text,
         delivery_lat,
-        delivery_lng
+        delivery_lng,
+        delivery_fee
     } = req.body;
     const userId = req.user!.userId;
 
@@ -127,10 +128,10 @@ export const createRequest = async (req: AuthRequest, res: Response) => {
 
         const result = await client.query(
             `INSERT INTO part_requests
-      (customer_id, car_make, car_model, car_year, vin_number, part_description, part_number, condition_required, image_urls, delivery_address_text, delivery_lat, delivery_lng)
-      VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12)
+      (customer_id, car_make, car_model, car_year, vin_number, part_description, part_number, condition_required, image_urls, delivery_address_text, delivery_lat, delivery_lng, delivery_fee)
+      VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13)
       RETURNING request_id, created_at`,
-            [userId, car_make, car_model, yearCheck.value, vin_number || null, part_description, part_number || null, condition_required || 'any', image_urls, delivery_address_text, delivery_lat || null, delivery_lng || null]
+            [userId, car_make, car_model, yearCheck.value, vin_number || null, part_description, part_number || null, condition_required || 'any', image_urls, delivery_address_text, delivery_lat || null, delivery_lng || null, delivery_fee || 0]
         );
 
         const request = result.rows[0];

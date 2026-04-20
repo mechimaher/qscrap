@@ -15,36 +15,21 @@ import {
     Platform,
 } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
-import { log } from '../utils/helpers';
 import { LinearGradient } from 'expo-linear-gradient';
-import { log } from '../utils/helpers';
 import * as ImagePicker from 'expo-image-picker';
-import { log } from '../utils/helpers';
 import * as Location from 'expo-location';
-import { log } from '../utils/helpers';
 import * as Haptics from 'expo-haptics';
-import { log } from '../utils/helpers';
 import { useNavigation } from '@react-navigation/native';
-import { log } from '../utils/helpers';
 import { NativeStackNavigationProp } from '@react-navigation/native-stack';
-import { log } from '../utils/helpers';
 import { RootStackParamList } from '../../App';
-import { log } from '../utils/helpers';
 import { api } from '../services/api';
-import { log } from '../utils/helpers';
 import { Colors, Spacing, BorderRadius, FontSizes, Shadows } from '../constants/theme';
-import { log } from '../utils/helpers';
 import SearchableDropdown from '../components/SearchableDropdown';
-import { log } from '../utils/helpers';
-
 import ImageViewerModal from '../components/ImageViewerModal';
-import { log } from '../utils/helpers';
+import { SafeImage } from '../components/SafeImage';
 import { CAR_MAKES, CAR_MODELS, YEARS } from '../constants/carData';
-import { log } from '../utils/helpers';
 import { Address } from '../services/api';
-import { log } from '../utils/helpers';
 import { PART_CATEGORIES, PART_SUBCATEGORIES } from '../constants/categoryData';
-import { log } from '../utils/helpers';
 
 type NavigationProp = NativeStackNavigationProp<RootStackParamList>;
 
@@ -235,6 +220,11 @@ export default function NewRequestScreen() {
             formData.append('part_number', partNumber);
             formData.append('condition_required', condition);
             formData.append('delivery_address_text', deliveryAddress);
+
+            // Add delivery fee if calculated
+            if (deliveryFee !== null && deliveryFee > 0) {
+                formData.append('delivery_fee', deliveryFee.toString());
+            }
 
             if (location) {
                 formData.append('delivery_lat', location.lat.toString());
@@ -434,7 +424,7 @@ export default function NewRequestScreen() {
                                             setCurrentImageIndex(index);
                                             setImageViewerVisible(true);
                                         }}>
-                                            <Image source={{ uri }} style={styles.image} />
+                                            <SafeImage source={{ uri }} style={styles.image} />
                                         </TouchableOpacity>
                                         <TouchableOpacity
                                             style={styles.removeImage}

@@ -13,25 +13,16 @@ import {
     Image,
 } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
-import { log } from '../utils/helpers';
 import { LinearGradient } from 'expo-linear-gradient';
-import { log } from '../utils/helpers';
 import * as Haptics from 'expo-haptics';
-import { log } from '../utils/helpers';
 import * as ImagePicker from 'expo-image-picker';
-import { log } from '../utils/helpers';
 import { useNavigation } from '@react-navigation/native';
-import { log } from '../utils/helpers';
 import { api } from '../services/api';
-import { log } from '../utils/helpers';
 import { API_BASE_URL, API_ENDPOINTS } from '../config/api';
-import { log } from '../utils/helpers';
 import { useAuth } from '../contexts/AuthContext';
-import { log } from '../utils/helpers';
 import { useTheme } from '../contexts/ThemeContext';
-import { log } from '../utils/helpers';
 import { Colors, Spacing, BorderRadius, FontSizes, Shadows } from '../constants/theme';
-import { log } from '../utils/helpers';
+import { SafeImage } from '../components/SafeImage';
 
 export default function EditProfileScreen() {
     const navigation = useNavigation();
@@ -241,7 +232,7 @@ export default function EditProfileScreen() {
                 <View style={styles.avatarSection}>
                     <View style={styles.avatar}>
                         {avatarUri ? (
-                            <Image source={{ uri: avatarUri }} style={styles.avatarImage} />
+                            <SafeImage source={{ uri: avatarUri }} style={styles.avatarImage} />
                         ) : (
                             <Text style={styles.avatarText}>
                                 {fullName.charAt(0).toUpperCase() || '👤'}

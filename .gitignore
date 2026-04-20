@@ -19,29 +19,19 @@ build/
 *.swp
 *.swo
 
+# OS files
+.DS_Store
+Thumbs.db
+
 # Logs
 *.log
 
-# Temp files
-*.tmp
-
-# Coverage reports
+# Coverage
 coverage/
 htmlcov/
-*.coverage
+.coverage
 
-# Python cache
-__pycache__/
-*.pyc
-*.pyo
-*.pyd
-
-# Mobile app specific
-*.ipa
-*.apk
-*.aab
-
-# Lock files
-yarn.lock
-package-lock.json
+# Temporary files
+*.tmp
+*.temp
 ```

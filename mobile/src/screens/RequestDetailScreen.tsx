@@ -21,6 +21,7 @@ import { useTheme } from '../contexts/ThemeContext';
 import { API_BASE_URL } from '../config/api';
 import { RootStackParamList } from '../../App';
 import ImageViewerModal from '../components/ImageViewerModal';
+import { SafeImage } from '../components/SafeImage';
 import { useSocketContext } from '../hooks/useSocket';
 import { log } from '../utils/helpers';
 
@@ -372,7 +373,7 @@ export default function RequestDetailScreen() {
                                             activeOpacity={0.85}
                                             style={styles.bidImageWrapper}
                                         >
-                                            <Image
+                                            <SafeImage
                                                 source={{ uri: fullUrl }}
                                                 style={styles.bidImage}
                                                 resizeMode="cover"
@@ -533,7 +534,7 @@ export default function RequestDetailScreen() {
                                             setIsViewerVisible(true);
                                         }}
                                     >
-                                        <Image
+                                        <SafeImage
                                             source={{ uri: fullUrl }}
                                             style={styles.requestImage}
                                         />
