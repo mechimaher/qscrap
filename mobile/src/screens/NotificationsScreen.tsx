@@ -1,5 +1,6 @@
 // QScrap Notifications Screen - Premium Notification Center
 import React, { useState, useEffect, useCallback } from 'react';
+import { log } from '../utils/helpers';
 import {
     View,
     Text,
@@ -10,13 +11,21 @@ import {
     ActivityIndicator,
 } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
+import { log } from '../utils/helpers';
 import { useNavigation } from '@react-navigation/native';
+import { log } from '../utils/helpers';
 import { NativeStackNavigationProp } from '@react-navigation/native-stack';
+import { log } from '../utils/helpers';
 import { RootStackParamList } from '../../App';
+import { log } from '../utils/helpers';
 import * as Haptics from 'expo-haptics';
+import { log } from '../utils/helpers';
 import { api } from '../services/api';
+import { log } from '../utils/helpers';
 import { useTheme } from '../contexts/ThemeContext';
+import { log } from '../utils/helpers';
 import { Colors, Spacing, BorderRadius, FontSizes, Shadows } from '../constants/theme';
+import { log } from '../utils/helpers';
 
 interface Notification {
     notification_id: string;
@@ -42,7 +51,7 @@ export default function NotificationsScreen() {
             const data = await api.getNotifications();
             setNotifications(data.notifications || []);
         } catch (error) {
-            console.log('Failed to load notifications:', error);
+            log.debug('Failed to load notifications:', error);
         } finally {
             setIsLoading(false);
             setIsRefreshing(false);
@@ -74,7 +83,7 @@ export default function NotificationsScreen() {
                     )
                 );
             } catch (error) {
-                console.log('Failed to mark notification as read:', error);
+                log.debug('Failed to mark notification as read:', error);
             }
         }
 
@@ -92,7 +101,7 @@ export default function NotificationsScreen() {
             await api.markAllNotificationsRead();
             setNotifications(prev => prev.map(n => ({ ...n, is_read: true })));
         } catch (error) {
-            console.log('Failed to mark all as read:', error);
+            log.debug('Failed to mark all as read:', error);
         }
     };
 

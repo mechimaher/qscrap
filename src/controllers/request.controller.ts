@@ -3,6 +3,7 @@ import { AuthRequest } from '../middleware/auth.middleware';
 import pool from '../config/db';
 import fs from 'fs/promises';
 import { SystemConfig } from '../config/system.config';
+import { fleetPricingService, FleetPricingService } from '../services/fleet-pricing.service';
 
 // ============================================
 // VALIDATION HELPERS
@@ -68,7 +69,8 @@ export const createRequest = async (req: AuthRequest, res: Response) => {
         condition_required,
         delivery_address_text,
         delivery_lat,
-        delivery_lng
+        delivery_lng,
+        delivery_fee
     } = req.body;
     const userId = req.user!.userId;
 
@@ -121,16 +123,72 @@ export const createRequest = async (req: AuthRequest, res: Response) => {
     const files = req.files as Express.Multer.File[];
     const image_urls = files ? files.map(f => '/' + f.path.replace(/\\/g, '/')) : [];
 
+    // ============================================
+    // DELIVERY FEE CALCULATION (QATAR MOCI COMPLIANT)
+    // ============================================
+    
+    let calculatedDeliveryFee = 0;
+    
+    // Only calculate if we have valid coordinates
+    if (delivery_lat && delivery_lng) {
+        try {
+            // Validate coordinates are within Qatar
+            const isValidLocation = FleetPricingService.isValidQatarCoordinate(
+                parseFloat(delivery_lat),
+                parseFloat(delivery_lng)
+            );
+            
+            if (isValidLocation) {
+                // Determine vehicle type based on part category
+                const vehicleType = FleetPricingService.getRequiredVehicle(part_category);
+                
+                // Calculate distance from a central Doha point (can be enhanced with actual garage location)
+                // Using Souq Waqif as central reference point: 25.2867° N, 51.5333° E
+                const DOHA_CENTER_LAT = 25.2867;
+                const DOHA_CENTER_LNG = 51.5333;
+                
+                const distanceKm = FleetPricingService.calculateHaversineDistance(
+                    DOHA_CENTER_LAT,
+                    DOHA_CENTER_LNG,
+                    parseFloat(delivery_lat),
+                    parseFloat(delivery_lng)
+                );
+                
+                // Calculate fee (zone surcharge can be added based on area detection)
+                calculatedDeliveryFee = FleetPricingService.calculateDeliveryFee(
+                    distanceKm,
+                    vehicleType,
+                    undefined // zoneSurcharge - can be added based on geofencing
+                );
+            } else {
+                // Coordinates outside Qatar - use default fee
+                calculatedDeliveryFee = SystemConfig.DEFAULT_DELIVERY_FEE;
+            }
+        } catch (error) {
+            console.error('[REQUEST] Delivery fee calculation error:', error);
+            // Fallback to default fee on error
+            calculatedDeliveryFee = SystemConfig.DEFAULT_DELIVERY_FEE;
+        }
+    } else {
+        // No coordinates provided - use default fee
+        calculatedDeliveryFee = SystemConfig.DEFAULT_DELIVERY_FEE;
+    }
+
+    // Use client-provided fee if present and reasonable, otherwise use calculated fee
+    const finalDeliveryFee = (delivery_fee && delivery_fee > 0) 
+        ? Math.round(parseFloat(delivery_fee)) 
+        : calculatedDeliveryFee;
+
     const client = await pool.connect();
     try {
         await client.query('BEGIN');
 
         const result = await client.query(
             `INSERT INTO part_requests
-      (customer_id, car_make, car_model, car_year, vin_number, part_description, part_number, condition_required, image_urls, delivery_address_text, delivery_lat, delivery_lng)
-      VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12)
+      (customer_id, car_make, car_model, car_year, vin_number, part_description, part_number, condition_required, image_urls, delivery_address_text, delivery_lat, delivery_lng, delivery_fee, part_category)
+      VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13, $14)
       RETURNING request_id, created_at`,
-            [userId, car_make, car_model, yearCheck.value, vin_number || null, part_description, part_number || null, condition_required || 'any', image_urls, delivery_address_text, delivery_lat || null, delivery_lng || null]
+            [userId, car_make, car_model, yearCheck.value, vin_number || null, part_description, part_number || null, condition_required || 'any', image_urls, delivery_address_text, delivery_lat || null, delivery_lng || null, finalDeliveryFee, part_category || null]
         );
 
         const request = result.rows[0];
@@ -150,6 +208,7 @@ export const createRequest = async (req: AuthRequest, res: Response) => {
                 condition_required: condition_required || 'any',
                 image_urls: image_urls,
                 delivery_address_text: delivery_address_text || null,
+                delivery_fee: finalDeliveryFee,
                 status: 'active',
                 created_at: request.created_at,
                 bid_count: 0
@@ -159,7 +218,11 @@ export const createRequest = async (req: AuthRequest, res: Response) => {
             // Don't fail the request creation if socket fails
         }
 
-        res.status(201).json({ message: 'Request created', request_id: request.request_id });
+        res.status(201).json({ 
+            message: 'Request created', 
+            request_id: request.request_id,
+            delivery_fee: finalDeliveryFee
+        });
     } catch (err: any) {
         await client.query('ROLLBACK');
 

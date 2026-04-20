@@ -1,8 +1,12 @@
 // LanguageContext - Complete i18n solution with RTL support
 import React, { createContext, useContext, useState, useEffect, useCallback, ReactNode } from 'react';
+import { log } from '../utils/helpers';
 import { I18nManager, Alert } from 'react-native';
+import { log } from '../utils/helpers';
 import AsyncStorage from '@react-native-async-storage/async-storage';
+import { log } from '../utils/helpers';
 import { translations, getTranslation, Language } from '../i18n';
+import { log } from '../utils/helpers';
 
 const LANGUAGE_KEY = 'qscrap_language';
 
@@ -33,7 +37,7 @@ export function LanguageProvider({ children }: { children: ReactNode }) {
                 setIsRTL(saved === 'ar');
             }
         } catch (error) {
-            console.log('Failed to load language:', error);
+            log.debug('Failed to load language:', error);
         } finally {
             setIsLoading(false);
         }
@@ -63,7 +67,7 @@ export function LanguageProvider({ children }: { children: ReactNode }) {
                 );
             }
         } catch (error) {
-            console.log('Failed to save language:', error);
+            log.debug('Failed to save language:', error);
         }
     }, []);
 

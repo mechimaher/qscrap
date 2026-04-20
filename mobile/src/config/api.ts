@@ -1,14 +1,28 @@
 // API Configuration
-// PRODUCTION: Use your actual server URL
-// DEVELOPMENT: Uncomment local IP for testing on physical device
+// Environment-aware configuration using react-native-config
+import Config from 'react-native-config';
 
-// PRODUCTION URLs (update when domain is ready)
-// export const API_BASE_URL = 'https://api.qscrap.qa/api';
-// export const SOCKET_URL = 'https://api.qscrap.qa';
+// Determine environment
+const APP_ENV = Config.APP_ENV || 'dev';
 
-// DEVELOPMENT URLs (for local testing)
-export const API_BASE_URL = 'http://192.168.1.59:3000/api';
-export const SOCKET_URL = 'http://192.168.1.59:3000';
+// API Base URLs - Prioritized by environment
+export const API_BASE_URL = Config.API_BASE_URL || (APP_ENV === 'prod' 
+    ? 'https://api.qscrap.qa/api' 
+    : 'http://192.168.1.59:3000/api');
+
+export const SOCKET_URL = Config.SOCKET_URL || (APP_ENV === 'prod'
+    ? 'https://api.qscrap.qa'
+    : 'http://192.168.1.59:3000');
+
+// Google Maps Configuration
+export const GOOGLE_MAPS_API_KEY = Config.GOOGLE_MAPS_API_KEY || '';
+
+// Feature Flags
+export const ENABLE_BIOMETRICS = Config.ENABLE_BIOMETRICS !== 'false';
+export const ENABLE_DELIVERY_FEE_CALCULATION = Config.ENABLE_DELIVERY_FEE_CALCULATION !== 'false';
+
+// Sentry Configuration
+export const SENTRY_DSN = Config.SENTRY_DSN || '';
 
 // API endpoints - Match exactly with backend routes
 export const API_ENDPOINTS = {
@@ -29,6 +43,7 @@ export const API_ENDPOINTS = {
 
     // Orders - FIXED: matches backend /orders/accept-bid/:bid_id
     MY_ORDERS: '/orders/my',
+    ORDER_DETAILS: (orderId: string) => `/orders/${orderId}`,
     ACCEPT_BID: (bidId: string) => `/orders/accept-bid/${bidId}`,
     CONFIRM_DELIVERY: (orderId: string) => `/orders/${orderId}/confirm-delivery`,
     SUBMIT_REVIEW: (orderId: string) => `/orders/${orderId}/review`,

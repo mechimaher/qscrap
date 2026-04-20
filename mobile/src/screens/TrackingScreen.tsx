@@ -1,5 +1,6 @@
 // QScrap Live Tracking Screen - Premium Real-time Map Experience
 import React, { useState, useEffect, useRef } from 'react';
+import { log } from '../utils/helpers';
 import {
     View,
     Text,
@@ -12,17 +13,27 @@ import {
     Alert,
 } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
-import MapView, { Marker, Polyline, PROVIDER_GOOGLE } from 'react-native-maps';
+import { log } from '../utils/helpers';
+import MapView, { Marker, Polyline } from 'react-native-maps';
+import { GOOGLE_MAPS_API_KEY } from '../config/api';
+import { log } from '../utils/helpers';
 import { LinearGradient } from 'expo-linear-gradient';
+import { log } from '../utils/helpers';
 import * as Haptics from 'expo-haptics';
+import { log } from '../utils/helpers';
 import * as Location from 'expo-location';
-import { useNavigation, useRoute } from '@react-navigation/native';
+import { log } from '../utils/helpers';
+import { useNavigation, useRoute, RouteProp } from '@react-navigation/native';
 import { NativeStackNavigationProp } from '@react-navigation/native-stack';
 import { RootStackParamList } from '../../App';
 import { io, Socket } from 'socket.io-client';
+import { log } from '../utils/helpers';
 import { SOCKET_URL } from '../config/api';
+import { log } from '../utils/helpers';
 import { api } from '../services/api';
+import { log } from '../utils/helpers';
 import { Colors, Spacing, BorderRadius, FontSizes, Shadows } from '../constants/theme';
+import { log } from '../utils/helpers';
 
 const { width, height } = Dimensions.get('window');
 const ASPECT_RATIO = width / height;
@@ -41,8 +52,8 @@ type NavigationProp = NativeStackNavigationProp<RootStackParamList>;
 
 export default function TrackingScreen() {
     const navigation = useNavigation<NavigationProp>();
-    const route = useRoute();
-    const { orderId, orderNumber, deliveryAddress } = route.params as any;
+    const route = useRoute<RouteProp<RootStackParamList, 'Tracking'>>();
+    const { orderId, orderNumber, deliveryAddress } = route.params;
 
     const mapRef = useRef<MapView>(null);
     const socket = useRef<Socket | null>(null);
@@ -156,7 +167,7 @@ export default function TrackingScreen() {
                 }
             }
         } catch (error) {
-            console.log('Failed to load order data:', error);
+            log.debug('Failed to load order data:', error);
         }
     };
 
@@ -189,7 +200,7 @@ export default function TrackingScreen() {
                     }
                 );
             } catch (error) {
-                console.log('Location error:', error);
+                log.debug('Location error:', error);
             }
         };
 
@@ -307,12 +318,13 @@ export default function TrackingScreen() {
             <MapView
                 ref={mapRef}
                 style={styles.map}
-                provider={PROVIDER_GOOGLE}
                 initialRegion={defaultRegion}
                 showsUserLocation={false}
                 showsMyLocationButton={false}
                 showsCompass={false}
                 customMapStyle={darkMapStyle}
+                // Google Maps is used by default on Android, Apple Maps on iOS
+                // provider={PROVIDER_GOOGLE} // Removed: Use platform default or configure via app.json
             >
                 {/* Driver Marker */}
                 {driverLocation && (

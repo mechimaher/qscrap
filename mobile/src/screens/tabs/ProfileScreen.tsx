@@ -1,5 +1,6 @@
 // QScrap Profile Screen - Premium VIP Design
 import React, { useState, useEffect } from 'react';
+import { log } from '../utils/helpers';
 import {
     View,
     Text,
@@ -10,16 +11,27 @@ import {
     Linking,
 } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
+import { log } from '../utils/helpers';
 import { LinearGradient } from 'expo-linear-gradient';
+import { log } from '../utils/helpers';
 import * as Haptics from 'expo-haptics';
+import { log } from '../utils/helpers';
 import { useAuth } from '../../contexts/AuthContext';
+import { log } from '../utils/helpers';
 import { api } from '../../services/api';
+import { log } from '../utils/helpers';
 import { useTheme } from '../../contexts/ThemeContext';
+import { log } from '../utils/helpers';
 import { PRIVACY_URL, TERMS_URL, APP_VERSION } from '../../config/api';
+import { log } from '../utils/helpers';
 import { Colors, Spacing, BorderRadius, FontSizes, Shadows } from '../../constants/theme';
+import { log } from '../utils/helpers';
 import { useNavigation } from '@react-navigation/native';
+import { log } from '../utils/helpers';
 import { NativeStackNavigationProp } from '@react-navigation/native-stack';
+import { log } from '../utils/helpers';
 import { RootStackParamList } from '../../../App';
+import { log } from '../utils/helpers';
 
 export default function ProfileScreen() {
     const navigation = useNavigation<NativeStackNavigationProp<RootStackParamList>>();
@@ -43,7 +55,7 @@ export default function ProfileScreen() {
             const data = await api.getProfile();
             setProfile(data);
         } catch (error) {
-            console.log('Failed to load profile:', error);
+            log.debug('Failed to load profile:', error);
         }
     };
 
@@ -53,7 +65,7 @@ export default function ProfileScreen() {
             const unreadCount = (data.notifications || []).filter((n: any) => !n.is_read).length;
             setUnreadNotifications(unreadCount);
         } catch (error) {
-            console.log('Failed to load notifications:', error);
+            log.debug('Failed to load notifications:', error);
         }
     };
 

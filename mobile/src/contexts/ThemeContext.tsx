@@ -1,6 +1,8 @@
 // QScrap Theme Context - App-wide dark mode support
 import React, { createContext, useContext, useState, useEffect, ReactNode } from 'react';
+import { log } from '../utils/helpers';
 import AsyncStorage from '@react-native-async-storage/async-storage';
+import { log } from '../utils/helpers';
 
 const THEME_KEY = 'qscrap_theme';
 
@@ -80,7 +82,7 @@ export function ThemeProvider({ children }: { children: ReactNode }) {
                 setIsDarkMode(savedTheme === 'dark');
             }
         } catch (error) {
-            console.log('Failed to load theme:', error);
+            log.debug('Failed to load theme:', error);
         }
     };
 
@@ -90,7 +92,7 @@ export function ThemeProvider({ children }: { children: ReactNode }) {
         try {
             await AsyncStorage.setItem(THEME_KEY, newTheme ? 'dark' : 'light');
         } catch (error) {
-            console.log('Failed to save theme:', error);
+            log.debug('Failed to save theme:', error);
         }
     };
 

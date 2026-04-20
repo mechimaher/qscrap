@@ -1,5 +1,6 @@
 // QScrap New Request Screen - Premium "Excellence" Edition
 import React, { useState, useEffect } from 'react';
+import { log } from '../utils/helpers';
 import {
     View,
     Text,
@@ -24,8 +25,8 @@ import { RootStackParamList } from '../../App';
 import { api } from '../services/api';
 import { Colors, Spacing, BorderRadius, FontSizes, Shadows } from '../constants/theme';
 import SearchableDropdown from '../components/SearchableDropdown';
-
 import ImageViewerModal from '../components/ImageViewerModal';
+import { SafeImage } from '../components/SafeImage';
 import { CAR_MAKES, CAR_MODELS, YEARS } from '../constants/carData';
 import { Address } from '../services/api';
 import { PART_CATEGORIES, PART_SUBCATEGORIES } from '../constants/categoryData';
@@ -109,7 +110,7 @@ export default function NewRequestScreen() {
                 setDeliveryAddress(`${a.street || ''} ${a.city || ''}, Qatar`.trim());
             }
         } catch (error) {
-            console.log('Location error:', error);
+            log.debug('Location error:', error);
             Alert.alert('Error', 'Failed to get location');
         }
     };
@@ -117,7 +118,7 @@ export default function NewRequestScreen() {
     const handleSelectAddress = async () => {
         navigation.navigate('Addresses', {
             onSelect: async (address: Address) => {
-                console.log('[NewRequest] Address selected:', address);
+                log.debug('[NewRequest] Address selected:', address);
                 setDeliveryAddress(address.address_text);
 
                 // Calculate delivery fee if coordinates available
@@ -125,7 +126,7 @@ export default function NewRequestScreen() {
                     setLocation({ lat: address.latitude, lng: address.longitude });
                     try {
                         const res = await api.calculateDeliveryFee(address.latitude, address.longitude);
-                        console.log('[NewRequest] Fee calculated:', res);
+                        log.debug('[NewRequest] Fee calculated:', res);
                         if (res.success) {
                             setDeliveryFee(res.delivery_fee);
                             Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success);
@@ -135,7 +136,7 @@ export default function NewRequestScreen() {
                             Alert.alert('Note', 'Using standard delivery fee (25 QAR)');
                         }
                     } catch (error) {
-                        console.log('[NewRequest] Fee calculation error:', error);
+                        log.debug('[NewRequest] Fee calculation error:', error);
                         setDeliveryFee(25);
                         Alert.alert('Note', 'Using standard delivery fee (25 QAR)');
                     }
@@ -145,7 +146,7 @@ export default function NewRequestScreen() {
                     Alert.alert('Note', 'Address has no coordinates. Using standard delivery fee (25 QAR)');
                 }
             }
-        } as any);
+        });
     };
 
     const handlePickImage = async () => {
@@ -220,6 +221,11 @@ export default function NewRequestScreen() {
             formData.append('condition_required', condition);
             formData.append('delivery_address_text', deliveryAddress);
 
+            // Add delivery fee if calculated
+            if (deliveryFee !== null && deliveryFee > 0) {
+                formData.append('delivery_fee', deliveryFee.toString());
+            }
+
             if (location) {
                 formData.append('delivery_lat', location.lat.toString());
                 formData.append('delivery_lng', location.lng.toString());
@@ -231,7 +237,7 @@ export default function NewRequestScreen() {
                     uri,
                     name: `image_${index}.jpg`,
                     type: 'image/jpeg',
-                } as any);
+                } as any); // TypeScript FormData type limitation in React Native
             });
 
             const result = await api.createRequest(formData);
@@ -418,7 +424,7 @@ export default function NewRequestScreen() {
                                             setCurrentImageIndex(index);
                                             setImageViewerVisible(true);
                                         }}>
-                                            <Image source={{ uri }} style={styles.image} />
+                                            <SafeImage source={{ uri }} style={styles.image} />
                                         </TouchableOpacity>
                                         <TouchableOpacity
                                             style={styles.removeImage}

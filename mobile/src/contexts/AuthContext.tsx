@@ -1,6 +1,8 @@
 // Auth Context - Manages authentication state across the app
 import React, { createContext, useContext, useState, useEffect, ReactNode } from 'react';
+import { log } from '../utils/helpers';
 import { api, User } from '../services/api';
+import { log } from '../utils/helpers';
 
 interface AuthContextType {
     user: User | null;
@@ -32,7 +34,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
                 }
             }
         } catch (error) {
-            console.log('Auth check failed:', error);
+            log.debug('Auth check failed:', error);
         } finally {
             setIsLoading(false);
         }
@@ -86,9 +88,9 @@ export function AuthProvider({ children }: { children: ReactNode }) {
             // Reset user state
             setUser(null);
 
-            console.log('[Auth] Logout complete - all data cleared');
+            log.debug('[Auth] Logout complete - all data cleared');
         } catch (error) {
-            console.error('[Auth] Logout error:', error);
+            log.error('[Auth] Logout error:', error);
             // Still reset user even if cleanup fails
             setUser(null);
         }
@@ -110,7 +112,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
                 await api.saveUser(updatedUser);
             }
         } catch (error) {
-            console.log('Failed to refresh user:', error);
+            log.debug('Failed to refresh user:', error);
         }
     };
 

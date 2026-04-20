@@ -1,10 +1,16 @@
 // QScrap Socket Service - Real-time Updates for Bids, Orders, Tracking
 import { useEffect, useRef, useState, useCallback } from 'react';
+import { log } from '../utils/helpers';
 import { io, Socket } from 'socket.io-client';
+import { log } from '../utils/helpers';
 import { AppState, AppStateStatus } from 'react-native';
+import { log } from '../utils/helpers';
 import * as Haptics from 'expo-haptics';
+import { log } from '../utils/helpers';
 import { SOCKET_URL } from '../config/api';
+import { log } from '../utils/helpers';
 import { api, Bid, Order } from '../services/api';
+import { log } from '../utils/helpers';
 
 // Event Types
 interface BidNotification {
@@ -50,7 +56,7 @@ export function useSocket() {
         try {
             const token = await api.getToken();
             if (!token) {
-                console.log('[Socket] No token, skipping connection');
+                log.debug('[Socket] No token, skipping connection');
                 return;
             }
 
@@ -71,7 +77,7 @@ export function useSocket() {
 
             // Connection events
             socket.current.on('connect', () => {
-                console.log('[Socket] Connected:', socket.current?.id);
+                log.debug('[Socket] Connected:', socket.current?.id);
                 setIsConnected(true);
                 reconnectAttempts.current = 0;
 
@@ -80,7 +86,7 @@ export function useSocket() {
             });
 
             socket.current.on('disconnect', (reason) => {
-                console.log('[Socket] Disconnected:', reason);
+                log.debug('[Socket] Disconnected:', reason);
                 setIsConnected(false);
                 // Clear notifications on disconnect to prevent ghost notifications on re-login
                 setNewBids([]);
@@ -89,17 +95,17 @@ export function useSocket() {
             });
 
             socket.current.on('connect_error', (error) => {
-                console.log('[Socket] Connection error:', error.message);
+                log.debug('[Socket] Connection error:', error.message);
                 reconnectAttempts.current++;
             });
 
             // New bid received on your request
             socket.current.on('new_bid', (data: BidNotification) => {
-                console.log('[Socket] New bid received:', data.garage_name, data.bid_amount);
+                log.debug('[Socket] New bid received:', data.garage_name, data.bid_amount);
 
                 // Validate the bid has required fields before showing
                 if (!data.bid_id || !data.request_id || !data.garage_name) {
-                    console.log('[Socket] Invalid bid data, skipping notification');
+                    log.debug('[Socket] Invalid bid data, skipping notification');
                     return;
                 }
 
@@ -118,7 +124,7 @@ export function useSocket() {
 
             // Bid was updated
             socket.current.on('bid_updated', (data: { bid_id: string; bid_amount: number }) => {
-                console.log('[Socket] Bid updated:', data.bid_id);
+                log.debug('[Socket] Bid updated:', data.bid_id);
                 setNewBids(prev =>
                     prev.map(bid =>
                         bid.bid_id === data.bid_id
@@ -132,19 +138,19 @@ export function useSocket() {
 
             // Garage sent a counter-offer
             socket.current.on('garage_counter_offer', (data: any) => {
-                console.log('[Socket] Garage counter-offer:', data);
+                log.debug('[Socket] Garage counter-offer:', data);
                 Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success);
             });
 
             // Counter-offer accepted by garage
             socket.current.on('counter_offer_accepted', (data: any) => {
-                console.log('[Socket] Counter-offer accepted:', data);
+                log.debug('[Socket] Counter-offer accepted:', data);
                 Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success);
             });
 
             // Counter-offer rejected by garage
             socket.current.on('counter_offer_rejected', (data: any) => {
-                console.log('[Socket] Counter-offer rejected:', data);
+                log.debug('[Socket] Counter-offer rejected:', data);
                 Haptics.notificationAsync(Haptics.NotificationFeedbackType.Warning);
             });
 
@@ -152,7 +158,7 @@ export function useSocket() {
 
             // Order status changed
             socket.current.on('order_status_updated', (data: OrderStatusUpdate) => {
-                console.log('[Socket] Order status updated:', data.order_number, data.new_status);
+                log.debug('[Socket] Order status updated:', data.order_number, data.new_status);
                 Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success);
 
                 setOrderUpdates(prev => {
@@ -170,7 +176,7 @@ export function useSocket() {
                 estimated_delivery?: string;
                 notification: string;
             }) => {
-                console.log('[Socket] Driver assigned:', data.driver?.name);
+                log.debug('[Socket] Driver assigned:', data.driver?.name);
                 Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success);
             });
 
@@ -178,17 +184,17 @@ export function useSocket() {
 
             socket.current.on('driver_location_update', (data: DriverLocationUpdate) => {
                 // This is handled by TrackingScreen directly
-                console.log('[Socket] Driver location update:', data.order_id);
+                log.debug('[Socket] Driver location update:', data.order_id);
             });
 
             // Order delivered
             socket.current.on('order_delivered', (data: { order_id: string; order_number: string }) => {
-                console.log('[Socket] Order delivered:', data.order_number);
+                log.debug('[Socket] Order delivered:', data.order_number);
                 Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success);
             });
 
         } catch (error) {
-            console.error('[Socket] Setup error:', error);
+            log.error('[Socket] Setup error:', error);
         }
     }, []);
 
@@ -245,7 +251,7 @@ export function useSocket() {
                 const token = await api.getToken();
                 if (!token) {
                     // User logged out - disconnect socket and clear notifications
-                    console.log('[Socket] No token on app active - disconnecting...');
+                    log.debug('[Socket] No token on app active - disconnecting...');
                     disconnect();
                     clearAllNotifications();
                     return;
@@ -253,7 +259,7 @@ export function useSocket() {
 
                 // User still logged in - reconnect if needed
                 if (!socket.current?.connected) {
-                    console.log('[Socket] App active, reconnecting...');
+                    log.debug('[Socket] App active, reconnecting...');
                     connect();
                 }
             }
@@ -291,6 +297,7 @@ export function useSocket() {
 
 // Socket Context for app-wide access
 import React, { createContext, useContext, ReactNode } from 'react';
+import { log } from '../utils/helpers';
 
 interface SocketContextType {
     socket: Socket | null;

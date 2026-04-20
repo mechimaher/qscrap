@@ -1,39 +1,52 @@
+```
 # Dependencies
 node_modules/
-package-lock.json
+
+# Build artifacts
+dist/
+build/
+*.js.map
 
 # Environment
 .env
 .env.local
-.env.production
+*.env.*
 
-# Build output
-dist/
-build/
+# Editors
+.vscode/
+.idea/
 
 # Logs
-logs/
 *.log
-npm-debug.log*
 
-# IDE
-.idea/
-.vscode/
+# Temp files
+*.tmp
 *.swp
-*.swo
 
-# OS files
+# OS
 .DS_Store
 Thumbs.db
 
-# Uploads (user data)
-uploads/
-
-# Test files
-*.test.js
-coverage/
-
-# Temporary
-tmp/
-temp/
-*.tmp
+# Python
+__pycache__/
+*.pyc
+*.pyo
+*.pyd
+.Python
+env/
+venv/
+.venv/
+pip-log.txt
+pipenv.lock
+.coverage
+htmlcov/
+.pytest_cache/
+.mypy_cache/
+.tox/
+.coverage*
+nosetests.xml
+coverage.xml
+*.cover
+*.log
+.DS_Store
+```

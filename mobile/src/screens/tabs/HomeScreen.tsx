@@ -1,5 +1,6 @@
 // QScrap Home Screen - Premium VIP Dashboard
 import React, { useState, useCallback, useEffect } from 'react';
+import { log } from '../utils/helpers';
 import {
     View,
     Text,
@@ -12,20 +13,37 @@ import {
     Image,
 } from 'react-native';
 import { LinearGradient } from 'expo-linear-gradient';
+import { log } from '../utils/helpers';
 import { SafeAreaView } from 'react-native-safe-area-context';
+import { log } from '../utils/helpers';
 import { useNavigation, useFocusEffect } from '@react-navigation/native';
+import { log } from '../utils/helpers';
 import { NativeStackNavigationProp } from '@react-navigation/native-stack';
+import { log } from '../utils/helpers';
 import * as Haptics from 'expo-haptics';
+import { log } from '../utils/helpers';
 import { useAuth } from '../../contexts/AuthContext';
+import { log } from '../utils/helpers';
 import { useTheme } from '../../contexts/ThemeContext';
+import { log } from '../utils/helpers';
 import { api, Stats } from '../../services/api';
+import { log } from '../utils/helpers';
 import { Colors, Spacing, BorderRadius, FontSizes, Shadows } from '../../constants/theme';
+import { log } from '../utils/helpers';
 import { RootStackParamList } from '../../../App';
+import { log } from '../utils/helpers';
 import { LoadingStats } from '../../components/SkeletonLoading';
+import { log } from '../utils/helpers';
 import { useSocketContext } from '../../hooks/useSocket';
+import { log } from '../utils/helpers';
 import FeaturedProductsSection from '../../components/FeaturedProductsSection';
+import { log } from '../utils/helpers';
 
 type HomeScreenNavigationProp = NativeStackNavigationProp<RootStackParamList>;
+
+// Helper type for tab navigation
+type MainTabScreen = 'Home' | 'Requests' | 'Orders' | 'Profile';
+
 const { width } = Dimensions.get('window');
 const cardWidth = (width - Spacing.lg * 3) / 2;
 
@@ -43,7 +61,7 @@ export default function HomeScreen() {
             const data = await api.getStats();
             setStats(data.stats);
         } catch (error) {
-            console.log('Failed to load stats:', error);
+            log.debug('Failed to load stats:', error);
         } finally {
             setIsLoading(false);
             setIsRefreshing(false);
@@ -60,7 +78,7 @@ export default function HomeScreen() {
     // Real-time: Reload stats when socket receives new bids or order updates
     useEffect(() => {
         if (newBids.length > 0 || orderUpdates.length > 0) {
-            console.log('[HomeScreen] Socket event received, refreshing stats...');
+            log.debug('[HomeScreen] Socket event received, refreshing stats...');
             loadStats();
         }
     }, [newBids, orderUpdates, loadStats]);
@@ -120,7 +138,7 @@ export default function HomeScreen() {
                     </View>
                     <TouchableOpacity
                         style={[styles.notificationBtn, { backgroundColor: colors.surface }]}
-                        onPress={() => navigation.navigate('Notifications' as any)}
+                        onPress={() => navigation.navigate('Notifications')}
                     >
                         <Text style={styles.notificationIcon}>🔔</Text>
                         <View style={styles.notificationBadge} />
@@ -158,7 +176,7 @@ export default function HomeScreen() {
                 <FeaturedProductsSection
                     onProductPress={(product) => {
                         // TODO: Open product detail modal or navigate to catalog
-                        console.log('Product pressed:', product.title);
+                        log.debug('Product pressed:', product.title);
                     }}
                 />
 
@@ -175,7 +193,7 @@ export default function HomeScreen() {
                         <View style={styles.statsRow}>
                             <TouchableOpacity
                                 style={styles.statCard}
-                                onPress={() => navigation.navigate('Main', { screen: 'Requests' } as any)}
+                                onPress={() => navigation.navigate('Main', { screen: 'Requests' })}
                                 activeOpacity={0.8}
                             >
                                 <LinearGradient
@@ -192,7 +210,7 @@ export default function HomeScreen() {
 
                             <TouchableOpacity
                                 style={styles.statCard}
-                                onPress={() => navigation.navigate('Main', { screen: 'Orders' } as any)}
+                                onPress={() => navigation.navigate('Main', { screen: 'Orders' })}
                                 activeOpacity={0.8}
                             >
                                 <LinearGradient
@@ -211,7 +229,7 @@ export default function HomeScreen() {
                         {/* Row 2: Full width card */}
                         <TouchableOpacity
                             style={styles.statCardWide}
-                            onPress={() => navigation.navigate('Main', { screen: 'Orders' } as any)}
+                            onPress={() => navigation.navigate('Main', { screen: 'Orders' })}
                             activeOpacity={0.8}
                         >
                             <LinearGradient
@@ -241,7 +259,7 @@ export default function HomeScreen() {
                 <View style={styles.actionsGrid}>
                     <TouchableOpacity
                         style={styles.actionCard}
-                        onPress={() => navigation.navigate('Main', { screen: 'Requests' } as any)}
+                        onPress={() => navigation.navigate('Main', { screen: 'Requests' })}
                         activeOpacity={0.8}
                     >
                         <View style={[styles.actionIconBg, { backgroundColor: '#FFF3E0' }]}>
@@ -252,7 +270,7 @@ export default function HomeScreen() {
 
                     <TouchableOpacity
                         style={styles.actionCard}
-                        onPress={() => navigation.navigate('Main', { screen: 'Orders' } as any)}
+                        onPress={() => navigation.navigate('Main', { screen: 'Orders' })}
                         activeOpacity={0.8}
                     >
                         <View style={[styles.actionIconBg, { backgroundColor: '#E3F2FD' }]}>
@@ -274,7 +292,7 @@ export default function HomeScreen() {
 
                     <TouchableOpacity
                         style={styles.actionCard}
-                        onPress={() => navigation.navigate('Main', { screen: 'Profile' } as any)}
+                        onPress={() => navigation.navigate('Main', { screen: 'Profile' })}
                         activeOpacity={0.8}
                     >
                         <View style={[styles.actionIconBg, { backgroundColor: '#F3E5F5' }]}>

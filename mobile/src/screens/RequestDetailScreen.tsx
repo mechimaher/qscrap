@@ -21,7 +21,9 @@ import { useTheme } from '../contexts/ThemeContext';
 import { API_BASE_URL } from '../config/api';
 import { RootStackParamList } from '../../App';
 import ImageViewerModal from '../components/ImageViewerModal';
+import { SafeImage } from '../components/SafeImage';
 import { useSocketContext } from '../hooks/useSocket';
+import { log } from '../utils/helpers';
 
 type NavigationProp = NativeStackNavigationProp<RootStackParamList>;
 
@@ -64,7 +66,7 @@ export default function RequestDetailScreen() {
         if (!socket) return;
 
         const handleCounterOfferEvent = (data: any) => {
-            console.log('[RequestDetail] Counter-offer event received:', data);
+            log.debug('[RequestDetail] Counter-offer event received:', data);
             loadRequestDetails();
         };
 
@@ -89,7 +91,7 @@ export default function RequestDetailScreen() {
             const sortedBids = (data.bids || []).sort((a: Bid, b: Bid) => a.bid_amount - b.bid_amount);
             setBids(sortedBids);
         } catch (error) {
-            console.log('Failed to load request:', error);
+            log.debug('Failed to load request:', error);
             Alert.alert('Error', 'Failed to load request details');
         } finally {
             setIsLoading(false);
@@ -201,17 +203,17 @@ export default function RequestDetailScreen() {
         const isAccepted = bid.status === 'accepted';
 
         // Check for garage counter-offer (pending response from customer) or last garage offer
-        const hasGarageCounterOffer = !!(bid as any).garage_counter_amount;
-        const garageCounterAmount = (bid as any).garage_counter_amount;
-        const lastGarageOfferAmount = (bid as any).last_garage_offer_amount;
-        const negotiationRounds = parseInt((bid as any).negotiation_rounds) || 0;
+        const hasGarageCounterOffer = !!bid.garage_counter_amount;
+        const garageCounterAmount = bid.garage_counter_amount;
+        const lastGarageOfferAmount = bid.last_garage_offer_amount;
+        const negotiationRounds = parseInt(String(bid.negotiation_rounds || 0));
 
         // Original bid amount (before any negotiation) - for strikethrough display
-        const originalBidAmount = (bid as any).original_bid_amount || bid.bid_amount;
+        const originalBidAmount = bid.original_bid_amount || bid.bid_amount;
 
         // Customer's last counter-offer
-        const customerCounterAmount = (bid as any).customer_counter_amount;
-        const customerCounterStatus = (bid as any).customer_counter_status;
+        const customerCounterAmount = bid.customer_counter_amount;
+        const customerCounterStatus = bid.customer_counter_status;
 
         // Check if garage accepted the customer's counter-offer (negotiation complete, waiting for customer to finalize)
         const isNegotiationAgreed = customerCounterStatus === 'accepted';
@@ -371,7 +373,7 @@ export default function RequestDetailScreen() {
                                             activeOpacity={0.85}
                                             style={styles.bidImageWrapper}
                                         >
-                                            <Image
+                                            <SafeImage
                                                 source={{ uri: fullUrl }}
                                                 style={styles.bidImage}
                                                 resizeMode="cover"
@@ -422,7 +424,7 @@ export default function RequestDetailScreen() {
                                     currentAmount: displayPrice,
                                     partDescription: request.part_description,
                                     // Pass garage counter ID if responding to a pending offer
-                                    garageCounterId: (bid as any).garage_counter_id || null,
+                                    garageCounterId: bid.garage_counter_id || null,
                                 })}
                             >
                                 <Text style={styles.counterText}>↩ Counter</Text>
@@ -532,7 +534,7 @@ export default function RequestDetailScreen() {
                                             setIsViewerVisible(true);
                                         }}
                                     >
-                                        <Image
+                                        <SafeImage
                                             source={{ uri: fullUrl }}
                                             style={styles.requestImage}
                                         />

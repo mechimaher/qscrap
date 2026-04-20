@@ -1,4 +1,5 @@
 import React, { useState, useEffect } from 'react';
+import { log } from '../utils/helpers';
 import {
     View,
     Text,
@@ -9,11 +10,17 @@ import {
     TextInput
 } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
+import { log } from '../utils/helpers';
 import { Ionicons } from '@expo/vector-icons';
+import { log } from '../utils/helpers';
 import { useNavigation, useRoute } from '@react-navigation/native';
+import { log } from '../utils/helpers';
 import { useTheme } from '../contexts';
+import { log } from '../utils/helpers';
 import { cancellationApi } from '../services';
+import { log } from '../utils/helpers';
 import { Spacing, BorderRadius, FontSize, Shadows } from '../constants';
+import { log } from '../utils/helpers';
 
 const CANCELLATION_REASONS = [
     { id: 'changed_mind', label: 'Changed my mind', icon: 'refresh-outline' },

@@ -58,6 +58,12 @@ export interface Bid {
     garage_counter_message?: string;
     garage_counter_id?: string;
     plan_code?: string;
+    // Additional counter-offer negotiation fields
+    last_garage_offer_amount?: number;
+    negotiation_rounds?: number | string;
+    original_bid_amount?: number;
+    customer_counter_amount?: number;
+    customer_counter_status?: string;
 }
 
 export interface Order {
@@ -260,6 +266,10 @@ class ApiService {
     // Orders
     async getMyOrders(): Promise<{ orders: Order[] }> {
         return this.request(API_ENDPOINTS.MY_ORDERS);
+    }
+
+    async getOrderDetails(orderId: string): Promise<{ order: Order }> {
+        return this.request(API_ENDPOINTS.ORDER_DETAILS(orderId));
     }
 
     async acceptBid(bidId: string, paymentMethod = 'cash'): Promise<any> {

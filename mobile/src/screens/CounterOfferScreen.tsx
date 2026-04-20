@@ -1,5 +1,6 @@
 // QScrap Counter-Offer Screen - Bid Negotiation (up to 3 rounds)
 import React, { useState, useEffect } from 'react';
+import { log } from '../utils/helpers';
 import {
     View,
     Text,
@@ -11,13 +12,21 @@ import {
     ActivityIndicator,
 } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
+import { log } from '../utils/helpers';
 import { LinearGradient } from 'expo-linear-gradient';
+import { log } from '../utils/helpers';
 import * as Haptics from 'expo-haptics';
+import { log } from '../utils/helpers';
 import { useNavigation, useRoute } from '@react-navigation/native';
+import { log } from '../utils/helpers';
 import { api } from '../services/api';
+import { log } from '../utils/helpers';
 import { API_BASE_URL, API_ENDPOINTS } from '../config/api';
+import { log } from '../utils/helpers';
 import { Colors, Spacing, BorderRadius, FontSizes, Shadows } from '../constants/theme';
+import { log } from '../utils/helpers';
 import { useSocketContext } from '../hooks/useSocket';
+import { log } from '../utils/helpers';
 
 interface CounterOffer {
     counter_offer_id: string;
@@ -67,7 +76,7 @@ export default function CounterOfferScreen() {
         if (!socket) return;
 
         const handleGarageCounterOffer = (data: any) => {
-            console.log('[CounterOffer] Garage counter-offer received:', data);
+            log.debug('[CounterOffer] Garage counter-offer received:', data);
             if (data.bid_id === bidId) {
                 loadNegotiationHistory();
                 Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success);
@@ -75,7 +84,7 @@ export default function CounterOfferScreen() {
         };
 
         const handleCounterOfferAccepted = (data: any) => {
-            console.log('[CounterOffer] Counter-offer accepted:', data);
+            log.debug('[CounterOffer] Counter-offer accepted:', data);
             if (data.bid_id === bidId) {
                 loadNegotiationHistory();
                 Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success);
@@ -84,7 +93,7 @@ export default function CounterOfferScreen() {
         };
 
         const handleCounterOfferRejected = (data: any) => {
-            console.log('[CounterOffer] Counter-offer rejected:', data);
+            log.debug('[CounterOffer] Counter-offer rejected:', data);
             if (data.bid_id === bidId) {
                 loadNegotiationHistory();
                 Haptics.notificationAsync(Haptics.NotificationFeedbackType.Warning);
@@ -134,7 +143,7 @@ export default function CounterOfferScreen() {
                 }
             }
         } catch (error) {
-            console.log('Failed to load negotiation history:', error);
+            log.debug('Failed to load negotiation history:', error);
         } finally {
             setIsLoading(false);
         }

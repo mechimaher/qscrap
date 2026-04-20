@@ -238,17 +238,44 @@ export const stringToColor = (str: string): string => {
 };
 
 /**
- * Check if running in development mode
+ * Log only in development mode
  */
 export const isDev = __DEV__;
 
 /**
- * Log only in development
+ * Conditional logging - only logs in development mode
+ * Prevents sensitive data leakage in production builds
  */
 export const devLog = (...args: any[]): void => {
     if (__DEV__) {
         console.log('[DEV]', ...args);
     }
+};
+
+/**
+ * Safe logging wrapper for production
+ * Use this instead of console.log to prevent data leakage
+ */
+export const log = {
+    info: (...args: any[]): void => {
+        if (__DEV__) {
+            console.log('[INFO]', ...args);
+        }
+    },
+    warn: (...args: any[]): void => {
+        if (__DEV__) {
+            console.warn('[WARN]', ...args);
+        }
+    },
+    error: (...args: any[]): void => {
+        // Always log errors, even in production (for debugging crashes)
+        console.error('[ERROR]', ...args);
+    },
+    debug: (...args: any[]): void => {
+        if (__DEV__) {
+            console.log('[DEBUG]', ...args);
+        }
+    },
 };
 
 /**

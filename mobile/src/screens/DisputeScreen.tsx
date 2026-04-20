@@ -1,4 +1,5 @@
 import React, { useState } from 'react';
+import { log } from '../utils/helpers';
 import {
     View,
     Text,
@@ -17,6 +18,7 @@ import * as ImagePicker from 'expo-image-picker';
 import { useTheme } from '../contexts';
 import { disputeApi } from '../services';
 import { Spacing, BorderRadius, FontSize, Shadows } from '../constants';
+import { SafeImage } from '../components/SafeImage';
 
 const DISPUTE_REASONS = [
     { id: 'wrong_item', label: 'Wrong Item Received', icon: 'swap-horizontal-outline', refund: '100%' },
@@ -107,7 +109,7 @@ const DisputeScreen: React.FC = () => {
                     uri,
                     name: filename,
                     type,
-                } as any);
+                } as any); // TypeScript FormData type limitation in React Native
             });
 
             await disputeApi.create(formData);

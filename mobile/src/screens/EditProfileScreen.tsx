@@ -1,5 +1,6 @@
 // QScrap Edit Profile Screen - Full Profile Management
 import React, { useState, useEffect } from 'react';
+import { log } from '../utils/helpers';
 import {
     View,
     Text,
@@ -21,6 +22,7 @@ import { API_BASE_URL, API_ENDPOINTS } from '../config/api';
 import { useAuth } from '../contexts/AuthContext';
 import { useTheme } from '../contexts/ThemeContext';
 import { Colors, Spacing, BorderRadius, FontSizes, Shadows } from '../constants/theme';
+import { SafeImage } from '../components/SafeImage';
 
 export default function EditProfileScreen() {
     const navigation = useNavigation();
@@ -51,7 +53,7 @@ export default function EditProfileScreen() {
                 setEmail(data.profile.email || '');
             }
         } catch (error) {
-            console.log('Failed to load profile:', error);
+            log.debug('Failed to load profile:', error);
         } finally {
             setIsLoading(false);
         }
@@ -230,7 +232,7 @@ export default function EditProfileScreen() {
                 <View style={styles.avatarSection}>
                     <View style={styles.avatar}>
                         {avatarUri ? (
-                            <Image source={{ uri: avatarUri }} style={styles.avatarImage} />
+                            <SafeImage source={{ uri: avatarUri }} style={styles.avatarImage} />
                         ) : (
                             <Text style={styles.avatarText}>
                                 {fullName.charAt(0).toUpperCase() || '👤'}

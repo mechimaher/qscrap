@@ -6,10 +6,15 @@
  */
 
 import { Platform } from 'react-native';
+import { log } from '../utils/helpers';
 import * as Notifications from 'expo-notifications';
+import { log } from '../utils/helpers';
 import * as Device from 'expo-device';
+import { log } from '../utils/helpers';
 import { notificationApi } from './api';
+import { log } from '../utils/helpers';
 import * as storage from '../utils/storage';
+import { log } from '../utils/helpers';
 
 // Configure notification behavior
 Notifications.setNotificationHandler({
@@ -38,7 +43,7 @@ export interface NotificationData {
  */
 export const registerForPushNotifications = async (): Promise<string | null> => {
     if (!Device.isDevice) {
-        console.log('[Notifications] Push notifications not available in simulator');
+        log.debug('[Notifications] Push notifications not available in simulator');
         return null;
     }
 
@@ -54,7 +59,7 @@ export const registerForPushNotifications = async (): Promise<string | null> => 
         }
 
         if (finalStatus !== 'granted') {
-            console.log('[Notifications] Permission not granted');
+            log.debug('[Notifications] Permission not granted');
             return null;
         }
 
@@ -64,7 +69,7 @@ export const registerForPushNotifications = async (): Promise<string | null> => 
         });
         const token = tokenData.data;
 
-        console.log('[Notifications] Token:', token);
+        log.debug('[Notifications] Token:', token);
 
         // Store token locally
         await storage.setItem(storage.StorageKey.PUSH_TOKEN, token);
@@ -142,7 +147,7 @@ export const registerForPushNotifications = async (): Promise<string | null> => 
 
         return token;
     } catch (error) {
-        console.error('[Notifications] Error registering:', error);
+        log.error('[Notifications] Error registering:', error);
         return null;
     }
 };
@@ -154,10 +159,10 @@ export const registerTokenWithBackend = async (token: string): Promise<boolean> 
     try {
         const platform = Platform.OS as 'ios' | 'android';
         await notificationApi.registerPushToken(token, platform);
-        console.log('[Notifications] Token registered with backend');
+        log.debug('[Notifications] Token registered with backend');
         return true;
     } catch (error) {
-        console.error('[Notifications] Failed to register token with backend:', error);
+        log.error('[Notifications] Failed to register token with backend:', error);
         return false;
     }
 };
