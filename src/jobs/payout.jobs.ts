@@ -129,7 +129,7 @@ export async function applyPendingReversals(pool: Pool): Promise<{ applied: numb
                         remaining_reversal_balance: deductionAmount >= reversal.amount ? 0 : reversal.amount - deductionAmount,
                         reason: 'Automatic debt recovery from previous refund'
                     },
-                    status_code: 200,
+                    response_status: 200,
                     duration_ms: 0
                 });
             } catch (auditErr) {

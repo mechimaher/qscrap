@@ -10,6 +10,7 @@ export class SearchService {
     async universalSearch(userId: string, userType: string, query: string, searchType?: string, maxResults: number = 10) {
         // Clean query for FTS (convert spaces to & for mandatory match, or use websearch_to_tsquery)
         const results: Record<string, unknown> = {};
+        const searchTerm = `%${query.trim()}%`;
 
         // Orders search - FTS Hardened
         if (!searchType || searchType === 'orders') {
@@ -37,7 +38,6 @@ export class SearchService {
 
         // Users search - admin only (Keep ILIKE for small identifiers like email/phone)
         if (userType === 'admin' && (!searchType || searchType === 'users')) {
-            const searchTerm = `%${query.trim()}%`;
             const userResult = await this.pool.query(`SELECT user_id, full_name, email, phone_number, user_type, is_active, created_at FROM users WHERE (full_name ILIKE $1 OR email ILIKE $1 OR phone_number ILIKE $1) ORDER BY created_at DESC LIMIT $2`, [searchTerm, maxResults]);
             if (userResult.rows.length > 0) {results.users = userResult.rows;}
         }

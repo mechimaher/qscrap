@@ -11,7 +11,7 @@ import { autoSaveVehicle } from '../controllers/vehicle.controller';
 import fs from 'fs/promises';
 import logger from '../utils/logger';
 import { getIO } from '../utils/socketIO';
-import * as vinService from './vin.service';
+import { vinService } from './vin.service';
 
 // ============================================
 // TYPES
