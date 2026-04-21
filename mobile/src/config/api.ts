@@ -2,13 +2,13 @@
 // PRODUCTION: Use your actual server URL
 // DEVELOPMENT: Uncomment local IP for testing on physical device
 
-// PRODUCTION URLs (update when domain is ready)
-// export const API_BASE_URL = 'https://api.qscrap.qa/api';
-// export const SOCKET_URL = 'https://api.qscrap.qa';
+// PRODUCTION URLs - ACTIVE
+export const API_BASE_URL = 'https://api.qscrap.qa/api';
+export const SOCKET_URL = 'https://api.qscrap.qa';
 
-// DEVELOPMENT URLs (for local testing)
-export const API_BASE_URL = 'http://192.168.1.59:3000/api';
-export const SOCKET_URL = 'http://192.168.1.59:3000';
+// DEVELOPMENT URLs (for local testing - uncomment when needed)
+// export const API_BASE_URL = 'http://192.168.1.59:3000/api';
+// export const SOCKET_URL = 'http://192.168.1.59:3000';
 
 // API endpoints - Match exactly with backend routes
 export const API_ENDPOINTS = {
