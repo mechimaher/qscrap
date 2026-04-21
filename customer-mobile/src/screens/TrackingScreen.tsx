@@ -17,7 +17,7 @@ import {
     ScrollView,
 } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
-import MapView, { Marker, Polyline, PROVIDER_GOOGLE } from 'react-native-maps';
+import MapView, { Marker, Polyline } from 'react-native-maps';
 import { LinearGradient } from 'expo-linear-gradient';
 import * as Haptics from 'expo-haptics';
 import * as Location from 'expo-location';
@@ -499,7 +499,6 @@ export default function TrackingScreen() {
             {/* Premium Google Maps - VVIP Midnight Chic */}
             <MapView
                 ref={mapRef}
-                provider={PROVIDER_GOOGLE}
                 style={styles.map}
                 customMapStyle={isDark ? VVIP_MIDNIGHT_STYLE : LIGHT_MAP_STYLE}
                 showsUserLocation

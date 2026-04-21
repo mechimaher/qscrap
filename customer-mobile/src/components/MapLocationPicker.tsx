@@ -13,7 +13,7 @@ import {
     Keyboard,
     Animated,
 } from 'react-native';
-import MapView, { Marker, PROVIDER_GOOGLE, Region } from 'react-native-maps';
+import MapView, { Marker, Region } from 'react-native-maps';
 import { LinearGradient } from 'expo-linear-gradient';
 import * as Location from 'expo-location';
 import * as Haptics from 'expo-haptics';
@@ -284,7 +284,6 @@ export const MapLocationPicker: React.FC<MapLocationPickerProps> = ({
             <MapView
                 ref={mapRef}
                 style={styles.map}
-                provider={PROVIDER_GOOGLE}
                 customMapStyle={QATAR_PREMIUM_MAP_STYLE}
                 initialRegion={selectedLocation}
                 onPress={handleMapPress}

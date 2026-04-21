@@ -379,8 +379,8 @@ function RootNavigator() {
   );
 }
 
-// Main App with all providers — wrapped with Sentry for automatic error capture
-export default Sentry.wrap(function App() {
+// Main App with all providers
+export default function App() {
   // Load Inter fonts for VVIP typography
   const [fontsLoaded] = useFonts({
     Inter_400Regular,
@@ -423,7 +423,7 @@ export default Sentry.wrap(function App() {
       </SafeAreaProvider>
     </GestureHandlerRootView>
   );
-});
+}
 
 // Themed wrapper component to access theme context
 function ThemedApp() {
