@@ -190,6 +190,20 @@ app.get('/privacy', servePage('privacy'));
 app.get('/terms', servePage('terms'));
 app.get('/refund', servePage('refund'));
 
+// ==========================================
+// INTERNAL DASHBOARDS (Relocated to /dashboards)
+// ==========================================
+const serveDashboard = (file: string) => (req: express.Request, res: express.Response) => {
+    res.sendFile(path.join(__dirname, '../public/dashboards', `${file}.html`));
+};
+
+app.get('/garage-dashboard', serveDashboard('garage-dashboard'));
+app.get('/admin', serveDashboard('admin-dashboard'));
+app.get('/finance', serveDashboard('finance-dashboard'));
+app.get('/operations', serveDashboard('operations-dashboard'));
+app.get('/support', serveDashboard('support-dashboard'));
+app.get('/setup', serveDashboard('setup')); 
+
 // Location pages (SEO)
 app.get('/locations/industrial-area', servePage('locations/industrial-area'));
 app.get('/locations/doha', servePage('locations/doha'));
