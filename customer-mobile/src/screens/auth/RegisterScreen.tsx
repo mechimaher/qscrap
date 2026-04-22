@@ -76,11 +76,17 @@ export default function RegisterScreen() {
         setError('');
 
         try {
+            // QATAR SMART LOGIC: Auto-prefix +974 if user enters exactly 8 digits
+            let finalPhone = phone.trim().replace(/\s/g, '');
+            if (finalPhone.length === 8 && /^\d+$/.test(finalPhone)) {
+                finalPhone = `+974${finalPhone}`;
+            }
+
             // Call new Email OTP registration API
             const result = await api.registerWithEmail({
                 full_name: name,
                 email: email.toLowerCase().trim(),
-                phone_number: phone,
+                phone_number: finalPhone,
                 password
             });
 

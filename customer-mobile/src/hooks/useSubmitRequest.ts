@@ -41,6 +41,7 @@ export function useSubmitRequest({
     navigation,
 }: SubmitParams) {
     const [isSubmitting, setIsSubmitting] = useState(false);
+    const [submittingPhase, setSubmittingPhase] = useState<string>('');
 
     const handleSubmit = async () => {
         if (isSubmitting) return;
@@ -72,6 +73,7 @@ export function useSubmitRequest({
         }
 
         setIsSubmitting(true);
+        setSubmittingPhase(t('newRequest.phasePreparing') || 'Preparing...');
         Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Medium);
 
         try {
@@ -97,7 +99,7 @@ export function useSubmitRequest({
                 finalDescription += `\n${t('newRequest.position')}: ${sideLabels[side]}`;
             }
 
-                formData.append('part_description', finalDescription);
+            formData.append('part_description', finalDescription);
             if (partCategory) formData.append('part_category', partCategory);
             if (partSubCategory) formData.append('part_subcategory', partSubCategory);
             if (partNumber.trim()) formData.append('part_number', partNumber.trim());
@@ -139,7 +141,11 @@ export function useSubmitRequest({
                 } as any);
             }
 
+            setSubmittingPhase(t('newRequest.phaseUploading') || 'Uploading images...');
+
             const response = await api.createRequest(formData);
+
+            setSubmittingPhase(t('newRequest.phaseFinalizing') || 'Finalizing...');
 
             Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success);
             toast.success(t('newRequest.requestCreated'), t('newRequest.garagesReviewing'));
@@ -156,6 +162,7 @@ export function useSubmitRequest({
 
     return {
         isSubmitting,
+        submittingPhase,
         handleSubmit,
     };
 }

@@ -114,7 +114,7 @@ export default function NewRequestScreen() {
         handleTakeCarRearPhoto,
     } = useRequestImages(t, toast);
 
-    const { isSubmitting, handleSubmit } = useSubmitRequest({
+    const { isSubmitting, submittingPhase, handleSubmit } = useSubmitRequest({
         selectedVehicle,
         partDescription,
         quantity,
@@ -202,7 +202,7 @@ export default function NewRequestScreen() {
                     >
                         {/* Pro Tip Header Banner - Just-in-time guidance */}
                         <Animated.View style={[styles.proTipBanner, { backgroundColor: '#FFF8E1', flexDirection: rtlFlexDirection(isRTL) }]}>
-                            <Text style={[styles.proTipIcon, isRTL && { marginRight: 0, marginLeft: Spacing.md }]}></Text>
+                            <Text style={[styles.proTipIcon, isRTL && { marginRight: 0, marginLeft: Spacing.md }]}>💡</Text>
                             <View style={styles.proTipContent}>
                                 <Text style={[styles.proTipTitle, { textAlign: rtlTextAlign(isRTL) }]}>{t('newRequest.proTipTitle')}</Text>
                                 <Text style={[styles.proTipText, { textAlign: rtlTextAlign(isRTL) }]}>
@@ -298,7 +298,10 @@ export default function NewRequestScreen() {
                             style={styles.submitGradient}
                         >
                             {isSubmitting ? (
-                                <ActivityIndicator color="#fff" />
+                                <View style={{ flexDirection: 'row', alignItems: 'center' }}>
+                                    <ActivityIndicator color="#fff" size="small" style={{ marginRight: 10 }} />
+                                    <Text style={styles.submitText}>{submittingPhase}</Text>
+                                </View>
                             ) : (
                                 <>
                                     <Text style={styles.submitText}>{t('newRequest.submitRequest')}</Text>

@@ -63,6 +63,16 @@ export default function VerifyOTPScreen() {
     }, []);
 
     const handleOTPChange = (value: string, index: number) => {
+        // DETECT PASTE: If the value is 6 digits (pasted), distribute it
+        if (value.length === 6 && /^\d+$/.test(value)) {
+            const digits = value.split('');
+            setOTP(digits);
+            // Focus last input and trigger verify
+            inputRefs.current[5]?.focus();
+            handleVerify(value);
+            return;
+        }
+
         if (value.length > 1) return; // Only single digit
 
         const newOTP = [...otp];

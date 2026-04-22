@@ -93,6 +93,7 @@ export default function TrackingScreen() {
     const mapRef = useRef<any>(null);
     const socket = useRef<Socket | null>(null);
     const pulseAnim = useRef(new Animated.Value(1)).current;
+    const lastRouteFetch = useRef<number>(0);
 
     // Draggable bottom sheet - SIMPLE: Fixed height, starts almost hidden
     const SHEET_HEIGHT = height * 0.75; // Fixed sheet height
@@ -227,7 +228,10 @@ export default function TrackingScreen() {
                         });
 
                         // Fetch route via Google Directions for accurate ETA & polyline
-                        if (customerLocation) {
+                        // ARCHITECT NOTE: Throttle to once every 30 seconds to optimize Google API costs
+                        const now = Date.now();
+                        if (customerLocation && (now - lastRouteFetch.current > 30000)) {
+                            lastRouteFetch.current = now;
                             fetchRoute(
                                 { lat, lng },
                                 { lat: customerLocation.latitude, lng: customerLocation.longitude }
@@ -514,6 +518,7 @@ export default function TrackingScreen() {
                             longitude: driverLocation.longitude
                         }}
                         anchor={{ x: 0.5, y: 0.5 }}
+                        rotation={driverLocation.heading || 0}
                         tracksViewChanges={false}
                         zIndex={999}
                     >
