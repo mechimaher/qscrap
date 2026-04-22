@@ -1,16 +1,26 @@
 import paramiko
 import os
 
-# VPS Credentials
+# --- VPS CONFIGURATION ---
 host = "147.93.89.153"
 user = "root"
-password = "QScrap@2026byMaher"
+password = os.getenv("VPS_PASS") # Securely loaded
 
-# New Gmail SMTP Credentials
+if not password:
+    print("❌ ERROR: VPS_PASS environment variable is missing!")
+    exit(1)
+
+# --- CONFIGURATION (Use environment variables for security) ---
 SMTP_HOST = "smtp.gmail.com"
-SMTP_PORT = "587"
+SMTP_PORT = 587
 SMTP_USER = "qscrap.noreply@gmail.com"
-SMTP_PASS = "hanzlekwhuzqsdik"
+SMTP_PASS = os.getenv("SMTP_PASS") 
+SMTP_FROM = f"QScrap <{SMTP_USER}>"
+
+if not SMTP_PASS:
+    print("❌ ERROR: SMTP_PASS environment variable is missing!")
+    print("Usage: SMTP_PASS=your_app_password python3 scripts/update_vps_smtp.py")
+    exit(1)
 
 def run_remote_cmd(client, cmd, label):
     print(f"\n--- {label} ---")

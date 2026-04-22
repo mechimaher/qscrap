@@ -1,10 +1,15 @@
 import paramiko
 import time
+import os
 
 # VPS Credentials
 host = "147.93.89.153"
 user = "root"
-password = "QScrap@2026byMaher"
+password = os.getenv("VPS_PASS")
+
+if not password:
+    print("❌ ERROR: VPS_PASS environment variable is missing!")
+    exit(1)
 
 def run_remote_cmd(client, cmd, label):
     print(f"\n--- {label} ---")
