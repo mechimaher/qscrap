@@ -17,7 +17,9 @@ export class AddressService {
 
     async getAddresses(customerId: string) {
         const result = await this.pool.query(
-            `SELECT address_id, label, address_line, area, city, location_lat, location_lng, delivery_notes, is_default, created_at, updated_at 
+            `SELECT address_id, label, address_line as address_text, area, city, 
+                    location_lat as latitude, location_lng as longitude, 
+                    delivery_notes, is_default, created_at, updated_at 
              FROM customer_addresses 
              WHERE customer_id = $1 
              ORDER BY is_default DESC, created_at DESC`, 
@@ -40,7 +42,7 @@ export class AddressService {
             const result = await client.query(
                 `INSERT INTO customer_addresses (customer_id, label, address_line, area, city, location_lat, location_lng, delivery_notes, is_default) 
                  VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9) 
-                 RETURNING *`, 
+                 RETURNING address_id, label, address_line as address_text, area, city, location_lat as latitude, location_lng as longitude, delivery_notes, is_default, created_at, updated_at`, 
                 [
                     customerId, 
                     data.label, 
@@ -89,7 +91,7 @@ export class AddressService {
                      is_default = COALESCE($8, is_default), 
                      updated_at = NOW() 
                  WHERE address_id = $9 AND customer_id = $10 
-                 RETURNING *`, 
+                 RETURNING address_id, label, address_line as address_text, area, city, location_lat as latitude, location_lng as longitude, delivery_notes, is_default, created_at, updated_at`, 
                 [
                     data.label, 
                     data.address_text, 

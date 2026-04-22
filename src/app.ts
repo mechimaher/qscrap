@@ -118,9 +118,11 @@ const cacheControl = (req: express.Request, res: express.Response, next: express
         // Add ETag support for conditional requests
         res.setHeader('Vary', 'Accept-Encoding');
     } else if (req.method === 'GET' && req.path.startsWith('/api/')) {
-        // Short cache for GET API responses (no sensitive data)
-        // Vary by Authorization and Accept-Language for proper caching
-        res.setHeader('Cache-Control', 'private, max-age=30, must-revalidate');
+        // Disable caching for API responses to ensure mobile apps always get fresh data
+        // and avoid 304 Not Modified issues in some mobile environments
+        res.setHeader('Cache-Control', 'no-store, no-cache, must-revalidate, proxy-revalidate');
+        res.setHeader('Pragma', 'no-cache');
+        res.setHeader('Expires', '0');
         res.setHeader('Vary', 'Authorization, Accept-Language');
     } else {
         // HTML pages: short cache with revalidation

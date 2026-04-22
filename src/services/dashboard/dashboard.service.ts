@@ -85,17 +85,19 @@ export class DashboardService {
 
     // ============= CUSTOMER DASHBOARD =============
     async getCustomerStats(customerId: string) {
-        const [activeRequests, totalOrders, inProgressOrders, awaitingConfirmation] = await Promise.all([
+        const [activeRequests, totalOrders, inProgressOrders, awaitingConfirmation, completedOrders] = await Promise.all([
             this.pool.query(`SELECT COUNT(*) as count FROM part_requests WHERE customer_id = $1 AND status = 'active'`, [customerId]),
             this.pool.query(`SELECT COUNT(*) as count FROM orders WHERE customer_id = $1`, [customerId]),
             this.pool.query(`SELECT COUNT(*) as count FROM orders WHERE customer_id = $1 AND order_status IN ('confirmed', 'preparing', 'ready_for_pickup', 'collected', 'in_transit')`, [customerId]),
-            this.pool.query(`SELECT COUNT(*) as count FROM orders WHERE customer_id = $1 AND order_status = 'delivered'`, [customerId])
+            this.pool.query(`SELECT COUNT(*) as count FROM orders WHERE customer_id = $1 AND order_status = 'delivered'`, [customerId]),
+            this.pool.query(`SELECT COUNT(*) as count FROM orders WHERE customer_id = $1 AND order_status = 'completed'`, [customerId])
         ]);
         return {
             active_requests: parseInt(activeRequests.rows[0].count),
             total_orders: parseInt(totalOrders.rows[0].count),
             pending_deliveries: parseInt(inProgressOrders.rows[0].count),
-            awaiting_confirmation: parseInt(awaitingConfirmation.rows[0].count)
+            awaiting_confirmation: parseInt(awaitingConfirmation.rows[0].count),
+            completed_orders: parseInt(completedOrders.rows[0].count)
         };
     }
 
@@ -103,7 +105,7 @@ export class DashboardService {
         const [userResult, statsResult, addressesResult] = await Promise.all([
             this.pool.query(`SELECT user_id, full_name, phone_number, email, created_at FROM users WHERE user_id = $1`, [customerId]),
             this.pool.query(`SELECT (SELECT COUNT(*) FROM part_requests WHERE customer_id = $1) as total_requests, (SELECT COUNT(*) FROM orders WHERE customer_id = $1) as total_orders, (SELECT COUNT(*) FROM orders WHERE customer_id = $1 AND order_status = 'completed') as completed_orders, (SELECT COUNT(*) FROM order_reviews WHERE customer_id = $1) as reviews_given`, [customerId]),
-            this.pool.query(`SELECT address_id, label, address_line, area, city, delivery_notes, is_default FROM customer_addresses WHERE customer_id = $1 ORDER BY is_default DESC, created_at DESC`, [customerId])
+            this.pool.query(`SELECT address_id, label, address_line as address_text, area, city, location_lat as latitude, location_lng as longitude, delivery_notes, is_default FROM customer_addresses WHERE customer_id = $1 ORDER BY is_default DESC, created_at DESC`, [customerId])
         ]);
         return { user: userResult.rows[0] || null, stats: statsResult.rows[0] || { total_requests: 0, completed_orders: 0, reviews_given: 0 }, addresses: addressesResult.rows };
     }
@@ -116,7 +118,7 @@ export class DashboardService {
     // ============= ADDRESSES =============
     async addAddress(customerId: string, data: { label?: string; address_line: string; area: string; delivery_notes?: string; is_default?: boolean }) {
         if (data.is_default) { await this.pool.query(`UPDATE customer_addresses SET is_default = false WHERE customer_id = $1`, [customerId]); }
-        const result = await this.pool.query(`INSERT INTO customer_addresses (customer_id, label, address_line, area, delivery_notes, is_default) VALUES ($1, $2, $3, $4, $5, $6) RETURNING *`, [customerId, data.label || 'Home', data.address_line, data.area, data.delivery_notes, data.is_default || false]);
+        const result = await this.pool.query(`INSERT INTO customer_addresses (customer_id, label, address_line, area, delivery_notes, is_default) VALUES ($1, $2, $3, $4, $5, $6) RETURNING address_id, label, address_line as address_text, area, delivery_notes, is_default`, [customerId, data.label || 'Home', data.address_line, data.area, data.delivery_notes, data.is_default || false]);
         return result.rows[0];
     }
 
@@ -127,13 +129,13 @@ export class DashboardService {
 
     async setDefaultAddress(customerId: string, addressId: string) {
         await this.pool.query(`UPDATE customer_addresses SET is_default = false WHERE customer_id = $1`, [customerId]);
-        const result = await this.pool.query(`UPDATE customer_addresses SET is_default = true WHERE address_id = $1 AND customer_id = $2 RETURNING *`, [addressId, customerId]);
+        const result = await this.pool.query(`UPDATE customer_addresses SET is_default = true WHERE address_id = $1 AND customer_id = $2 RETURNING address_id, label, address_line as address_text, area, delivery_notes, is_default`, [addressId, customerId]);
         return result.rows[0];
     }
 
     // ============= NOTIFICATIONS =============
     async getNotifications(userId: string) {
-        const result = await this.pool.query(`SELECT notification_id, title, body as message, notification_type as type, is_read, created_at, data->'related_id' as related_id, data FROM notifications WHERE user_id = $1 ORDER BY created_at DESC LIMIT 50`, [userId]);
+        const result = await this.pool.query(`SELECT notification_id, title, body, body as message, notification_type as type, is_read, created_at, data->'related_id' as related_id, data FROM notifications WHERE user_id = $1 ORDER BY created_at DESC LIMIT 50`, [userId]);
         return result.rows;
     }
 
