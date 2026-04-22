@@ -176,7 +176,7 @@ export class SubscriptionService {
             // Import Stripe (using existing test credentials)
             const Stripe = require('stripe') as typeof import('stripe');
             const stripe = new Stripe.default(process.env.STRIPE_SECRET_KEY!, {
-                apiVersion: '2025-12-15.clover',
+                apiVersion: '2026-02-25.clover',
             });
 
             // Create PaymentIntent
@@ -247,7 +247,7 @@ export class SubscriptionService {
             // Verify payment with Stripe
             const Stripe = require('stripe') as typeof import('stripe');
             const stripe = new Stripe.default(process.env.STRIPE_SECRET_KEY!, {
-                apiVersion: '2025-12-15.clover',
+                apiVersion: '2026-02-25.clover',
             });
             const paymentIntent = await stripe.paymentIntents.retrieve(paymentIntentId);
 
@@ -361,7 +361,7 @@ export class SubscriptionService {
                 try {
                     const Stripe = require('stripe') as typeof import('stripe');
                     const stripe = new Stripe.default(process.env.STRIPE_SECRET_KEY!, {
-                        apiVersion: '2025-12-15.clover',
+                        apiVersion: '2026-02-25.clover',
                     });
                     await stripe.paymentIntents.cancel(request.payment_intent_id);
                 } catch (stripeErr) {

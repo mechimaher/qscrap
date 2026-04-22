@@ -886,7 +886,7 @@ export class SupportActionsService {
                 // Type-safe Stripe import
                 const Stripe = require('stripe') as typeof import('stripe');
                 const stripe = new Stripe.default(process.env.STRIPE_SECRET_KEY!, {
-                    apiVersion: '2025-12-15.clover'
+                    apiVersion: '2026-02-25.clover'
                 });
 
                 const stripeRefund = await stripe.refunds.create({

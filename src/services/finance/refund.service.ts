@@ -371,7 +371,7 @@ export class RefundService {
 
                 // Type-safe Stripe import
                 const Stripe = require('stripe') as typeof import('stripe');
-                const stripe = new Stripe.default(stripeSecretKey, { apiVersion: '2025-12-15.clover' });
+                const stripe = new Stripe.default(stripeSecretKey, { apiVersion: '2026-02-25.clover' });
 
                 // CRITICAL: Get actual charge amount from Stripe to avoid refunding more than was charged
                 // This handles deposit-based orders (e.g., 10 QAR Stripe deposit + 310 QAR COD)

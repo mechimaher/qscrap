@@ -16,7 +16,7 @@ const router = express.Router();
 // Initialize Stripe only if key is configured
 const stripeKey = process.env.STRIPE_SECRET_KEY;
 const stripe = stripeKey ? new Stripe(stripeKey, {
-    apiVersion: '2025-12-15.clover',
+    apiVersion: '2026-02-25.clover',
 }) : null;
 
 /**
