@@ -48,7 +48,7 @@ self.addEventListener('fetch', (event) => {
 
 function isHTMLRequest(url, request) {
     return url.pathname.endsWith('.html') || 
-           url.pathname === '/' || 
+           url.pathname === '/' ||
            request.headers.get('accept')?.includes('text/html');
 }
 
