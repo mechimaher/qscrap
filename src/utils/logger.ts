@@ -39,14 +39,24 @@ class Logger {
         return this.levelOrder[level] >= this.levelOrder[this.minLevel];
     }
 
+    private safeStringify(obj: any): string {
+        try {
+            return JSON.stringify(obj, (key, value) =>
+                typeof value === 'bigint' ? value.toString() : value
+            );
+        } catch (err) {
+            return '[Unserializable Content]';
+        }
+    }
+
     private formatEntry(entry: LogEntry): string {
         if (process.env.LOG_FORMAT === 'json') {
-            return JSON.stringify(entry);
+            return this.safeStringify(entry);
         }
 
         // Human-readable format for development
         const prefix = `[${entry.timestamp}] [${entry.level.toUpperCase()}] [${entry.nodeId}]`;
-        const context = entry.context ? ` ${JSON.stringify(entry.context)}` : '';
+        const context = entry.context ? ` ${this.safeStringify(entry.context)}` : '';
         return `${prefix} ${entry.message}${context}`;
     }
 

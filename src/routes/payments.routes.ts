@@ -352,23 +352,31 @@ router.post('/deposit/:orderId',
                 'QAR'
             );
 
-            res.json({
+            const responseData = {
                 success: true,
                 intent: {
-                    id: result.intentId,
-                    clientSecret: result.clientSecret,
-                    amount: result.amount,
-                    currency: result.currency
+                    id: String(result.intentId),
+                    clientSecret: String(result.clientSecret),
+                    amount: Number(result.amount),
+                    currency: String(result.currency)
                 },
                 breakdown: {
-                    partPrice,
-                    deliveryFee,
-                    loyaltyDiscount,
-                    originalTotal,
-                    codAmount: discountedPartPrice,
-                    total: newTotal
+                    partPrice: Number(partPrice),
+                    deliveryFee: Number(deliveryFee),
+                    loyaltyDiscount: Number(loyaltyDiscount),
+                    originalTotal: Number(originalTotal),
+                    codAmount: Number(discountedPartPrice),
+                    total: Number(newTotal)
                 }
+            };
+
+            logger.info('Sending deposit response', { 
+                orderId, 
+                intentId: responseData.intent.id, 
+                total: responseData.breakdown.total 
             });
+
+            res.json(responseData);
         } catch (error: any) {
             logger.error('Deposit error', { error: (error as Error).message });
             res.status(500).json({ success: false, error: error.message || 'Deposit creation failed' });
@@ -438,22 +446,30 @@ router.post('/full/:orderId',
                 'QAR'
             );
 
-            res.json({
+            const responseData = {
                 success: true,
                 intent: {
-                    id: result.intentId,
-                    clientSecret: result.clientSecret,
-                    amount: result.amount,
-                    currency: result.currency
+                    id: String(result.intentId),
+                    clientSecret: String(result.clientSecret),
+                    amount: Number(result.amount),
+                    currency: String(result.currency)
                 },
                 breakdown: {
-                    partPrice,
-                    deliveryFee,
-                    loyaltyDiscount,
-                    originalTotal: totalAmount,
-                    total: chargeAmount
+                    partPrice: Number(partPrice),
+                    deliveryFee: Number(deliveryFee),
+                    loyaltyDiscount: Number(loyaltyDiscount),
+                    originalTotal: Number(totalAmount),
+                    total: Number(chargeAmount)
                 }
+            };
+
+            logger.info('Sending full payment response', { 
+                orderId, 
+                intentId: responseData.intent.id, 
+                total: responseData.breakdown.total 
             });
+
+            res.json(responseData);
         } catch (error: any) {
             logger.error('Full payment error', { error: (error as Error).message });
             res.status(500).json({ success: false, error: error.message || 'Full payment creation failed' });
