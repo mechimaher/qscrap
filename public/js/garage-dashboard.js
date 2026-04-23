@@ -15,14 +15,6 @@ if (token && userType && userType !== 'garage') {
 let socket = null;
 let requests = [];
 
-// ===== SOCKET CLEANUP (Prevent memory leak on long sessions) =====
-window.addEventListener('beforeunload', () => {
-    if (socket) {
-        socket.removeAllListeners();
-        socket.disconnect();
-    }
-});
-
 // ===== SECURITY UTILITIES =====
 /**
  * Escape HTML to prevent XSS attacks
@@ -43,34 +35,6 @@ function escapeJSString(text) {
         .replace(/\n/g, '\\n')
         .replace(/\r/g, '\\r')
         .replace(/\t/g, '\\t');
-}
-
-/**
- * Fetch with timeout - prevents UI hang on slow/dead network
- * @param {string} url - URL to fetch
- * @param {object} options - Fetch options
- * @param {number} timeout - Timeout in ms (default: 10000)
- */
-function fetchWithTimeout(url, options = {}, timeout = 10000) {
-    return Promise.race([
-        fetch(url, options),
-        new Promise((_, reject) =>
-            setTimeout(() => reject(new Error('Request timeout')), timeout)
-        )
-    ]);
-}
-
-/**
- * Debounce utility - prevents API spam on rapid filter changes
- * @param {function} fn - Function to debounce
- * @param {number} delay - Delay in ms
- */
-function debounce(fn, delay = 300) {
-    let timer;
-    return (...args) => {
-        clearTimeout(timer);
-        timer = setTimeout(() => fn(...args), delay);
-    };
 }
 
 let ignoredRequests = JSON.parse(localStorage.getItem('ignoredRequests') || '[]');
@@ -145,6 +109,36 @@ let autoRefreshInterval = null;
 let lastActivityTime = Date.now();
 let notifications = [];
 
+// Theme Management
+function initTheme() {
+    const savedTheme = localStorage.getItem('theme');
+    const prefersDark = window.matchMedia('(prefers-color-scheme: dark)').matches;
+
+    // Use saved theme, or system preference, or default to dark
+    const theme = savedTheme || (prefersDark ? 'dark' : 'light');
+    setTheme(theme);
+}
+
+function setTheme(theme) {
+    document.documentElement.setAttribute('data-theme', theme);
+    localStorage.setItem('theme', theme);
+
+    // Update label text
+    const label = document.getElementById('themeLabel');
+    if (label) {
+        label.textContent = theme === 'light' ? 'Light Mode' : 'Dark Mode';
+    }
+}
+
+function toggleTheme() {
+    const current = document.documentElement.getAttribute('data-theme');
+    const newTheme = current === 'light' ? 'dark' : 'light';
+    setTheme(newTheme);
+}
+
+// Initialize theme immediately (before DOM fully loads)
+initTheme();
+
 // Initialize app
 if (token) {
     showDashboard();
@@ -157,11 +151,11 @@ document.getElementById('loginForm').addEventListener('submit', async (e) => {
     const password = document.getElementById('loginPassword').value;
 
     try {
-        const res = await fetchWithTimeout(`${API_URL}/auth/login`, {
+        const res = await fetch(`${API_URL}/auth/login`, {
             method: 'POST',
             headers: { 'Content-Type': 'application/json' },
             body: JSON.stringify({ phone_number: phone, password })
-        }, 15000); // 15s timeout for login
+        });
         const data = await res.json();
 
         if (data.token) {
@@ -180,7 +174,7 @@ document.getElementById('loginForm').addEventListener('submit', async (e) => {
             showToast(data.error || 'Login failed', 'error');
         }
     } catch (err) {
-        showToast(err.message === 'Request timeout' ? 'Login request timed out. Please check your connection.' : 'Connection error', 'error');
+        showToast('Connection error', 'error');
     }
 });
 
@@ -355,45 +349,15 @@ async function showDashboard() {
 
     // Connection handlers for data freshness
     socket.on('connect', () => {
-<<<<<<< HEAD
         // console.log('[Socket] Connected - refreshing data');
-=======
-        console.log('[Socket] Connected - refreshing data');
-        const dot = document.getElementById('systemStatusDot');
-        const text = document.getElementById('systemStatusText');
-        if (dot) {
-            dot.style.background = '#22C55E'; // Success Green
-            dot.classList.remove('pulse-warning');
-        }
-        if (text) text.textContent = 'Live System Active';
-        
-        // Graceful Sync
->>>>>>> 06c3dc41 (feat(enterprise): surgical audit & hardening v3.0 - GOLD CERTIFIED)
         loadStats();
         loadRequests();
         loadBids();
         loadOrders();
-        loadBadgeCounts();
     });
 
     socket.on('disconnect', () => {
-<<<<<<< HEAD
         // console.log('[Socket] Disconnected');
-=======
-        console.log('[Socket] Disconnected');
-        const dot = document.getElementById('systemStatusDot');
-        const text = document.getElementById('systemStatusText');
-        if (dot) {
-            dot.style.background = '#EF4444'; // Danger Red
-            dot.classList.add('pulse-warning');
-        }
-        if (text) text.textContent = 'System Offline - Reconnecting...';
-    });
-
-    socket.on('reconnect_attempt', () => {
-        const dot = document.getElementById('systemStatusDot');
-        if (dot) dot.style.background = '#F59E0B'; // Warning Amber
->>>>>>> 06c3dc41 (feat(enterprise): surgical audit & hardening v3.0 - GOLD CERTIFIED)
     });
 
     socket.on('new_request', (data) => {
@@ -609,7 +573,12 @@ async function showDashboard() {
         loadOrders(); // Refresh to show returning_to_garage status
     });
 
-    // NOTE: dispute_resolved handler already registered at line 523 — duplicate removed (Feb 2026 audit)
+    // Dispute resolved notification - part may be returning
+    socket.on('dispute_resolved', (data) => {
+        playNotificationSound('info');
+        showToast(data.notification || `Dispute for Order #${data.order_number} resolved.`, 'info');
+        loadOrders(); // Refresh orders
+    });
 
     // Return driver assigned - driver is on the way with the part
     socket.on('return_driver_assigned', (data) => {
@@ -624,7 +593,7 @@ async function showDashboard() {
         loadBids(),
         loadOrders(),
         loadProfile(),
-        loadSubscription(),  // Load subscription state
+        loadSubscription(),  // Load subscription to update Analytics badge
         loadBadgeCounts()    // Enterprise badge counts
     ]);
 
@@ -645,9 +614,9 @@ async function showDashboard() {
 
 async function loadStats() {
     try {
-        const res = await fetchWithTimeout(`${API_URL}/dashboard/garage/stats`, {
+        const res = await fetch(`${API_URL}/dashboard/garage/stats`, {
             headers: { 'Authorization': `Bearer ${token}` }
-        }, 10000); // 10s timeout for stats
+        });
         const data = await res.json();
         // Dashboard stats loaded
 
@@ -737,9 +706,9 @@ async function loadRequests(page = 1) {
     const sort = document.getElementById('requestSortOption')?.value || 'newest';
 
     try {
-        const res = await fetchWithTimeout(`${API_URL}/requests/pending?page=${page}&limit=${REQUESTS_PAGE_SIZE}&urgency=${urgency}&condition=${condition}&sort=${sort}`, {
+        const res = await fetch(`${API_URL}/requests/pending?page=${page}&limit=${REQUESTS_PAGE_SIZE}&urgency=${urgency}&condition=${condition}&sort=${sort}`, {
             headers: { 'Authorization': `Bearer ${token}` }
-        }, 10000); // 10s timeout for requests
+        });
         const data = await res.json();
         // Handle both old array format and new wrapped format
         requests = Array.isArray(data) ? data : (data.requests || []);
@@ -769,15 +738,15 @@ function renderRequests() {
     // Recent Orders section on dashboard is populated by loadDashboard/loadOrders
 }
 
-// Filter requests - now triggers server reload (debounced to prevent API spam)
-const filterRequests = debounce(function() {
+// Filter requests - now triggers server reload
+function filterRequests() {
     loadRequests(1);
-}, 300);
+}
 
-// Sort requests based on selected option (debounced to prevent API spam)
-const sortRequests = debounce(function() {
+// Sort requests based on selected option
+function sortRequests() {
     loadRequests(1);
-}, 300);
+}
 
 
 // Clear all request filters
@@ -995,9 +964,9 @@ const BIDS_PAGE_SIZE = 20;
 async function loadBids(page = 1) {
     currentBidsPage = page;
     try {
-        const res = await fetchWithTimeout(`${API_URL}/bids/my?page=${page}&limit=${BIDS_PAGE_SIZE}`, {
+        const res = await fetch(`${API_URL}/bids/my?page=${page}&limit=${BIDS_PAGE_SIZE}`, {
             headers: { 'Authorization': `Bearer ${token}` }
-        }, 10000); // 10s timeout for bids
+        });
         const data = await res.json();
 
         // Handle both old array format and new paginated format
@@ -1539,9 +1508,9 @@ function generateOrderTimeline(status) {
 
 async function loadOrders() {
     try {
-        const res = await fetchWithTimeout(`${API_URL}/orders/my`, {
+        const res = await fetch(`${API_URL}/orders/my`, {
             headers: { 'Authorization': `Bearer ${token}` }
-        }, 10000); // 10s timeout for orders
+        });
         const data = await res.json();
         // Handle both old array format and new wrapped format
         const orders = Array.isArray(data) ? data : (data.orders || []);
@@ -1580,7 +1549,7 @@ async function loadOrders() {
                 // Disputed orders - show Review Dispute button
                 actionsHtml = `
                             <div class="order-actions">
-                                <button class="btn-status dispute" onclick="event.stopPropagation(); reviewDisputeForOrder('${o.order_id}')" style="background: linear-gradient(135deg, #f59e0b 0%, #d97706 100%);">
+                                <button class="btn-status dispute" onclick="reviewDisputeForOrder('${o.order_id}')" style="background: linear-gradient(135deg, #f59e0b 0%, #d97706 100%);">
                                     <i class="bi bi-exclamation-triangle"></i> Review Dispute
                                 </button>
                             </div>
@@ -1593,13 +1562,13 @@ async function loadOrders() {
                 const transition = garageAllowedTransitions[o.order_status];
                 actionsHtml = `
                             <div class="order-actions">
-                                <button class="btn-cancel" onclick="event.stopPropagation(); openCancelOrderModal('${o.order_id}')" title="Cancel this order">
+                                <button class="btn-cancel" onclick="openCancelOrderModal('${o.order_id}')" title="Cancel this order">
                                     <i class="bi bi-x-circle"></i> Cancel
                                 </button>
                                 <button class="btn-outline-sm" onclick="event.stopPropagation(); printPackingSlip('${o.order_id}')" title="Print packing slip" style="padding: 6px 10px; font-size: 12px; border: 1px solid var(--text-muted); color: var(--text-secondary); background: transparent; border-radius: 6px; cursor: pointer; transition: all 0.2s;" onmouseover="this.style.background='var(--bg-tertiary)';" onmouseout="this.style.background='transparent';">
                                     <i class="bi bi-printer"></i> Print
                                 </button>
-                                <button class="btn-status next" onclick="event.stopPropagation(); updateOrderStatus('${o.order_id}', '${transition.next}')">
+                                <button class="btn-status next" onclick="updateOrderStatus('${o.order_id}', '${transition.next}')">
                                     <i class="bi bi-check-circle"></i> ${transition.label}
                                 </button>
                             </div>
@@ -1679,7 +1648,7 @@ async function loadOrders() {
                                 ${thumbnail ? `<img src="${thumbnail}" alt="Part" style="width: 60px; height: 60px; object-fit: cover; border-radius: 8px; flex-shrink: 0;">` : '<div style="width: 60px; height: 60px; background: var(--bg-tertiary); border-radius: 8px; display: flex; align-items: center; justify-content: center; flex-shrink: 0;"><i class="bi bi-image" style="color: var(--text-muted);"></i></div>'}
                                 <div style="flex: 1; min-width: 0;">
                                     <div style="color: var(--text-secondary); font-size: 14px; font-weight: 600;">
-                                        ${escapeHTML(o.car_make || '')} ${escapeHTML(o.car_model || '')} - ${escapeHTML(o.part_category || o.part_description?.slice(0, 30) || 'Part')}
+                                        ${o.car_make} ${o.car_model} - ${o.part_category || o.part_description?.slice(0, 30) || 'Part'}
                                     </div>
                                     ${o.part_description && o.part_category ? `<div style="font-size: 12px; color: var(--text-muted); margin-top: 2px;">${escapeHTML(o.part_description.slice(0, 35))}</div>` : ''}
                                     <div style="font-weight: 600; margin-top: 4px;">${o.part_price} QAR</div>
@@ -2063,8 +2032,7 @@ async function confirmCancelOrder() {
 
 // ===== LOAD MY REVIEWS (Garage sees reviews about them) =====
 async function loadMyReviews(page = 1) {
-    const safePage = Math.max(1, Number(page) || 1);
-    reviewsPage = safePage;
+    reviewsPage = page;
     const summaryEl = document.getElementById('reviewsSummary');
     const listEl = document.getElementById('reviewsList');
 
@@ -2072,7 +2040,7 @@ async function loadMyReviews(page = 1) {
     listEl.innerHTML = '';
 
     try {
-        const res = await fetch(`${API_URL}/reviews/my?page=${safePage}&limit=${REVIEWS_PAGE_SIZE}`, {
+        const res = await fetch(`${API_URL}/reviews/my?page=${page}&limit=${REVIEWS_PAGE_SIZE}`, {
             headers: { 'Authorization': `Bearer ${token}` }
         });
         const data = await res.json();
@@ -2996,8 +2964,7 @@ async function updateOrderStatus(orderId, newStatus) {
 
 function switchSection(section) {
     document.querySelectorAll('.nav-item').forEach(i => i.classList.remove('active'));
-    const navItem = document.querySelector(`[data-section="${section}"]`);
-    if (navItem) navItem.classList.add('active');
+    document.querySelector(`[data-section="${section}"]`).classList.add('active');
 
     // Handle hyphenated section names
     const sectionIdMap = {
@@ -3005,11 +2972,8 @@ function switchSection(section) {
     };
     const sectionId = sectionIdMap[section] || section.charAt(0).toUpperCase() + section.slice(1);
 
-    const sectionEl = document.getElementById('section' + sectionId);
-    if (!sectionEl) return; // Guard: section doesn't exist
-
     document.querySelectorAll('.section').forEach(s => s.classList.remove('active'));
-    sectionEl.classList.add('active');
+    document.getElementById('section' + sectionId).classList.add('active');
 
     // Refresh data based on section
     if (section === 'requests') loadRequests();
@@ -3017,10 +2981,13 @@ function switchSection(section) {
     if (section === 'orders') loadOrders();
     if (section === 'dashboard') { loadStats(); loadRequests(); }
     if (section === 'subscription') loadSubscription();
+    if (section === 'analytics') loadAnalytics();
+    if (section === 'showcase') loadShowcase();
     if (section === 'earnings') loadEarnings();
     if (section === 'reviews') loadMyReviews();
     if (section === 'profile') loadProfile();
     if (section === 'pending-actions') { loadPendingCounterOffers(); loadPendingDisputes(); }
+    if (section === 'quick-services') { loadQuickServicesSettings(); loadQuickServicesRequests(); }
 }
 
 // Ignore/Skip request - now persists to database (per-garage) with 5-second undo
@@ -3373,10 +3340,7 @@ function getTimeAgo(date) {
 function showToast(message, type = 'success') {
     const toast = document.createElement('div');
     toast.className = `toast ${type}`;
-    const icon = document.createElement('i');
-    icon.className = `bi bi-${type === 'success' ? 'check-circle' : type === 'error' ? 'x-circle' : 'exclamation-triangle'}`;
-    toast.appendChild(icon);
-    toast.appendChild(document.createTextNode(' ' + message));
+    toast.innerHTML = `<i class="bi bi-${type === 'success' ? 'check-circle' : type === 'error' ? 'x-circle' : 'exclamation-triangle'}"></i> ${message}`;
     document.getElementById('toastContainer').appendChild(toast);
     setTimeout(() => toast.remove(), 4000);
 }
@@ -3718,6 +3682,34 @@ async function loadSubscription() {
 
             // Plan name
             document.getElementById('subPlanName').textContent = sub.plan_name || 'Free Trial';
+
+            // Update Analytics badges based on plan
+            const planCode = (sub.plan_code || '').toLowerCase();
+            const analyticsBadge = document.getElementById('analyticsPlanBadge');
+            const analyticsHeaderBadge = document.getElementById('analyticsHeaderBadge');
+
+            let badgeText = 'PRO+';
+            let badgeStyle = 'background: linear-gradient(135deg, #A82050, #8D1B3D);';
+
+            if (planCode === 'enterprise') {
+                badgeText = 'ENTERPRISE';
+                badgeStyle = 'background: linear-gradient(135deg, #eab308, #f59e0b);';
+            } else if (planCode === 'professional') {
+                badgeText = 'PRO';
+                badgeStyle = 'background: linear-gradient(135deg, #A82050, #8D1B3D);';
+            } else if (planCode === 'starter') {
+                badgeText = 'UPGRADE';
+                badgeStyle = 'background: linear-gradient(135deg, #6b7280, #9ca3af);';
+            }
+
+            if (analyticsBadge) {
+                analyticsBadge.textContent = badgeText;
+                analyticsBadge.style.cssText += badgeStyle;
+            }
+            if (analyticsHeaderBadge) {
+                analyticsHeaderBadge.textContent = badgeText;
+                analyticsHeaderBadge.style.cssText += badgeStyle;
+            }
 
             // Price display - commission plans have no monthly fee
             if (sub.is_commission_based || sub.monthly_fee === 0) {
@@ -4169,6 +4161,327 @@ document.addEventListener('DOMContentLoaded', function () {
         });
     }
 });
+
+
+// ===== ANALYTICS MODULE (Pro/Enterprise) =====
+let revenueChart = null;
+
+async function loadAnalytics() {
+    const period = document.getElementById('analyticsPeriod')?.value || '30';
+
+    try {
+        const res = await fetch(`${API_URL}/garage/analytics?period=${period}`, {
+            headers: { 'Authorization': `Bearer ${token}` }
+        });
+
+        if (res.status === 403) {
+            // User doesn't have access - show upgrade prompt
+            const data = await res.json();
+            document.getElementById('analyticsUpgradePrompt').style.display = 'flex';
+            document.getElementById('analyticsContent').style.display = 'none';
+            // console.log('Analytics requires upgrade:', data.required_plans);
+            return;
+        }
+
+        if (!res.ok) {
+            showToast('Failed to load analytics', 'error');
+            return;
+        }
+
+        const data = await res.json();
+
+        // Show analytics content, hide upgrade prompt
+        document.getElementById('analyticsUpgradePrompt').style.display = 'none';
+        document.getElementById('analyticsContent').style.display = 'block';
+
+        // Update summary cards
+        document.getElementById('analyticsRevenue').textContent =
+            (data.summary.total_revenue || 0).toLocaleString() + ' QAR';
+        document.getElementById('analyticsOrders').textContent =
+            data.summary.total_orders || 0;
+        document.getElementById('analyticsAcceptRate').textContent =
+            (data.summary.acceptance_rate || 0).toFixed(1) + '%';
+        document.getElementById('analyticsResponseTime').textContent =
+            (data.summary.avg_response_hours || 0).toFixed(1) + 'h';
+
+        // Update bid performance
+        document.getElementById('analyticsTotalBids').textContent = data.summary.total_bids || 0;
+        document.getElementById('analyticsAcceptedBids').textContent =
+            Math.round((data.summary.acceptance_rate / 100) * data.summary.total_bids) || 0;
+        document.getElementById('analyticsRejectedBids').textContent =
+            Math.round(((100 - data.summary.acceptance_rate - 10) / 100) * data.summary.total_bids) || 0;
+        document.getElementById('analyticsPendingBids').textContent =
+            Math.round((10 / 100) * data.summary.total_bids) || 0;
+
+        // Render revenue chart
+        renderRevenueChart(data.charts.revenue_trend);
+
+        // Update top categories
+        renderTopCategories(data.top_categories);
+
+        // Show export button for Enterprise
+        if (data.premium_insights?.can_export) {
+            document.getElementById('exportAnalyticsBtn').style.display = 'inline-flex';
+        }
+
+        // Show customer insights for Enterprise
+        if (data.premium_insights?.customer_insights_available) {
+            document.getElementById('customerInsightsCard').style.display = 'block';
+            loadCustomerInsights();
+            loadMarketInsights();
+        }
+
+    } catch (err) {
+        console.error('Failed to load analytics:', err);
+        showToast('Error loading analytics', 'error');
+    }
+}
+
+function renderRevenueChart(data) {
+    const ctx = document.getElementById('revenueChart')?.getContext('2d');
+    if (!ctx) return;
+
+    // Destroy existing chart
+    if (revenueChart) {
+        revenueChart.destroy();
+    }
+
+    const labels = data.map(d => new Date(d.date).toLocaleDateString('en-US', { month: 'short', day: 'numeric' }));
+    const revenues = data.map(d => parseFloat(d.revenue) || 0);
+
+    revenueChart = new Chart(ctx, {
+        type: 'line',
+        data: {
+            labels: labels,
+            datasets: [{
+                label: 'Revenue (QAR)',
+                data: revenues,
+                borderColor: '#A82050',
+                backgroundColor: 'rgba(139, 92, 246, 0.1)',
+                fill: true,
+                tension: 0.4
+            }]
+        },
+        options: {
+            responsive: true,
+            maintainAspectRatio: false,
+            plugins: {
+                legend: { display: false }
+            },
+            scales: {
+                y: {
+                    beginAtZero: true,
+                    grid: { color: 'rgba(255,255,255,0.1)' }
+                },
+                x: {
+                    grid: { display: false }
+                }
+            }
+        }
+    });
+}
+
+function renderTopCategories(categories) {
+    const container = document.getElementById('topCategoriesList');
+    if (!container) return;
+
+    if (!categories || categories.length === 0) {
+        container.innerHTML = '<p style="color: var(--text-muted);">No bid data yet</p>';
+        return;
+    }
+
+    const maxBids = Math.max(...categories.map(c => c.bid_count));
+
+    container.innerHTML = categories.map(cat => `
+        <div style="margin-bottom: 12px;">
+            <div style="display: flex; justify-content: space-between; margin-bottom: 4px;">
+                <span>${escapeHTML(cat.part_name)}</span>
+                <span style="color: var(--text-muted);">${cat.wins}/${cat.bid_count} wins</span>
+            </div>
+            <div style="background: var(--bg-tertiary); border-radius: 4px; height: 8px;">
+                <div style="background: linear-gradient(90deg, #A82050, #8D1B3D); height: 100%; border-radius: 4px; width: ${(cat.bid_count / maxBids * 100)}%;"></div>
+            </div>
+        </div>
+    `).join('');
+}
+
+async function loadCustomerInsights() {
+    try {
+        const res = await fetch(`${API_URL}/garage/analytics/customers`, {
+            headers: { 'Authorization': `Bearer ${token}` }
+        });
+
+        if (!res.ok) return;
+
+        const data = await res.json();
+        const container = document.getElementById('customerInsightsContent');
+
+        container.innerHTML = `
+            <div style="display: grid; grid-template-columns: repeat(3, 1fr); gap: 16px; margin-bottom: 16px;">
+                <div class="stat-card" style="background: var(--bg-tertiary);">
+                    <div class="stat-value">${data.insights.unique_customers}</div>
+                    <div class="stat-label">Unique Customers</div>
+                </div>
+                <div class="stat-card" style="background: var(--bg-tertiary);">
+                    <div class="stat-value">${data.insights.repeat_customers}</div>
+                    <div class="stat-label">Repeat Customers</div>
+                </div>
+                <div class="stat-card" style="background: var(--bg-tertiary);">
+                    <div class="stat-value">${data.insights.repeat_rate}%</div>
+                    <div class="stat-label">Repeat Rate</div>
+                </div>
+            </div>
+            <h4 style="margin-bottom: 12px;">Top Areas</h4>
+            ${data.area_breakdown.map(area => `
+                <div style="display: flex; justify-content: space-between; padding: 8px 0; border-bottom: 1px solid var(--border);">
+                    <span>${escapeHTML(area.area)}</span>
+                    <span>${parseFloat(area.revenue).toLocaleString()} QAR (${area.orders} orders)</span>
+                </div>
+            `).join('')}
+        `;
+    } catch (err) {
+        console.error('Failed to load customer insights:', err);
+    }
+}
+
+async function loadMarketInsights() {
+    try {
+        const res = await fetch(`${API_URL}/garage/analytics/market`, {
+            headers: { 'Authorization': `Bearer ${token}` }
+        });
+
+        if (!res.ok) return;
+
+        const data = await res.json();
+        const container = document.getElementById('marketInsightsContent');
+
+        // Show the card
+        document.getElementById('marketInsightsCard').style.display = 'block';
+
+        container.innerHTML = `
+            <!-- Platform Stats & Your Position -->
+            <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 24px; margin-bottom: 24px;">
+                <!-- Platform Stats -->
+                <div style="background: linear-gradient(135deg, rgba(99, 102, 241, 0.1), rgba(139, 92, 246, 0.05)); border-radius: 12px; padding: 20px;">
+                    <h4 style="margin-bottom: 12px; font-size: 14px; color: var(--text-muted);">📊 Platform Stats</h4>
+                    <div style="display: grid; gap: 12px;">
+                        <div style="display: flex; justify-content: space-between;">
+                            <span>Active Garages</span>
+                            <strong>${data.platform.active_garages}</strong>
+                        </div>
+                        <div style="display: flex; justify-content: space-between;">
+                            <span>Orders This Month</span>
+                            <strong>${data.platform.orders_this_month}</strong>
+                        </div>
+                        <div style="display: flex; justify-content: space-between;">
+                            <span>Active Requests</span>
+                            <strong>${data.platform.active_requests}</strong>
+                        </div>
+                    </div>
+                </div>
+                <!-- Your Position -->
+                <div style="background: linear-gradient(135deg, rgba(234, 179, 8, 0.1), rgba(245, 158, 11, 0.05)); border-radius: 12px; padding: 20px; text-align: center;">
+                    <h4 style="margin-bottom: 8px; font-size: 14px; color: var(--text-muted);">🏆 Your Position</h4>
+                    <div style="font-size: 48px; font-weight: 700; color: #eab308;">#${data.your_position.rank}</div>
+                    <div style="color: var(--text-secondary);">of ${data.your_position.total_garages} garages</div>
+                    <div style="margin-top: 8px; font-size: 12px; color: var(--success);">Top ${100 - data.your_position.percentile}%</div>
+                </div>
+            </div>
+
+            <!-- Performance Benchmarks -->
+            <h4 style="margin-bottom: 12px;">📈 Performance vs Market Average</h4>
+            <div style="display: grid; grid-template-columns: repeat(2, 1fr); gap: 12px; margin-bottom: 24px;">
+                ${renderBenchmark('Rating', data.benchmarks.rating.yours.toFixed(1), data.benchmarks.rating.market_avg.toFixed(1), data.benchmarks.rating.is_above_avg, '⭐')}
+                ${renderBenchmark('Win Rate', data.benchmarks.win_rate.yours.toFixed(1) + '%', data.benchmarks.win_rate.market_avg.toFixed(1) + '%', data.benchmarks.win_rate.is_above_avg, '🎯')}
+                ${renderBenchmark('Response Time', data.benchmarks.response_time.yours + ' min', data.benchmarks.response_time.market_avg + ' min', data.benchmarks.response_time.is_above_avg, '⚡')}
+                ${renderBenchmark('Fulfillment', data.benchmarks.fulfillment_rate.yours.toFixed(1) + '%', data.benchmarks.fulfillment_rate.market_avg.toFixed(1) + '%', data.benchmarks.fulfillment_rate.is_above_avg, '✅')}
+            </div>
+
+            <!-- Trending Parts -->
+            <h4 style="margin-bottom: 12px;">🔥 Trending Parts (Last 30 Days)</h4>
+            <div style="display: grid; gap: 8px;">
+                ${data.trending_parts.map((part, i) => `
+                    <div style="display: flex; align-items: center; gap: 12px; padding: 12px; background: var(--bg-tertiary); border-radius: 8px;">
+                        <span style="font-size: 20px; opacity: 0.5;">${i + 1}</span>
+                        <div style="flex: 1;">
+                            <div style="font-weight: 500;">${escapeHTML(part.name)}</div>
+                            <div style="font-size: 12px; color: var(--text-muted);">${part.requests} requests</div>
+                        </div>
+                        <span style="background: rgba(16, 185, 129, 0.2); color: #10b981; padding: 4px 8px; border-radius: 4px; font-size: 12px;">
+                            Hot 🔥
+                        </span>
+                    </div>
+                `).join('')}
+            </div>
+        `;
+    } catch (err) {
+        console.error('Failed to load market insights:', err);
+    }
+}
+
+function renderBenchmark(label, yours, market, isAbove, icon) {
+    const color = isAbove ? '#10b981' : '#ef4444';
+    const indicator = isAbove ? '↑' : '↓';
+    return `
+        <div style="background: var(--bg-tertiary); border-radius: 8px; padding: 12px;">
+            <div style="display: flex; align-items: center; gap: 8px; margin-bottom: 8px;">
+                <span>${icon}</span>
+                <span style="font-weight: 500;">${label}</span>
+            </div>
+            <div style="display: flex; justify-content: space-between; align-items: center;">
+                <div>
+                    <div style="font-size: 20px; font-weight: 700; color: ${color};">${yours}</div>
+                    <div style="font-size: 11px; color: var(--text-muted);">Market: ${market}</div>
+                </div>
+                <span style="font-size: 24px; color: ${color};">${indicator}</span>
+            </div>
+        </div>
+    `;
+}
+
+async function exportAnalytics() {
+    const period = document.getElementById('analyticsPeriod')?.value || '90';
+
+    try {
+        const res = await fetch(`${API_URL}/garage/analytics/export?period=${period}`, {
+            headers: { 'Authorization': `Bearer ${token}` }
+        });
+
+        if (!res.ok) {
+            showToast('Export requires Enterprise plan', 'error');
+            return;
+        }
+
+        const data = await res.json();
+
+        // Convert to CSV
+        const headers = ['Order ID', 'Date', 'Part Name', 'Car', 'Amount', 'Platform Fee', 'Payout'];
+        const rows = data.data.map(row => [
+            row.order_id,
+            new Date(row.completed_at).toLocaleDateString(),
+            row.part_name,
+            `${row.car_make} ${row.car_model} ${row.car_year}`,
+            row.bid_amount,
+            row.platform_fee,
+            row.garage_payout_amount
+        ]);
+
+        const csv = [headers.join(','), ...rows.map(r => r.join(','))].join('\n');
+
+        // Download
+        const blob = new Blob([csv], { type: 'text/csv' });
+        const url = URL.createObjectURL(blob);
+        const a = document.createElement('a');
+        a.href = url;
+        a.download = `qscrap-analytics-${period}days.csv`;
+        a.click();
+        URL.revokeObjectURL(url);
+
+        showToast('Analytics exported!', 'success');
+    } catch (err) {
+        showToast('Export failed', 'error');
+    }
+}
 
 // ===== EARNINGS & PAYOUTS =====
 async function loadEarnings() {
@@ -4776,8 +5089,8 @@ function renderSearchResults(results) {
                  style="padding: 10px 12px; cursor: pointer; display: flex; justify-content: space-between; align-items: center; border-bottom: 1px solid var(--border);"
                  onmouseover="this.style.background='var(--bg-hover)'" onmouseout="this.style.background=''">
                 <div>
-                    <div style="font-weight: 600; color: var(--accent);">#${escapeHTML(o.order_number || '')}</div>
-                    <div style="font-size: 12px; color: var(--text-secondary);">${escapeHTML(o.car_make || '')} ${escapeHTML(o.car_model || '')} - ${escapeHTML(o.part_description?.slice(0, 25) || '')}</div>
+                    <div style="font-weight: 600; color: var(--accent);">#${o.order_number}</div>
+                    <div style="font-size: 12px; color: var(--text-secondary);">${o.car_make} ${o.car_model} - ${o.part_description?.slice(0, 25) || ''}</div>
                 </div>
                 <span class="order-status ${o.order_status?.replace('_', '-')}" style="font-size: 10px;">${o.order_status}</span>
             </div>
@@ -4792,8 +5105,8 @@ function renderSearchResults(results) {
                  style="padding: 10px 12px; cursor: pointer; display: flex; justify-content: space-between; align-items: center; border-bottom: 1px solid var(--border);"
                  onmouseover="this.style.background='var(--bg-hover)'" onmouseout="this.style.background=''">
                 <div>
-                    <div style="font-weight: 600;">${escapeHTML(r.car_make || '')} ${escapeHTML(r.car_model || '')}</div>
-                    <div style="font-size: 12px; color: var(--text-secondary);">${escapeHTML(r.part_description?.slice(0, 35) || '')}</div>
+                    <div style="font-weight: 600;">${r.car_make} ${r.car_model}</div>
+                    <div style="font-size: 12px; color: var(--text-secondary);">${r.part_description?.slice(0, 35) || ''}</div>
                 </div>
                 <span style="font-size: 11px; color: var(--text-muted);">${r.status}</span>
             </div>
@@ -5811,7 +6124,7 @@ function refreshCurrentSection(silent = false) {
             loadEarnings();
             break;
         case 'reviews':
-            loadMyReviews(reviewsPage);
+            loadReviews();
             break;
         case 'profile':
             loadProfile();
@@ -6038,6 +6351,567 @@ async function viewNegotiationHistory(bidId) {
 function closeNegotiationHistoryModal() {
     const modal = document.getElementById('negotiationHistoryModal');
     if (modal) modal.remove();
+}
+
+// ===== PARTS SHOWCASE (Enterprise Only) =====
+let hasShowcaseAccess = false;
+
+async function loadShowcase() {
+    try {
+        const res = await fetch(`${API_URL}/showcase/garage`, {
+            headers: { 'Authorization': `Bearer ${token}` }
+        });
+
+        if (res.status === 403 || res.status === 400) {
+            // Not Enterprise - show upgrade prompt
+            hasShowcaseAccess = false;
+            document.getElementById('showcaseUpgradePrompt').style.display = 'block';
+            document.getElementById('showcaseContent').style.display = 'none';
+            document.getElementById('addPartBtn').style.display = 'none';
+            return;
+        }
+
+        const data = await res.json();
+        hasShowcaseAccess = true;
+
+        // Show content, hide upgrade prompt
+        document.getElementById('showcaseUpgradePrompt').style.display = 'none';
+        document.getElementById('showcaseContent').style.display = 'block';
+        document.getElementById('addPartBtn').style.display = 'inline-flex';
+
+        // Update stats
+        const analytics = data.analytics || {};
+        document.getElementById('showcaseTotalParts').textContent = analytics.total_parts || 0;
+        document.getElementById('showcaseActiveParts').textContent = analytics.active_parts || 0;
+        document.getElementById('showcaseTotalViews').textContent = analytics.total_views || 0;
+        document.getElementById('showcaseTotalOrders').textContent = analytics.total_orders || 0;
+
+        // Render parts grid
+        renderShowcaseParts(data.parts || []);
+
+    } catch (err) {
+        console.error('loadShowcase error:', err);
+        showToast('Failed to load showcase', 'error');
+    }
+}
+
+function renderShowcaseParts(parts) {
+    // Cache parts for editing
+    showcasePartsCache = parts;
+
+    const grid = document.getElementById('showcasePartsGrid');
+
+    if (!parts.length) {
+        grid.innerHTML = `
+            <div class="empty-state" style="grid-column: 1/-1; text-align: center; padding: 60px 20px;">
+                <i class="bi bi-box-seam" style="font-size: 48px; color: var(--text-muted); margin-bottom: 16px;"></i>
+                <h4 style="margin: 0 0 8px;">No parts yet</h4>
+                <p style="color: var(--text-secondary);">Click "Add Part" to showcase your first part to customers!</p>
+            </div>
+        `;
+        return;
+    }
+
+    grid.innerHTML = parts.map(part => {
+        const statusClass = part.status === 'active' ? 'success' : (part.status === 'sold' ? 'warning' : 'secondary');
+        const statusIcon = part.status === 'active' ? 'check-circle' : (part.status === 'sold' ? 'bag-check' : 'eye-slash');
+
+        // Handle image URL - may be just filename or full path
+        let imageUrl = '';
+        if (part.image_urls && part.image_urls.length > 0) {
+            const firstImage = part.image_urls[0];
+            // If it's just a filename, add the full path
+            imageUrl = firstImage.startsWith('/') ? firstImage : `/uploads/${firstImage}`;
+        }
+        const hasImage = !!imageUrl;
+
+        return `
+            <div class="request-card" style="position: relative;">
+                <div style="position: absolute; top: 12px; right: 12px;">
+                    <span class="badge badge-${statusClass}" style="font-size: 11px;">
+                        <i class="bi bi-${statusIcon}"></i> ${part.status.charAt(0).toUpperCase() + part.status.slice(1)}
+                    </span>
+                </div>
+                <div style="display: flex; gap: 12px;">
+                    ${hasImage ? `
+                        <img src="${imageUrl}" alt="${escapeHTML(part.title)}" 
+                             style="width: 80px; height: 80px; object-fit: cover; border-radius: 8px; border: 1px solid var(--border);"
+                             onerror="this.style.display='none'; this.nextElementSibling.style.display='flex';">
+                        <div class="part-placeholder-icon" style="display: none; width: 80px; height: 80px; background: var(--bg-secondary); border-radius: 8px; border: 1px solid var(--border); align-items: center; justify-content: center;">
+                            <i class="bi bi-box-seam" style="font-size: 28px; color: var(--text-muted);"></i>
+                        </div>
+                    ` : `
+                        <div style="width: 80px; height: 80px; background: var(--bg-secondary); border-radius: 8px; border: 1px solid var(--border); display: flex; align-items: center; justify-content: center;">
+                            <i class="bi bi-box-seam" style="font-size: 28px; color: var(--text-muted);"></i>
+                        </div>
+                    `}
+                    <div style="flex: 1;">
+                        <h4 style="margin: 0 0 4px; font-size: 15px; color: var(--text-primary);">${escapeHTML(part.title)}</h4>
+                        <p style="margin: 0 0 8px; font-size: 13px; color: var(--text-secondary);">
+                            ${escapeHTML(part.car_make)}${part.car_model ? ' ' + escapeHTML(part.car_model) : ''}
+                        </p>
+                        <div style="display: flex; gap: 16px; font-size: 13px;">
+                            <span style="font-weight: 600; color: var(--success);">${part.price} QAR</span>
+                            <span style="color: var(--text-muted);">${part.part_condition}</span>
+                            <span style="color: var(--text-muted);">Qty: ${part.quantity}</span>
+                        </div>
+                    </div>
+                </div>
+                <div style="display: flex; justify-content: space-between; align-items: center; margin-top: 12px; padding-top: 12px; border-top: 1px solid var(--border);">
+                    <div style="display: flex; gap: 16px; font-size: 12px; color: var(--text-muted);">
+                        <span><i class="bi bi-eye"></i> ${part.view_count || 0} views</span>
+                        <span><i class="bi bi-cart-check"></i> ${part.order_count || 0} orders</span>
+                    </div>
+                    <div style="display: flex; gap: 8px;">
+                        <button class="btn btn-sm btn-outline" onclick="openPartPreviewModal('${part.part_id}')" title="Preview as customer" style="color: var(--accent);">
+                            <i class="bi bi-phone"></i>
+                        </button>
+                        <button class="btn btn-sm btn-outline" onclick="openEditPartModal('${part.part_id}')" title="Edit part">
+                            <i class="bi bi-pencil"></i>
+                        </button>
+                        <button class="btn btn-sm btn-outline" onclick="togglePartStatus('${part.part_id}')" title="Toggle visibility">
+                            <i class="bi bi-${part.status === 'active' ? 'eye-slash' : 'eye'}"></i>
+                        </button>
+                        <button class="btn btn-sm btn-outline" style="color: var(--danger);" onclick="deleteShowcasePart('${part.part_id}')" title="Delete">
+                            <i class="bi bi-trash"></i>
+                        </button>
+                    </div>
+                </div>
+            </div>
+        `;
+    }).join('');
+}
+
+// Track editing state
+let editingPartId = null;
+let showcasePartsCache = [];
+let imagesToRemove = []; // Track images marked for removal during edit
+
+function openAddPartModal() {
+    if (!hasShowcaseAccess) {
+        showToast('Enterprise plan required for Parts Showcase', 'warning');
+        return;
+    }
+    editingPartId = null;
+    imagesToRemove = []; // Reset removal list
+    document.getElementById('addPartForm').reset();
+    document.getElementById('partModalTitle').innerHTML = '<i class="bi bi-plus-circle"></i> Add Part to Showcase';
+    document.getElementById('submitPartBtn').innerHTML = '<i class="bi bi-plus-lg"></i> Add Part';
+    document.getElementById('currentImagesPreview').innerHTML = '';
+    document.getElementById('currentImagesPreview').style.display = 'none';
+    document.getElementById('addPartModal').classList.add('active');
+}
+
+// Mark an image for removal (visual only until save)
+function markImageForRemoval(url, idx) {
+    if (!imagesToRemove.includes(url)) {
+        imagesToRemove.push(url);
+    }
+    // Update visual - strikethrough effect
+    const imgWrapper = document.querySelector(`[data-img-idx="${idx}"]`);
+    if (imgWrapper) {
+        imgWrapper.classList.add('marked-for-removal');
+        imgWrapper.querySelector('.remove-img-btn').innerHTML = '<i class="bi bi-arrow-counterclockwise"></i>';
+        imgWrapper.querySelector('.remove-img-btn').onclick = () => unmarkImageForRemoval(url, idx);
+    }
+    showToast(`Image marked for removal (${imagesToRemove.length})`, 'info');
+}
+
+// Undo removal marking
+function unmarkImageForRemoval(url, idx) {
+    imagesToRemove = imagesToRemove.filter(u => u !== url);
+    const imgWrapper = document.querySelector(`[data-img-idx="${idx}"]`);
+    if (imgWrapper) {
+        imgWrapper.classList.remove('marked-for-removal');
+        imgWrapper.querySelector('.remove-img-btn').innerHTML = '<i class="bi bi-x-circle"></i>';
+        imgWrapper.querySelector('.remove-img-btn').onclick = () => markImageForRemoval(url, idx);
+    }
+}
+
+function openEditPartModal(partId) {
+    if (!hasShowcaseAccess) {
+        showToast('Enterprise plan required for Parts Showcase', 'warning');
+        return;
+    }
+
+    // Find part in cache
+    const part = showcasePartsCache.find(p => p.part_id === partId);
+    if (!part) {
+        showToast('Part not found', 'error');
+        return;
+    }
+
+    editingPartId = partId;
+    imagesToRemove = []; // Reset removal tracking
+
+    // Populate form fields
+    document.getElementById('partTitle').value = part.title || '';
+    document.getElementById('partCarMake').value = part.car_make || '';
+    document.getElementById('partCarModel').value = part.car_model || '';
+    document.getElementById('partCondition').value = part.part_condition || 'used';
+    document.getElementById('partPrice').value = part.price || '';
+    document.getElementById('partPriceType').value = part.price_type || 'fixed';
+    document.getElementById('partWarranty').value = part.warranty_days || 0;
+    document.getElementById('partQuantity').value = part.quantity || 1;
+    document.getElementById('partDescription').value = part.part_description || '';
+
+    // Show current images with REMOVE buttons
+    const previewContainer = document.getElementById('currentImagesPreview');
+    if (part.image_urls && part.image_urls.length > 0) {
+        previewContainer.innerHTML = `
+            <label style="display: block; margin-bottom: 8px; color: var(--text-secondary); font-size: 13px;">
+                <i class="bi bi-images" style="color: var(--accent);"></i> Current Images 
+                <span style="color: var(--text-muted);">(click ❌ to remove)</span>
+            </label>
+            <div style="display: flex; gap: 10px; flex-wrap: wrap;">
+                ${part.image_urls.map((url, idx) => `
+                    <div class="current-img-wrapper" data-img-idx="${idx}" style="position: relative; transition: all 0.3s;">
+                        <img src="${url}" alt="Part image ${idx + 1}" 
+                             style="width: 70px; height: 70px; object-fit: cover; border-radius: 8px; border: 2px solid var(--border); transition: all 0.3s;"
+                             onerror="this.parentElement.style.display='none';">
+                        <button type="button" class="remove-img-btn" onclick="markImageForRemoval('${url}', ${idx})"
+                                style="position: absolute; top: -6px; right: -6px; width: 22px; height: 22px; border-radius: 50%; background: var(--danger); color: white; border: 2px solid var(--bg-card); cursor: pointer; display: flex; align-items: center; justify-content: center; font-size: 12px; transition: all 0.2s;">
+                            <i class="bi bi-x-circle"></i>
+                        </button>
+                    </div>
+                `).join('')}
+            </div>
+            <style>
+                .current-img-wrapper.marked-for-removal img {
+                    opacity: 0.3;
+                    filter: grayscale(100%);
+                    border-color: var(--danger) !important;
+                }
+                .current-img-wrapper.marked-for-removal::after {
+                    content: "";
+                    position: absolute;
+                    top: 50%;
+                    left: 0;
+                    right: 0;
+                    height: 2px;
+                    background: var(--danger);
+                    transform: rotate(-45deg);
+                }
+                .remove-img-btn:hover {
+                    transform: scale(1.1);
+                }
+            </style>
+        `;
+        previewContainer.style.display = 'block';
+    } else {
+        previewContainer.innerHTML = '';
+        previewContainer.style.display = 'none';
+    }
+
+    // Update modal title and button
+    document.getElementById('partModalTitle').innerHTML = '<i class="bi bi-pencil-square"></i> Edit Part';
+    document.getElementById('submitPartBtn').innerHTML = '<i class="bi bi-check-lg"></i> Save Changes';
+
+    document.getElementById('addPartModal').classList.add('active');
+}
+
+function closeAddPartModal() {
+    document.getElementById('addPartModal').classList.remove('active');
+    editingPartId = null;
+}
+
+async function submitAddPart(event) {
+    event.preventDefault();
+
+    const submitBtn = document.getElementById('submitPartBtn');
+    const isEditing = !!editingPartId;
+
+    submitBtn.disabled = true;
+    submitBtn.innerHTML = `<i class="bi bi-hourglass-split"></i> ${isEditing ? 'Saving...' : 'Adding...'}`;
+
+    try {
+        const formData = new FormData();
+        formData.append('title', document.getElementById('partTitle').value);
+        formData.append('car_make', document.getElementById('partCarMake').value);
+        formData.append('car_model', document.getElementById('partCarModel').value || '');
+        formData.append('part_condition', document.getElementById('partCondition').value);
+        formData.append('price', document.getElementById('partPrice').value);
+        formData.append('price_type', document.getElementById('partPriceType').value);
+        formData.append('warranty_days', document.getElementById('partWarranty').value || 0);
+        formData.append('quantity', document.getElementById('partQuantity').value || 1);
+        formData.append('part_description', document.getElementById('partDescription').value || '');
+
+        // Add images marked for removal (only when editing)
+        if (isEditing && imagesToRemove.length > 0) {
+            formData.append('images_to_remove', JSON.stringify(imagesToRemove));
+        }
+
+        // Add new images
+        const imagesInput = document.getElementById('partImages');
+        if (imagesInput.files.length > 0) {
+            for (let i = 0; i < Math.min(imagesInput.files.length, 5); i++) {
+                formData.append('images', imagesInput.files[i]);
+            }
+        }
+
+        const url = isEditing
+            ? `${API_URL}/showcase/garage/${editingPartId}`
+            : `${API_URL}/showcase/garage`;
+
+        const method = isEditing ? 'PUT' : 'POST';
+
+        const res = await fetch(url, {
+            method: method,
+            headers: { 'Authorization': `Bearer ${token}` },
+            body: formData
+        });
+
+        const data = await res.json();
+
+        if (res.ok) {
+            let message = isEditing ? 'Part updated successfully!' : 'Part added to showcase!';
+            if (isEditing && data.images_removed > 0) {
+                message += ` (${data.images_removed} image${data.images_removed > 1 ? 's' : ''} removed)`;
+            }
+            showToast(message, 'success');
+            closeAddPartModal();
+            imagesToRemove = []; // Reset
+            loadShowcase(); // Reload parts
+        } else {
+            showToast(data.error || `Failed to ${isEditing ? 'update' : 'add'} part`, 'error');
+        }
+    } catch (err) {
+        console.error('submitAddPart error:', err);
+        showToast(`Failed to ${isEditing ? 'update' : 'add'} part`, 'error');
+    } finally {
+        submitBtn.disabled = false;
+        submitBtn.innerHTML = isEditing
+            ? '<i class="bi bi-check-lg"></i> Save Changes'
+            : '<i class="bi bi-plus-lg"></i> Add Part';
+    }
+}
+
+async function togglePartStatus(partId) {
+    try {
+        const res = await fetch(`${API_URL}/showcase/garage/${partId}/toggle`, {
+            method: 'POST',
+            headers: { 'Authorization': `Bearer ${token}` }
+        });
+
+        const data = await res.json();
+
+        if (res.ok) {
+            showToast(`Part ${data.status === 'active' ? 'activated' : 'hidden'}`, 'success');
+            loadShowcase();
+        } else {
+            showToast(data.error || 'Failed to toggle status', 'error');
+        }
+    } catch (err) {
+        console.error('togglePartStatus error:', err);
+        showToast('Failed to toggle status', 'error');
+    }
+}
+
+async function deleteShowcasePart(partId) {
+    if (typeof QScrapModal !== 'undefined') {
+        QScrapModal.create({
+            id: 'delete-showcase-modal',
+            title: 'Remove Part',
+            headerIcon: 'bi-trash',
+            headerClass: 'linear-gradient(135deg, #ef4444, #dc2626)',
+            size: 'sm',
+            content: `<div style="padding: 8px 0;"><p>Are you sure you want to remove this part from your showcase?</p><p style="color: var(--text-muted); font-size: 13px; margin-top: 8px;">Customers will no longer see this listing.</p></div>`,
+            actions: [
+                { id: 'keep-part-btn', text: 'Keep', class: 'btn btn-ghost', onclick: () => QScrapModal.close('delete-showcase-modal') },
+                { id: 'delete-part-btn', text: 'Remove Part', class: 'btn btn-danger', onclick: async () => { QScrapModal.close('delete-showcase-modal'); await executeDeletePart(partId); } }
+            ]
+        });
+        return;
+    }
+    if (!confirm('Are you sure you want to remove this part from your showcase?')) return;
+    await executeDeletePart(partId);
+}
+
+async function executeDeletePart(partId) {
+    try {
+        const res = await fetch(`${API_URL}/showcase/garage/${partId}`, {
+            method: 'DELETE',
+            headers: { 'Authorization': `Bearer ${token}` }
+        });
+
+        if (res.ok) {
+            showToast('Part removed from showcase', 'success');
+            loadShowcase();
+        } else {
+            const data = await res.json();
+            showToast(data.error || 'Failed to remove part', 'error');
+        }
+    } catch (err) {
+        console.error('deleteShowcasePart error:', err);
+        showToast('Failed to remove part', 'error');
+    }
+}
+
+// ===== PREMIUM PART PREVIEW MODAL =====
+// Shows exactly what customers see in the app
+function openPartPreviewModal(partId) {
+    const part = showcasePartsCache.find(p => p.part_id === partId);
+    if (!part) {
+        showToast('Part not found', 'error');
+        return;
+    }
+
+    // Format condition nicely
+    const conditionLabels = {
+        'new': '✨ New',
+        'used': '♻️ Used',
+        'refurbished': '🔧 Refurbished'
+    };
+    const conditionDisplay = conditionLabels[part.part_condition] || part.part_condition;
+
+    // Build image gallery HTML
+    const images = part.image_urls || [];
+    const galleryHtml = images.length > 0 ? `
+        <div class="preview-gallery" style="display: flex; gap: 8px; overflow-x: auto; padding-bottom: 10px;">
+            ${images.map((url, idx) => `
+                <img src="${url}" alt="Part image ${idx + 1}" 
+                     onclick="previewFullImage('${url}')"
+                     style="width: 100px; height: 100px; object-fit: cover; border-radius: 12px; cursor: zoom-in; border: 2px solid var(--border); transition: transform 0.2s;"
+                     onmouseover="this.style.transform='scale(1.05)'"
+                     onmouseout="this.style.transform='scale(1)'"
+                     onerror="this.style.display='none'">
+            `).join('')}
+        </div>
+    ` : `
+        <div style="text-align: center; padding: 40px; background: var(--bg-secondary); border-radius: 12px; color: var(--text-muted);">
+            <i class="bi bi-image" style="font-size: 48px; margin-bottom: 12px; display: block;"></i>
+            <span>No images uploaded</span>
+        </div>
+    `;
+
+    // Main image
+    const mainImageHtml = images.length > 0 ? `
+        <div style="position: relative; margin-bottom: 16px; border-radius: 16px; overflow: hidden; background: var(--bg-secondary);">
+            <img src="${images[0]}" alt="${escapeHTML(part.title)}"
+                 style="width: 100%; height: 220px; object-fit: cover; cursor: zoom-in;"
+                 onclick="previewFullImage('${images[0]}')"
+                 onerror="this.parentElement.innerHTML='<div style=\\'padding:60px; text-align:center; color:var(--text-muted);\\'><i class=\\'bi bi-image\\' style=\\'font-size:48px;\\'></i></div>'">
+            ${images.length > 1 ? `<span style="position: absolute; bottom: 10px; right: 10px; background: rgba(0,0,0,0.7); color: white; padding: 4px 10px; border-radius: 20px; font-size: 12px;">+${images.length - 1} more</span>` : ''}
+        </div>
+    ` : '';
+
+    // Create modal
+    const modalHtml = `
+        <div class="part-preview-overlay" id="partPreviewModal" onclick="closePartPreviewModal()" style="display: flex; align-items: center; justify-content: center; position: fixed; inset: 0; background: rgba(0,0,0,0.7); z-index: 10000; backdrop-filter: blur(4px);">
+            <div class="preview-modal" onclick="event.stopPropagation()" style="max-width: 420px; width: 95%; max-height: 90vh; overflow-y: auto; background: var(--bg-card); border-radius: 24px; box-shadow: 0 25px 80px rgba(0,0,0,0.4); animation: slideUp 0.3s ease;">
+                <!-- Header -->
+                <div style="background: linear-gradient(135deg, var(--accent), #A82050); padding: 16px 20px; display: flex; justify-content: space-between; align-items: center; border-radius: 24px 24px 0 0;">
+                    <div style="display: flex; align-items: center; gap: 10px; color: white;">
+                        <i class="bi bi-phone" style="font-size: 20px;"></i>
+                        <span style="font-weight: 600;">Customer Preview</span>
+                    </div>
+                    <button onclick="closePartPreviewModal()" style="background: rgba(255,255,255,0.2); border: none; width: 32px; height: 32px; border-radius: 50%; color: white; cursor: pointer; display: flex; align-items: center; justify-content: center;">
+                        <i class="bi bi-x-lg"></i>
+                    </button>
+                </div>
+                
+                <!-- Content -->
+                <div style="padding: 20px;">
+                    <!-- Main Image -->
+                    ${mainImageHtml}
+                    
+                    <!-- Title & Price -->
+                    <div style="margin-bottom: 20px;">
+                        <h2 style="margin: 0 0 8px; font-size: 20px; font-weight: 700; color: var(--text-primary);">${escapeHTML(part.title)}</h2>
+                        <div style="display: flex; align-items: center; gap: 16px;">
+                            <span style="font-size: 26px; font-weight: 800; color: var(--success);">${part.price} QAR</span>
+                            ${part.price_type === 'negotiable' ? '<span style="background: rgba(245, 158, 11, 0.2); color: #f59e0b; padding: 4px 10px; border-radius: 12px; font-size: 11px; font-weight: 600;">NEGOTIABLE</span>' : '<span style="background: rgba(16, 185, 129, 0.2); color: #10b981; padding: 4px 10px; border-radius: 12px; font-size: 11px; font-weight: 600;">FIXED PRICE</span>'}
+                        </div>
+                    </div>
+                    
+                    <!-- Quick Info Cards -->
+                    <div style="display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 10px; margin-bottom: 20px;">
+                        <div style="background: var(--bg-secondary); padding: 12px; border-radius: 12px; text-align: center;">
+                            <div style="font-size: 11px; color: var(--text-muted); margin-bottom: 4px;">Condition</div>
+                            <div style="font-size: 13px; font-weight: 600; color: var(--text-primary);">${conditionDisplay}</div>
+                        </div>
+                        <div style="background: var(--bg-secondary); padding: 12px; border-radius: 12px; text-align: center;">
+                            <div style="font-size: 11px; color: var(--text-muted); margin-bottom: 4px;">Warranty</div>
+                            <div style="font-size: 13px; font-weight: 600; color: var(--text-primary);">${part.warranty_days || 0} days</div>
+                        </div>
+                        <div style="background: var(--bg-secondary); padding: 12px; border-radius: 12px; text-align: center;">
+                            <div style="font-size: 11px; color: var(--text-muted); margin-bottom: 4px;">In Stock</div>
+                            <div style="font-size: 13px; font-weight: 600; color: ${part.quantity > 0 ? 'var(--success)' : 'var(--danger)'};">${part.quantity || 0}</div>
+                        </div>
+                    </div>
+                    
+                    <!-- Vehicle Compatibility -->
+                    <div style="background: linear-gradient(135deg, rgba(99, 102, 241, 0.1), rgba(139, 92, 246, 0.1)); padding: 16px; border-radius: 16px; margin-bottom: 20px; border: 1px solid rgba(99, 102, 241, 0.2);">
+                        <div style="display: flex; align-items: center; gap: 10px; margin-bottom: 8px;">
+                            <i class="bi bi-car-front" style="color: var(--accent); font-size: 18px;"></i>
+                            <span style="font-weight: 600; color: var(--text-primary);">Fits Vehicle</span>
+                        </div>
+                        <div style="font-size: 15px; color: var(--text-primary);">
+                            <strong>${escapeHTML(part.car_make)}</strong>${part.car_model ? ' ' + escapeHTML(part.car_model) : ''}
+                            ${part.car_year_from ? `<span style="color: var(--text-muted);"> (${part.car_year_from}${part.car_year_to ? '-' + part.car_year_to : '+'})</span>` : ''}
+                        </div>
+                    </div>
+                    
+                    <!-- Description -->
+                    ${part.part_description ? `
+                        <div style="margin-bottom: 20px;">
+                            <div style="font-size: 12px; color: var(--text-muted); margin-bottom: 6px; text-transform: uppercase; letter-spacing: 0.5px;">Description</div>
+                            <p style="margin: 0; color: var(--text-secondary); font-size: 14px; line-height: 1.6;">${escapeHTML(part.part_description)}</p>
+                        </div>
+                    ` : ''}
+                    
+                    <!-- Image Gallery (if more than 1) -->
+                    ${images.length > 1 ? `
+                        <div style="margin-bottom: 20px;">
+                            <div style="font-size: 12px; color: var(--text-muted); margin-bottom: 10px; text-transform: uppercase; letter-spacing: 0.5px;">All Photos (${images.length})</div>
+                            ${galleryHtml}
+                        </div>
+                    ` : ''}
+                    
+                    <!-- Mock Buy Button (disabled) -->
+                    <button disabled style="width: 100%; padding: 16px; background: linear-gradient(135deg, #10b981, #059669); color: white; border: none; border-radius: 14px; font-size: 16px; font-weight: 700; cursor: not-allowed; opacity: 0.7; display: flex; align-items: center; justify-content: center; gap: 10px;">
+                        <i class="bi bi-cart-plus"></i>
+                        ${part.price_type === 'negotiable' ? 'Request Quote' : 'Buy Now'}
+                        <span style="font-size: 11px; background: rgba(255,255,255,0.2); padding: 2px 8px; border-radius: 8px;">PREVIEW</span>
+                    </button>
+                </div>
+            </div>
+        </div>
+        <style>
+            @keyframes slideUp {
+                from { opacity: 0; transform: translateY(30px); }
+                to { opacity: 1; transform: translateY(0); }
+            }
+        </style>
+    `;
+
+    // Remove existing modal if any
+    const existingModal = document.getElementById('partPreviewModal');
+    if (existingModal) existingModal.remove();
+
+    document.body.insertAdjacentHTML('beforeend', modalHtml);
+}
+
+function closePartPreviewModal() {
+    const modal = document.getElementById('partPreviewModal');
+    if (modal) modal.remove();
+}
+
+// Full image preview helper
+function previewFullImage(url) {
+    // Use existing lightbox if available
+    if (typeof openRequestLightbox === 'function') {
+        // Create temp array for lightbox
+        window.tempLightboxImages = [url];
+        lightboxImages = window.tempLightboxImages;
+        currentLightboxIndex = 0;
+        document.getElementById('lightboxImg').src = url;
+        document.getElementById('lightboxCounter').textContent = '1 / 1';
+        document.getElementById('proLightbox').classList.add('active');
+    } else {
+        // Simple fallback - open in new tab
+        window.open(url, '_blank');
+    }
 }
 
 // ============================================

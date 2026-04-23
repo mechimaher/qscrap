@@ -794,7 +794,193 @@
             border-color: var(--white);
         }
 
+        .footer-grid {
+            display: grid;
+            grid-template-columns: 2fr 1fr 1fr 1fr;
+            gap: 60px;
+            margin-bottom: 60px;
+            max-width: 1280px;
+            margin-left: auto;
+            margin-right: auto;
+        }
 
+        .footer-brand p {
+            color: var(--slate);
+            font-size: 15px;
+            line-height: 1.7;
+            margin-top: 16px;
+        }
+
+        .footer-title {
+            font-size: 14px;
+            font-weight: 700;
+            text-transform: uppercase;
+            letter-spacing: 1px;
+            margin-bottom: 20px;
+            color: var(--white);
+        }
+
+        .footer-links {
+            list-style: none;
+        }
+
+        .footer-links li {
+            margin-bottom: 12px;
+        }
+
+        .footer-links a {
+            color: var(--slate);
+            text-decoration: none;
+            font-size: 15px;
+            transition: color 0.2s ease;
+        }
+
+        .footer-links a:hover {
+            color: var(--gold);
+        }
+
+        /* Footer */
+        /* ===== VVVIP 2030 Premium Footer ===== */
+        .footer {
+            background: linear-gradient(180deg, #0A0A0A 0%, #000000 100%);
+            color: var(--white);
+            padding: 100px 24px 48px;
+            position: relative;
+            overflow: hidden;
+        }
+
+        .footer::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: 0;
+            right: 0;
+            height: 1px;
+            background: linear-gradient(90deg, transparent, var(--gold), transparent);
+        }
+
+        .footer::after {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: 50%;
+            transform: translateX(-50%);
+            width: 400px;
+            height: 400px;
+            background: radial-gradient(circle, rgba(201, 162, 39, 0.05) 0%, transparent 70%);
+            pointer-events: none;
+        }
+
+        .footer-grid {
+            display: grid;
+            grid-template-columns: 2fr 1fr 1fr 1fr;
+            gap: 60px;
+            margin-bottom: 64px;
+            position: relative;
+            z-index: 1;
+        }
+
+        .footer-brand p {
+            color: rgba(255, 255, 255, 0.6);
+            font-size: 15px;
+            line-height: 1.8;
+            margin-top: 20px;
+            max-width: 280px;
+        }
+
+        .footer-social {
+            display: flex;
+            gap: 12px;
+            margin-top: 28px;
+        }
+
+        .footer-social a {
+            width: 44px;
+            height: 44px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            background: rgba(255, 255, 255, 0.08);
+            border: 1px solid rgba(255, 255, 255, 0.15);
+            border-radius: 12px;
+            text-decoration: none;
+            transition: all 0.3s ease;
+            overflow: hidden;
+        }
+
+        .footer-social a img {
+            width: 24px;
+            height: 24px;
+            object-fit: contain;
+            filter: brightness(0) invert(1);
+            transition: filter 0.3s ease;
+        }
+
+        .footer-social a:hover {
+            background: var(--gold);
+            border-color: var(--gold);
+            transform: translateY(-3px);
+            box-shadow: 0 8px 24px rgba(201, 162, 39, 0.3);
+        }
+
+        .footer-social a:hover img {
+            filter: brightness(0);
+        }
+
+        .footer-title {
+            font-size: 13px;
+            font-weight: 700;
+            text-transform: uppercase;
+            letter-spacing: 2px;
+            margin-bottom: 24px;
+            color: var(--gold);
+        }
+
+        .footer-links {
+            list-style: none;
+        }
+
+        .footer-links li {
+            margin-bottom: 14px;
+        }
+
+        .footer-links a {
+            color: rgba(255, 255, 255, 0.6);
+            text-decoration: none;
+            font-size: 15px;
+            transition: all 0.3s ease;
+            display: inline-flex;
+            align-items: center;
+            gap: 8px;
+        }
+
+        .footer-links a:hover {
+            color: var(--white);
+            transform: translateX(4px);
+        }
+
+        .footer-bottom {
+            border-top: 1px solid rgba(255, 255, 255, 0.08);
+            padding-top: 40px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            flex-wrap: wrap;
+            gap: 20px;
+            position: relative;
+            z-index: 1;
+        }
+
+        .footer-legal {
+            font-size: 13px;
+            color: rgba(255, 255, 255, 0.4);
+            letter-spacing: 0.5px;
+        }
+
+        .footer-copyright {
+            font-size: 13px;
+            color: rgba(255, 255, 255, 0.5);
+        }
 
         /* Responsive */
         @media (max-width: 992px) {
@@ -915,7 +1101,13 @@
             direction: rtl;
         }
 
+        [dir="rtl"] .info-grid {
+            direction: rtl;
+        }
 
+        [dir="rtl"] .footer-grid {
+            direction: rtl;
+        }
 
         [dir="rtl"] .section-header {
             text-align: center;
@@ -951,7 +1143,7 @@
     <nav class="nav" id="mainNav">
         <div class="nav-container">
             <a href="/" class="nav-logo">
-                <img src="/assets/images/qscrap-logo.webp" alt="QScrap Logo">
+                <img src="/assets/images/qscrap-logo.png?v=2026" alt="QScrap Logo">
 
             </a>
             <div class="nav-links">
@@ -1208,9 +1400,53 @@
         </div>
     </section>
 
-    <!-- Footer Component Loader -->
-    <footer id="footer-container" aria-label="Site footer"></footer>
-    <script src="/js/components/footer-loader.min.js" defer></script>
+    <!-- VVVIP 2030 Premium Footer -->
+    <footer class="footer">
+        <div class="container">
+            <div class="footer-grid">
+                <div class="footer-brand">
+                    <a href="/" class="nav-logo" style="margin-bottom: 16px;">
+                        <img src="/assets/images/qscrap-logo.png?v=2026" alt="QScrap"
+                            style="filter: brightness(0) invert(1);">
+                    </a>
+                    <p data-i18n="footer.tagline">Qatar's premium automotive parts marketplace. Connecting customers
+                        with verified garages for
+                        quality new, used, and OEM parts.</p>
+                </div>
+                <div>
+                    <h4 class="footer-title" data-i18n="footer.company">Company</h4>
+                    <ul class="footer-links">
+                        <li><a href="/about.html" data-i18n="footer.aboutUs">About Us</a></li>
+                        <li><a href="/partners.html" data-i18n="footer.forBusiness">For Businesses</a></li>
+                        <li><a href="/about.html#contact" data-i18n="footer.contact">Contact</a></li>
+                        <li><a href="/#how-it-works" data-i18n="footer.howItWorks">How It Works</a></li>
+                    </ul>
+                </div>
+                <div>
+                    <h4 class="footer-title" data-i18n="footer.legal">Legal</h4>
+                    <ul class="footer-links">
+                        <li><a href="/privacy.html" data-i18n="footer.privacy">Privacy Policy</a></li>
+                        <li><a href="/terms.html" data-i18n="footer.terms">Terms of Service</a></li>
+                        <li><a href="/refund.html" data-i18n="footer.refund">Refund Policy</a></li>
+                    </ul>
+                </div>
+                <div>
+                    <h4 class="footer-title" data-i18n="footer.contactTitle">Contact</h4>
+                    <ul class="footer-links">
+                        <li><a href="mailto:support@qscrap.qa" data-i18n="footer.email">📧 support@qscrap.qa</a></li>
+                        <li><a href="tel:+97450267974" dir="ltr" data-i18n="footer.phone">📞 +974 5026 7974</a></li>
+                        <li><a href="https://wa.me/97450267974" target="_blank" data-i18n="footer.whatsapp">💬 WhatsApp
+                                Support</a></li>
+                    </ul>
+                </div>
+            </div>
+            <div class="footer-bottom">
+                <p class="footer-legal" data-i18n="footer.legalInfo">QScrap Services &amp; Trading L.L.C | Doha, Qatar
+                </p>
+                <p class="footer-copyright" data-i18n="footer.copyright">© 2026 QScrap. All rights reserved.</p>
+            </div>
+        </div>
+    </footer>
 
     <script>
         // Navigation scroll effect
@@ -1233,13 +1469,7 @@
         window.addEventListener('load', revealOnScroll);
     </script>
     <!-- i18n System -->
-    <script src="/js/about.min.js"></script>
-
-    <!-- Service Worker for Offline Support & Caching -->
-    <script src="/js/register-sw.min.js" defer></script>
-
-    <!-- Service Worker for Offline Support & Caching -->
-    <script src="/js/register-sw.min.js" defer></script>
+    <script src="/js/about.js"></script>
 </body>
 
 </html>

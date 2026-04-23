@@ -109,8 +109,6 @@ const translations = {
         'nav.forBusiness': 'For Businesses',
         'nav.about': 'About',
         'nav.download': 'Download App',
-        'nav.requestPart': 'Request a Part',
-        'hero.requestNow': 'Request a Part Now',
 
         // Hero Section
         'hero.badge': "Qatar's #1 Auto Parts Platform",
@@ -206,20 +204,14 @@ const translations = {
         'footer.privacy': 'Privacy Policy',
         'footer.terms': 'Terms of Service',
         'footer.refund': 'Refund Policy',
-        'footer.email': 'support@qscrap.qa',
-        'footer.phone': '+974 5026 7974',
-        'footer.whatsapp': 'WhatsApp Support',
-        'footer.legalInfo.en': 'QScrap Services & Trading L.L.C | Doha, Qatar',
-        'footer.legalInfo.ar': 'كيوسكراب للخدمات والتجارة ذ.م.م | الدوحة، قطر',
+        'footer.email': '<svg class="footer-contact-icon" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><path d="M4 4h16c1.1 0 2 .9 2 2v12c0 1.1-.9 2-2 2H4c-1.1 0-2-.9-2-2V6c0-1.1.9-2 2-2z"/><polyline points="22,6 12,13 2,6"/></svg> support@qscrap.qa',
+        'footer.phone': '<svg class="footer-contact-icon" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><path d="M22 16.92v3a2 2 0 0 1-2.18 2 19.79 19.79 0 0 1-8.63-3.07 19.5 19.5 0 0 1-6-6 19.79 19.79 0 0 1-3.07-8.67A2 2 0 0 1 4.11 2h3a2 2 0 0 1 2 1.72 12.84 12.84 0 0 0 .7 2.81 2 2 0 0 1-.45 2.11L8.09 9.91a16 16 0 0 0 6 6l1.27-1.27a2 2 0 0 1 2.11-.45 12.84 12.84 0 0 0 2.81.7A2 2 0 0 1 22 16.92z"/></svg> +974 5026 7974',
+        'footer.whatsapp': '<svg class="footer-contact-icon" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><path d="M21 11.5a8.38 8.38 0 0 1-.9 3.8 8.5 8.5 0 0 1-7.6 4.7 8.38 8.38 0 0 1-3.8-.9L3 21l1.9-5.7a8.38 8.38 0 0 1-.9-3.8 8.5 8.5 0 0 1 4.7-7.6 8.38 8.38 0 0 1 3.8-.9h.5a8.48 8.48 0 0 1 8 8v.5z"/></svg> WhatsApp Support',
+        'footer.legalInfo': 'QScrap Services & Trading L.L.C | Doha, Qatar',
         'footer.copyright': '© 2026 QScrap. All rights reserved.',
 
-        // Floating Action Widget Sequence - VVIP 2090 Galaxy
-        'vvip.radar': 'Wherever you are in Qatar, the parts find you.',
-        'vvip.radar.cta': 'Start Request',
-        'vvip.maglev': 'Don\'t leave your seat. Lightning-speed delivery.',
-        'vvip.maglev.cta': 'Order Now',
-        'vvip.orb': 'Spare parts teleported to your door. No traffic, no stress.',
-        'vvip.orb.cta': 'Get Started'
+        // Floating Action Widget
+        'fab.text': 'Request Parts Now'
     },
     ar: {
         // Navigation
@@ -228,8 +220,6 @@ const translations = {
         'nav.forBusiness': 'للشركات',
         'nav.about': 'من نحن',
         'nav.download': 'تحميل التطبيق',
-        'nav.requestPart': 'طلب قطعة',
-        'hero.requestNow': 'اطلب قطعة الآن',
 
         // Hero Section
         'hero.badge': 'المنصة الأولى لقطع غيار السيارات في قطر',
@@ -325,25 +315,16 @@ const translations = {
         'footer.privacy': 'سياسة الخصوصية',
         'footer.terms': 'شروط الخدمة',
         'footer.refund': 'سياسة الاسترداد',
-        'footer.email': 'support@qscrap.qa',
-        'footer.phone': '+974 5026 7974',
-        'footer.whatsapp': 'دعم واتساب',
-        'footer.legalInfo.en': 'QScrap Services & Trading L.L.C | Doha, Qatar',
-        'footer.legalInfo.ar': 'كيوسكراب للخدمات والتجارة ذ.م.م | الدوحة، قطر',
+        'footer.email': '<svg class="footer-contact-icon" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><path d="M4 4h16c1.1 0 2 .9 2 2v12c0 1.1-.9 2-2 2H4c-1.1 0-2-.9-2-2V6c0-1.1.9-2 2-2z"/><polyline points="22,6 12,13 2,6"/></svg> support@qscrap.qa',
+        'footer.phone': '<svg class="footer-contact-icon" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><path d="M22 16.92v3a2 2 0 0 1-2.18 2 19.79 19.79 0 0 1-8.63-3.07 19.5 19.5 0 0 1-6-6 19.79 19.79 0 0 1-3.07-8.67A2 2 0 0 1 4.11 2h3a2 2 0 0 1 2 1.72 12.84 12.84 0 0 0 .7 2.81 2 2 0 0 1-.45 2.11L8.09 9.91a16 16 0 0 0 6 6l1.27-1.27a2 2 0 0 1 2.11-.45 12.84 12.84 0 0 0 2.81.7A2 2 0 0 1 22 16.92z"/></svg> <span dir="ltr">+974 5026 7974</span>',
+        'footer.whatsapp': '<svg class="footer-contact-icon" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><path d="M21 11.5a8.38 8.38 0 0 1-.9 3.8 8.5 8.5 0 0 1-7.6 4.7 8.38 8.38 0 0 1-3.8-.9L3 21l1.9-5.7a8.38 8.38 0 0 1-.9-3.8 8.5 8.5 0 0 1 4.7-7.6 8.38 8.38 0 0 1 3.8-.9h.5a8.48 8.48 0 0 1 8 8v.5z"/></svg> دعم واتساب',
+        'footer.legalInfo': 'كيوسكراب للخدمات والتجارة ذ.م.م | الدوحة، قطر',
         'footer.copyright': 'كيوسكراب © 2026. جميع الحقوق محفوظة.',
 
-        // Floating Action Widget Sequence - VVIP 2090 Galaxy (Premium Arabic Translations)
-        'vvip.radar': 'أينما كنت في قطر، قطع الغيار تصلك.',
-        'vvip.radar.cta': 'ابدأ الطلب',
-        'vvip.maglev': 'من دون مغادرة مقعدك. توصيل بسرعة البرق.',
-        'vvip.maglev.cta': 'اطلب الآن',
-        'vvip.orb': 'قطع الغيار تُحضَر إلى بابك. من دون زحام، من دون توتر.',
-        'vvip.orb.cta': 'ابدأ الآن'
+        // Floating Action Widget
+        'fab.text': 'اطلب قطع الغيار الآن'
     }
 };
-
-// Expose translations globally for footer-loader.js
-window.translations = translations;
 
 // i18n System
 const i18n = {
@@ -420,11 +401,6 @@ const i18n = {
             const translation = translations[lang][key];
             if (translation) el.setAttribute('aria-label', translation);
         });
-
-        // Dispatch custom event for VVIP widget and other listeners
-        document.dispatchEvent(new CustomEvent('qscrap:langchange', {
-            detail: { lang }
-        }));
     },
 
     t(key) {
@@ -587,259 +563,4 @@ const mobileMenu = {
 document.addEventListener('DOMContentLoaded', () => {
     i18n.init();
     mobileMenu.init();
-    vvipWidget.init();
 });
-
-// ===== VVIP "2090" WIDGET - INTELLIGENT FUNNEL SEQUENCE =====
-// Premium scroll-based widget sequencing for ultimate user experience
-
-const vvipWidget = {
-    currentWidget: 'radar',
-    isTransitioning: false,
-    lastScrollPosition: 0,
-    transitionTimeout: null,
-    cooldownTimeout: null,
-
-    // Scroll thresholds for widget transitions
-    thresholds: {
-        radar: { min: 0, max: 30 },      // 0-30% scroll
-        maglev: { min: 30, max: 70 },    // 30-70% scroll
-        orb: { min: 70, max: 100 }       // 70-100% scroll
-    },
-
-    init() {
-        this.container = document.getElementById('vvipWidgetContainer');
-        if (!this.container) {
-            console.warn('[VVIP Widget] Container not found - widget disabled');
-            return;
-        }
-
-        // Check for saved widget state from session
-        const savedWidget = sessionStorage.getItem('vvip-last-widget');
-        const startWidget = savedWidget || 'radar';
-
-        // Cache widget elements with validation
-        this.widgets = {
-            radar: document.getElementById('vvipRadar'),
-            maglev: document.getElementById('vvipMaglev'),
-            orb: document.getElementById('vvipOrb')
-        };
-
-        // Validate all widgets exist
-        const missingWidgets = Object.entries(this.widgets)
-            .filter(([_, el]) => !el)
-            .map(([name, _]) => name);
-
-        if (missingWidgets.length > 0) {
-            console.error('[VVIP Widget] Missing widgets:', missingWidgets);
-            return;
-        }
-
-        // Cache text elements
-        this.textElements = {
-            radar: document.getElementById('vvipRadarText'),
-            maglev: document.getElementById('vvipMaglevText'),
-            orb: document.getElementById('vvipOrbText')
-        };
-
-        // Cache CTA buttons
-        this.ctaElements = {
-            radar: document.getElementById('vvipRadarCta'),
-            maglev: document.getElementById('vvipMaglevCta'),
-            orb: document.getElementById('vvipOrbCta')
-        };
-
-        // Initialize with saved or default widget
-        this.currentWidget = startWidget;
-
-        // Update ALL widget texts on initialization (for current language)
-        this.updateAllWidgetTexts();
-
-        this.showWidget(startWidget);
-
-        // Setup scroll listener with throttling
-        let ticking = false;
-        window.addEventListener('scroll', () => {
-            if (!ticking) {
-                window.requestAnimationFrame(() => {
-                    this.handleScroll();
-                    ticking = false;
-                });
-                ticking = true;
-            }
-        }, { passive: true });
-
-        // Setup CTA button clicks and touch interactions
-        this.setupCTAListeners();
-
-        // Update text on language change
-        document.addEventListener('qscrap:langchange', (e) => {
-            this.updateWidgetText(e.detail.lang);
-        });
-
-        // Cleanup on page unload
-        window.addEventListener('beforeunload', () => {
-            this.destroy();
-        });
-
-        console.log('[VVIP Widget] Initialized with intelligent sequencing');
-    },
-
-    handleScroll() {
-        if (this.isTransitioning) return;
-
-        const scrollPercent = this.getScrollPercentage();
-        const targetWidget = this.getWidgetForScrollPosition(scrollPercent);
-
-        if (targetWidget !== this.currentWidget) {
-            this.transitionToWidget(targetWidget);
-        }
-
-        this.lastScrollPosition = scrollPercent;
-    },
-
-    getScrollPercentage() {
-        const scrollTop = window.scrollY;
-        const docHeight = document.documentElement.scrollHeight - window.innerHeight;
-        return docHeight > 0 ? (scrollTop / docHeight) * 100 : 0;
-    },
-
-    getWidgetForScrollPosition(scrollPercent) {
-        for (const [widget, range] of Object.entries(this.thresholds)) {
-            if (scrollPercent >= range.min && scrollPercent < range.max) {
-                return widget;
-            }
-        }
-        return 'orb'; // Default to orb at 100%
-    },
-
-    transitionToWidget(targetWidget) {
-        // Cancel any pending transition to prevent race condition
-        if (this.transitionTimeout) {
-            clearTimeout(this.transitionTimeout);
-        }
-
-        this.isTransitioning = true;
-
-        // Hide current widget
-        this.hideWidget(this.currentWidget);
-
-        this.transitionTimeout = setTimeout(() => {
-            this.showWidget(targetWidget);
-            this.currentWidget = targetWidget;
-
-            // Save to session storage for page reload persistence
-            sessionStorage.setItem('vvip-last-widget', targetWidget);
-
-            this.transitionTimeout = null;
-
-            this.cooldownTimeout = setTimeout(() => {
-                this.isTransitioning = false;
-            }, 800);
-        }, 400);
-    },
-
-    showWidget(widgetName) {
-        const widget = this.widgets[widgetName];
-        if (!widget) return;
-
-        widget.classList.remove('vvip-widget-hidden');
-        widget.classList.add('vvip-widget-visible');
-
-        // Update i18n text
-        this.updateWidgetText(i18n.currentLang);
-    },
-
-    hideWidget(widgetName) {
-        const widget = this.widgets[widgetName];
-        if (!widget) return;
-
-        widget.classList.remove('vvip-widget-visible');
-        widget.classList.add('vvip-widget-hidden');
-    },
-
-    updateWidgetText(lang) {
-        // Update ALL widget texts when language changes
-        this.updateAllWidgetTexts();
-    },
-
-    // Update text for all widgets (called on init and language change)
-    updateAllWidgetTexts() {
-        // Update radar text
-        if (this.textElements.radar) {
-            this.textElements.radar.textContent = i18n.t(`vvip.radar`);
-        }
-        if (this.ctaElements.radar) {
-            this.ctaElements.radar.textContent = i18n.t(`vvip.radar.cta`);
-        }
-
-        // Update maglev text
-        if (this.textElements.maglev) {
-            this.textElements.maglev.textContent = i18n.t(`vvip.maglev`);
-        }
-        if (this.ctaElements.maglev) {
-            this.ctaElements.maglev.textContent = i18n.t(`vvip.maglev.cta`);
-        }
-
-        // Update orb text
-        if (this.textElements.orb) {
-            this.textElements.orb.textContent = i18n.t(`vvip.orb`);
-        }
-        if (this.ctaElements.orb) {
-            this.ctaElements.orb.textContent = i18n.t(`vvip.orb.cta`);
-        }
-    },
-
-    setupCTAListeners() {
-        // All CTAs scroll to download section
-        Object.values(this.ctaElements).forEach(cta => {
-            if (cta) {
-                cta.addEventListener('click', (e) => {
-                    e.preventDefault();
-                    const downloadSection = document.getElementById('download');
-                    if (downloadSection) {
-                        downloadSection.scrollIntoView({
-                            behavior: 'smooth',
-                            block: 'start'
-                        });
-                    }
-                });
-            }
-        });
-
-        // Also make the entire widget clickable
-        Object.values(this.widgets).forEach(widget => {
-            if (widget) {
-                widget.addEventListener('click', (e) => {
-                    // Don't trigger if clicking on CTA button (already handled)
-                    if (e.target.closest('.vvip-cta-btn')) return;
-
-                    const downloadSection = document.getElementById('download');
-                    if (downloadSection) {
-                        downloadSection.scrollIntoView({
-                            behavior: 'smooth',
-                            block: 'start'
-                        });
-                    }
-                });
-
-                // Touch interaction for mobile (iOS Safari)
-                widget.addEventListener('touchstart', (e) => {
-                    widget.classList.toggle('vvip-widget-active');
-                }, { passive: true });
-            }
-        });
-    },
-
-    // Cleanup timeouts on page unload
-    destroy() {
-        if (this.transitionTimeout) {
-            clearTimeout(this.transitionTimeout);
-            this.transitionTimeout = null;
-        }
-        if (this.cooldownTimeout) {
-            clearTimeout(this.cooldownTimeout);
-            this.cooldownTimeout = null;
-        }
-    }
-};

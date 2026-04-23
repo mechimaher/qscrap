@@ -8,13 +8,8 @@
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
     <link rel="stylesheet" href="/assets/bootstrap-icons/bootstrap-icons.css">
-<<<<<<< HEAD:public/finance-dashboard.html
-    <link rel="stylesheet" href="css/shared.min.css">
+    <link rel="stylesheet" href="css/shared.css">
     <link rel="stylesheet" href="css/operations-dashboard.css?v=2.3">
-=======
-    <link rel="stylesheet" href="/css/shared.css">
-    <link rel="stylesheet" href="/css/operations-dashboard.css?v=2.3">
->>>>>>> 06c3dc41 (feat(enterprise): surgical audit & hardening v3.0 - GOLD CERTIFIED):public/dashboards/finance-dashboard.html
     <script>
         window.toggleSidebar = function () {
             const sidebar = document.querySelector('.sidebar');
@@ -52,7 +47,7 @@
     <div class="login-screen" id="loginScreen">
         <div class="login-card">
             <div class="login-header">
-                <img src="/assets/images/qscrap-logo.png?v=2026" alt="QScrap" class="login-logo">
+                <img src="assets/images/qscrap-logo.png?v=2026" alt="QScrap" class="login-logo">
                 <h1 class="login-title">Finance Center</h1>
                 <p class="login-subtitle">Payout & Revenue</p>
             </div>
@@ -80,7 +75,7 @@
         <aside class="sidebar">
             <div class="sidebar-header">
                 <div class="sidebar-logo">
-                    <img src="/assets/images/qscrap-logo.png?v=2026" alt="QScrap" class="sidebar-logo-img">
+                    <img src="assets/images/qscrap-logo.png?v=2026" alt="QScrap" class="sidebar-logo-img">
                     <div class="logo-subtitle">Finance</div>
                 </div>
             </div>
@@ -395,41 +390,6 @@
                         </tbody>
                     </table>
                 </div>
-                
-                <!-- Batch Action Bar (P1 UX Feature) -->
-                <div id="batchActionBar" class="batch-action-bar" style="display: none;">
-                    <div class="batch-action-info">
-                        <i class="bi bi-check2-square"></i>
-                        <span id="selectedPayoutCount">0</span> payouts selected
-                        <span id="selectedPayoutTotal" style="margin-left: 12px; font-weight: 700; color: var(--accent);">0 QAR</span>
-                    </div>
-                    <div class="batch-action-buttons">
-                        <button class="btn btn-primary" onclick="openBatchPaymentModal()" id="batchSendBtn">
-                            <i class="bi bi-send"></i> Send Batch Payment
-                        </button>
-                        <button class="btn btn-ghost" onclick="clearBatchSelection()">
-                            <i class="bi bi-x-circle"></i> Clear Selection
-                        </button>
-                    </div>
-                </div>
-                
-                <!-- Payment Templates Section (P1 UX Feature) -->
-                <div class="content-card" style="margin-top: 20px; background: rgba(16, 185, 129, 0.05); border: 1px solid var(--success);">
-                    <div class="content-header">
-                        <h3 class="content-title"><i class="bi bi-file-earmark-check" style="color: var(--success);"></i> Saved Payment Templates</h3>
-                        <button class="btn btn-sm btn-success" onclick="openNewTemplateModal()">
-                            <i class="bi bi-plus-circle"></i> New Template
-                        </button>
-                    </div>
-                    <div id="templatesList" style="padding: 16px;">
-                        <div style="text-align: center; color: var(--text-muted); padding: 20px;">
-                            <i class="bi bi-inbox" style="font-size: 32px; margin-bottom: 12px;"></i>
-                            <p>No saved templates yet</p>
-                            <p style="font-size: 12px;">Save garage payment details to auto-fill future payments</p>
-                        </div>
-                    </div>
-                </div>
-                
                 <div id="pendingPagination"></div>
             </section>
 
@@ -1119,25 +1079,11 @@
     <div class="toast-container" id="toastContainer"></div>
 
     <script src="https://cdn.socket.io/4.6.0/socket.io.min.js"></script>
-<<<<<<< HEAD:public/finance-dashboard.html
     <script src="js/shared/utils.js?v=20260115d"></script>
     <script src="js/shared/toast.js?v=20260115d"></script>
     <script src="js/shared/modal.js?v=20260115d"></script>
     <script src="js/pagination-utils.js?v=20260115d"></script>
     <script src="js/finance-dashboard.js?v=20260213b"></script>
-
-    <!-- Service Worker for Offline Support & Caching -->
-    <script src="/js/register-sw.min.js" defer></script>
-
-    <!-- Service Worker for Offline Support & Caching -->
-    <script src="/js/register-sw.min.js" defer></script>
-=======
-    <script src="/js/shared/utils.js?v=20260115d"></script>
-    <script src="/js/shared/toast.js?v=20260115d"></script>
-    <script src="/js/shared/modal.js?v=20260115d"></script>
-    <script src="/js/pagination-utils.js?v=20260115d"></script>
-    <script src="/js/finance-dashboard.js?v=20260208b"></script>
->>>>>>> 06c3dc41 (feat(enterprise): surgical audit & hardening v3.0 - GOLD CERTIFIED):public/dashboards/finance-dashboard.html
 </body>
 
 </html>

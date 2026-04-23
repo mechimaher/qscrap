@@ -100,41 +100,13 @@ const legalTranslations = {
         'refund.contact.whatsapp': 'WhatsApp',
         'refund.contact.service': 'Customer Service',
         'refund.contact.website': 'Website',
-
-        'refund.s1.num': '1',
-        'refund.s2.num': '2',
-        'refund.s3.num': '3',
-        'refund.s4.num': '4',
-        'refund.s5.num': '5',
-        'refund.s6.num': '6',
-
         'refund.contact.company': 'QScrap Services & Trading L.L.C',
         'refund.contact.companyAr': 'كيوسكراب للخدمات والتجارة ذ.م.م',
         'refund.contact.cr': 'CR No: [CR Number]',
 
         // ===== TERMS OF SERVICE =====
         'terms.title': 'Terms of Service',
-        'terms.titleAr': 'شروط الخدمة',
         'terms.lastUpdated': 'Last updated: February 2026',
-
-        // Summary
-        'terms.summary.title': '📋 Agreement Overview',
-        'terms.summary.text': 'These Terms of Service govern your use of the QScrap platform operated by QScrap Services & Trading L.L.C. By accessing or using the Platform, you agree to be legally bound by these terms. Please read them carefully before using our marketplace.',
-
-        // Section Numbers
-        'terms.s1.num': '1',
-        'terms.s2.num': '2',
-        'terms.s3.num': '3',
-        'terms.s4.num': '4',
-        'terms.s5.num': '5',
-        'terms.s6.num': '6',
-        'terms.s7.num': '7',
-        'terms.s8.num': '8',
-        'terms.s9.num': '9',
-        'terms.s10.num': '10',
-        'terms.s11.num': '11',
-        'terms.s12.num': '12',
-        'terms.s13.num': '13',
 
         'terms.s1.title': 'Acceptance of Terms',
         'terms.s1.text': 'By accessing or using the QScrap mobile applications, website, or related services (collectively, the "Platform"), you agree to be legally bound by these Terms of Service. If you do not agree, you must not use the Platform.',
@@ -194,151 +166,95 @@ const legalTranslations = {
         'terms.s13.title': 'Contact',
         'terms.s13.text': 'For legal inquiries, contact: <a href="mailto:legal@qscrap.qa" class="legal-link">legal@qscrap.qa</a>',
 
-        // Terms Contact Card
-        'terms.contact.title': '📞 Contact Us',
-        'terms.contact.legal': 'Legal Inquiries',
-        'terms.contact.support': 'Support',
-        'terms.contact.phone': 'Phone',
-        'terms.contact.hq': 'Headquarters',
-        'terms.contact.hqValue': 'Doha, State of Qatar',
-        'terms.contact.website': 'Website',
-
         // ===== PRIVACY POLICY =====
         'privacy.title': 'Privacy Policy',
-        'privacy.titleAr': 'سياسة الخصوصية',
         'privacy.lastUpdated': 'Last Updated: February 2026',
 
-        // Summary
-        'privacy.summary.title': '🔒 Your Privacy is Our Priority',
-        'privacy.summary.text': 'This Privacy Policy explains how QScrap Services & Trading L.L.C ("QScrap", "we", "us", or "our") collects, uses, shares, and protects your personal information when you use our mobile applications and services. We are committed to transparency and compliance with Qatar\'s Law No. 13 of 2016 on Personal Data Protection.',
+        'privacy.s1.title': 'Introduction',
+        'privacy.s1.p1': 'This Privacy Policy explains how QScrap ("we", "our", or "the Platform") collects, uses, stores, and protects personal data when you use our mobile applications, website, and related services.',
+        'privacy.s1.p2': 'By using the Platform, you acknowledge that your personal data will be processed in accordance with this Policy and applicable law.',
 
-        // Section Numbers
-        'privacy.s1.num': '1',
-        'privacy.s2.num': '2',
-        'privacy.s3.num': '3',
-        'privacy.s4.num': '4',
-        'privacy.s5.num': '5',
-        'privacy.s6.num': '6',
-        'privacy.s7.num': '7',
-        'privacy.s8.num': '8',
-        'privacy.s9.num': '9',
-        'privacy.s10.num': '10',
-        'privacy.s11.num': '11',
-        'privacy.s12.num': '12',
-        'privacy.s13.num': '13',
-        'privacy.s14.num': '14',
-
-        'privacy.s1.title': 'Introduction and Scope',
-        'privacy.s1.p1': 'QScrap Services & Trading L.L.C operates the QScrap Customer App and QScrap Driver App. This Privacy Policy applies to all users:',
-        'privacy.s1.user1': '<strong>Customers:</strong> Individual users searching for automotive spare parts',
-        'privacy.s1.user2': '<strong>Garage Partners:</strong> Businesses providing spare parts through our Platform',
-        'privacy.s1.user3': '<strong>Drivers:</strong> Delivery personnel using the QScrap Driver App',
-        'privacy.s1.p2': 'By using our applications or services, you agree to the collection, use, and disclosure of your information as described in this Privacy Policy. This policy complies with Qatar\'s Law No. 13 of 2016 on Personal Data Protection.',
-
-        'privacy.s2.title': 'Information We Collect',
-        'privacy.s2.subtitle1': '2.1 Personal Information You Provide',
-        'privacy.s2.l1.i1': 'Account Information: Full name, phone number, email address',
-        'privacy.s2.l1.i2': 'Profile Information: Profile picture (optional), language preferences',
-        'privacy.s2.l1.i3': 'Vehicle Information: VIN, make, model, year for parts matching',
-        'privacy.s2.l1.i4': 'Payment Information: Payment method preferences (COD, Card)',
-        'privacy.s2.l1.i5': 'Business Information (Garages): CR number, IBAN, business address',
-        'privacy.s2.l1.i6': 'Driver Information: QID, Driving License, Vehicle Registration',
+        'privacy.s2.title': 'Personal Data We Collect',
+        'privacy.s2.subtitle1': '2.1 Information You Provide',
+        'privacy.s2.l1.i1': 'Full name, phone number, email address',
+        'privacy.s2.l1.i2': 'Account credentials and profile details',
+        'privacy.s2.l1.i3': 'Vehicle information and service requests',
+        'privacy.s2.l1.i4': 'Payment identifiers necessary to complete transactions',
+        'privacy.s2.l1.i5': 'Location information, including delivery address and saved locations',
+        'privacy.s2.l1.i6': 'Communications with customer support',
 
         'privacy.s2.subtitle2': '2.2 Information Collected Automatically',
-        'privacy.s2.l2.i1': 'Device Information: Device type, OS version, unique identifiers, push tokens',
-        'privacy.s2.l2.i2': 'Location Data: GPS coordinates for delivery areas, real-time tracking',
-        'privacy.s2.l2.i3': 'Usage Data: App interactions, features used, session duration',
-        'privacy.s2.l2.i4': 'Log Data: IP address, access times, app crashes, system activity',
-        'privacy.s2.l2.i5': 'Photos and Media: Uploaded photos for parts requests and proof of delivery',
+        'privacy.s2.l2.i1': 'Device type, operating system, and unique identifiers',
+        'privacy.s2.l2.i2': 'Log data, app usage analytics, and performance diagnostics',
+        'privacy.s2.l2.i3': 'Push notification tokens',
 
         'privacy.s2.subtitle3': '2.3 Location Data',
-        'privacy.s2.p1': 'Our applications require location access to function correctly. We use it for delivery fee calculation, nearest garage matching, real-time tracking, and route optimization. You can disable this in settings, but it will impact functionality.',
+        'privacy.s2.p1': 'Location services are used to enable delivery, garage matching, and order tracking. You may disable location permissions at any time through your device settings; however, doing so may prevent essential Platform functionality.',
 
-        'privacy.s3.title': 'How We Use Your Information',
-        'privacy.s3.l1.i1': 'Processing and fulfilling spare parts requests and orders',
-        'privacy.s3.l1.i2': 'Facilitating bidding between customers and garages',
-        'privacy.s3.l1.i3': 'Calculating delivery fees based on your location',
-        'privacy.s3.l1.i4': 'Providing real-time order tracking and notifications',
-        'privacy.s3.l1.i5': 'Processing payments and disbursements',
-        'privacy.s3.l1.i6': 'Managing warranties, returns, and refunds',
+        'privacy.s3.title': 'Legal Basis for Processing',
+        'privacy.s3.l1.i1': 'Consent provided by the user',
+        'privacy.s3.l1.i2': 'Contractual necessity to fulfill orders and services',
+        'privacy.s3.l1.i3': 'Legal obligations under applicable regulations',
+        'privacy.s3.l1.i4': 'Legitimate interests, limited to service improvement, fraud prevention, and security',
 
-        'privacy.s4.title': 'Data Sharing and Disclosure',
-        'privacy.s4.intro': 'We may share your information with:',
-        'privacy.s4.l1.i1': 'Garages: Your name, phone, and delivery address to fulfill orders',
-        'privacy.s4.l1.i2': 'Drivers: Your name, phone, and delivery location for order drops',
-        'privacy.s4.l1.i3': 'Payment Processors: Transaction details for payment processing',
-        'privacy.s4.l1.i4': 'Third-party Service Providers (Cloud, Analytics, Maps) for operation',
-        'privacy.s4.l1.i5': 'Competent Authorities when required by law',
-        'privacy.s4.alert': 'We do not sell your personal information to third parties for advertising or marketing.',
+        'privacy.s4.title': 'How We Use Personal Data',
+        'privacy.s4.l1.i1': 'Create and manage user accounts',
+        'privacy.s4.l1.i2': 'Facilitate orders, payments, and deliveries',
+        'privacy.s4.l1.i3': 'Communicate service updates and support responses',
+        'privacy.s4.l1.i4': 'Improve Platform functionality and security',
+        'privacy.s4.l1.i5': 'Send marketing communications only where consent is obtained (Opt-out available via in-app settings)',
 
-        'privacy.s5.title': 'Data Security',
-        'privacy.s5.l1.i1': 'Encryption: All data transfers use SSL/TLS (HTTPS)',
-        'privacy.s5.l1.i2': 'Secure Storage: Encrypted databases with access controls',
-        'privacy.s5.l1.i3': 'Authentication: OTP verification for account access',
-        'privacy.s5.l1.i4': 'Access Control: Role-based restrictions for employees',
-        'privacy.s5.alert': 'While we strive to protect your data, no method of transmission over the internet is 100% secure.',
+        'privacy.s5.title': 'Sharing of Personal Data',
+        'privacy.s5.intro': 'We may share data only where necessary with:',
+        'privacy.s5.l1.i1': 'Independent garages and service providers fulfilling your request',
+        'privacy.s5.l1.i2': 'Licensed payment processors handling transactions',
+        'privacy.s5.l1.i3': 'Technology vendors providing hosting, analytics, or notifications',
+        'privacy.s5.l1.i4': 'Competent authorities where legally required',
+        'privacy.s5.alert': 'All third parties are required to protect personal data in accordance with applicable law.',
 
         'privacy.s6.title': 'International Data Transfers',
-        'privacy.s6.p1': 'Your information may be transferred to and processed on servers located outside Qatar. We ensure appropriate safeguards are in place to protect your data in accordance with Qatar Law No. 13 of 2016.',
+        'privacy.s6.p1': 'Your personal data may be processed or stored outside your country of residence. Where transfers occur, we implement appropriate safeguards such as Standard contractual clauses or equivalent legal protection mechanisms. By using the Platform, you acknowledge the potential risks of cross-border data transfers where local laws may differ.',
 
         'privacy.s7.title': 'Data Retention',
-        'privacy.s7.l1.i1': 'We retain your personal information as long as necessary to provide our services and comply with Qatar\'s legal requirements (e.g., 10-year retention for commercial records).',
-        'privacy.s7.l1.i2': 'When data no longer serves a legitimate purpose, we securely delete or anonymize it.',
+        'privacy.s7.l1.i1': 'We retain personal data only as long as necessary to provide services and comply with legal requirements.',
+        'privacy.s7.l1.i2': 'Data is securely deleted or anonymized when no longer required.',
 
-        'privacy.s8.title': 'Your Rights',
-        'privacy.s8.intro': 'Under Qatar Data Protection Laws and our policies, you have the right to:',
-        'privacy.s8.l1.i1': 'Access: Request a copy of your personal data',
-        'privacy.s8.l1.i2': 'Correction: Update or correct inaccurate information',
-        'privacy.s8.l1.i3': 'Deletion: Request deletion of your account and data (subject to legal retention)',
-        'privacy.s8.l1.i4': 'Data Portability and Withdrawal of Consent',
-        'privacy.s8.alert': 'To exercise these rights, contact us at <a href="mailto:privacy@qscrap.qa">privacy@qscrap.qa</a>.',
+        'privacy.s8.title': 'Data Security',
+        'privacy.s8.l1.i1': 'Encrypted communications',
+        'privacy.s8.l1.i2': 'Secure authentication and one-time verification codes',
+        'privacy.s8.l1.i3': 'Restricted internal access controls',
+        'privacy.s8.l1.i4': 'Continuous monitoring for unauthorized activity',
+        'privacy.s8.alert': 'No digital system is completely secure; however, we apply industry-standard protections.',
 
-        'privacy.s9.title': 'Account Deletion',
-        'privacy.s9.intro': 'You can request account deletion through the app. Upon deletion, your profile will be removed or anonymized, except where retention is required by law.',
+        'privacy.s9.title': 'Your Privacy Rights',
+        'privacy.s9.intro': 'Subject to applicable law, you may request to:',
+        'privacy.s9.l1.i1': 'Access, correct, or delete your personal data',
+        'privacy.s9.l1.i2': 'Restrict or object to processing',
+        'privacy.s9.l1.i3': 'Receive a portable copy of your data',
+        'privacy.s9.alert': 'Requests may be submitted via privacy@qscrap.qa or through the in-app privacy request form. We aim to respond within 30 days.',
 
-        'privacy.s10.title': 'Children\'s Privacy',
-        'privacy.s10.p1': 'Our applications are not intended for individuals under 18 years old. We do not knowingly collect personal information from minors.',
+        'privacy.s10.title': "Children's Privacy",
+        'privacy.s10.p1': 'The Platform is not intended for individuals under 18 years old. We do not knowingly collect children\'s personal data. If such data is discovered, it will be deleted promptly upon verification.',
 
-        'privacy.s11.title': 'Third Party Links',
-        'privacy.s11.p1': 'We are not responsible for the privacy practices of third-party websites or services linked from our applications.',
+        'privacy.s11.title': 'Data Protection Contact',
+        'privacy.s11.p1': 'For privacy inquiries or complaints, contact: <a href="mailto:privacy@qscrap.qa" class="legal-link">privacy@qscrap.qa</a>',
 
-        'privacy.s12.title': 'Changes to this Policy',
-        'privacy.s12.p1': 'We may update this Privacy Policy. We will notify you of material changes. Continued use of our apps constitutes acceptance of the updated policy.',
+        'privacy.s12.title': 'Policy Updates',
+        'privacy.s12.p1': 'We may update this Privacy Policy from time to time. Material changes will be communicated through the Platform. Continued use constitutes acceptance.',
 
-        'privacy.s13.title': 'Governing Law',
-        'privacy.s13.p1': 'This Policy is governed by the laws of the State of Qatar, and Doha courts have exclusive jurisdiction over any disputes.',
+        'privacy.s13.title': 'Contact Information',
+        'privacy.s13.l1.i1': 'QScrap Services & Trading L.L.C',
+        'privacy.s13.l1.i2': 'Commercial Registration No.: [CR NUMBER]',
+        'privacy.s13.l1.i3': 'Registered Address: Doha, Qatar',
+        'privacy.s13.l1.i4': 'Email: privacy@qscrap.qa',
 
-        'privacy.s14.title': 'Contact Information',
-        'privacy.s14.l1.i1': 'QScrap Services & Trading L.L.C',
-        'privacy.s14.l1.i2': 'Commercial Registration No.: [CR NUMBER]',
-        'privacy.s14.l1.i3': 'Email: <a href="mailto:privacy@qscrap.qa">privacy@qscrap.qa</a>',
-
-        // Privacy Contact Card
-        'privacy.contact.title': '📞 Contact Us',
-        'privacy.contact.dpo': 'Data Protection Officer',
-        'privacy.contact.general': 'General Support',
-        'privacy.contact.phone': 'Phone',
-        'privacy.contact.address': 'Location',
-        'privacy.contact.addressValue': 'Doha, Qatar',
-
-        // Footer (Matching footer component)
-        'footer.tagline': "Qatar's premium automotive parts marketplace. Connecting customers with verified garages for quality new, used, and OEM parts.",
-        'footer.company': 'Company',
-        'footer.aboutUs': 'About Us',
-        'footer.forBusiness': 'For Businesses',
-        'footer.contact': 'Contact',
-        'footer.howItWorks': 'How It Works',
-        'footer.legal': 'Legal',
+        // Footer
+        'footer.copyright': '© 2026 QScrap Services & Trading L.L.C. All rights reserved.',
+        'footer.compliance': 'Compliant with Google Play Developer Program Policies and Qatar\'s Personal Data Protection Law.',
+        'footer.backHome': 'Back to QScrap Home',
         'footer.privacy': 'Privacy Policy',
         'footer.terms': 'Terms of Service',
-        'footer.refund': 'Refund Policy',
-        'footer.contactTitle': 'Contact',
-        'footer.email': 'support@qscrap.qa',
-        'footer.phone': '+974 5026 7974',
-        'footer.whatsapp': 'WhatsApp Support',
-        'footer.legalInfo.en': 'QScrap Services & Trading L.L.C | Doha, Qatar',
-        'footer.legalInfo.ar': 'كيوسكراب للخدمات والتجارة ذ.م.م | الدوحة، قطر',
-        'footer.copyright': '© 2026 QScrap. All rights reserved.'
+        'footer.refund': 'Refund Policy'
     },
     ar: {
         // Navigation
@@ -453,8 +369,6 @@ const legalTranslations = {
         'terms.title': 'شروط الخدمة',
         'terms.titleAr': '', // Hide subtitle in Arabic mode
         'terms.lastUpdated': 'آخر تحديث: 2026',
-        'terms.summary.title': '📋 نظرة عامة على الاتفاقية',
-        'terms.summary.text': 'تحكم شروط الخدمة هذه استخدامك لمنصة كيوسكراب التي تديرها شركة كيوسكراب للخدمات والتجارة ذ.م.م. من خلال استخدام المنصة، فإنك توافق على الالتزام بهذه الشروط. يرجى قراءتها بعناية.',
 
         // Section Numbers (Arabic Numerals)
         'terms.s1.num': '1',
@@ -513,9 +427,8 @@ const legalTranslations = {
         'terms.s9.text': 'لا تتحمل كيوسكراب المسؤولية عن أي تأخير أو إخفاق ناتج عن ظروف خارجة عن السيطرة، بما في ذلك القرارات الحكومية أو انقطاع الاتصالات أو نقص الوقود أو الهجمات السيبرانية أو الأحوال الجوية الشديدة.',
 
         'terms.s10.title': 'القانون الواجب التطبيق وتسوية النزاعات',
-        'terms.s10.l1.i1': 'تخضع هذه الشروط لقوانين دولة قطر.',
-        'terms.s10.l1.i2': 'تختص محاكم الدوحة، قطر، بالنظر في أي نزاع بشكل حصري.',
-        'terms.s10.l1.i3': 'قبل البدء في أي إجراءات قضائية، يوافق الأطراف على محاولة التسوية الودية من خلال إدارة حماية المستهلك بوزارة التجارة والصناعة.',
+        'terms.s10.l1.i1': 'تخضع هذه الشروط لقوانين دولة قطر، وتختص محاكم الدوحة دون غيرها بنظر أي نزاع.',
+        'terms.s10.l1.i2': 'ويتعين قبل اللجوء للقضاء محاولة التسوية الودية عبر إدارة حماية المستهلك بوزارة التجارة والصناعة.',
 
         'terms.s11.title': 'الإفصاح التجاري',
         'terms.s11.l1.i1': 'الاسم القانوني: كيوسكراب للخدمات والتجارة ذ.م.م',
@@ -529,39 +442,10 @@ const legalTranslations = {
         'terms.s13.title': 'التواصل',
         'terms.s13.text': 'للاستفسارات القانونية: <a href="mailto:legal@qscrap.qa" class="legal-link">legal@qscrap.qa</a>',
 
-        // Terms Contact Card (Arabic)
-        'terms.contact.title': '📞 تواصل معنا',
-        'terms.contact.legal': 'الاستفسارات القانونية',
-        'terms.contact.support': 'الدعم',
-        'terms.contact.phone': 'الهاتف',
-        'terms.contact.hq': 'المقر الرئيسي',
-        'terms.contact.hqValue': 'الدوحة، دولة قطر',
-        'terms.contact.website': 'الموقع الإلكتروني',
-
         // ===== PRIVACY POLICY (Arabic) =====
         'privacy.title': 'سياسة الخصوصية',
         'privacy.titleAr': '', // Hide subtitle in Arabic mode
         'privacy.lastUpdated': 'آخر تحديث: 2026',
-
-        // Section Numbers (Arabic Numerals)
-        'privacy.s1.num': '1',
-        'privacy.s2.num': '2',
-        'privacy.s3.num': '3',
-        'privacy.s4.num': '4',
-        'privacy.s5.num': '5',
-        'privacy.s6.num': '6',
-        'privacy.s7.num': '7',
-        'privacy.s8.num': '8',
-        'privacy.s9.num': '9',
-        'privacy.s10.num': '10',
-        'privacy.s11.num': '11',
-        'privacy.s12.num': '12',
-        'privacy.s13.num': '13',
-        'privacy.s14.num': '14',
-
-        // Summary (Arabic)
-        'privacy.summary.title': '🔒 خصوصيتك هي أولويتنا',
-        'privacy.summary.text': 'توضح سياسة الخصوصية هذه كيف تجمع شركة كيوسكراب للخدمات والتجارة ذ.م.م ("كيوسكراب" أو "نحن") وتستخدم وتشارك وتحمي معلوماتك الشخصية عند استخدام تطبيقاتنا وخدماتنا. نحن ملتزمون بالشفافية والامتثال للقانون القطري رقم 13 لسنة 2016 بشأن حماية البيانات الشخصية.',
 
         'privacy.s1.title': 'المقدمة والنطاق',
         'privacy.s1.p1': 'تدير شركة كيوسكراب للخدمات والتجارة ذ.م.م تطبيق كيوسكراب للعملاء وتطبيق كيوسكراب للسائقين. تنطبق سياسة الخصوصية هذه على جميع المستخدمين:',
@@ -648,37 +532,15 @@ const legalTranslations = {
         'privacy.s14.l1.i2': 'سجل تجاري رقم: [CR NUMBER]',
         'privacy.s14.l1.i3': 'البريد الإلكتروني: <a href="mailto:privacy@qscrap.qa">privacy@qscrap.qa</a>',
 
-        // Privacy Contact Card (Arabic)
-        'privacy.contact.title': '📞 تواصل معنا',
-        'privacy.contact.dpo': 'مسؤول حماية البيانات',
-        'privacy.contact.general': 'الدعم العام',
-        'privacy.contact.phone': 'الهاتف',
-        'privacy.contact.address': 'الموقع',
-        'privacy.contact.addressValue': 'الدوحة، قطر',
-
-        // Footer (Matching footer component)
-        'footer.tagline': 'سوق قطع غيار السيارات المتميز في قطر. نربط العملاء بكراجات معتمدة للحصول على قطع جديدة ومستعملة وأصلية.',
-        'footer.company': 'الشركة',
-        'footer.aboutUs': 'من نحن',
-        'footer.forBusiness': 'للشركات',
-        'footer.contact': 'تواصل',
-        'footer.howItWorks': 'كيف يعمل',
-        'footer.legal': 'قانوني',
+        // Footer
+        'footer.copyright': 'كيوسكراب للخدمات والتجارة ذ.م.م © 2026. جميع الحقوق محفوظة.',
+        'footer.compliance': 'متوافق مع سياسات برنامج مطوري Google Play وقانون حماية البيانات الشخصية في قطر.',
+        'footer.backHome': 'العودة إلى الصفحة الرئيسية',
         'footer.privacy': 'سياسة الخصوصية',
         'footer.terms': 'شروط الخدمة',
-        'footer.refund': 'سياسة الاسترداد',
-        'footer.contactTitle': 'تواصل',
-        'footer.email': 'support@qscrap.qa',
-        'footer.phone': '+974 5026 7974',
-        'footer.whatsapp': 'دعم واتساب',
-        'footer.legalInfo.en': 'QScrap Services & Trading L.L.C | Doha, Qatar',
-        'footer.legalInfo.ar': 'كيوسكراب للخدمات والتجارة ذ.م.م | الدوحة، قطر',
-        'footer.copyright': 'كيوسكراب © 2026. جميع الحقوق محفوظة.'
+        'footer.refund': 'سياسة الاسترداد'
     }
 };
-
-// Expose translations globally for footer-loader.js
-window.translations = legalTranslations;
 
 // i18n System for Legal Pages
 const legalI18n = {
@@ -747,8 +609,3 @@ const legalI18n = {
 
 // Initialize i18n on DOM ready
 document.addEventListener('DOMContentLoaded', () => legalI18n.init());
-
-// Re-apply current language when footer component is injected asynchronously.
-document.addEventListener('footer:loaded', () => {
-    legalI18n.setLanguage(legalI18n.currentLang, false);
-});

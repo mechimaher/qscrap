@@ -282,10 +282,10 @@ const translations = {
         'success.portalBtn': 'Go to Partner Portal',
 
         // Footer
-        'footer.tagline': 'Qatar\'s premium automotive parts marketplace. Connecting customers with verified garages for quality new, used, and OEM parts.',
+        'footer.description': 'Qatar\'s premium automotive parts marketplace. Connecting customers with verified garages for quality new, used, and OEM parts.',
         'footer.company': 'Company',
         'footer.aboutUs': 'About Us',
-        'footer.forBusiness': 'For Businesses',
+        'footer.forBusinesses': 'For Businesses',
         'footer.contact': 'Contact',
         'footer.howItWorks': 'How It Works',
         'footer.legal': 'Legal',
@@ -293,10 +293,7 @@ const translations = {
         'footer.terms': 'Terms of Service',
         'footer.refund': 'Refund Policy',
         'footer.contactTitle': 'Contact',
-        'footer.email': 'support@qscrap.qa',
-        'footer.phone': '+974 5026 7974',
         'footer.whatsapp': 'WhatsApp Support',
-        'footer.legalInfo.en': 'QScrap Services & Trading L.L.C | Doha, Qatar',
         'footer.copyright': '© 2026 QScrap. All rights reserved.'
     },
 
@@ -574,10 +571,10 @@ const translations = {
         'success.portalBtn': 'اذهب لبوابة الشركاء',
 
         // Footer
-        'footer.tagline': 'سوق قطع السيارات الفاخر في قطر. نربط العملاء بالكراجات المعتمدة للحصول على قطع جديدة ومستعملة وأصلية بجودة عالية.',
+        'footer.description': 'سوق قطع السيارات الفاخر في قطر. نربط العملاء بالكراجات المعتمدة للحصول على قطع جديدة ومستعملة وأصلية بجودة عالية.',
         'footer.company': 'الشركة',
         'footer.aboutUs': 'من نحن',
-        'footer.forBusiness': 'للأعمال',
+        'footer.forBusinesses': 'للأعمال',
         'footer.contact': 'تواصل معنا',
         'footer.howItWorks': 'كيف يعمل',
         'footer.legal': 'قانوني',
@@ -585,10 +582,7 @@ const translations = {
         'footer.terms': 'شروط الخدمة',
         'footer.refund': 'سياسة الاسترداد',
         'footer.contactTitle': 'تواصل',
-        'footer.email': 'support@qscrap.qa',
-        'footer.phone': '+974 5026 7974',
         'footer.whatsapp': 'دعم واتساب',
-        'footer.legalInfo.ar': 'كيوسكراب للخدمات والتجارة ذ.م.م | الدوحة، قطر',
         'footer.copyright': 'كيوسكراب © 2026. جميع الحقوق محفوظة.'
     }
 };

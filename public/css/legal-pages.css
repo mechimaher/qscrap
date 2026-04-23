@@ -190,7 +190,7 @@ body {
     padding: 60px 24px;
 }
 
-.content-wrapper .container {
+.container {
     max-width: 900px;
     margin: 0 auto;
 }
@@ -272,7 +272,7 @@ body {
     font-weight: 700;
 }
 
-.content-wrapper h3 {
+h3 {
     color: var(--qatar-maroon);
     font-size: 17px;
     font-weight: 600;
@@ -282,7 +282,7 @@ body {
     gap: 8px;
 }
 
-.content-wrapper h3::before {
+h3::before {
     content: '';
     width: 4px;
     height: 20px;
@@ -290,24 +290,24 @@ body {
     border-radius: 2px;
 }
 
-.content-wrapper p {
+p {
     margin-bottom: 16px;
     color: var(--charcoal);
 }
 
-.content-wrapper ul {
+ul {
     margin-left: 0;
     margin-bottom: 16px;
     list-style: none;
 }
 
-.content-wrapper li {
+li {
     margin-bottom: 10px;
     padding-left: 28px;
     position: relative;
 }
 
-.content-wrapper li::before {
+li::before {
     content: '✓';
     position: absolute;
     left: 0;
@@ -315,14 +315,14 @@ body {
     font-weight: 700;
 }
 
-.content-wrapper a {
+a {
     color: var(--qatar-maroon);
     text-decoration: none;
     font-weight: 500;
     transition: color 0.2s ease;
 }
 
-.content-wrapper a:hover {
+a:hover {
     color: var(--gold);
 }
 
@@ -449,8 +449,8 @@ body {
     color: var(--slate);
 }
 
-/* Legacy static footer styles (kept for archival templates only) */
-.legal-static-footer {
+/* Footer */
+.footer {
     background: var(--black);
     color: var(--white);
     text-align: center;
@@ -458,12 +458,12 @@ body {
     font-size: 14px;
 }
 
-.legal-static-footer p {
+.footer p {
     color: #FFFFFF;
     opacity: 0.9;
 }
 
-.legal-static-footer a {
+.footer a {
     color: var(--gold);
 }
 
@@ -565,12 +565,12 @@ body {
 }
 
 /* RTL List Items - Checkmarks on Right */
-[dir="rtl"] .content-wrapper li {
+[dir="rtl"] li {
     padding-left: 0;
     padding-right: 28px;
 }
 
-[dir="rtl"] .content-wrapper li::before {
+[dir="rtl"] li::before {
     left: auto;
     right: 0;
 }
