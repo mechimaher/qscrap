@@ -65,7 +65,8 @@ export class PaymentService {
         orderId: string,
         customerId: string,
         deliveryFee: number,
-        currency: string = 'QAR'
+        currency: string = 'QAR',
+        loyaltyDiscount: number = 0
     ): Promise<DepositResult> {
         const client = await this.pool.connect();
 
@@ -93,14 +94,33 @@ export class PaymentService {
                 VALUES (gen_random_uuid(), $1, $2, $3, $4, 'deposit', $5, $6, $7, $8)
             `, [orderId, customerId, deliveryFee, currency, this.provider.providerName, intent.id, intent.clientSecret, intent.status]);
 
-            // Update order with deposit info
-            await client.query(`
-                UPDATE orders 
-                SET deposit_amount = $2, 
-                    deposit_status = 'pending',
-                    payment_method = 'card'
-                WHERE order_id = $1
-            `, [orderId, deliveryFee]);
+            // Update order with deposit info and loyalty discount in ONE ATOMIC MOVE
+            if (loyaltyDiscount > 0) {
+                // Get current part price to calculate new total
+                const orderData = await client.query('SELECT part_price FROM orders WHERE order_id = $1', [orderId]);
+                const partPrice = parseFloat(orderData.rows[0]?.part_price || 0);
+                const newTotal = deliveryFee + Math.max(0, partPrice - loyaltyDiscount);
+
+                await client.query(`
+                    UPDATE orders 
+                    SET deposit_amount = $2, 
+                        deposit_status = 'pending',
+                        payment_method = 'card',
+                        loyalty_discount = $3,
+                        total_amount = $4,
+                        updated_at = NOW()
+                    WHERE order_id = $1
+                `, [orderId, deliveryFee, loyaltyDiscount, newTotal]);
+            } else {
+                await client.query(`
+                    UPDATE orders 
+                    SET deposit_amount = $2, 
+                        deposit_status = 'pending',
+                        payment_method = 'card',
+                        updated_at = NOW()
+                    WHERE order_id = $1
+                `, [orderId, deliveryFee]);
+            }
 
             await client.query('COMMIT');
 
@@ -141,7 +161,8 @@ export class PaymentService {
         totalAmount: number,
         partPrice: number,
         deliveryFee: number,
-        currency: string = 'QAR'
+        currency: string = 'QAR',
+        loyaltyDiscount: number = 0
     ): Promise<DepositResult> {
         const client = await this.pool.connect();
 
@@ -160,7 +181,8 @@ export class PaymentService {
                     orderId,
                     customerId,
                     partPrice: partPrice.toString(),
-                    deliveryFee: deliveryFee.toString()
+                    deliveryFee: deliveryFee.toString(),
+                    loyaltyDiscount: loyaltyDiscount.toString()
                 }
             });
 
@@ -171,15 +193,17 @@ export class PaymentService {
                 VALUES (gen_random_uuid(), $1, $2, $3, $4, 'full', $5, $6, $7, $8)
             `, [orderId, customerId, totalAmount, currency, this.provider.providerName, intent.id, intent.clientSecret, intent.status]);
 
-            // Update order with full payment info
-            // payment_method = 'card_full' signals driver POD to skip COD collection
+            // Update order with full payment info and loyalty discount in ONE ATOMIC MOVE
             await client.query(`
                 UPDATE orders 
                 SET deposit_amount = $2, 
                     deposit_status = 'pending',
-                    payment_method = 'card_full'
+                    payment_method = 'card_full',
+                    loyalty_discount = $3,
+                    total_amount = $4,
+                    updated_at = NOW()
                 WHERE order_id = $1
-            `, [orderId, deliveryFee]); // Still track delivery fee in deposit_amount
+            `, [orderId, deliveryFee, loyaltyDiscount, totalAmount]);
 
             await client.query('COMMIT');
 

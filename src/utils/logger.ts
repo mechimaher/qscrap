@@ -39,7 +39,7 @@ class Logger {
         return this.levelOrder[level] >= this.levelOrder[this.minLevel];
     }
 
-    private safeStringify(obj: any): string {
+    public safeStringify(obj: any): string {
         try {
             return JSON.stringify(obj, (key, value) =>
                 typeof value === 'bigint' ? value.toString() : value

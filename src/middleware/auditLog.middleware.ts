@@ -53,7 +53,7 @@ export const logAuditEntry = async (entry: AuditLogEntry): Promise<void> => {
             entry.path,
             entry.ip_address,
             entry.user_agent?.substring(0, 500),
-            JSON.stringify(sanitizeRequestBody(entry.request_body)),
+            logger.safeStringify(sanitizeRequestBody(entry.request_body)),
             entry.response_status,
             entry.duration_ms
         ]);

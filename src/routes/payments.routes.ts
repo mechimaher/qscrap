@@ -336,20 +336,12 @@ router.post('/deposit/:orderId',
                 return res.status(400).json({ success: false, error: 'No delivery fee to pay' });
             }
 
-            // Save discount info to order if provided
-            if (loyaltyDiscount > 0) {
-                await pool.query(
-                    'UPDATE orders SET loyalty_discount = $2, total_amount = $3 WHERE order_id = $1',
-                    [orderId, loyaltyDiscount, newTotal]
-                );
-                logger.info('Deposit discount applied', { loyaltyDiscount, discountedPartPrice, partPrice, newTotal });
-            }
-
             const result = await depositService.createDeliveryFeeDeposit(
                 orderId,
                 userId,
                 deliveryFee,
-                'QAR'
+                'QAR',
+                loyaltyDiscount
             );
 
             const responseData = {
@@ -427,23 +419,14 @@ router.post('/full/:orderId',
                 return res.status(400).json({ success: false, error: 'No amount to pay' });
             }
 
-            // Update order with discount info and adjusted total
-            if (loyaltyDiscount > 0) {
-                // Save discount and update total_amount to reflect discounted price
-                await pool.query(
-                    'UPDATE orders SET loyalty_discount = $2, total_amount = $3 WHERE order_id = $1',
-                    [orderId, loyaltyDiscount, chargeAmount]
-                );
-                logger.info('Full payment discount applied', { loyaltyDiscount, chargeAmount });
-            }
-
             const result = await depositService.createFullPaymentIntent(
                 orderId,
                 userId,
                 chargeAmount, // Customer pays discounted amount
                 partPrice,    // Garage still gets full part price
                 deliveryFee,
-                'QAR'
+                'QAR',
+                loyaltyDiscount
             );
 
             const responseData = {
