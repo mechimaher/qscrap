@@ -127,14 +127,15 @@ export class PaymentService {
             logger.info('Created deposit intent', { intentId: intent.id, orderId, amount: deliveryFee, currency });
 
             return {
-                intentId: intent.id,
-                clientSecret: intent.clientSecret,
-                amount: deliveryFee,
-                currency,
-                status: intent.status
+                intentId: String(intent.id),
+                clientSecret: String(intent.clientSecret || ''),
+                amount: Number(deliveryFee),
+                currency: String(currency),
+                status: String(intent.status || 'pending')
             };
         } catch (error) {
-            await client.query('ROLLBACK');
+            if (client) await client.query('ROLLBACK');
+            logger.error('Deposit service error', { error: (error as Error).message, orderId });
             throw error;
         } finally {
             client.release();
@@ -210,14 +211,15 @@ export class PaymentService {
             logger.info('Created full payment intent', { intentId: intent.id, orderId, amount: totalAmount, currency });
 
             return {
-                intentId: intent.id,
-                clientSecret: intent.clientSecret,
-                amount: totalAmount,
-                currency,
-                status: intent.status
+                intentId: String(intent.id),
+                clientSecret: String(intent.clientSecret || ''),
+                amount: Number(totalAmount),
+                currency: String(currency),
+                status: String(intent.status || 'pending')
             };
         } catch (error) {
-            await client.query('ROLLBACK');
+            if (client) await client.query('ROLLBACK');
+            logger.error('Full payment service error', { error: (error as Error).message, orderId });
             throw error;
         } finally {
             client.release();
