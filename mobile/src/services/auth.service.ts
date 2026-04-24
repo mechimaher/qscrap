@@ -4,6 +4,11 @@ import { log, warn, error } from "../utils/logger";
 import * as SecureStore from "expo-secure-store";
 import { User, AuthResponse, Request, Bid, Order, Stats, Address, Product, Notification, SupportTicket, Vehicle, LoyaltyTransaction, PaymentMethod, UrgentAction } from "./types";
 
+// SecureStore keys for biometric credentials — must match apiClient.ts
+const BIOMETRIC_PHONE = 'qscrap_biometric_phone';
+const BIOMETRIC_PASSWORD = 'qscrap_biometric_password';
+const BIOMETRIC_ENABLED = 'qscrap_biometric_enabled';
+
 export class AuthService {
     async login(phone_number: string, password: string): Promise<AuthResponse> {
         const data = await apiClient.request<AuthResponse>(API_ENDPOINTS.LOGIN, {
