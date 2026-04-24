@@ -44,7 +44,7 @@ import { useStripeCheckout } from '../hooks/useStripeCheckout';
 
 
 // Version for cache-busting diagnostics
-const SCREEN_VERSION = 'v2.0.0-2026-01-27';
+const SCREEN_VERSION = 'v2.1.0-2026-04-24';
 
 interface RouteParams {
     bidId: string;
@@ -56,7 +56,57 @@ interface RouteParams {
     _cacheKey?: string; // Cache-busting key for navigation
 }
 
+/**
+ * PaymentScreen — Outer wrapper that provides StripeProvider context.
+ * 
+ * CRITICAL: useStripe() MUST be called inside <StripeProvider>.
+ * This wrapper ensures the Stripe SDK is initialized before any
+ * child component calls useStripe().
+ */
 export default function PaymentScreen() {
+    const { colors } = useTheme();
+    const { t } = useTranslation();
+    const navigation = useNavigation<any>();
+
+    const stripeKey = KEYS.STRIPE_PUBLISHABLE_KEY;
+
+    // Guard: If Stripe key is missing, show error instead of crashing
+    if (!stripeKey) {
+        return (
+            <SafeAreaView style={[styles.container, { backgroundColor: colors.background }]}>
+                <View style={styles.loadingContainer}>
+                    <Ionicons name="card-outline" size={56} color={Colors.error || '#e74c3c'} />
+                    <Text style={[styles.loadingText, { color: colors.text, marginTop: 16, fontSize: 18, fontWeight: '600' }]}>
+                        {t('payment.configError') || 'Payment Configuration Error'}
+                    </Text>
+                    <Text style={[styles.loadingText, { color: colors.textSecondary, fontSize: 14, marginTop: 8, paddingHorizontal: 32, textAlign: 'center' }]}>
+                        {t('payment.stripeNotConfigured') || 'Stripe payment is not configured. Please contact support.'}
+                    </Text>
+                    <TouchableOpacity
+                        onPress={() => navigation.goBack()}
+                        style={styles.retryCancel}
+                    >
+                        <Text style={[styles.retryCancelText, { color: colors.textSecondary }]}>
+                            {t('common.goBack') || 'Go Back'}
+                        </Text>
+                    </TouchableOpacity>
+                </View>
+            </SafeAreaView>
+        );
+    }
+
+    return (
+        <StripeProvider publishableKey={stripeKey}>
+            <PaymentScreenContent />
+        </StripeProvider>
+    );
+}
+
+/**
+ * PaymentScreenContent — Inner component that safely uses useStripe() 
+ * because it renders inside <StripeProvider>.
+ */
+function PaymentScreenContent() {
     const navigation = useNavigation<any>();
     const route = useRoute();
     const { colors } = useTheme();
@@ -146,7 +196,7 @@ export default function PaymentScreen() {
         initializePayment();
     }, []);
 
-    // 4. Handle Stripe Checkouts
+    // 4. Handle Stripe Checkouts — NOW SAFE because we are inside <StripeProvider>
     const { isLoading, handlePayment, handleFreeOrder } = useStripeCheckout({
         clientSecret,
         cardComplete,
@@ -220,85 +270,83 @@ export default function PaymentScreen() {
     }
 
     return (
-        <StripeProvider publishableKey={KEYS.STRIPE_PUBLISHABLE_KEY}>
-            <SafeAreaView style={[styles.container, { backgroundColor: colors.background }]}>
-                {/* Header */}
-                <View style={[styles.header, { backgroundColor: colors.surface }]}>
-                    <TouchableOpacity onPress={handleCancel} style={styles.backButton}>
-                        <Text style={styles.backText}>{isRTL ? '→' : '←'} {t('common.cancel')}</Text>
-                    </TouchableOpacity>
-                    <Text style={[styles.headerTitle, { color: colors.text }]}>
-                        {paymentType === 'full' ? t('payment.payFullAmount') : t('payment.payDeliveryFee')}
-                    </Text>
-                    <View style={{ width: 60 }} />
-                </View>
+        <SafeAreaView style={[styles.container, { backgroundColor: colors.background }]}>
+            {/* Header */}
+            <View style={[styles.header, { backgroundColor: colors.surface }]}>
+                <TouchableOpacity onPress={handleCancel} style={styles.backButton}>
+                    <Text style={styles.backText}>{isRTL ? '→' : '←'} {t('common.cancel')}</Text>
+                </TouchableOpacity>
+                <Text style={[styles.headerTitle, { color: colors.text }]}>
+                    {paymentType === 'full' ? t('payment.payFullAmount') : t('payment.payDeliveryFee')}
+                </Text>
+                <View style={{ width: 60 }} />
+            </View>
 
-                <KeyboardAvoidingView
-                    style={{ flex: 1 }}
-                    behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
-                    keyboardVerticalOffset={Platform.OS === 'ios' ? 0 : 20}
-                >
-                    <ScrollView style={styles.content} showsVerticalScrollIndicator={false} keyboardShouldPersistTaps="handled">
+            <KeyboardAvoidingView
+                style={{ flex: 1 }}
+                behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
+                keyboardVerticalOffset={Platform.OS === 'ios' ? 0 : 20}
+            >
+                <ScrollView style={styles.content} showsVerticalScrollIndicator={false} keyboardShouldPersistTaps="handled">
 
-                        <PaymentSummary
-                            garageName={garageName}
-                            partDescription={partDescription}
-                            partPrice={partPrice}
-                            deliveryFee={deliveryFee}
-                            totalAmount={totalAmount}
-                            isRTL={isRTL}
-                            t={t}
-                        />
+                    <PaymentSummary
+                        garageName={garageName}
+                        partDescription={partDescription}
+                        partPrice={partPrice}
+                        deliveryFee={deliveryFee}
+                        totalAmount={totalAmount}
+                        isRTL={isRTL}
+                        t={t}
+                    />
 
-                        <PaymentTypeSelector
-                            paymentType={paymentType}
-                            setPaymentType={setPaymentType}
-                            deliveryFee={deliveryFee}
-                            totalAmount={totalAmount}
-                            isRTL={isRTL}
-                            t={t}
-                            setClientSecret={setClientSecret}
-                        />
+                    <PaymentTypeSelector
+                        paymentType={paymentType}
+                        setPaymentType={setPaymentType}
+                        deliveryFee={deliveryFee}
+                        totalAmount={totalAmount}
+                        isRTL={isRTL}
+                        t={t}
+                        setClientSecret={setClientSecret}
+                    />
 
-                        <LoyaltyDiscountCard
-                            loyaltyData={loyaltyData}
-                            freeOrder={freeOrder}
-                            applyDiscount={applyDiscount}
-                            setApplyDiscount={setApplyDiscount}
-                            paymentType={paymentType}
-                            calculateDiscount={calculateDiscount}
-                            partPrice={partPrice}
-                            codAmount={codAmount}
-                            totalAmount={totalAmount}
-                            payNowAmount={payNowAmount}
-                            discountAmount={discountAmount}
-                            isRTL={isRTL}
-                            t={t}
-                        />
+                    <LoyaltyDiscountCard
+                        loyaltyData={loyaltyData}
+                        freeOrder={freeOrder}
+                        applyDiscount={applyDiscount}
+                        setApplyDiscount={setApplyDiscount}
+                        paymentType={paymentType}
+                        calculateDiscount={calculateDiscount}
+                        partPrice={partPrice}
+                        codAmount={codAmount}
+                        totalAmount={totalAmount}
+                        payNowAmount={payNowAmount}
+                        discountAmount={discountAmount}
+                        isRTL={isRTL}
+                        t={t}
+                    />
 
-                        <StripeCardField
-                            colors={colors}
-                            t={t}
-                            setCardComplete={setCardComplete}
-                            isRTL={isRTL}
-                        />
+                    <StripeCardField
+                        colors={colors}
+                        t={t}
+                        setCardComplete={setCardComplete}
+                        isRTL={isRTL}
+                    />
 
-                        <View style={{ height: 180 }} />
-                    </ScrollView>
-                </KeyboardAvoidingView>
+                    <View style={{ height: 180 }} />
+                </ScrollView>
+            </KeyboardAvoidingView>
 
-                <PaymentButton
-                    freeOrder={freeOrder}
-                    handleFreeOrder={handleFreeOrder}
-                    isLoading={isLoading}
-                    cardComplete={cardComplete}
-                    handlePayment={handlePayment}
-                    payNowAmount={payNowAmount}
-                    t={t}
-                    colors={colors}
-                />
-            </SafeAreaView>
-        </StripeProvider>
+            <PaymentButton
+                freeOrder={freeOrder}
+                handleFreeOrder={handleFreeOrder}
+                isLoading={isLoading}
+                cardComplete={cardComplete}
+                handlePayment={handlePayment}
+                payNowAmount={payNowAmount}
+                t={t}
+                colors={colors}
+            />
+        </SafeAreaView>
     );
 }
 
