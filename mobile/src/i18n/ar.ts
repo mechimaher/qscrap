@@ -615,6 +615,7 @@ export const ar = {
         orderAgain: 'اطلب مرة أخرى',
         orderedAt: 'تم الطلب في {{date}} الساعة {{time}}',
         deliveryFee: 'رسوم التوصيل',
+        calculatedAtCheckout: '(تُحسب عند الدفع)',
         partPrice: 'سعر القطعة',
         loyaltyDiscount: 'خصم الولاء',
         customerNotes: 'ملاحظات العميل',

@@ -222,7 +222,7 @@ const PremiumBidCard = ({
                                 {displayPrice} {t('common.qar')}
                             </Text>
                             <Text style={[styles.deliveryFeeText, { textAlign: isRTL ? 'left' : 'right' }]}>
-                                + {t('order.deliveryFee')} ~15 {t('common.qar')}
+                                + {t('order.deliveryFee')} {t('order.calculatedAtCheckout')}
                             </Text>
                         </>
                     ) : (
@@ -233,7 +233,7 @@ const PremiumBidCard = ({
                             </Text>
                             {!isAccepted && (
                                 <Text style={[styles.deliveryFeeText, { textAlign: isRTL ? 'left' : 'right' }]}>
-                                    + {t('order.deliveryFee')} ~15 {t('common.qar')}
+                                    + {t('order.deliveryFee')} {t('order.calculatedAtCheckout')}
                                 </Text>
                             )}
                         </>

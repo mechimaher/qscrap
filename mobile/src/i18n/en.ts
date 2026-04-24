@@ -614,6 +614,7 @@ export const en = {
         orderAgain: 'Order Again',
         orderedAt: 'Ordered on {{date}} at {{time}}',
         deliveryFee: 'Delivery Fee',
+        calculatedAtCheckout: '(Calculated at checkout)',
         partPrice: 'Part Price',
         loyaltyDiscount: 'Loyalty Discount',
         customerNotes: 'Customer Notes',
