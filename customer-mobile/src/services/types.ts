@@ -14,6 +14,23 @@ export interface AuthResponse {
     user?: User;
 }
 
+export interface DeletionBlocker {
+    type: string;
+    count: number;
+    message: string;
+    action: string;
+}
+
+export interface DeletionEligibilityResponse {
+    canDelete: boolean;
+    blockers: DeletionBlocker[];
+}
+
+export interface DeleteAccountResponse {
+    success: boolean;
+    message: string;
+}
+
 export interface Request {
     request_id: string;
     car_make: string;

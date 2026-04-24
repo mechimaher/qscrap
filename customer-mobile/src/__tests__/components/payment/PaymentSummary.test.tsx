@@ -78,8 +78,8 @@ describe('PaymentSummary', () => {
 
     it('should handle zero prices', () => {
         render(<PaymentSummary {...defaultProps} partPrice={0} deliveryFee={0} totalAmount={0} />);
-        
-        expect(screen.getByText('0 QAR')).toBeTruthy();
+
+        expect(screen.getAllByText('0 QAR')).toHaveLength(3);
     });
 
     it('should handle decimal prices correctly', () => {

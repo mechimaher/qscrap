@@ -27,6 +27,7 @@ export const PaymentTypeSelector: React.FC<PaymentTypeSelectorProps> = ({
     return (
         <View style={styles.paymentOptionsSection}>
             <TouchableOpacity
+                testID="payment-option-delivery"
                 style={[
                     styles.vvipPaymentOption,
                     paymentType === 'delivery_only' && styles.vvipPaymentSelected
@@ -42,7 +43,7 @@ export const PaymentTypeSelector: React.FC<PaymentTypeSelectorProps> = ({
             >
                 <View style={[styles.vvipPaymentLeft, { flexDirection: rtlFlexDirection(isRTL) }]}>
                     <View style={[styles.vvipPaymentIcon, { backgroundColor: '#3B82F6' }]}>
-                        <Ionicons name="car-sport" size={20} color="#fff" />
+                        <Ionicons testID="payment-icon-car-sport" name="car-sport" size={20} color="#fff" />
                     </View>
                     <View>
                         <Text style={styles.vvipPaymentTitle}>{t('payment.payDeliveryOnly')}</Text>
@@ -56,6 +57,7 @@ export const PaymentTypeSelector: React.FC<PaymentTypeSelectorProps> = ({
             </TouchableOpacity>
 
             <TouchableOpacity
+                testID="payment-option-full"
                 style={[
                     styles.vvipPaymentOption,
                     paymentType === 'full' && styles.vvipPaymentSelected
@@ -71,7 +73,7 @@ export const PaymentTypeSelector: React.FC<PaymentTypeSelectorProps> = ({
             >
                 <View style={[styles.vvipPaymentLeft, { flexDirection: rtlFlexDirection(isRTL) }]}>
                     <View style={[styles.vvipPaymentIcon, { backgroundColor: '#22C55E' }]}>
-                        <Ionicons name="card" size={20} color="#fff" />
+                        <Ionicons testID="payment-icon-card" name="card" size={20} color="#fff" />
                     </View>
                     <View>
                         <Text style={styles.vvipPaymentTitle}>{t('payment.payFullOption')}</Text>

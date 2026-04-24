@@ -14,10 +14,10 @@ jest.mock('../../../components/MyVehiclesSelector', () => {
     return function MockMyVehiclesSelector({ onSelect, selectedVehicleId, onVehiclesLoaded }: any) {
         return (
             <View testID="my-vehicles-selector">
-                <TouchableOpacity onPress={() => onSelect({ vehicle_id: 'v1', car_make: 'Toyota', car_model: 'Camry', car_year: 2024 })}>
-                    <Text>Select Vehicle</Text>
+                <TouchableOpacity testID="mock-select-vehicle" onPress={() => onSelect({ vehicle_id: 'v1', car_make: 'Toyota', car_model: 'Camry', car_year: 2024 })}>
+                    <Text>Trigger Vehicle Selection</Text>
                 </TouchableOpacity>
-                <TouchableOpacity onPress={() => onVehiclesLoaded([{ vehicle_id: 'v1', car_make: 'Toyota', car_model: 'Camry', car_year: 2024 }])}>
+                <TouchableOpacity testID="mock-load-vehicles" onPress={() => onVehiclesLoaded([{ vehicle_id: 'v1', car_make: 'Toyota', car_model: 'Camry', car_year: 2024 }])}>
                     <Text>Load Vehicles</Text>
                 </TouchableOpacity>
                 {selectedVehicleId && <Text testID="selected-id">{selectedVehicleId}</Text>}
@@ -33,13 +33,17 @@ describe('VehicleSelectionStep', () => {
             text: '#1F2937',
             textSecondary: '#6B7280',
         },
-        t: (key: string) => {
+        t: (key: string, params?: { vin?: string }) => {
             const translations: Record<string, string> = {
                 'newRequest.selectVehicle': 'Select Vehicle',
                 'newRequest.chooseFromCars': 'Choose from your saved vehicles',
                 'newRequest.vinVerified': 'VIN {{vin}} verified',
             };
-            return translations[key] || key;
+            let text = translations[key] || key;
+            if (params?.vin) {
+                text = text.replace('{{vin}}', params.vin);
+            }
+            return text;
         },
         isRTL: false,
         rtlFlexDirection: (isRTL: boolean) => isRTL ? "row-reverse" : "row",
@@ -82,7 +86,7 @@ describe('VehicleSelectionStep', () => {
         const handleVehicleSelectMock = jest.fn();
         render(<VehicleSelectionStep {...defaultProps} handleVehicleSelect={handleVehicleSelectMock} />);
 
-        const selectButton = screen.getByText('Select Vehicle');
+        const selectButton = screen.getByTestId('mock-select-vehicle');
         fireEvent.press(selectButton);
 
         expect(handleVehicleSelectMock).toHaveBeenCalledWith({
@@ -97,7 +101,7 @@ describe('VehicleSelectionStep', () => {
         const handleVehiclesLoadedMock = jest.fn();
         render(<VehicleSelectionStep {...defaultProps} handleVehiclesLoaded={handleVehiclesLoadedMock} />);
 
-        const loadButton = screen.getByText('Load Vehicles');
+        const loadButton = screen.getByTestId('mock-load-vehicles');
         fireEvent.press(loadButton);
 
         expect(handleVehiclesLoadedMock).toHaveBeenCalledWith([
@@ -146,7 +150,7 @@ describe('VehicleSelectionStep', () => {
         const { rerender } = render(<VehicleSelectionStep {...defaultProps} />);
         expect(screen.getByText('Select Vehicle')).toBeTruthy();
 
-        rerender(<VehicleSelectionStep {...defaultProps} />);
+        rerender(<VehicleSelectionStep {...defaultProps} isRTL={true} />);
         expect(screen.getByText('Select Vehicle')).toBeTruthy();
     });
 

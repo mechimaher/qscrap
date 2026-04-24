@@ -41,14 +41,20 @@ export const LoyaltyDiscountCard: React.FC<LoyaltyDiscountCardProps> = ({
         return null;
     }
 
+    const iconName = loyaltyData.tier === 'platinum' ? 'diamond' : loyaltyData.tier === 'gold' ? 'trophy' : 'medal';
+    const iconColor = loyaltyData.tier === 'platinum' ? '#E5E7EB' : loyaltyData.tier === 'gold' ? '#FFD700' : '#C0C0C0';
+
     return (
-        <View style={[
-            styles.vvipLoyaltyCard,
-            freeOrder && { borderColor: '#22C55E', borderWidth: 2 }
-        ]}>
+        <View
+            testID="loyalty-card"
+            style={[
+                styles.vvipLoyaltyCard,
+                freeOrder && { borderColor: '#22C55E', borderWidth: 2 }
+            ]}
+        >
             <View style={[styles.vvipLoyaltyRow, { flexDirection: rtlFlexDirection(isRTL) }]}>
                 <View style={styles.vvipLoyaltyLeft}>
-                    <Ionicons name={loyaltyData.tier === 'platinum' ? 'diamond' : loyaltyData.tier === 'gold' ? 'trophy' : 'medal'} size={28} color={loyaltyData.tier === 'platinum' ? '#E5E7EB' : loyaltyData.tier === 'gold' ? '#FFD700' : '#C0C0C0'} />
+                    <Ionicons testID={`loyalty-icon-${iconName}`} name={iconName} size={28} color={iconColor} />
                     <View>
                         <Text style={styles.vvipLoyaltyTier}>
                             {loyaltyData.tier.toUpperCase()} • {loyaltyData.discountPercentage}% {t('payment.off')}

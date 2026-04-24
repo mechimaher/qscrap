@@ -54,7 +54,7 @@ export const StripeCardField: React.FC<StripeCardFieldProps> = ({
             </View>
 
             <View style={[styles.cardSecurityRow, { flexDirection: rtlFlexDirection(isRTL) }]}>
-                <Ionicons name="lock-closed" size={16} color="#22c55e" />
+                <Ionicons testID="lock-closed" name="lock-closed" size={16} color="#22c55e" />
                 <Text style={[styles.securityText, { color: colors.textSecondary }]}>
                     {t('payment.cardSecure')}
                 </Text>

@@ -20,9 +20,20 @@ const mockNetInfo = NetInfo as jest.Mocked<typeof NetInfo>;
 const mockFileSystem = FileSystem as jest.Mocked<typeof FileSystem>;
 const mockApi = api as jest.Mocked<typeof api>;
 
+const advanceTimers = async (ms: number) => {
+    const jestWithAsync = jest as unknown as { advanceTimersByTimeAsync?: (time: number) => Promise<void> };
+    if (jestWithAsync.advanceTimersByTimeAsync) {
+        await jestWithAsync.advanceTimersByTimeAsync(ms);
+        return;
+    }
+    jest.advanceTimersByTime(ms);
+    await Promise.resolve();
+};
+
 describe('OfflineQueue Service', () => {
     beforeEach(() => {
         jest.clearAllMocks();
+        offlineQueue.resetForTests();
         
         // Default: online state
         (mockNetInfo.fetch as jest.Mock).mockResolvedValue({ isConnected: true });
@@ -32,6 +43,10 @@ describe('OfflineQueue Service', () => {
         
         // Default: API success
         (mockApi.request as jest.Mock).mockResolvedValue(undefined);
+    });
+
+    afterEach(() => {
+        jest.useRealTimers();
     });
 
     describe('enqueue', () => {
@@ -63,7 +78,7 @@ describe('OfflineQueue Service', () => {
             const queue1 = JSON.parse(calls[0][1]);
             const queue2 = JSON.parse(calls[1][1]);
             
-            expect(queue1[0].id).not.toBe(queue2[0].id);
+            expect(queue1[0].id).not.toBe(queue2[1].id);
         });
 
         it('should include timestamp and retry count', async () => {
@@ -153,16 +168,16 @@ describe('OfflineQueue Service', () => {
             
             const processPromise = offlineQueue.processQueue();
             
-            // Fast-forward 2 seconds (first retry)
-            jest.advanceTimersByTime(2000);
-            
-            expect(mockApi.request).toHaveBeenCalledTimes(2);
-            
-            jest.useRealTimers();
+            await Promise.resolve();
+            await advanceTimers(2000);
             await processPromise;
+
+            expect(mockApi.request).toHaveBeenCalledTimes(2);
         });
 
         it('should drop requests after 5 failed retries', async () => {
+            jest.useFakeTimers();
+
             (mockNetInfo.fetch as jest.Mock).mockResolvedValue({ isConnected: false });
             await offlineQueue.enqueue('/driver/location', 'POST', { lat: 25.276987, lng: 51.520008 });
             
@@ -170,7 +185,10 @@ describe('OfflineQueue Service', () => {
             (mockApi.request as jest.Mock).mockRejectedValue(new Error('Network error'));
             (mockNetInfo.fetch as jest.Mock).mockResolvedValue({ isConnected: true });
             
-            await offlineQueue.processQueue();
+            const processPromise = offlineQueue.processQueue();
+            await Promise.resolve();
+            await advanceTimers(30000);
+            await processPromise;
             
             // Should have tried 5 times
             expect(mockApi.request).toHaveBeenCalledTimes(5);
@@ -188,13 +206,11 @@ describe('OfflineQueue Service', () => {
             
             const processPromise = offlineQueue.processQueue();
             
-            // Fast-forward 60 seconds (rate limit wait)
-            jest.advanceTimersByTime(60000);
-            
-            expect(mockApi.request).toHaveBeenCalledTimes(2);
-            
-            jest.useRealTimers();
+            await Promise.resolve();
+            await advanceTimers(60000);
             await processPromise;
+
+            expect(mockApi.request).toHaveBeenCalledTimes(2);
         });
 
         it('should drop client errors (4xx) immediately without retry', async () => {

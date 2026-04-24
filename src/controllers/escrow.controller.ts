@@ -1,18 +1,22 @@
-import { Request, Response } from 'express';
+import { Response } from 'express';
 import pool from '../config/db';
 import { EscrowService } from '../services/escrow.service';
 import { ApiError } from '../middleware/errorHandler.middleware';
+import { catchAsync } from '../utils/catchAsync';
+import { AuthRequest } from '../middleware/auth.middleware';
 
 const escrowService = new EscrowService(pool);
 
-const getUserContext = (req: any): { userId: string; userType: string } | null => {
+const getUserContext = (req: AuthRequest): { userId: string; userType: string } | null => {
     const userId = (req as any).user?.userId || (req as any).user?.id;
     const userType = (req as any).user?.role || (req as any).user?.userType;
-    if (!userId || !userType) return null;
+    if (!userId || !userType) {
+        return null;
+    }
     return { userId, userType };
 };
 
-export const getEscrowForOrder = async (req: Request, res: Response) => {
+export const getEscrowForOrder = catchAsync(async (req: AuthRequest, res: Response) => {
     const user = getUserContext(req);
     if (!user) {
         return res.status(401).json({ error: 'Authentication required' });
@@ -35,9 +39,9 @@ export const getEscrowForOrder = async (req: Request, res: Response) => {
         dispute_raised_at: escrow.dispute_raised_at,
         dispute_reason: escrow.dispute_reason,
     });
-};
+});
 
-export const raiseEscrowDisputeHandler = async (req: Request, res: Response) => {
+export const raiseEscrowDisputeHandler = catchAsync(async (req: AuthRequest, res: Response) => {
     const user = getUserContext(req);
     if (!user) {
         return res.status(401).json({ error: 'Authentication required' });
@@ -54,4 +58,4 @@ export const raiseEscrowDisputeHandler = async (req: Request, res: Response) => 
         dispute_reason: escrow.dispute_reason,
         dispute_raised_at: escrow.dispute_raised_at,
     });
-};
+});

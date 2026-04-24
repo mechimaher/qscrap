@@ -15,7 +15,8 @@ jest.mock('@stripe/stripe-react-native', () => ({
     CardField: (props: any) => (
         <View
             testID="card-field"
-            {...{ onChange: () => props.onCardChange?.({ complete: true }) }}
+            {...props}
+            onChange={(event: any) => props.onCardChange?.(event)}
         />
     ),
 }));
@@ -106,13 +107,11 @@ describe('StripeCardField', () => {
         render(<StripeCardField {...defaultProps} />);
 
         const cardField = screen.getByTestId('card-field');
-        expect(cardField.props.style).toEqual(
-            expect.arrayContaining([
-                expect.objectContaining({
-                    backgroundColor: '#FFFFFF',
-                    textColor: '#1F2937',
-                }),
-            ])
+        expect(cardField.props.cardStyle).toEqual(
+            expect.objectContaining({
+                backgroundColor: '#FFFFFF',
+                textColor: '#1F2937',
+            })
         );
     });
 

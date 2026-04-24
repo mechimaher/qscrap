@@ -380,7 +380,9 @@ export class PaymentService {
     private async ensureEscrowForOrder(order: any): Promise<void> {
         try {
             const existing = await this.escrowService.getEscrowByOrder(order.order_id);
-            if (existing) return;
+            if (existing) {
+                return;
+            }
 
             const deliveryFee = parseFloat(order.delivery_fee || 0);
             const totalAmount = parseFloat(order.total_amount || order.payment_amount || 0);

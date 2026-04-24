@@ -41,15 +41,16 @@ export const PaymentButton: React.FC<PaymentButtonProps> = ({
                     onPress={handleFreeOrder}
                     disabled={isLoading}
                 >
-                    <LinearGradient
-                        colors={['#FFD700', '#FFA500']}
-                        style={styles.payGradient}
-                    >
-                        {isLoading ? (
-                            <ActivityIndicator color="#fff" />
-                        ) : (
-                            <Text style={[styles.payButtonText, { color: '#1a1a2e' }]}>
-                                {t('payment.freeOrderClaim')}
+                        <LinearGradient
+                            testID="payment-gradient"
+                            colors={['#FFD700', '#FFA500']}
+                            style={styles.payGradient}
+                        >
+                            {isLoading ? (
+                                <ActivityIndicator testID="activity-indicator" color="#fff" />
+                            ) : (
+                                <Text style={[styles.payButtonText, { color: '#1a1a2e' }]}>
+                                    {t('payment.freeOrderClaim')}
                             </Text>
                         )}
                     </LinearGradient>
@@ -82,11 +83,12 @@ export const PaymentButton: React.FC<PaymentButtonProps> = ({
                         disabled={!cardComplete || isLoading}
                     >
                         <LinearGradient
+                            testID="payment-gradient"
                             colors={cardComplete ? ['#22c55e', '#16a34a'] : ['#9ca3af', '#6b7280']}
                             style={styles.payGradient}
                         >
                             {isLoading ? (
-                                <ActivityIndicator color="#fff" />
+                                <ActivityIndicator testID="activity-indicator" color="#fff" />
                             ) : (
                                 <Text style={styles.payButtonText}>
                                     {t('payment.pay').replace('{{amount}}', payNowAmount.toFixed(2))}

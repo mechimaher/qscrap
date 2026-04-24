@@ -1,11 +1,43 @@
-/**
- * RequestPhotosStep Component Test
- * Tests the part damage photos wizard step with multi-image upload
- */
-
 import React from 'react';
-import { render, fireEvent, screen } from '@testing-library/react-native';
+import { fireEvent, render, screen } from '@testing-library/react-native';
 import RequestPhotosStep from '../../../components/request/RequestPhotosStep';
+
+jest.mock('../../../components/request/PhotoUploadSection', () => {
+    const React = require('react');
+    const { View, Text, TouchableOpacity } = require('react-native');
+
+    return function MockPhotoUploadSection({
+        images,
+        maxImages,
+        onPickImage,
+        onTakePhoto,
+        onRemoveImage,
+    }: any) {
+        return (
+            <View testID="photo-upload-section">
+                {images.map((uri: string, index: number) => (
+                    <View key={`${uri}-${index}`}>
+                        <Text testID="image-preview">{uri}</Text>
+                        <TouchableOpacity testID={`remove-image-${index}`} onPress={() => onRemoveImage(index)}>
+                            <Text>Remove</Text>
+                        </TouchableOpacity>
+                    </View>
+                ))}
+
+                {images.length < maxImages && (
+                    <>
+                        <TouchableOpacity testID="add-photo-btn" onPress={onPickImage}>
+                            <Text>Add Photo</Text>
+                        </TouchableOpacity>
+                        <TouchableOpacity testID="take-photo-btn" onPress={onTakePhoto}>
+                            <Text>Take Photo</Text>
+                        </TouchableOpacity>
+                    </>
+                )}
+            </View>
+        );
+    };
+});
 
 describe('RequestPhotosStep', () => {
     const defaultProps = {
@@ -16,116 +48,82 @@ describe('RequestPhotosStep', () => {
         },
         t: (key: string) => {
             const translations: Record<string, string> = {
-                'newRequest.partPhotos': 'Part Photos',
-                'newRequest.uploadDamagePhotos': 'Upload photos of part damage',
-                'newRequest.addPhoto': 'Add Photo',
-                'newRequest.takePhoto': 'Take Photo',
+                'newRequest.photosOptional': 'Part Photos',
+                'newRequest.addUpTo5': 'Upload photos of part damage',
             };
             return translations[key] || key;
         },
         isRTL: false,
-        rtlFlexDirection: (isRTL: boolean) => isRTL ? 'row-reverse' : 'row',
-        rtlTextAlign: (isRTL: boolean) => isRTL ? 'right' : 'left',
-        images: [],
+        rtlTextAlign: (isRTL: boolean) => (isRTL ? 'right' : 'left'),
+        images: [] as string[],
         handlePickImage: jest.fn(),
         handleTakePhoto: jest.fn(),
-        removeImage: jest.fn(),
+        handleRemoveImage: jest.fn(),
     };
 
     beforeEach(() => {
         jest.clearAllMocks();
     });
 
-    it('should render step header with title', () => {
+    it('renders step header and subtitle', () => {
         render(<RequestPhotosStep {...defaultProps} />);
-        
+
         expect(screen.getByText('Part Photos')).toBeTruthy();
-    });
-
-    it('should render step subtitle', () => {
-        render(<RequestPhotosStep {...defaultProps} />);
-        
         expect(screen.getByText('Upload photos of part damage')).toBeTruthy();
-    });
-
-    it('should display step number badge', () => {
-        render(<RequestPhotosStep {...defaultProps} />);
-        
         expect(screen.getByText('3')).toBeTruthy();
     });
 
-    it('should render add photo button when no images', () => {
-        render(<RequestPhotosStep {...defaultProps} />);
-        
-        expect(screen.getByText('Add Photo')).toBeTruthy();
+    it('calls gallery and camera handlers', () => {
+        const handlePickImage = jest.fn();
+        const handleTakePhoto = jest.fn();
+
+        render(
+            <RequestPhotosStep
+                {...defaultProps}
+                handlePickImage={handlePickImage}
+                handleTakePhoto={handleTakePhoto}
+            />
+        );
+
+        fireEvent.press(screen.getByTestId('add-photo-btn'));
+        fireEvent.press(screen.getByTestId('take-photo-btn'));
+
+        expect(handlePickImage).toHaveBeenCalledTimes(1);
+        expect(handleTakePhoto).toHaveBeenCalledTimes(1);
     });
 
-    it('should render take photo button', () => {
-        render(<RequestPhotosStep {...defaultProps} />);
-        
-        expect(screen.getByText('Take Photo')).toBeTruthy();
+    it('renders uploaded images and removes by index', () => {
+        const handleRemoveImage = jest.fn();
+        render(
+            <RequestPhotosStep
+                {...defaultProps}
+                images={['image1.jpg', 'image2.jpg']}
+                handleRemoveImage={handleRemoveImage}
+            />
+        );
+
+        expect(screen.getAllByTestId('image-preview')).toHaveLength(2);
+        fireEvent.press(screen.getByTestId('remove-image-0'));
+        expect(handleRemoveImage).toHaveBeenCalledWith(0);
     });
 
-    it('should call handlePickImage when add photo is pressed', () => {
-        const handlePickImageMock = jest.fn();
-        render(<RequestPhotosStep {...defaultProps} handlePickImage={handlePickImageMock} />);
-        
-        const addButton = screen.getByText('Add Photo');
-        fireEvent.press(addButton);
-        
-        expect(handlePickImageMock).toHaveBeenCalled();
+    it('hides add/take controls at max image count', () => {
+        render(
+            <RequestPhotosStep
+                {...defaultProps}
+                images={['1.jpg', '2.jpg', '3.jpg', '4.jpg', '5.jpg']}
+            />
+        );
+
+        expect(screen.queryByTestId('add-photo-btn')).toBeNull();
+        expect(screen.queryByTestId('take-photo-btn')).toBeNull();
     });
 
-    it('should call handleTakePhoto when take photo is pressed', () => {
-        const handleTakePhotoMock = jest.fn();
-        render(<RequestPhotosStep {...defaultProps} handleTakePhoto={handleTakePhotoMock} />);
-        
-        const takeButton = screen.getByText('Take Photo');
-        fireEvent.press(takeButton);
-        
-        expect(handleTakePhotoMock).toHaveBeenCalled();
-    });
-
-    it('should display uploaded images', () => {
-        const images = ['image1.jpg', 'image2.jpg'];
-        render(<RequestPhotosStep {...defaultProps} images={images} />);
-        
-        expect(screen.getAllByTestId('image-preview').length).toBe(2);
-    });
-
-    it('should call removeImage when remove button is pressed', () => {
-        const removeImageMock = jest.fn();
-        const images = ['image1.jpg'];
-        render(<RequestPhotosStep {...defaultProps} images={images} removeImage={removeImageMock} />);
-        
-        const removeButton = screen.getByTestId('remove-image-0');
-        if (removeButton) {
-            fireEvent.press(removeButton);
-        }
-        
-        expect(removeImageMock).toHaveBeenCalledWith(0);
-    });
-
-    it('should show image count limit (max 5)', () => {
-        const images = ['img1.jpg', 'img2.jpg', 'img3.jpg', 'img4.jpg', 'img5.jpg'];
-        render(<RequestPhotosStep {...defaultProps} images={images} />);
-        
-        // Add photo button should be disabled or hidden when max reached
-        const addButton = screen.queryByText('Add Photo');
-        expect(addButton).toBeNull();
-    });
-
-    it('should support RTL layout', () => {
+    it('supports RTL layout', () => {
         const { rerender } = render(<RequestPhotosStep {...defaultProps} isRTL={false} />);
         expect(screen.getByText('Part Photos')).toBeTruthy();
-        
+
         rerender(<RequestPhotosStep {...defaultProps} isRTL={true} />);
         expect(screen.getByText('Part Photos')).toBeTruthy();
-    });
-
-    it('should display empty state when no images', () => {
-        render(<RequestPhotosStep {...defaultProps} />);
-        
-        expect(screen.queryByTestId('image-preview')).toBeNull();
     });
 });

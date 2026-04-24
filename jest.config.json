@@ -14,12 +14,7 @@
     ],
     "testPathIgnorePatterns": [],
     "transform": {
-        "^.+\\.ts$": [
-            "ts-jest",
-            {
-                "isolatedModules": true
-            }
-        ]
+        "^.+\\.ts$": "ts-jest"
     },
     "collectCoverageFrom": [
         "src/**/*.ts",

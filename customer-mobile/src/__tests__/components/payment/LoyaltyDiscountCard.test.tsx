@@ -74,46 +74,46 @@ describe('LoyaltyDiscountCard', () => {
     });
 
     it('should render loyalty tier and discount percentage', () => {
-        const { getByText, getByTestId, queryByText, getByRole } = render(<LoyaltyDiscountCard {...defaultProps} />);
+        const { getByText } = render(<LoyaltyDiscountCard {...defaultProps} />);
 
         expect(getByText('PLATINUM • 10% OFF')).toBeTruthy();
     });
 
     it('should display correct icon for platinum tier', () => {
-        const { getByText, getByTestId, queryByText, getByRole } = render(<LoyaltyDiscountCard {...defaultProps} />);
+        const { getByTestId } = render(<LoyaltyDiscountCard {...defaultProps} />);
 
-        expect(getByTestId('diamond')).toBeTruthy();
+        expect(getByTestId('loyalty-icon-diamond')).toBeTruthy();
     });
 
     it('should display trophy icon for gold tier', () => {
-        const { getByText, getByTestId, queryByText, getByRole } = render(<LoyaltyDiscountCard {...defaultProps} loyaltyData={{ tier: 'gold', discountPercentage: 8 }} />);
+        const { getByTestId } = render(<LoyaltyDiscountCard {...defaultProps} loyaltyData={{ tier: 'gold', discountPercentage: 8 }} />);
 
-        expect(getByTestId('trophy')).toBeTruthy();
+        expect(getByTestId('loyalty-icon-trophy')).toBeTruthy();
     });
 
     it('should display medal icon for silver tier', () => {
-        const { getByText, getByTestId, queryByText, getByRole } = render(<LoyaltyDiscountCard {...defaultProps} loyaltyData={{ tier: 'silver', discountPercentage: 5 }} />);
+        const { getByTestId } = render(<LoyaltyDiscountCard {...defaultProps} loyaltyData={{ tier: 'silver', discountPercentage: 5 }} />);
 
-        expect(getByTestId('medal')).toBeTruthy();
+        expect(getByTestId('loyalty-icon-medal')).toBeTruthy();
     });
 
     it('should show savings amount when discount is applied', () => {
-        const { getByText, getByTestId, queryByText, getByRole } = render(<LoyaltyDiscountCard {...defaultProps} applyDiscount={true} />);
+        const { getByText } = render(<LoyaltyDiscountCard {...defaultProps} applyDiscount={true} />);
 
         expect(getByText('Save 55 QAR')).toBeTruthy();
     });
 
     it('should show "Tap to apply" when discount is not applied', () => {
-        const { getByText, getByTestId, queryByText, getByRole } = render(<LoyaltyDiscountCard {...defaultProps} applyDiscount={false} />);
+        const { getByText } = render(<LoyaltyDiscountCard {...defaultProps} applyDiscount={false} />);
 
         expect(getByText('Tap to apply discount')).toBeTruthy();
     });
 
     it('should call setApplyDiscount when toggle is switched', () => {
         const setApplyDiscountMock = jest.fn();
-        const { getByText, getByTestId, queryByText, getByRole } = render(<LoyaltyDiscountCard {...defaultProps} applyDiscount={false} setApplyDiscount={setApplyDiscountMock} />);
+        const { getByTestId } = render(<LoyaltyDiscountCard {...defaultProps} applyDiscount={false} setApplyDiscount={setApplyDiscountMock} />);
 
-        const toggle = getByRole('switch');
+        const toggle = getByTestId('loyalty-switch');
         fireEvent(toggle, 'valueChange', true);
 
         expect(setApplyDiscountMock).toHaveBeenCalledWith(true);
@@ -121,22 +121,22 @@ describe('LoyaltyDiscountCard', () => {
 
     it('should trigger haptic feedback on toggle', () => {
         const { impactAsync } = require('expo-haptics');
-        const { getByText, getByTestId, queryByText, getByRole } = render(<LoyaltyDiscountCard {...defaultProps} applyDiscount={false} />);
+        const { getByTestId } = render(<LoyaltyDiscountCard {...defaultProps} applyDiscount={false} />);
 
-        const toggle = getByRole('switch');
+        const toggle = getByTestId('loyalty-switch');
         fireEvent(toggle, 'valueChange', true);
 
         expect(impactAsync).toHaveBeenCalled();
     });
 
     it('should display free order banner when freeOrder is true', () => {
-        const { getByText, getByTestId, queryByText, getByRole } = render(<LoyaltyDiscountCard {...defaultProps} freeOrder={true} applyDiscount={true} />);
+        const { getByText } = render(<LoyaltyDiscountCard {...defaultProps} freeOrder={true} applyDiscount={true} />);
 
         expect(getByText('FREE ORDER! Loyalty covers everything!')).toBeTruthy();
     });
 
     it('should not display free order banner when freeOrder is false', () => {
-        const { getByText, getByTestId, queryByText, getByRole } = render(<LoyaltyDiscountCard {...defaultProps} freeOrder={false} />);
+        const { queryByText } = render(<LoyaltyDiscountCard {...defaultProps} freeOrder={false} />);
 
         expect(queryByText('FREE ORDER! Loyalty covers everything!')).toBeNull();
     });
@@ -164,7 +164,7 @@ describe('LoyaltyDiscountCard', () => {
     });
 
     it('should calculate savings for delivery_only payment type', () => {
-        const { getByText, getByTestId, queryByText, getByRole } = render(
+        const { getByText } = render(
             <LoyaltyDiscountCard
                 {...defaultProps}
                 paymentType="delivery_only"

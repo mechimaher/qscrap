@@ -92,7 +92,9 @@ export class EscrowService {
             // If unique constraint exists and we hit duplicate, return existing
             if (err.code === '23505') {
                 const existing = await this.getEscrowByOrder(orderId);
-                if (existing) return existing;
+                if (existing) {
+                    return existing;
+                }
             }
             throw err;
         }

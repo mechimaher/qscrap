@@ -9,12 +9,11 @@ module.exports = {
                 strict: true,
                 moduleResolution: 'node',
                 resolveJsonModule: true,
-                isolatedModules: true,
             },
         }],
     },
     transformIgnorePatterns: [
-        'node_modules/(?!(expo-secure-store|expo-haptics|expo-image|expo-linear-gradient|expo-location|expo-notifications|expo-linking|expo-device|expo-font|expo-status-bar|expo-file-system)/)',
+        'node_modules/(?!(expo-secure-store|expo-haptics|expo-image|expo-linear-gradient|expo-location|expo-notifications|expo-linking|expo-device|expo-font|expo-status-bar|expo-file-system|@expo/vector-icons)/)',
     ],
     moduleNameMapper: {
         '\\.png$': '<rootDir>/src/__tests__/__mocks__/fileMock.js',

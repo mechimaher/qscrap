@@ -8,8 +8,17 @@ export const testAuth = (req: Request, _res: Response, next: NextFunction) => {
     const header = req.headers.authorization;
     if (header && header.startsWith('Bearer test-')) {
         const token = header.replace('Bearer test-', '');
-        const [userId, role] = token.split('-');
-        (req as any).user = { userId, role: role || 'customer', userType: role || 'customer' };
+        const separatorIndex = token.lastIndexOf('-');
+        if (separatorIndex > 0) {
+            const userId = token.slice(0, separatorIndex);
+            const role = token.slice(separatorIndex + 1) || 'customer';
+            (req as any).user = {
+                userId,
+                id: userId,
+                role,
+                userType: role,
+            };
+        }
     }
     next();
 };

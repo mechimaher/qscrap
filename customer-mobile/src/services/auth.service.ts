@@ -2,7 +2,7 @@ import { apiClient, BIOMETRIC_PHONE, BIOMETRIC_PASSWORD, BIOMETRIC_ENABLED } fro
 import { API_ENDPOINTS, API_BASE_URL } from "../config/api";
 import { log, warn, error } from "../utils/logger";
 import * as SecureStore from "expo-secure-store";
-import { User, AuthResponse, Request, Bid, Order, Stats, Address, Product, Notification, SupportTicket, Vehicle, LoyaltyTransaction, PaymentMethod, UrgentAction } from "./types";
+import { User, AuthResponse, Request, Bid, Order, Stats, Address, Product, Notification, SupportTicket, Vehicle, LoyaltyTransaction, PaymentMethod, UrgentAction, DeletionEligibilityResponse, DeleteAccountResponse } from "./types";
 
 export class AuthService {
     async login(phone_number: string, password: string): Promise<AuthResponse> {
@@ -102,6 +102,18 @@ export class AuthService {
         } catch {
             // Best-effort — don't block logout if server call fails
         }
+    }
+
+    async checkDeletionEligibility(): Promise<DeletionEligibilityResponse> {
+        return apiClient.request<DeletionEligibilityResponse>(API_ENDPOINTS.DELETION_ELIGIBILITY, {
+            method: 'GET',
+        });
+    }
+
+    async deleteAccount(): Promise<DeleteAccountResponse> {
+        return apiClient.request<DeleteAccountResponse>(API_ENDPOINTS.DELETE_ACCOUNT, {
+            method: 'DELETE',
+        });
     }
 
     async requestPasswordReset(email: string): Promise<{ success: boolean; message: string }> {

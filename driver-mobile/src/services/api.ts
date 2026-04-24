@@ -101,14 +101,17 @@ class DriverApiService {
     private refreshQueue: Array<{ resolve: (token: string) => void; reject: (error: Error) => void }> = [];
 
     // Timeout wrapper to prevent SecureStore from hanging indefinitely
-    private async withTimeout<T>(promise: Promise<T>, timeoutMs: number, fallback: T): Promise<T> {
+    private async withTimeout<T>(promise: Promise<T> | T, timeoutMs: number, fallback: T): Promise<T> {
         return new Promise((resolve) => {
             const timer = setTimeout(() => {
                 warn(`[API] SecureStore operation timed out after ${timeoutMs}ms, using fallback`);
                 resolve(fallback);
             }, timeoutMs);
+            if (typeof (timer as any).unref === 'function') {
+                (timer as any).unref();
+            }
 
-            promise
+            Promise.resolve(promise)
                 .then((result) => {
                     clearTimeout(timer);
                     resolve(result);

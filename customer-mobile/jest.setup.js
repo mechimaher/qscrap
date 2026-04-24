@@ -41,7 +41,12 @@ jest.mock('react-native', () => {
         Alert: { alert: jest.fn() },
         Linking: { openURL: jest.fn() },
         AppState: { currentState: 'active', addEventListener: jest.fn(() => ({ remove: jest.fn() })) },
-        I18nManager: { isRTL: false, forceRTL: jest.fn() },
+        I18nManager: {
+            isRTL: false,
+            forceRTL: jest.fn(),
+            allowRTL: jest.fn(),
+            swapLeftAndRightInRTL: jest.fn(),
+        },
         Keyboard: { dismiss: jest.fn(), addListener: jest.fn(() => ({ remove: jest.fn() })) },
         PixelRatio: { get: () => 2, roundToNearestPixel: (v) => v },
         StatusBar: { setBarStyle: jest.fn() },
@@ -119,6 +124,41 @@ jest.mock('expo-font', () => ({
     useFonts: jest.fn(() => [true, null]),
     isLoaded: jest.fn(() => true),
 }));
+
+// Mock expo-localization
+jest.mock('expo-localization', () => ({
+    getLocales: jest.fn(() => [{ languageCode: 'en', regionCode: 'QA' }]),
+    locale: 'en-US',
+    timezone: 'Asia/Qatar',
+}));
+
+// Mock expo-updates
+jest.mock('expo-updates', () => ({
+    reloadAsync: jest.fn().mockResolvedValue(undefined),
+}));
+
+// Mock @sentry/react-native
+jest.mock('@sentry/react-native', () => ({
+    setUser: jest.fn(),
+    captureException: jest.fn(),
+}));
+
+// Mock @expo/vector-icons
+jest.mock('@expo/vector-icons', () => {
+    const React = require('react');
+    const { View } = require('react-native');
+    const Icon = (props) => React.createElement(View, props, props.children);
+
+    return {
+        AntDesign: Icon,
+        Entypo: Icon,
+        Feather: Icon,
+        FontAwesome: Icon,
+        Ionicons: Icon,
+        MaterialIcons: Icon,
+        MaterialCommunityIcons: Icon,
+    };
+});
 
 // Mock react-native-safe-area-context
 jest.mock('react-native-safe-area-context', () => {
@@ -265,7 +305,7 @@ jest.mock('@react-navigation/native-stack', () => ({
     })),
 }));
 
-// Suppress console warnings in tests
+// Suppress console warnings/errors in tests
 const originalWarn = console.warn;
 console.warn = (...args) => {
     if (
@@ -277,6 +317,17 @@ console.warn = (...args) => {
         return;
     }
     originalWarn(...args);
+};
+
+const originalError = console.error;
+console.error = (...args) => {
+    if (
+        typeof args[0] === 'string' &&
+        args[0].includes('react-test-renderer is deprecated')
+    ) {
+        return;
+    }
+    originalError(...args);
 };
 
 // Mock global fetch

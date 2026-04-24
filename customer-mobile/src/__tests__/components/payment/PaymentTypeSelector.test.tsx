@@ -55,15 +55,17 @@ describe('PaymentTypeSelector', () => {
     });
 
     it('should display delivery fee for delivery_only option', () => {
-        const { getByText } = render(<PaymentTypeSelector {...defaultProps} />);
+        const { getByText, getAllByText } = render(<PaymentTypeSelector {...defaultProps} />);
 
-        expect(getByText('50 QAR')).toBeTruthy();
+        expect(getByText('50')).toBeTruthy();
+        expect(getAllByText('QAR')).toHaveLength(2);
     });
 
     it('should display total amount for full payment option', () => {
-        const { getByText } = render(<PaymentTypeSelector {...defaultProps} />);
+        const { getByText, getAllByText } = render(<PaymentTypeSelector {...defaultProps} />);
 
-        expect(getByText('550 QAR')).toBeTruthy();
+        expect(getByText('550')).toBeTruthy();
+        expect(getAllByText('QAR')).toHaveLength(2);
     });
 
     it('should highlight selected payment type', () => {
@@ -75,60 +77,45 @@ describe('PaymentTypeSelector', () => {
 
     it('should call setPaymentType when delivery_only is selected', () => {
         const setPaymentTypeMock = jest.fn();
-        const { getByText } = render(<PaymentTypeSelector {...defaultProps} setPaymentType={setPaymentTypeMock} paymentType="full" />);
+        const { getByTestId } = render(<PaymentTypeSelector {...defaultProps} setPaymentType={setPaymentTypeMock} paymentType="full" />);
 
-        const deliveryOption = getByText('Pay Delivery Only').parent?.parent?.parent;
-        if (deliveryOption) {
-            fireEvent.press(deliveryOption);
-        }
+        fireEvent.press(getByTestId('payment-option-delivery'));
 
         expect(setPaymentTypeMock).toHaveBeenCalledWith('delivery_only');
     });
 
     it('should call setPaymentType when full payment is selected', () => {
         const setPaymentTypeMock = jest.fn();
-        const { getByText } = render(<PaymentTypeSelector {...defaultProps} setPaymentType={setPaymentTypeMock} paymentType="delivery_only" />);
+        const { getByTestId } = render(<PaymentTypeSelector {...defaultProps} setPaymentType={setPaymentTypeMock} paymentType="delivery_only" />);
 
-        const fullOption = getByText('Pay Full Amount').parent?.parent?.parent;
-        if (fullOption) {
-            fireEvent.press(fullOption);
-        }
+        fireEvent.press(getByTestId('payment-option-full'));
 
         expect(setPaymentTypeMock).toHaveBeenCalledWith('full');
     });
 
     it('should call setClientSecret when switching payment types', () => {
         const setClientSecretMock = jest.fn();
-        const { getByText } = render(<PaymentTypeSelector {...defaultProps} setClientSecret={setClientSecretMock} paymentType="delivery_only" />);
+        const { getByTestId } = render(<PaymentTypeSelector {...defaultProps} setClientSecret={setClientSecretMock} paymentType="delivery_only" />);
 
-        const fullOption = getByText('Pay Full Amount').parent?.parent?.parent;
-        if (fullOption) {
-            fireEvent.press(fullOption);
-        }
+        fireEvent.press(getByTestId('payment-option-full'));
 
         expect(setClientSecretMock).toHaveBeenCalledWith(null);
     });
 
     it('should trigger haptic feedback on selection', () => {
         const { impactAsync } = require('expo-haptics');
-        const { getByText } = render(<PaymentTypeSelector {...defaultProps} paymentType="full" />);
+        const { getByTestId } = render(<PaymentTypeSelector {...defaultProps} paymentType="full" />);
 
-        const deliveryOption = getByText('Pay Delivery Only').parent?.parent?.parent;
-        if (deliveryOption) {
-            fireEvent.press(deliveryOption);
-        }
+        fireEvent.press(getByTestId('payment-option-delivery'));
 
         expect(impactAsync).toHaveBeenCalled();
     });
 
     it('should not trigger callback when already selected', () => {
         const setPaymentTypeMock = jest.fn();
-        const { getByText } = render(<PaymentTypeSelector {...defaultProps} setPaymentType={setPaymentTypeMock} paymentType="delivery_only" />);
+        const { getByTestId } = render(<PaymentTypeSelector {...defaultProps} setPaymentType={setPaymentTypeMock} paymentType="delivery_only" />);
 
-        const deliveryOption = getByText('Pay Delivery Only').parent?.parent?.parent;
-        if (deliveryOption) {
-            fireEvent.press(deliveryOption);
-        }
+        fireEvent.press(getByTestId('payment-option-delivery'));
 
         expect(setPaymentTypeMock).not.toHaveBeenCalled();
     });
@@ -145,8 +132,7 @@ describe('PaymentTypeSelector', () => {
     it('should display correct icons for each option', () => {
         const { getByTestId } = render(<PaymentTypeSelector {...defaultProps} />);
 
-        // Icons should be present (car for delivery, card for full)
-        expect(getByTestId('car-sport')).toBeTruthy();
-        expect(getByTestId('card')).toBeTruthy();
+        expect(getByTestId('payment-icon-car-sport')).toBeTruthy();
+        expect(getByTestId('payment-icon-card')).toBeTruthy();
     });
 });
