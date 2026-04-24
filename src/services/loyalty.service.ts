@@ -126,7 +126,9 @@ export class LoyaltyService {
                 `SELECT 
                     transaction_id,
                     points_change,
+                    points_change as points,
                     transaction_type,
+                    transaction_type as type,
                     order_id,
                     description,
                     balance_after,

@@ -142,7 +142,7 @@ export const markNotificationsRead = async (userId: string, notificationIds: str
  */
 export const getUserNotifications = async (userId: string, limit = 50) => {
     const result = await pool.query(
-        `SELECT * FROM notifications 
+        `SELECT *, notification_type as type FROM notifications 
          WHERE user_id = $1 
          ORDER BY created_at DESC 
          LIMIT $2`,

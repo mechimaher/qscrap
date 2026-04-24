@@ -44,7 +44,7 @@ export interface Bid {
     bid_amount: number | string;
     part_condition: string;
     warranty_days: number;
-    delivery_days: number;
+    delivery_days?: number;
     notes?: string;
     bid_status: string;
     created_at: string;
@@ -69,7 +69,7 @@ export interface Order {
     order_id: string;
     order_number: string;
     garage_name: string;
-    part_name: string;
+    part_name?: string;
     car_make: string;
     car_model: string;
     car_year: number;

@@ -49,6 +49,7 @@ export const getTransactionHistory = async (req: AuthRequest, res: Response) => 
         res.json({
             success: true,
             data: transactions,
+            transactions, // Mobile app compatibility alias
             count: transactions.length
         });
     } catch (err) {
@@ -98,6 +99,7 @@ export const redeemPoints = async (req: AuthRequest, res: Response) => {
             success: true,
             discount_amount: parseFloat(result.discount_amount),
             new_balance: result.new_balance,
+            remaining_points: result.new_balance, // Mobile app compatibility alias
             message: result.message
         });
     } catch (err) {

@@ -72,7 +72,7 @@ export default function DeliveryConfirmationScreen() {
         setIsLoading(true);
 
         try {
-            await api.confirmEscrowReceipt(escrow?.escrow_id || 'test', photos);
+            await api.confirmDelivery(order?.order_id);
             Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success);
             setStep('success');
         } catch (error: any) {
@@ -151,7 +151,7 @@ export default function DeliveryConfirmationScreen() {
                         {t('common.order')} #{order?.order_number || 'N/A'}
                     </Text>
                     <Text style={[styles.partName, { color: colors.text, textAlign: rtlTextAlign(isRTL) }]}>
-                        {order?.part_name || t('delivery.autoPart')}
+                        {order?.part_description || order?.part_name || t('delivery.autoPart')}
                     </Text>
                     <Text style={[styles.seller, { color: colors.textSecondary, textAlign: rtlTextAlign(isRTL) }]}>
                         {t('common.from')} {order?.garage_name || t('common.seller')}

@@ -16,6 +16,7 @@ const router = Router();
 router.get('/summary', authenticate, requireRole('customer'), getRewardsSummary);
 router.get('/balance', authenticate, requireRole('customer'), getRewardsSummary); // Alias for mobile app compatibility
 router.get('/transactions', authenticate, requireRole('customer'), getTransactionHistory);
+router.get('/history', authenticate, requireRole('customer'), getTransactionHistory); // Mobile app compatibility alias
 router.post('/redeem', authenticate, requireRole('customer'), redeemPoints);
 router.get('/tiers', authenticate, getTierBenefits); // Available to all authenticated users
 router.get('/calculate', authenticate, calculateRewards);

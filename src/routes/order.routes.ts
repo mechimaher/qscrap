@@ -36,12 +36,12 @@ router.get('/my', authenticate, getMyOrders);
 // ============================================
 // CUSTOMER: GET ORDERS (for customer-specific view)
 // ============================================
-router.get('/orders', authenticate, getMyOrders);
+router.get('/', authenticate, getMyOrders);
 
 // ============================================
 // CUSTOMER: GET ORDER COUNT (for confetti trigger)
 // ============================================
-router.get('/orders/count', authenticate, getOrderCount);
+router.get('/count', authenticate, getOrderCount);
 
 // Both: Get order details
 router.get('/:order_id', authenticate, validateParams(orderIdParamSchema), getOrderDetails);
