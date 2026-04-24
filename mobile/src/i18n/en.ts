@@ -156,6 +156,7 @@ export const en = {
         // Validation
         required: '{{field}} is required',
         invalidPhone: 'Please enter a valid phone number',
+        invalidName: 'Name must be at least 2 characters',
         invalidEmail: 'Please enter a valid email address',
         invalidVin: 'Please enter a valid 17-character VIN',
         passwordShort: 'Password must be at least 6 characters',

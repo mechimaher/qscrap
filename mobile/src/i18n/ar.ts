@@ -157,6 +157,7 @@ export const ar = {
         // Validation
         required: '{{field}} مطلوب',
         invalidPhone: 'يرجى إدخال رقم هاتف صحيح',
+        invalidName: 'يجب أن يتكون الاسم من حرفين على الأقل',
         invalidEmail: 'يرجى إدخال بريد إلكتروني صحيح',
         invalidVin: 'يرجى إدخال رقم شاسيه صحيح مكون من 17 حرف',
         passwordShort: 'كلمة المرور يجب أن تكون 6 أحرف على الأقل',

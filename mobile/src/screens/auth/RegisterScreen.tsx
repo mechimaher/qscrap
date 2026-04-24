@@ -22,6 +22,7 @@ import { rtlFlexDirection, rtlTextAlign } from '../../utils/rtl';
 import { Colors, Spacing, BorderRadius, FontSizes, Shadows } from '../../constants/theme';
 import { AuthStackParamList } from '../../../App';
 import { api } from '../../services/api';
+import { validatePhoneNumber } from '../../utils/validation';
 import { Ionicons } from '@expo/vector-icons';
 
 type RegisterScreenNavigationProp = NativeStackNavigationProp<AuthStackParamList, 'Register'>;
@@ -36,6 +37,8 @@ export default function RegisterScreen() {
     const [phone, setPhone] = useState('');
     const [password, setPassword] = useState('');
     const [confirmPassword, setConfirmPassword] = useState('');
+    const [showPassword, setShowPassword] = useState(false);
+    const [showConfirmPassword, setShowConfirmPassword] = useState(false);
     const [isLoading, setIsLoading] = useState(false);
     const [error, setError] = useState('');
 
@@ -48,6 +51,19 @@ export default function RegisterScreen() {
         // Validation
         if (!name || !email || !phone || !password || !confirmPassword) {
             setError(t('auth.fillAllFields'));
+            Haptics.notificationAsync(Haptics.NotificationFeedbackType.Error);
+            return;
+        }
+
+        if (name.trim().length < 2) {
+            setError(t('auth.invalidName') || 'Name must be at least 2 characters');
+            Haptics.notificationAsync(Haptics.NotificationFeedbackType.Error);
+            return;
+        }
+
+        const phoneValidation = validatePhoneNumber(phone);
+        if (!phoneValidation.isValid) {
+            setError(phoneValidation.error || t('auth.invalidPhone'));
             Haptics.notificationAsync(Haptics.NotificationFeedbackType.Error);
             return;
         }
@@ -184,26 +200,42 @@ export default function RegisterScreen() {
 
                         <View style={styles.inputContainer}>
                             <Text style={[styles.inputLabel, { textAlign: rtlTextAlign(isRTL) }]}>{t('auth.password')}</Text>
-                            <TextInput
-                                style={[styles.input, { textAlign: rtlTextAlign(isRTL) }]}
-                                placeholder={t('auth.minCharacters', { count: 6 })}
-                                placeholderTextColor="#999"
-                                value={password}
-                                onChangeText={setPassword}
-                                secureTextEntry
-                            />
+                            <View style={styles.passwordContainer}>
+                                <TextInput
+                                    style={[styles.input, styles.passwordInput, { textAlign: rtlTextAlign(isRTL) }]}
+                                    placeholder={t('auth.minCharacters', { count: 6 })}
+                                    placeholderTextColor="#999"
+                                    value={password}
+                                    onChangeText={setPassword}
+                                    secureTextEntry={!showPassword}
+                                />
+                                <TouchableOpacity 
+                                    style={styles.eyeIcon} 
+                                    onPress={() => setShowPassword(!showPassword)}
+                                >
+                                    <Ionicons name={showPassword ? "eye-off" : "eye"} size={24} color="#999" />
+                                </TouchableOpacity>
+                            </View>
                         </View>
 
                         <View style={styles.inputContainer}>
                             <Text style={[styles.inputLabel, { textAlign: rtlTextAlign(isRTL) }]}>{t('auth.confirmPassword')}</Text>
-                            <TextInput
-                                style={[styles.input, { textAlign: rtlTextAlign(isRTL) }]}
-                                placeholder={t('auth.repeatPassword')}
-                                placeholderTextColor="#999"
-                                value={confirmPassword}
-                                onChangeText={setConfirmPassword}
-                                secureTextEntry
-                            />
+                            <View style={styles.passwordContainer}>
+                                <TextInput
+                                    style={[styles.input, styles.passwordInput, { textAlign: rtlTextAlign(isRTL) }]}
+                                    placeholder={t('auth.repeatPassword')}
+                                    placeholderTextColor="#999"
+                                    value={confirmPassword}
+                                    onChangeText={setConfirmPassword}
+                                    secureTextEntry={!showConfirmPassword}
+                                />
+                                <TouchableOpacity 
+                                    style={styles.eyeIcon} 
+                                    onPress={() => setShowConfirmPassword(!showConfirmPassword)}
+                                >
+                                    <Ionicons name={showConfirmPassword ? "eye-off" : "eye"} size={24} color="#999" />
+                                </TouchableOpacity>
+                            </View>
                         </View>
 
                         <TouchableOpacity
@@ -346,6 +378,22 @@ const styles = StyleSheet.create({
         color: '#1a1a1a',
         borderWidth: 1.5,
         borderColor: '#E8E8E8',
+    },
+    passwordContainer: {
+        flexDirection: 'row',
+        alignItems: 'center',
+        backgroundColor: '#F8F9FA',
+        borderRadius: BorderRadius.lg,
+        borderWidth: 1.5,
+        borderColor: '#E8E8E8',
+    },
+    passwordInput: {
+        flex: 1,
+        borderWidth: 0,
+        backgroundColor: 'transparent',
+    },
+    eyeIcon: {
+        padding: Spacing.md,
     },
     registerButton: {
         marginTop: Spacing.md,

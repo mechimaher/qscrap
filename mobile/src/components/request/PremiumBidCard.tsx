@@ -221,6 +221,9 @@ const PremiumBidCard = ({
                             ]}>
                                 {displayPrice} {t('common.qar')}
                             </Text>
+                            <Text style={[styles.deliveryFeeText, { textAlign: isRTL ? 'left' : 'right' }]}>
+                                + {t('order.deliveryFee')} ~15 {t('common.qar')}
+                            </Text>
                         </>
                     ) : (
                         <>
@@ -228,6 +231,11 @@ const PremiumBidCard = ({
                             <Text style={[styles.priceAmount, isBestDeal && { color: '#22C55E' }]}>
                                 {bid.bid_amount} {t('common.qar')}
                             </Text>
+                            {!isAccepted && (
+                                <Text style={[styles.deliveryFeeText, { textAlign: isRTL ? 'left' : 'right' }]}>
+                                    + {t('order.deliveryFee')} ~15 {t('common.qar')}
+                                </Text>
+                            )}
                         </>
                     )}
                 </View>
@@ -554,6 +562,7 @@ const styles = StyleSheet.create({
     originalPrice: { fontSize: FontSizes.sm, color: '#737373', textDecorationLine: 'line-through' },
     currentPriceLabel: { fontSize: FontSizes.xs, color: '#F59E0B', fontWeight: '600' },
     currentPrice: { fontSize: FontSizes.xxl, fontWeight: '800', color: '#F59E0B' },
+    deliveryFeeText: { fontSize: FontSizes.xs, color: '#737373', marginTop: 2, fontWeight: '500' },
 
     negotiationBox: {
         backgroundColor: '#F8F9FA',

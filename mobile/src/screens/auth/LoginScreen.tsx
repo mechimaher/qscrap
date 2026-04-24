@@ -40,6 +40,7 @@ export default function LoginScreen() {
 
     const [phone, setPhone] = useState('');
     const [password, setPassword] = useState('');
+    const [showPassword, setShowPassword] = useState(false);
     const [isLoading, setIsLoading] = useState(false);
     const [error, setError] = useState('');
 
@@ -234,21 +235,30 @@ export default function LoginScreen() {
                             <Text style={[styles.inputLabel, { color: colors.textSecondary, textAlign: rtlTextAlign(isRTL) }]}>
                                 {t('auth.password')}
                             </Text>
-                            <TextInput
-                                style={[styles.input, {
-                                    backgroundColor: colors.surfaceSecondary,
-                                    color: colors.text,
-                                    borderColor: colors.border,
-                                    textAlign: rtlTextAlign(isRTL)
-                                }]}
-                                placeholder={t('auth.passwordPlaceholder')}
-                                placeholderTextColor={colors.textMuted}
-                                value={password}
-                                onChangeText={setPassword}
-                                secureTextEntry
-                                accessibilityLabel={t('auth.password')}
-                                accessibilityHint={t('auth.passwordHint')}
-                            />
+                            <View style={[styles.passwordContainer, {
+                                backgroundColor: colors.surfaceSecondary,
+                                borderColor: colors.border,
+                            }]}>
+                                <TextInput
+                                    style={[styles.input, styles.passwordInput, {
+                                        color: colors.text,
+                                        textAlign: rtlTextAlign(isRTL)
+                                    }]}
+                                    placeholder={t('auth.passwordPlaceholder')}
+                                    placeholderTextColor={colors.textMuted}
+                                    value={password}
+                                    onChangeText={setPassword}
+                                    secureTextEntry={!showPassword}
+                                    accessibilityLabel={t('auth.password')}
+                                    accessibilityHint={t('auth.passwordHint')}
+                                />
+                                <TouchableOpacity 
+                                    style={styles.eyeIcon} 
+                                    onPress={() => setShowPassword(!showPassword)}
+                                >
+                                    <Ionicons name={showPassword ? "eye-off" : "eye"} size={24} color={colors.textMuted} />
+                                </TouchableOpacity>
+                            </View>
                         </View>
 
                         <TouchableOpacity
@@ -307,8 +317,9 @@ export default function LoginScreen() {
                     <View style={styles.footer}>
                         <Text style={styles.footerText}>
                             {t('auth.agreeTerms')}{' '}
-                            <Text style={styles.footerLink}>{t('auth.terms')}</Text> {t('auth.and')}{' '}
-                            <Text style={styles.footerLink}>{t('auth.privacyPolicy')}</Text>
+                            <Text style={styles.footerLink} onPress={() => navigation.navigate('Terms' as any)}>{t('auth.terms')}</Text>
+                            {' '}{t('auth.and')}{' '}
+                            <Text style={styles.footerLink} onPress={() => navigation.navigate('PrivacyPolicy' as any)}>{t('auth.privacyPolicy')}</Text>
                         </Text>
                     </View>
                 </ScrollView>
@@ -438,6 +449,20 @@ const styles = StyleSheet.create({
         padding: Spacing.md,
         fontSize: FontSizes.lg,
         borderWidth: 1.5,
+    },
+    passwordContainer: {
+        flexDirection: 'row',
+        alignItems: 'center',
+        borderRadius: BorderRadius.lg,
+        borderWidth: 1.5,
+    },
+    passwordInput: {
+        flex: 1,
+        borderWidth: 0,
+        backgroundColor: 'transparent',
+    },
+    eyeIcon: {
+        padding: Spacing.md,
     },
     forgotPassword: {
         alignSelf: 'flex-end',
