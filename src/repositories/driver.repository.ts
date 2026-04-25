@@ -235,11 +235,20 @@ export class DriverRepository {
         description: string,
         client: PoolClient
     ) {
+        // Fetch order amount for required NOT NULL columns
+        const orderResult = await client.query(
+            'SELECT total_amount FROM orders WHERE order_id = $1',
+            [orderId]
+        );
+        const orderAmount = orderResult.rows[0]?.total_amount ?? 0;
+
         await client.query(`
             INSERT INTO disputes 
-            (order_id, customer_id, garage_id, reason, description, photo_urls, refund_amount, restocking_fee, status)
-            VALUES ($1, $2, $3, $4, $5, $6, $7, $8, 'pending')
-        `, [orderId, customerId, garageId, reason, description, JSON.stringify([]), 0, 0]);
+            (order_id, customer_id, garage_id, reason, description, photo_urls, 
+             order_amount, refund_percent, restocking_fee_percent, refund_amount, status)
+            VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, 'pending')
+        `, [orderId, customerId, garageId, reason, description, JSON.stringify([]),
+            orderAmount, 0, 0, 0]);
     }
 
     async countOtherActiveAssignments(driverId: string, currentAssignmentId: string, client: PoolClient) {

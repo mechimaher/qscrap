@@ -250,6 +250,47 @@ export class NegotiationService {
         if (reqResult.rows.length === 0) { throw new Error('Request not found'); }
         const request = reqResult.rows[0];
 
+        // 3b. Resolve delivery address - NEVER use placeholder text
+        // Priority: request address → customer's default saved address
+        let resolvedDeliveryAddress = request.delivery_address_text || '';
+        let resolvedDeliveryLat = request.delivery_lat ? parseFloat(request.delivery_lat) : null;
+        let resolvedDeliveryLng = request.delivery_lng ? parseFloat(request.delivery_lng) : null;
+
+        if (!resolvedDeliveryAddress || !resolvedDeliveryLat || !resolvedDeliveryLng) {
+            // Fallback to customer's default saved address
+            const defaultAddr = await client.query(`
+                SELECT address_line, area, city, location_lat, location_lng
+                FROM customer_addresses
+                WHERE customer_id = $1 AND is_default = true
+                LIMIT 1
+            `, [customerId]);
+
+            if (defaultAddr.rows.length > 0) {
+                const addr = defaultAddr.rows[0];
+                if (!resolvedDeliveryAddress) {
+                    resolvedDeliveryAddress = [addr.address_line, addr.area, addr.city].filter(Boolean).join(', ');
+                }
+                if (!resolvedDeliveryLat && addr.location_lat) {
+                    resolvedDeliveryLat = parseFloat(addr.location_lat);
+                }
+                if (!resolvedDeliveryLng && addr.location_lng) {
+                    resolvedDeliveryLng = parseFloat(addr.location_lng);
+                }
+            }
+
+            // Update the part_request with resolved coordinates for downstream use
+            if (resolvedDeliveryLat && resolvedDeliveryLng) {
+                await client.query(`
+                    UPDATE part_requests SET 
+                        delivery_address_text = COALESCE(NULLIF(delivery_address_text, ''), $2),
+                        delivery_lat = COALESCE(delivery_lat, $3),
+                        delivery_lng = COALESCE(delivery_lng, $4),
+                        updated_at = NOW()
+                    WHERE request_id = $1
+                `, [bid.request_id, resolvedDeliveryAddress, resolvedDeliveryLat, resolvedDeliveryLng]);
+            }
+        }
+
         // 4. Calculate commission
         const garageRateResult = await client.query(`
             SELECT g.approval_status, sp.commission_rate
@@ -272,10 +313,10 @@ export class NegotiationService {
 
         // Calculate delivery fee from zone (NOT hardcoded) - platform_positioning_cost excluded
         let deliveryFee = 10; // Zone 1 fallback
-        if (request.delivery_lat && request.delivery_lng) {
+        if (resolvedDeliveryLat && resolvedDeliveryLng) {
             const zoneInfo = await getDeliveryFeeForLocation(
-                parseFloat(request.delivery_lat),
-                parseFloat(request.delivery_lng)
+                resolvedDeliveryLat,
+                resolvedDeliveryLng
             );
             deliveryFee = zoneInfo.fee;
         }
@@ -294,7 +335,7 @@ export class NegotiationService {
             RETURNING order_id, order_number
             `, [bid.request_id, offer.bid_id, customerId, bid.garage_id, partPrice, commissionRate,
             platformFee, deliveryFee, totalAmount, garagePayout, 'cash',
-        request.delivery_address_text || 'To be confirmed']);
+        resolvedDeliveryAddress || 'Address pending - contact customer']);
 
         const order = orderResult.rows[0];
 

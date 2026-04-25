@@ -52,7 +52,7 @@ export class DisputeOrderService {
             }
             const restockingFee = Math.round(partPrice * (config.restockingFee / 100) * 100) / 100;
 
-            const disputeResult = await client.query(`INSERT INTO disputes (order_id, customer_id, garage_id, reason, description, photo_urls, refund_amount, restocking_fee) VALUES ($1, $2, $3, $4, $5, $6, $7, $8) RETURNING dispute_id, created_at`, [data.order_id, customerId, order.garage_id, data.reason, data.description, data.photoUrls, refundAmount, restockingFee]);
+            const disputeResult = await client.query(`INSERT INTO disputes (order_id, customer_id, garage_id, reason, description, photo_urls, order_amount, refund_percent, restocking_fee_percent, refund_amount) VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10) RETURNING dispute_id, created_at`, [data.order_id, customerId, order.garage_id, data.reason, data.description, data.photoUrls, partPrice, config.refundPercent, config.restockingFee, refundAmount]);
             await client.query(`UPDATE orders SET order_status = 'disputed', updated_at = NOW() WHERE order_id = $1`, [data.order_id]);
 
             // CRITICAL: Hold any pending/processing payout for this order

@@ -295,7 +295,7 @@ export class DriverService {
                     assignment.order_id,
                     assignment.customer_id,
                     assignment.garage_id,
-                    'delivery_issue',
+                    'other',
                     `Driver reported delivery failure: ${failureReason || notes || 'Customer refused delivery'}`,
                     client
                 );
