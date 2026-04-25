@@ -1,11 +1,15 @@
 --
--- PostgreSQL database dump
+-- QScrap Production Database Schema
+-- Source: VPS Production (147.93.89.153) - pg_dump
+-- Captured: 2026-04-25
+-- PostgreSQL 14.20
+--
+-- GOVERNANCE: This file must match production exactly.
+-- All changes go through migrations first, then this file is updated.
 --
 
-\restrict WfmU3EtPnrVAq3On6P9FGFcCBqLlsmId03iT7o06EqDiZEcn8NXhwq5mohVp8gn
-
--- Dumped from database version 16.11
--- Dumped by pg_dump version 16.11
+-- Dumped from database version 14.20
+-- Dumped by pg_dump version 14.20
 
 SET statement_timeout = 0;
 SET lock_timeout = 0;
@@ -18,25 +22,19 @@ SET xmloption = content;
 SET client_min_messages = warning;
 SET row_security = off;
 
---
--- Name: SCHEMA public; Type: COMMENT; Schema: -; Owner: -
---
-
-COMMENT ON SCHEMA public IS 'QScrap Parts Marketplace - Simplified (Parts Only, No Insurance/Services)';
-
 
 --
--- Name: pg_stat_statements; Type: EXTENSION; Schema: -; Owner: -
+-- Name: pg_trgm; Type: EXTENSION; Schema: -; Owner: -
 --
 
-CREATE EXTENSION IF NOT EXISTS pg_stat_statements WITH SCHEMA public;
+CREATE EXTENSION IF NOT EXISTS pg_trgm WITH SCHEMA public;
 
 
 --
--- Name: EXTENSION pg_stat_statements; Type: COMMENT; Schema: -; Owner: -
+-- Name: EXTENSION pg_trgm; Type: COMMENT; Schema: -; Owner: -
 --
 
-COMMENT ON EXTENSION pg_stat_statements IS 'track planning and execution statistics of all SQL statements executed';
+COMMENT ON EXTENSION pg_trgm IS 'text similarity measurement and index searching based on trigrams';
 
 
 --
@@ -65,6 +63,18 @@ CREATE EXTENSION IF NOT EXISTS "uuid-ossp" WITH SCHEMA public;
 --
 
 COMMENT ON EXTENSION "uuid-ossp" IS 'generate universally unique identifiers (UUIDs)';
+
+
+--
+-- Name: provider_type_enum; Type: TYPE; Schema: public; Owner: -
+--
+
+CREATE TYPE public.provider_type_enum AS ENUM (
+    'garage',
+    'mobile_mechanic',
+    'towing_company',
+    'detailer'
+);
 
 
 --
@@ -98,6 +108,34 @@ CREATE TYPE public.request_type_enum AS ENUM (
 
 
 --
+-- Name: service_category_enum; Type: TYPE; Schema: public; Owner: -
+--
+
+CREATE TYPE public.service_category_enum AS ENUM (
+    'repair',
+    'home_wash',
+    'home_service',
+    'towing'
+);
+
+
+--
+-- Name: service_request_status_enum; Type: TYPE; Schema: public; Owner: -
+--
+
+CREATE TYPE public.service_request_status_enum AS ENUM (
+    'pending',
+    'bidding',
+    'accepted',
+    'scheduled',
+    'in_progress',
+    'completed',
+    'cancelled',
+    'expired'
+);
+
+
+--
 -- Name: add_customer_points(uuid, integer, character varying, uuid, text); Type: FUNCTION; Schema: public; Owner: -
 --
 
@@ -105,52 +143,38 @@ CREATE FUNCTION public.add_customer_points(p_customer_id uuid, p_points integer,
     LANGUAGE plpgsql
     AS $$
 DECLARE
+    v_reward_id UUID;
     v_new_balance INTEGER;
-    v_new_tier VARCHAR(50);
+    v_new_tier VARCHAR(20);
 BEGIN
-    -- Update customer points
+    -- Insert or get customer reward record
+    INSERT INTO customer_rewards (customer_id, points_balance, lifetime_points)
+    VALUES (p_customer_id, 0, 0)
+    ON CONFLICT (customer_id) DO NOTHING
+    RETURNING reward_id INTO v_reward_id;
+    
+    -- Update points
     UPDATE customer_rewards
     SET 
         points_balance = points_balance + p_points,
-        lifetime_points = lifetime_points + GREATEST(p_points, 0),
-        updated_at = NOW()
+        lifetime_points = CASE 
+            WHEN p_points > 0 THEN lifetime_points + p_points 
+            ELSE lifetime_points 
+        END,
+        last_activity = NOW()
     WHERE customer_id = p_customer_id
-    RETURNING points_balance INTO v_new_balance;
+    RETURNING points_balance, current_tier INTO v_new_balance, v_new_tier;
     
-    -- Create if not exists
-    IF NOT FOUND THEN
-        INSERT INTO customer_rewards (customer_id, points_balance, lifetime_points)
-        VALUES (p_customer_id, p_points, GREATEST(p_points, 0))
-        RETURNING points_balance INTO v_new_balance;
-    END IF;
-    
-    -- Record transaction
+    -- Log transaction
     INSERT INTO reward_transactions (
-        customer_id, 
-        points_change, 
-        transaction_type, 
-        order_id, 
-        description,
-        balance_after
+        customer_id, points_change, transaction_type, 
+        order_id, description, balance_after
     ) VALUES (
-        p_customer_id,
-        p_points,
-        p_transaction_type,
-        p_order_id,
-        p_description,
-        v_new_balance
+        p_customer_id, p_points, p_transaction_type,
+        p_order_id, p_description, v_new_balance
     );
     
-    -- Determine new tier
-    SELECT tier_name INTO v_new_tier
-    FROM reward_tiers
-    WHERE min_points <= (
-        SELECT lifetime_points FROM customer_rewards WHERE customer_id = p_customer_id
-    )
-    ORDER BY min_points DESC
-    LIMIT 1;
-    
-    RETURN QUERY SELECT v_new_balance, COALESCE(v_new_tier, 'bronze');
+    RETURN QUERY SELECT v_new_balance, v_new_tier;
 END;
 $$;
 
@@ -160,6 +184,28 @@ $$;
 --
 
 COMMENT ON FUNCTION public.add_customer_points(p_customer_id uuid, p_points integer, p_transaction_type character varying, p_order_id uuid, p_description text) IS 'Add or deduct points with transaction logging';
+
+
+--
+-- Name: auto_record_claim_price(); Type: FUNCTION; Schema: public; Owner: -
+--
+
+CREATE FUNCTION public.auto_record_claim_price() RETURNS trigger
+    LANGUAGE plpgsql
+    AS $$
+BEGIN
+    IF NEW.part_name IS NOT NULL AND NEW.scrapyard_estimate > 0 THEN
+        INSERT INTO part_price_history (
+            part_name, vehicle_make, vehicle_model, vehicle_year,
+            price, source, source_id, recorded_at
+        ) VALUES (
+            NEW.part_name, NEW.vehicle_make, NEW.vehicle_model, NEW.vehicle_year,
+            NEW.scrapyard_estimate, 'claim', NEW.claim_id, NOW()
+        );
+    END IF;
+    RETURN NEW;
+END;
+$$;
 
 
 --
@@ -396,6 +442,36 @@ $$;
 
 
 --
+-- Name: check_escrow_expiry(); Type: FUNCTION; Schema: public; Owner: -
+--
+
+CREATE FUNCTION public.check_escrow_expiry() RETURNS void
+    LANGUAGE plpgsql
+    AS $$
+BEGIN
+    -- Auto-refund escrows that are held beyond expiry date
+    UPDATE escrow_payments
+    SET 
+        status = 'refunded',
+        refunded_amount = held_amount,
+        refund_date = NOW(),
+        release_notes = 'Auto-refunded: Work not completed within 30 days'
+    WHERE 
+        status = 'held' 
+        AND expiry_date < NOW()
+        AND refunded_amount = 0;
+    
+    -- Update corresponding claims
+    UPDATE insurance_claims
+    SET payment_status = 'refunded'
+    WHERE escrow_id IN (
+        SELECT escrow_id FROM escrow_payments WHERE status = 'refunded'
+    );
+END;
+$$;
+
+
+--
 -- Name: check_feature_access(uuid, character varying); Type: FUNCTION; Schema: public; Owner: -
 --
 
@@ -538,20 +614,80 @@ $$;
 
 
 --
--- Name: cleanup_expired_idempotency_keys(); Type: FUNCTION; Schema: public; Owner: -
+-- Name: detect_price_outlier(character varying, character varying, character varying, numeric); Type: FUNCTION; Schema: public; Owner: -
 --
 
-CREATE FUNCTION public.cleanup_expired_idempotency_keys() RETURNS integer
+CREATE FUNCTION public.detect_price_outlier(p_part_name character varying, p_vehicle_make character varying, p_vehicle_model character varying, p_quoted_price numeric) RETURNS TABLE(is_outlier boolean, deviation_percent numeric, avg_market_price numeric, outlier_severity character varying)
     LANGUAGE plpgsql
     AS $$
 DECLARE
-    deleted_count INTEGER;
+    v_avg_price DECIMAL;
+    v_std_dev DECIMAL;
+    v_deviation DECIMAL;
+    v_deviation_pct DECIMAL;
 BEGIN
-    DELETE FROM idempotency_keys
-    WHERE expires_at < CURRENT_TIMESTAMP;
+    -- Get benchmark statistics
+    SELECT avg_price, std_dev INTO v_avg_price, v_std_dev
+    FROM part_price_benchmarks
+    WHERE 
+        part_name = p_part_name
+        AND vehicle_make = p_vehicle_make
+        AND vehicle_model = p_vehicle_model;
     
-    GET DIAGNOSTICS deleted_count = ROW_COUNT;
-    RETURN deleted_count;
+    -- If no benchmark data, return not outlier
+    IF v_avg_price IS NULL THEN
+        RETURN QUERY SELECT FALSE, 0::DECIMAL, 0::DECIMAL, 'no_data'::VARCHAR;
+        RETURN;
+    END IF;
+    
+    -- Calculate deviation
+    v_deviation := p_quoted_price - v_avg_price;
+    v_deviation_pct := (v_deviation / v_avg_price) * 100;
+    
+    -- Determine outlier status and severity
+    IF v_deviation_pct > 50 THEN
+        RETURN QUERY SELECT TRUE, v_deviation_pct, v_avg_price, 'critical'::VARCHAR;
+    ELSIF v_deviation_pct > 30 THEN
+        RETURN QUERY SELECT TRUE, v_deviation_pct, v_avg_price, 'high'::VARCHAR;
+    ELSIF v_deviation_pct > 15 THEN
+        RETURN QUERY SELECT TRUE, v_deviation_pct, v_avg_price, 'medium'::VARCHAR;
+    ELSIF v_deviation_pct > 10 THEN
+        RETURN QUERY SELECT TRUE, v_deviation_pct, v_avg_price, 'low'::VARCHAR;
+    ELSE
+        RETURN QUERY SELECT FALSE, v_deviation_pct, v_avg_price, 'normal'::VARCHAR;
+    END IF;
+END;
+$$;
+
+
+--
+-- Name: enforce_subscription_integrity(); Type: FUNCTION; Schema: public; Owner: -
+--
+
+CREATE FUNCTION public.enforce_subscription_integrity() RETURNS trigger
+    LANGUAGE plpgsql
+    AS $$
+BEGIN
+    -- When garage status changes to demo, pending, or rejected, cancel active subscriptions
+    IF NEW.approval_status IN ('demo', 'pending', 'rejected') AND 
+       (OLD.approval_status IS NULL OR OLD.approval_status NOT IN ('demo', 'pending', 'rejected')) THEN
+        
+        -- Cancel any active subscriptions
+        UPDATE garage_subscriptions 
+        SET 
+            status = 'cancelled',
+            cancelled_at = NOW(),
+            cancellation_reason = 'Auto-cancelled: Garage status changed to ' || NEW.approval_status,
+            updated_at = NOW()
+        WHERE 
+            garage_id = NEW.garage_id 
+            AND status IN ('active', 'trial', 'past_due');
+        
+        -- Force current_plan_code to 'free'
+        NEW.current_plan_code := 'free';
+    END IF;
+    
+    RETURN NEW;
 END;
 $$;
 
@@ -567,28 +703,25 @@ BEGIN
     RETURN QUERY
     SELECT 
         g.garage_id,
-        g.garage_name::VARCHAR(255),
-        ROUND((
-            SQRT(
-                POWER(COALESCE(g.location_lat, customer_lat) - customer_lat, 2) +
-                POWER(COALESCE(g.location_lng, customer_lng) - customer_lng, 2)
-            ) * 111
-        )::numeric, 2) as distance_km,
-        g.rating_average::DECIMAL,
+        g.name,
+        ROUND(ST_Distance(
+            g.location,
+            ST_SetSRID(ST_Point(customer_lng, customer_lat), 4326)::geography
+        ) / 1000, 2) as distance_km,
+        g.rating,
         g.average_response_time_minutes,
-        ARRAY_REMOVE(ARRAY[
+        ARRAY[
             CASE WHEN g.sells_parts THEN 'parts' END,
             CASE WHEN g.provides_repairs THEN 'repairs' END,
             CASE WHEN g.provides_quick_services THEN 'quick_services' END,
             CASE WHEN g.has_mobile_technicians THEN 'mobile' END
-        ]::TEXT[], NULL) as capabilities
+        ]::TEXT[] as capabilities
     FROM garages g
-    WHERE g.deleted_at IS NULL
-        AND (
-            COALESCE(g.location_lat, customer_lat) BETWEEN customer_lat - (radius_km::DECIMAL / 111) AND customer_lat + (radius_km::DECIMAL / 111)
-        )
-        AND (
-            COALESCE(g.location_lng, customer_lng) BETWEEN customer_lng - (radius_km::DECIMAL / 111) AND customer_lng + (radius_km::DECIMAL / 111)
+    WHERE g.is_active = true
+        AND ST_DWithin(
+            g.location,
+            ST_SetSRID(ST_Point(customer_lng, customer_lat), 4326)::geography,
+            radius_km * 1000
         )
         AND CASE request_type
             WHEN 'parts' THEN g.sells_parts
@@ -723,84 +856,7 @@ $$;
 
 CREATE FUNCTION public.get_customer_rewards_summary(p_customer_id uuid) RETURNS TABLE(points_balance integer, lifetime_points integer, current_tier character varying, discount_percentage numeric, priority_support boolean, tier_badge_color character varying, next_tier character varying, points_to_next_tier integer)
     LANGUAGE plpgsql
-    AS $$
-DECLARE
-    v_points INTEGER;
-    v_lifetime INTEGER;
-    v_tier VARCHAR(50);
-    v_discount DECIMAL(5,2);
-    v_priority BOOLEAN;
-    v_color VARCHAR(50);
-BEGIN
-    -- Get current points
-    SELECT cr.points_balance, cr.lifetime_points
-    INTO v_points, v_lifetime
-    FROM customer_rewards cr
-    WHERE cr.customer_id = p_customer_id;
-    
-    IF NOT FOUND THEN
-        RETURN;
-    END IF;
-    
-    -- Determine tier based on lifetime points
-    SELECT rt.tier_name, rt.discount_percentage, rt.priority_support, rt.tier_badge_color
-    INTO v_tier, v_discount, v_priority, v_color
-    FROM reward_tiers rt
-    WHERE rt.min_points <= COALESCE(v_lifetime, 0)
-    ORDER BY rt.min_points DESC
-    LIMIT 1;
-    
-    -- Default tier if none found
-    IF v_tier IS NULL THEN
-        v_tier := 'bronze';
-        v_discount := 0;
-        v_priority := false;
-        v_color := '#CD7F32';
-    END IF;
-    
-    RETURN QUERY
-    SELECT 
-        COALESCE(v_points, 0),
-        COALESCE(v_lifetime, 0),
-        v_tier,
-        v_discount,
-        v_priority,
-        v_color,
-        CASE v_tier
-            WHEN 'bronze' THEN 'silver'
-            WHEN 'silver' THEN 'gold'
-            WHEN 'gold' THEN 'platinum'
-            ELSE 'platinum'
-        END::VARCHAR(50),
-        CASE v_tier
-            WHEN 'bronze' THEN 500 - COALESCE(v_lifetime, 0)
-            WHEN 'silver' THEN 2000 - COALESCE(v_lifetime, 0)
-            WHEN 'gold' THEN 5000 - COALESCE(v_lifetime, 0)
-            ELSE 0
-        END;
-END;
-$$;
-
-
---
--- Name: get_payment_summary(uuid); Type: FUNCTION; Schema: public; Owner: -
---
-
-CREATE FUNCTION public.get_payment_summary(p_user_id uuid) RETURNS TABLE(total_transactions bigint, successful_transactions bigint, failed_transactions bigint, total_amount numeric, total_refunded numeric)
-    LANGUAGE plpgsql
-    AS $$
-BEGIN
-    RETURN QUERY
-    SELECT 
-        COUNT(*)::BIGINT AS total_transactions,
-        COUNT(*) FILTER (WHERE status = 'success')::BIGINT AS successful_transactions,
-        COUNT(*) FILTER (WHERE status = 'failed')::BIGINT AS failed_transactions,
-        COALESCE(SUM(amount) FILTER (WHERE status = 'success'), 0) AS total_amount,
-        COALESCE(SUM(refund_amount), 0) AS total_refunded
-    FROM payment_transactions
-    WHERE user_id = p_user_id;
-END;
-$$;
+    AS $$ BEGIN RETURN QUERY SELECT cr.points_balance, cr.lifetime_points, cr.current_tier, rt.discount_percentage, rt.priority_support, rt.tier_badge_color, CASE WHEN cr.current_tier = 'bronze' THEN 'silver'::varchar WHEN cr.current_tier = 'silver' THEN 'gold'::varchar WHEN cr.current_tier = 'gold' THEN 'platinum'::varchar ELSE 'platinum'::varchar END as next_tier, CASE WHEN cr.current_tier = 'bronze' THEN GREATEST(0, 1000 - cr.lifetime_points) WHEN cr.current_tier = 'silver' THEN GREATEST(0, 3000 - cr.lifetime_points) WHEN cr.current_tier = 'gold' THEN GREATEST(0, 10000 - cr.lifetime_points) ELSE 0 END as points_to_next_tier FROM customer_rewards cr JOIN reward_tiers rt ON cr.current_tier = rt.tier_name WHERE cr.customer_id = p_customer_id; END; $$;
 
 
 --
@@ -853,6 +909,78 @@ BEGIN
     RETURNING log_id INTO v_log_id;
     RETURN v_log_id;
 END;
+$$;
+
+
+--
+-- Name: log_escrow_activity(); Type: FUNCTION; Schema: public; Owner: -
+--
+
+CREATE FUNCTION public.log_escrow_activity() RETURNS trigger
+    LANGUAGE plpgsql
+    AS $$
+BEGIN
+    IF TG_OP = 'INSERT' THEN
+        INSERT INTO escrow_activity_log (escrow_id, activity_type, new_status, amount)
+        VALUES (NEW.escrow_id, 'created', NEW.status, NEW.approved_amount);
+    ELSIF TG_OP = 'UPDATE' THEN
+        IF OLD.status != NEW.status THEN
+            INSERT INTO escrow_activity_log (
+                escrow_id, 
+                activity_type, 
+                previous_status, 
+                new_status, 
+                amount,
+                performed_by
+            )
+            VALUES (
+                NEW.escrow_id, 
+                'status_changed', 
+                OLD.status, 
+                NEW.status,
+                NEW.released_amount,
+                NEW.release_approved_by
+            );
+        END IF;
+    END IF;
+    RETURN NEW;
+END;
+$$;
+
+
+--
+-- Name: orders_search_vector_trigger(); Type: FUNCTION; Schema: public; Owner: -
+--
+
+CREATE FUNCTION public.orders_search_vector_trigger() RETURNS trigger
+    LANGUAGE plpgsql
+    AS $$
+BEGIN
+  NEW.search_vector :=
+    setweight(to_tsvector('english', COALESCE(NEW.order_number, '')), 'A') ||
+    setweight(to_tsvector('english', COALESCE(NEW.delivery_address, '')), 'B') ||
+    setweight(to_tsvector('english', COALESCE(NEW.delivery_notes, '')), 'C');
+  RETURN NEW;
+END
+$$;
+
+
+--
+-- Name: part_requests_search_vector_trigger(); Type: FUNCTION; Schema: public; Owner: -
+--
+
+CREATE FUNCTION public.part_requests_search_vector_trigger() RETURNS trigger
+    LANGUAGE plpgsql
+    AS $$
+BEGIN
+  NEW.search_vector :=
+    setweight(to_tsvector('english', COALESCE(NEW.car_make, '')), 'A') ||
+    setweight(to_tsvector('english', COALESCE(NEW.car_model, '')), 'A') ||
+    setweight(to_tsvector('english', COALESCE(NEW.part_number, '')), 'A') ||
+    setweight(to_tsvector('english', COALESCE(NEW.part_description, '')), 'B') ||
+    setweight(to_tsvector('english', COALESCE(NEW.vin_number, '')), 'C');
+  RETURN NEW;
+END
 $$;
 
 
@@ -941,51 +1069,38 @@ CREATE FUNCTION public.redeem_points_for_discount(p_customer_id uuid, p_points_t
     AS $$
 DECLARE
     v_current_balance INTEGER;
-    v_new_balance INTEGER;
     v_discount DECIMAL(10,2);
+    v_new_balance INTEGER;
 BEGIN
     -- Check current balance
     SELECT points_balance INTO v_current_balance
     FROM customer_rewards
     WHERE customer_id = p_customer_id;
     
-    IF NOT FOUND THEN
-        RETURN QUERY SELECT false, 0::DECIMAL(10,2), 0, 'Account not found'::TEXT;
+    IF v_current_balance IS NULL THEN
+        RETURN QUERY SELECT false, 0::DECIMAL, 0, 'No reward account found';
         RETURN;
     END IF;
     
     IF v_current_balance < p_points_to_redeem THEN
-        RETURN QUERY SELECT false, 0::DECIMAL(10,2), v_current_balance, 'Insufficient points'::TEXT;
+        RETURN QUERY SELECT false, 0::DECIMAL, v_current_balance, 'Insufficient points';
         RETURN;
     END IF;
     
-    -- Calculate discount (10 points = 1 QAR)
-    v_discount := p_points_to_redeem / 10.0;
+    -- Calculate discount (100 points = 10 QAR)
+    v_discount := (p_points_to_redeem / 100.0) * 10.0;
     
     -- Deduct points
-    UPDATE customer_rewards
-    SET 
-        points_balance = points_balance - p_points_to_redeem,
-        updated_at = NOW()
-    WHERE customer_id = p_customer_id
-    RETURNING points_balance INTO v_new_balance;
-    
-    -- Record redemption transaction
-    INSERT INTO reward_transactions (
-        customer_id,
-        points_change,
-        transaction_type,
-        description,
-        balance_after
-    ) VALUES (
+    SELECT new_balance INTO v_new_balance
+    FROM add_customer_points(
         p_customer_id,
         -p_points_to_redeem,
-        'redemption',
-        'Points redeemed for discount',
-        v_new_balance
+        'redeemed',
+        NULL,
+        format('Redeemed %s points for %s QAR discount', p_points_to_redeem, v_discount)
     );
     
-    RETURN QUERY SELECT true, v_discount, v_new_balance, 'Points redeemed successfully'::TEXT;
+    RETURN QUERY SELECT true, v_discount, v_new_balance, 'Points redeemed successfully';
 END;
 $$;
 
@@ -1013,6 +1128,19 @@ $$;
 
 
 --
+-- Name: refresh_price_benchmarks(); Type: FUNCTION; Schema: public; Owner: -
+--
+
+CREATE FUNCTION public.refresh_price_benchmarks() RETURNS void
+    LANGUAGE plpgsql
+    AS $$
+BEGIN
+    REFRESH MATERIALIZED VIEW CONCURRENTLY part_price_benchmarks;
+END;
+$$;
+
+
+--
 -- Name: set_escrow_inspection_expiry(); Type: FUNCTION; Schema: public; Owner: -
 --
 
@@ -1029,76 +1157,24 @@ $$;
 
 
 --
--- Name: sync_garage_settings_from_garages(); Type: FUNCTION; Schema: public; Owner: -
---
-
-CREATE FUNCTION public.sync_garage_settings_from_garages() RETURNS trigger
-    LANGUAGE plpgsql
-    AS $$
-BEGIN
-    -- Only sync on UPDATE (INSERT handled by backfill, DELETE cascades)
-    IF TG_OP = 'UPDATE' THEN
-        UPDATE garage_settings 
-        SET 
-            auto_renew = NEW.auto_renew,
-            provides_repairs = NEW.provides_repairs,
-            provides_quick_services = NEW.provides_quick_services,
-            has_mobile_technicians = NEW.has_mobile_technicians,
-            mobile_service_radius_km = NEW.mobile_service_radius_km,
-            max_concurrent_services = NEW.max_concurrent_services,
-            sells_parts = NEW.sells_parts,
-            updated_at = NOW()
-        WHERE garage_id = NEW.garage_id;
-    ELSIF TG_OP = 'INSERT' THEN
-        INSERT INTO garage_settings (
-            garage_id, auto_renew, provides_repairs, provides_quick_services,
-            has_mobile_technicians, mobile_service_radius_km, max_concurrent_services, sells_parts
-        ) VALUES (
-            NEW.garage_id, NEW.auto_renew, NEW.provides_repairs, NEW.provides_quick_services,
-            NEW.has_mobile_technicians, NEW.mobile_service_radius_km, NEW.max_concurrent_services, NEW.sells_parts
-        );
-    END IF;
-    RETURN NEW;
-END;
-$$;
-
-
---
--- Name: sync_garage_stats_from_garages(); Type: FUNCTION; Schema: public; Owner: -
---
-
-CREATE FUNCTION public.sync_garage_stats_from_garages() RETURNS trigger
-    LANGUAGE plpgsql
-    AS $$
-BEGIN
-    IF TG_OP = 'UPDATE' THEN
-        UPDATE garage_stats 
-        SET 
-            total_services_completed = NEW.total_services_completed,
-            quick_service_rating = NEW.quick_service_rating,
-            repair_rating = NEW.repair_rating,
-            average_response_time_minutes = NEW.average_response_time_minutes,
-            updated_at = NOW()
-        WHERE garage_id = NEW.garage_id;
-    ELSIF TG_OP = 'INSERT' THEN
-        INSERT INTO garage_stats (
-            garage_id, total_services_completed, quick_service_rating,
-            repair_rating, average_response_time_minutes
-        ) VALUES (
-            NEW.garage_id, NEW.total_services_completed, NEW.quick_service_rating,
-            NEW.repair_rating, NEW.average_response_time_minutes
-        );
-    END IF;
-    RETURN NEW;
-END;
-$$;
-
-
---
 -- Name: update_address_modtime(); Type: FUNCTION; Schema: public; Owner: -
 --
 
 CREATE FUNCTION public.update_address_modtime() RETURNS trigger
+    LANGUAGE plpgsql
+    AS $$
+                BEGIN
+                    NEW.updated_at = NOW();
+                    RETURN NEW;
+                END;
+                $$;
+
+
+--
+-- Name: update_bid_flags_updated_at(); Type: FUNCTION; Schema: public; Owner: -
+--
+
+CREATE FUNCTION public.update_bid_flags_updated_at() RETURNS trigger
     LANGUAGE plpgsql
     AS $$
 BEGIN
@@ -1211,20 +1287,6 @@ $$;
 
 
 --
--- Name: update_payment_transactions_updated_at(); Type: FUNCTION; Schema: public; Owner: -
---
-
-CREATE FUNCTION public.update_payment_transactions_updated_at() RETURNS trigger
-    LANGUAGE plpgsql
-    AS $$
-BEGIN
-    NEW.updated_at = CURRENT_TIMESTAMP;
-    RETURN NEW;
-END;
-$$;
-
-
---
 -- Name: update_push_tokens_updated_at(); Type: FUNCTION; Schema: public; Owner: -
 --
 
@@ -1320,85 +1382,32 @@ COMMENT ON TABLE public.ad_campaigns IS 'Advertising campaigns created by garage
 --
 
 CREATE MATERIALIZED VIEW public.ad_campaign_analytics AS
- SELECT campaign_id,
-    garage_id,
-    campaign_name,
-    campaign_type,
-    status,
-    budget_qar,
-    spent_amount,
-    impressions,
-    clicks,
-    conversions,
+ SELECT c.campaign_id,
+    c.garage_id,
+    c.campaign_name,
+    c.campaign_type,
+    c.status,
+    c.budget_qar,
+    c.spent_amount,
+    c.impressions,
+    c.clicks,
+    c.conversions,
         CASE
-            WHEN (impressions > 0) THEN round((((clicks)::numeric / (impressions)::numeric) * (100)::numeric), 2)
+            WHEN (c.impressions > 0) THEN round((((c.clicks)::numeric / (c.impressions)::numeric) * (100)::numeric), 2)
             ELSE (0)::numeric
         END AS ctr_percentage,
         CASE
-            WHEN (clicks > 0) THEN round((((conversions)::numeric / (clicks)::numeric) * (100)::numeric), 2)
+            WHEN (c.clicks > 0) THEN round((((c.conversions)::numeric / (c.clicks)::numeric) * (100)::numeric), 2)
             ELSE (0)::numeric
         END AS conversion_rate,
         CASE
-            WHEN (conversions > 0) THEN round((spent_amount / (conversions)::numeric), 2)
+            WHEN (c.conversions > 0) THEN round((c.spent_amount / (c.conversions)::numeric), 2)
             ELSE (0)::numeric
         END AS cost_per_conversion,
-    date_trunc('day'::text, (start_date)::timestamp with time zone) AS start_date,
-    date_trunc('day'::text, (end_date)::timestamp with time zone) AS end_date
+    date_trunc('day'::text, (c.start_date)::timestamp with time zone) AS start_date,
+    date_trunc('day'::text, (c.end_date)::timestamp with time zone) AS end_date
    FROM public.ad_campaigns c
   WITH NO DATA;
-
-
---
--- Name: ad_impressions; Type: TABLE; Schema: public; Owner: -
---
-
-CREATE TABLE public.ad_impressions (
-    impression_id uuid DEFAULT gen_random_uuid() NOT NULL,
-    campaign_id uuid,
-    placement_id uuid,
-    customer_id uuid,
-    ip_address inet,
-    user_agent text,
-    impression_type character varying(20) DEFAULT 'view'::character varying,
-    "timestamp" timestamp with time zone DEFAULT now(),
-    session_id uuid,
-    CONSTRAINT ad_impressions_impression_type_check CHECK (((impression_type)::text = ANY ((ARRAY['view'::character varying, 'click'::character varying, 'conversion'::character varying])::text[])))
-);
-
-
---
--- Name: TABLE ad_impressions; Type: COMMENT; Schema: public; Owner: -
---
-
-COMMENT ON TABLE public.ad_impressions IS 'Tracking table for ad views, clicks, and conversions';
-
-
---
--- Name: ad_placements; Type: TABLE; Schema: public; Owner: -
---
-
-CREATE TABLE public.ad_placements (
-    placement_id uuid DEFAULT gen_random_uuid() NOT NULL,
-    campaign_id uuid,
-    placement_type character varying(50) NOT NULL,
-    "position" integer DEFAULT 1,
-    priority integer DEFAULT 0,
-    active boolean DEFAULT true,
-    banner_image_url text,
-    banner_title character varying(100),
-    banner_description text,
-    cta_text character varying(30),
-    cta_url text,
-    created_at timestamp with time zone DEFAULT now(),
-    CONSTRAINT ad_placements_placement_type_check CHECK (((placement_type)::text = ANY ((ARRAY['search_top'::character varying, 'search_sidebar'::character varying, 'category_banner'::character varying, 'homepage_featured'::character varying, 'request_detail_banner'::character varying])::text[])))
-);
-
-
---
--- Name: TABLE ad_placements; Type: COMMENT; Schema: public; Owner: -
---
-
-COMMENT ON TABLE public.ad_placements IS 'Specific ad placement configurations for campaigns';
 
 
 --
@@ -1480,11 +1489,35 @@ CREATE TABLE public.bids (
     withdrawn_at timestamp without time zone,
     deleted_at timestamp without time zone,
     original_bid_amount numeric,
+    superseded_by uuid,
+    supersedes_bid_id uuid,
+    version_number integer DEFAULT 1,
     CONSTRAINT bids_bid_amount_check CHECK ((bid_amount > (0)::numeric)),
     CONSTRAINT bids_part_condition_check CHECK ((part_condition = ANY (ARRAY['new'::text, 'used_excellent'::text, 'used_good'::text, 'used_fair'::text, 'refurbished'::text]))),
-    CONSTRAINT bids_status_check CHECK ((status = ANY (ARRAY['pending'::text, 'accepted'::text, 'rejected'::text, 'withdrawn'::text, 'expired'::text]))),
+    CONSTRAINT bids_status_check CHECK ((status = ANY (ARRAY['pending'::text, 'accepted'::text, 'rejected'::text, 'withdrawn'::text, 'expired'::text, 'flagged'::text, 'superseded'::text]))),
     CONSTRAINT bids_warranty_days_check CHECK ((warranty_days >= 0))
 );
+
+
+--
+-- Name: COLUMN bids.superseded_by; Type: COMMENT; Schema: public; Owner: -
+--
+
+COMMENT ON COLUMN public.bids.superseded_by IS 'Points to the new bid that replaced this one';
+
+
+--
+-- Name: COLUMN bids.supersedes_bid_id; Type: COMMENT; Schema: public; Owner: -
+--
+
+COMMENT ON COLUMN public.bids.supersedes_bid_id IS 'Points to the original bid this one replaces';
+
+
+--
+-- Name: COLUMN bids.version_number; Type: COMMENT; Schema: public; Owner: -
+--
+
+COMMENT ON COLUMN public.bids.version_number IS 'Incremental version for bid corrections';
 
 
 --
@@ -1509,6 +1542,9 @@ CREATE TABLE public.cancellation_requests (
     reviewed_at timestamp without time zone,
     processed_at timestamp without time zone,
     created_at timestamp without time zone DEFAULT now(),
+    garage_compensation numeric(10,2) DEFAULT 0,
+    pending_compensation numeric(10,2) DEFAULT 0,
+    compensation_status character varying(30) DEFAULT 'not_applicable'::character varying,
     CONSTRAINT cancellation_requests_reason_code_check CHECK (((reason_code)::text = ANY (ARRAY[('changed_mind'::character varying)::text, ('found_elsewhere'::character varying)::text, ('too_expensive'::character varying)::text, ('wrong_part'::character varying)::text, ('taking_too_long'::character varying)::text, ('stock_out'::character varying)::text, ('part_defective'::character varying)::text, ('wrong_part_identified'::character varying)::text, ('customer_unreachable'::character varying)::text, ('other'::character varying)::text]))),
     CONSTRAINT cancellation_requests_requested_by_type_check CHECK (((requested_by_type)::text = ANY (ARRAY[('customer'::character varying)::text, ('garage'::character varying)::text, ('admin'::character varying)::text]))),
     CONSTRAINT cancellation_requests_status_check CHECK (((status)::text = ANY (ARRAY[('pending'::character varying)::text, ('approved'::character varying)::text, ('rejected'::character varying)::text, ('processed'::character varying)::text])))
@@ -1612,7 +1648,8 @@ CREATE TABLE public.customer_addresses (
     location_lng numeric(11,8),
     delivery_notes text,
     is_default boolean DEFAULT false,
-    created_at timestamp without time zone DEFAULT now()
+    created_at timestamp without time zone DEFAULT now(),
+    updated_at timestamp without time zone DEFAULT now()
 );
 
 
@@ -1648,12 +1685,11 @@ COMMENT ON TABLE public.customer_credits IS 'Goodwill credits granted to custome
 --
 
 CREATE TABLE public.customer_notes (
-    note_id integer NOT NULL,
+    note_id uuid DEFAULT gen_random_uuid() NOT NULL,
     customer_id uuid NOT NULL,
     agent_id uuid NOT NULL,
     note_text text NOT NULL,
-    created_at timestamp without time zone DEFAULT now(),
-    updated_at timestamp without time zone DEFAULT now()
+    created_at timestamp with time zone DEFAULT now()
 );
 
 
@@ -1662,26 +1698,6 @@ CREATE TABLE public.customer_notes (
 --
 
 COMMENT ON TABLE public.customer_notes IS 'Internal agent notes about customers for Support Dashboard';
-
-
---
--- Name: customer_notes_note_id_seq; Type: SEQUENCE; Schema: public; Owner: -
---
-
-CREATE SEQUENCE public.customer_notes_note_id_seq
-    AS integer
-    START WITH 1
-    INCREMENT BY 1
-    NO MINVALUE
-    NO MAXVALUE
-    CACHE 1;
-
-
---
--- Name: customer_notes_note_id_seq; Type: SEQUENCE OWNED BY; Schema: public; Owner: -
---
-
-ALTER SEQUENCE public.customer_notes_note_id_seq OWNED BY public.customer_notes.note_id;
 
 
 --
@@ -1728,7 +1744,6 @@ CREATE TABLE public.customer_vehicles (
     request_count integer DEFAULT 0,
     created_at timestamp with time zone DEFAULT now(),
     updated_at timestamp with time zone DEFAULT now(),
-    vin_image_url character varying(500),
     CONSTRAINT customer_vehicles_car_year_check CHECK (((car_year >= 1970) AND (car_year <= 2030)))
 );
 
@@ -1752,13 +1767,6 @@ COMMENT ON COLUMN public.customer_vehicles.nickname IS 'User-friendly name like 
 --
 
 COMMENT ON COLUMN public.customer_vehicles.is_primary IS 'Primary/default vehicle for this customer';
-
-
---
--- Name: COLUMN customer_vehicles.vin_image_url; Type: COMMENT; Schema: public; Owner: -
---
-
-COMMENT ON COLUMN public.customer_vehicles.vin_image_url IS 'Photo of registration card (Istimara) showing VIN number';
 
 
 --
@@ -1809,12 +1817,12 @@ CREATE TABLE public.delivery_assignments (
 CREATE TABLE public.delivery_chats (
     message_id uuid DEFAULT gen_random_uuid() NOT NULL,
     assignment_id uuid,
-    order_id uuid,
     sender_type character varying(20) NOT NULL,
     sender_id uuid,
     message text NOT NULL,
     created_at timestamp without time zone DEFAULT now(),
-    read_at timestamp without time zone
+    read_at timestamp without time zone,
+    order_id uuid
 );
 
 
@@ -1867,6 +1875,21 @@ CREATE SEQUENCE public.delivery_fee_tiers_tier_id_seq
 --
 
 ALTER SEQUENCE public.delivery_fee_tiers_tier_id_seq OWNED BY public.delivery_fee_tiers.tier_id;
+
+
+--
+-- Name: delivery_otps; Type: TABLE; Schema: public; Owner: -
+--
+
+CREATE TABLE public.delivery_otps (
+    otp_id uuid DEFAULT gen_random_uuid() NOT NULL,
+    order_id uuid NOT NULL,
+    otp_code character varying(6) NOT NULL,
+    expires_at timestamp without time zone DEFAULT (now() + '00:30:00'::interval) NOT NULL,
+    is_used boolean DEFAULT false,
+    used_at timestamp without time zone,
+    created_at timestamp without time zone DEFAULT now()
+);
 
 
 --
@@ -1968,7 +1991,7 @@ CREATE TABLE public.disputes (
     CONSTRAINT disputes_reason_check CHECK (((reason)::text = ANY (ARRAY[('wrong_part'::character varying)::text, ('damaged'::character varying)::text, ('not_as_described'::character varying)::text, ('doesnt_fit'::character varying)::text, ('changed_mind'::character varying)::text, ('other'::character varying)::text]))),
     CONSTRAINT disputes_refund_percent_check CHECK (((refund_percent >= 0) AND (refund_percent <= 100))),
     CONSTRAINT disputes_resolution_check CHECK (((resolution)::text = ANY (ARRAY[('refund_approved'::character varying)::text, ('auto_approved'::character varying)::text, ('claim_rejected'::character varying)::text, ('partial_refund'::character varying)::text]))),
-    CONSTRAINT disputes_status_check CHECK (((status)::text = ANY ((ARRAY['pending'::character varying, 'contested'::character varying, 'under_review'::character varying, 'accepted'::character varying, 'refund_approved'::character varying, 'refund_denied'::character varying, 'resolved'::character varying, 'auto_resolved'::character varying, 'cancelled'::character varying])::text[])))
+    CONSTRAINT disputes_status_check CHECK (((status)::text = ANY (ARRAY[('pending'::character varying)::text, ('contested'::character varying)::text, ('accepted'::character varying)::text, ('refund_approved'::character varying)::text, ('refund_denied'::character varying)::text, ('resolved'::character varying)::text, ('auto_resolved'::character varying)::text, ('cancelled'::character varying)::text])))
 );
 
 
@@ -2104,14 +2127,14 @@ CREATE TABLE public.driver_locations (
 CREATE TABLE public.driver_payouts (
     payout_id uuid DEFAULT gen_random_uuid() NOT NULL,
     driver_id uuid,
-    assignment_id uuid,
-    order_id uuid,
-    order_number character varying(50),
     amount numeric(10,2) NOT NULL,
     status character varying(20) DEFAULT 'pending'::character varying,
     notes text,
     created_at timestamp without time zone DEFAULT now(),
-    processed_at timestamp without time zone
+    processed_at timestamp without time zone,
+    assignment_id uuid,
+    order_id uuid,
+    order_number character varying(50)
 );
 
 
@@ -2173,6 +2196,73 @@ CREATE TABLE public.drivers (
     bank_account_name character varying(100),
     CONSTRAINT drivers_status_check CHECK (((status)::text = ANY (ARRAY[('available'::character varying)::text, ('busy'::character varying)::text, ('offline'::character varying)::text, ('suspended'::character varying)::text])))
 );
+
+
+--
+-- Name: email_otps; Type: TABLE; Schema: public; Owner: -
+--
+
+CREATE TABLE public.email_otps (
+    id integer NOT NULL,
+    email character varying(255) NOT NULL,
+    otp_code character varying(6) NOT NULL,
+    purpose character varying(50) DEFAULT 'registration'::character varying NOT NULL,
+    created_at timestamp without time zone DEFAULT CURRENT_TIMESTAMP,
+    expires_at timestamp without time zone NOT NULL,
+    is_used boolean DEFAULT false,
+    attempts integer DEFAULT 0,
+    max_attempts integer DEFAULT 5,
+    user_agent text,
+    ip_address inet
+);
+
+
+--
+-- Name: TABLE email_otps; Type: COMMENT; Schema: public; Owner: -
+--
+
+COMMENT ON TABLE public.email_otps IS 'Stores OTP codes for email verification (registration, password reset, 2FA)';
+
+
+--
+-- Name: COLUMN email_otps.purpose; Type: COMMENT; Schema: public; Owner: -
+--
+
+COMMENT ON COLUMN public.email_otps.purpose IS 'Purpose of OTP: registration, password_reset, or 2fa';
+
+
+--
+-- Name: COLUMN email_otps.expires_at; Type: COMMENT; Schema: public; Owner: -
+--
+
+COMMENT ON COLUMN public.email_otps.expires_at IS 'OTP expires after 10 minutes by default';
+
+
+--
+-- Name: COLUMN email_otps.max_attempts; Type: COMMENT; Schema: public; Owner: -
+--
+
+COMMENT ON COLUMN public.email_otps.max_attempts IS 'Maximum verification attempts allowed (default 5)';
+
+
+--
+-- Name: email_otps_id_seq; Type: SEQUENCE; Schema: public; Owner: -
+--
+
+CREATE SEQUENCE public.email_otps_id_seq
+    AS integer
+    START WITH 1
+    INCREMENT BY 1
+    NO MINVALUE
+    NO MAXVALUE
+    CACHE 1;
+
+
+--
+-- Name: email_otps_id_seq; Type: SEQUENCE OWNED BY; Schema: public; Owner: -
+--
+
+ALTER SEQUENCE public.email_otps_id_seq OWNED BY public.email_otps.id;
 
 
 --
@@ -2240,51 +2330,33 @@ COMMENT ON TABLE public.escrow_transactions IS 'Holds payment funds until buyer 
 
 
 --
--- Name: garage_analytics_summary; Type: TABLE; Schema: public; Owner: -
---
-
-CREATE TABLE public.garage_analytics_summary (
-    summary_id uuid DEFAULT gen_random_uuid() NOT NULL,
-    garage_id uuid,
-    period character varying(20) NOT NULL,
-    total_orders integer DEFAULT 0,
-    total_revenue numeric(12,2) DEFAULT 0,
-    total_bids integer DEFAULT 0,
-    win_rate numeric(5,2) DEFAULT 0,
-    avg_rating numeric(3,2) DEFAULT 0,
-    unique_customers integer DEFAULT 0,
-    updated_at timestamp with time zone DEFAULT now()
-);
-
-
---
 -- Name: garage_bid_analytics; Type: MATERIALIZED VIEW; Schema: public; Owner: -
 --
 
 CREATE MATERIALIZED VIEW public.garage_bid_analytics AS
- SELECT garage_id,
-    date_trunc('month'::text, created_at) AS month,
+ SELECT b.garage_id,
+    date_trunc('month'::text, b.created_at) AS month,
     count(*) AS total_bids,
     count(
         CASE
-            WHEN (status = 'accepted'::text) THEN 1
+            WHEN (b.status = 'accepted'::text) THEN 1
             ELSE NULL::integer
         END) AS won_bids,
     count(
         CASE
-            WHEN (status = 'rejected'::text) THEN 1
+            WHEN (b.status = 'rejected'::text) THEN 1
             ELSE NULL::integer
         END) AS lost_bids,
     round((((count(
         CASE
-            WHEN (status = 'accepted'::text) THEN 1
+            WHEN (b.status = 'accepted'::text) THEN 1
             ELSE NULL::integer
         END))::numeric / (NULLIF(count(*), 0))::numeric) * (100)::numeric), 2) AS win_rate_percentage,
-    avg(bid_amount) AS avg_bid_amount,
-    avg((EXTRACT(epoch FROM (updated_at - created_at)) / (60)::numeric)) AS avg_response_time_minutes
+    avg(b.bid_amount) AS avg_bid_amount,
+    avg((EXTRACT(epoch FROM (b.updated_at - b.created_at)) / (60)::numeric)) AS avg_response_time_minutes
    FROM public.bids b
-  WHERE (created_at >= (CURRENT_DATE - '365 days'::interval))
-  GROUP BY garage_id, (date_trunc('month'::text, created_at))
+  WHERE (b.created_at >= (CURRENT_DATE - '365 days'::interval))
+  GROUP BY b.garage_id, (date_trunc('month'::text, b.created_at))
   WITH NO DATA;
 
 
@@ -2330,17 +2402,22 @@ CREATE TABLE public.orders (
     version integer DEFAULT 1,
     delivery_zone_id integer,
     deleted_at timestamp without time zone,
+    pod_photo_url character varying(500),
+    completed_by_driver boolean DEFAULT false,
+    auto_completed boolean DEFAULT false,
     deposit_amount numeric(10,2) DEFAULT 0,
     deposit_status character varying(20) DEFAULT 'none'::character varying,
     deposit_intent_id uuid,
     final_payment_intent_id uuid,
+    delivered_at timestamp without time zone,
+    loyalty_discount numeric(10,2) DEFAULT 0,
     undo_deadline timestamp without time zone,
     undo_used boolean DEFAULT false,
     undo_at timestamp without time zone,
     undo_reason text,
-    CONSTRAINT orders_commission_rate_range CHECK (((commission_rate >= (0)::numeric) AND (commission_rate <= 0.15))),
-    CONSTRAINT orders_order_status_check CHECK ((order_status = ANY (ARRAY['pending_payment'::text, 'confirmed'::text, 'preparing'::text, 'ready_for_pickup'::text, 'ready_for_collection'::text, 'collected'::text, 'qc_in_progress'::text, 'qc_passed'::text, 'qc_failed'::text, 'returning_to_garage'::text, 'in_transit'::text, 'out_for_delivery'::text, 'delivered'::text, 'completed'::text, 'cancelled_by_customer'::text, 'cancelled_by_garage'::text, 'cancelled_by_ops'::text, 'disputed'::text, 'refunded'::text]))),
-    CONSTRAINT orders_payment_method_check CHECK ((payment_method = ANY (ARRAY['cash'::text, 'card'::text, 'wallet'::text]))),
+    search_vector tsvector,
+    CONSTRAINT orders_order_status_check CHECK ((order_status = ANY (ARRAY['pending_payment'::text, 'confirmed'::text, 'preparing'::text, 'ready_for_pickup'::text, 'ready_for_collection'::text, 'collected'::text, 'returning_to_garage'::text, 'in_transit'::text, 'delivered'::text, 'completed'::text, 'cancelled_by_customer'::text, 'cancelled_by_garage'::text, 'cancelled_by_ops'::text, 'disputed'::text, 'refunded'::text]))),
+    CONSTRAINT orders_payment_method_check CHECK ((payment_method = ANY (ARRAY['cash'::text, 'card'::text, 'wallet'::text, 'card_full'::text]))),
     CONSTRAINT orders_payment_status_check CHECK ((payment_status = ANY (ARRAY['pending'::text, 'paid'::text, 'refunded'::text, 'partially_refunded'::text])))
 );
 
@@ -2350,6 +2427,27 @@ CREATE TABLE public.orders (
 --
 
 COMMENT ON COLUMN public.orders.payment_method IS 'Payment method: cod (Cash on Delivery), card, wallet';
+
+
+--
+-- Name: COLUMN orders.pod_photo_url; Type: COMMENT; Schema: public; Owner: -
+--
+
+COMMENT ON COLUMN public.orders.pod_photo_url IS 'URL to proof of delivery photo taken by driver';
+
+
+--
+-- Name: COLUMN orders.completed_by_driver; Type: COMMENT; Schema: public; Owner: -
+--
+
+COMMENT ON COLUMN public.orders.completed_by_driver IS 'TRUE if driver completed this order (vs customer or operations)';
+
+
+--
+-- Name: COLUMN orders.auto_completed; Type: COMMENT; Schema: public; Owner: -
+--
+
+COMMENT ON COLUMN public.orders.auto_completed IS 'TRUE if order was auto-completed after timeout';
 
 
 --
@@ -2399,26 +2497,26 @@ COMMENT ON COLUMN public.orders.undo_reason IS 'User-provided reason for undo';
 --
 
 CREATE MATERIALIZED VIEW public.garage_daily_analytics AS
- SELECT garage_id,
-    date_trunc('day'::text, created_at) AS date,
-    count(DISTINCT order_id) AS orders_count,
-    sum(total_amount) AS revenue,
-    avg(platform_fee) AS avg_platform_fee,
-    count(DISTINCT customer_id) AS unique_customers,
-    avg((EXTRACT(epoch FROM (updated_at - created_at)) / (3600)::numeric)) AS avg_fulfillment_hours,
+ SELECT o.garage_id,
+    date_trunc('day'::text, o.created_at) AS date,
+    count(DISTINCT o.order_id) AS orders_count,
+    sum(o.total_amount) AS revenue,
+    avg(o.platform_fee) AS avg_platform_fee,
+    count(DISTINCT o.customer_id) AS unique_customers,
+    avg((EXTRACT(epoch FROM (o.updated_at - o.created_at)) / (3600)::numeric)) AS avg_fulfillment_hours,
     count(
         CASE
-            WHEN (order_status = 'completed'::text) THEN 1
+            WHEN (o.order_status = 'completed'::text) THEN 1
             ELSE NULL::integer
         END) AS completed_orders,
     count(
         CASE
-            WHEN (order_status = 'cancelled'::text) THEN 1
+            WHEN (o.order_status = 'cancelled'::text) THEN 1
             ELSE NULL::integer
         END) AS cancelled_orders
    FROM public.orders o
-  WHERE (created_at >= (CURRENT_DATE - '365 days'::interval))
-  GROUP BY garage_id, (date_trunc('day'::text, created_at))
+  WHERE (o.created_at >= (CURRENT_DATE - '365 days'::interval))
+  GROUP BY o.garage_id, (date_trunc('day'::text, o.created_at))
   WITH NO DATA;
 
 
@@ -2492,13 +2590,6 @@ CREATE TABLE public.garage_payment_methods (
 
 
 --
--- Name: TABLE garage_payment_methods; Type: COMMENT; Schema: public; Owner: -
---
-
-COMMENT ON TABLE public.garage_payment_methods IS 'Saved payment methods (Stripe) for garages';
-
-
---
 -- Name: garage_payouts; Type: TABLE; Schema: public; Owner: -
 --
 
@@ -2527,12 +2618,25 @@ CREATE TABLE public.garage_payouts (
     adjusted_at timestamp without time zone,
     resolved_by uuid,
     resolved_at timestamp with time zone,
+    notes text,
+    updated_at timestamp without time zone DEFAULT now(),
+    received_amount numeric(10,2),
+    confirmation_notes text,
+    dispute_reason character varying(100),
+    dispute_description text,
+    disputed_at timestamp without time zone,
     cancellation_reason text,
     cancelled_at timestamp with time zone,
     payout_type character varying(50) DEFAULT 'normal'::character varying,
     held_reason text,
     held_at timestamp without time zone,
-    CONSTRAINT garage_payouts_payout_status_check CHECK (((payout_status)::text = ANY ((ARRAY['pending'::character varying, 'processing'::character varying, 'awaiting_confirmation'::character varying, 'completed'::character varying, 'disputed'::character varying, 'failed'::character varying, 'on_hold'::character varying, 'cancelled'::character varying])::text[])))
+    potential_compensation numeric(10,2) DEFAULT 0,
+    review_reason character varying(100),
+    reviewed_by uuid,
+    reviewed_at timestamp without time zone,
+    review_notes text,
+    sent_by uuid,
+    CONSTRAINT garage_payouts_payout_status_check CHECK (((payout_status)::text = ANY ((ARRAY['pending'::character varying, 'processing'::character varying, 'awaiting_confirmation'::character varying, 'confirmed'::character varying, 'completed'::character varying, 'disputed'::character varying, 'failed'::character varying, 'on_hold'::character varying, 'cancelled'::character varying, 'held'::character varying])::text[])))
 );
 
 
@@ -2612,7 +2716,7 @@ CREATE TABLE public.part_requests (
     car_rear_image_url character varying(500),
     saved_vehicle_id uuid,
     part_subcategory character varying(100),
-    vin_image_url character varying(500),
+    search_vector tsvector,
     CONSTRAINT part_requests_car_year_dynamic_check CHECK (((car_year >= 1900) AND ((car_year)::numeric <= (EXTRACT(year FROM now()) + (2)::numeric)))),
     CONSTRAINT part_requests_condition_required_check CHECK ((condition_required = ANY (ARRAY['new'::text, 'used'::text, 'any'::text]))),
     CONSTRAINT part_requests_status_check CHECK ((status = ANY (ARRAY['active'::text, 'accepted'::text, 'expired'::text, 'cancelled_by_customer'::text])))
@@ -2634,31 +2738,10 @@ COMMENT ON COLUMN public.part_requests.delivery_lng IS 'Customer selected delive
 
 
 --
--- Name: COLUMN part_requests.car_front_image_url; Type: COMMENT; Schema: public; Owner: -
---
-
-COMMENT ON COLUMN public.part_requests.car_front_image_url IS 'Front view of vehicle for identification (license plate, front bumper)';
-
-
---
--- Name: COLUMN part_requests.car_rear_image_url; Type: COMMENT; Schema: public; Owner: -
---
-
-COMMENT ON COLUMN public.part_requests.car_rear_image_url IS 'Rear view of vehicle for identification (model/trim verification)';
-
-
---
 -- Name: COLUMN part_requests.part_subcategory; Type: COMMENT; Schema: public; Owner: -
 --
 
 COMMENT ON COLUMN public.part_requests.part_subcategory IS 'Subcategory of the part (e.g., Pistons under Engine category)';
-
-
---
--- Name: COLUMN part_requests.vin_image_url; Type: COMMENT; Schema: public; Owner: -
---
-
-COMMENT ON COLUMN public.part_requests.vin_image_url IS 'VIN photo transmitted with request for garage reference';
 
 
 --
@@ -2691,79 +2774,6 @@ COMMENT ON MATERIALIZED VIEW public.garage_popular_parts IS 'Most frequently ord
 
 
 --
--- Name: garage_products; Type: TABLE; Schema: public; Owner: -
---
-
-CREATE TABLE public.garage_products (
-    product_id uuid DEFAULT gen_random_uuid() NOT NULL,
-    garage_id uuid NOT NULL,
-    title character varying(200) NOT NULL,
-    description text,
-    part_number character varying(50),
-    brand character varying(100),
-    category character varying(50),
-    condition character varying(20) DEFAULT 'used_good'::character varying NOT NULL,
-    warranty_days integer DEFAULT 0,
-    price numeric(10,2) NOT NULL,
-    original_price numeric(10,2),
-    currency character varying(3) DEFAULT 'QAR'::character varying,
-    quantity integer DEFAULT 1,
-    compatible_makes text[],
-    compatible_models text[],
-    year_from integer,
-    year_to integer,
-    image_urls text[],
-    video_url text,
-    status character varying(20) DEFAULT 'draft'::character varying,
-    is_featured boolean DEFAULT false,
-    featured_until timestamp without time zone,
-    view_count integer DEFAULT 0,
-    inquiry_count integer DEFAULT 0,
-    purchase_count integer DEFAULT 0,
-    created_at timestamp without time zone DEFAULT now(),
-    updated_at timestamp without time zone DEFAULT now(),
-    CONSTRAINT valid_condition CHECK (((condition)::text = ANY (ARRAY[('new'::character varying)::text, ('used_excellent'::character varying)::text, ('used_good'::character varying)::text, ('used_fair'::character varying)::text, ('refurbished'::character varying)::text]))),
-    CONSTRAINT valid_status CHECK (((status)::text = ANY (ARRAY[('draft'::character varying)::text, ('active'::character varying)::text, ('sold'::character varying)::text, ('archived'::character varying)::text])))
-);
-
-
---
--- Name: garage_settings; Type: TABLE; Schema: public; Owner: -
---
-
-CREATE TABLE public.garage_settings (
-    garage_id uuid NOT NULL,
-    auto_renew boolean DEFAULT true NOT NULL,
-    provides_repairs boolean DEFAULT false NOT NULL,
-    provides_quick_services boolean DEFAULT false NOT NULL,
-    has_mobile_technicians boolean DEFAULT false NOT NULL,
-    mobile_service_radius_km integer,
-    max_concurrent_services integer DEFAULT 3 NOT NULL,
-    service_capabilities uuid[] DEFAULT '{}'::uuid[] NOT NULL,
-    quick_services_offered text[] DEFAULT '{}'::text[] NOT NULL,
-    repair_specializations text[] DEFAULT '{}'::text[] NOT NULL,
-    sells_parts boolean DEFAULT true NOT NULL,
-    created_at timestamp with time zone DEFAULT now() NOT NULL,
-    updated_at timestamp with time zone DEFAULT now() NOT NULL
-);
-
-
---
--- Name: garage_stats; Type: TABLE; Schema: public; Owner: -
---
-
-CREATE TABLE public.garage_stats (
-    garage_id uuid NOT NULL,
-    total_services_completed integer DEFAULT 0 NOT NULL,
-    quick_service_rating numeric(2,1),
-    repair_rating numeric(2,1),
-    average_response_time_minutes integer,
-    created_at timestamp with time zone DEFAULT now() NOT NULL,
-    updated_at timestamp with time zone DEFAULT now() NOT NULL
-);
-
-
---
 -- Name: garage_subscriptions; Type: TABLE; Schema: public; Owner: -
 --
 
@@ -2784,8 +2794,8 @@ CREATE TABLE public.garage_subscriptions (
     cancellation_reason text,
     is_admin_granted boolean DEFAULT false,
     admin_notes text,
-    next_plan_id uuid,
     locked_until timestamp with time zone,
+    next_plan_id uuid,
     renewal_reminder_sent boolean DEFAULT false,
     last_billing_attempt timestamp with time zone,
     billing_retry_count integer DEFAULT 0,
@@ -2824,9 +2834,9 @@ CREATE TABLE public.garages (
     demo_expires_at timestamp without time zone,
     admin_notes text,
     deleted_at timestamp without time zone,
-    supplier_type character varying(10) DEFAULT 'used'::character varying,
-    specialized_brands text[] DEFAULT '{}'::text[],
-    all_brands boolean DEFAULT true,
+    supplier_type character varying(20) DEFAULT 'used'::character varying,
+    specialized_brands text[],
+    all_brands boolean DEFAULT false,
     subscription_plan character varying(20) DEFAULT 'starter'::character varying,
     subscription_start_date timestamp with time zone DEFAULT now(),
     subscription_end_date timestamp with time zone,
@@ -2838,11 +2848,14 @@ CREATE TABLE public.garages (
     has_mobile_technicians boolean DEFAULT false,
     quick_services_offered text[] DEFAULT '{}'::text[],
     repair_specializations text[] DEFAULT '{}'::text[],
+    mobile_service_radius_km integer DEFAULT 10,
     max_concurrent_services integer DEFAULT 3,
     average_response_time_minutes integer,
     total_services_completed integer DEFAULT 0,
     quick_service_rating numeric(2,1),
     repair_rating numeric(2,1),
+    provider_type public.provider_type_enum DEFAULT 'garage'::public.provider_type_enum,
+    service_capabilities uuid[] DEFAULT '{}'::uuid[],
     cancellations_this_month integer DEFAULT 0,
     last_cancellation_reset timestamp with time zone DEFAULT now(),
     preferred_plan_code character varying(50),
@@ -2852,6 +2865,13 @@ CREATE TABLE public.garages (
     CONSTRAINT garages_billing_cycle_check CHECK (((billing_cycle)::text = ANY ((ARRAY['monthly'::character varying, 'annual'::character varying])::text[]))),
     CONSTRAINT garages_supplier_type_check CHECK (((supplier_type)::text = ANY (ARRAY[('used'::character varying)::text, ('new'::character varying)::text, ('both'::character varying)::text])))
 );
+
+
+--
+-- Name: COLUMN garages.approval_status; Type: COMMENT; Schema: public; Owner: -
+--
+
+COMMENT ON COLUMN public.garages.approval_status IS 'AUTHORITATIVE status: pending|demo|approved|rejected. Demo takes precedence over subscription for plan display.';
 
 
 --
@@ -2914,7 +2934,7 @@ COMMENT ON COLUMN public.garages.preferred_plan_code IS 'Plan tier garage is int
 -- Name: COLUMN garages.current_plan_code; Type: COMMENT; Schema: public; Owner: -
 --
 
-COMMENT ON COLUMN public.garages.current_plan_code IS 'Current active subscription plan';
+COMMENT ON COLUMN public.garages.current_plan_code IS 'Current subscription plan code. Must be "free" when approval_status is demo/pending/rejected.';
 
 
 --
@@ -2953,44 +2973,6 @@ ALTER SEQUENCE public.hub_locations_hub_id_seq OWNED BY public.hub_locations.hub
 
 
 --
--- Name: idempotency_keys; Type: TABLE; Schema: public; Owner: -
---
-
-CREATE TABLE public.idempotency_keys (
-    key character varying(255) NOT NULL,
-    transaction_id uuid,
-    response jsonb NOT NULL,
-    created_at timestamp without time zone DEFAULT CURRENT_TIMESTAMP NOT NULL,
-    expires_at timestamp without time zone DEFAULT (CURRENT_TIMESTAMP + '24:00:00'::interval) NOT NULL,
-    request_hash character varying(64),
-    user_id uuid
-);
-
-
---
--- Name: TABLE idempotency_keys; Type: COMMENT; Schema: public; Owner: -
---
-
-COMMENT ON TABLE public.idempotency_keys IS 'Prevents duplicate payment processing, auto-expires after 24h';
-
-
---
--- Name: inspection_criteria; Type: TABLE; Schema: public; Owner: -
---
-
-CREATE TABLE public.inspection_criteria (
-    criteria_id uuid DEFAULT gen_random_uuid() NOT NULL,
-    name character varying(100) NOT NULL,
-    description text,
-    category character varying(50) DEFAULT 'general'::character varying,
-    is_required boolean DEFAULT true,
-    is_active boolean DEFAULT true,
-    sort_order integer DEFAULT 0,
-    created_at timestamp without time zone DEFAULT now()
-);
-
-
---
 -- Name: invoice_number_seq; Type: SEQUENCE; Schema: public; Owner: -
 --
 
@@ -3009,8 +2991,8 @@ CREATE SEQUENCE public.invoice_number_seq
 CREATE TABLE public.migrations (
     id integer NOT NULL,
     name character varying(255) NOT NULL,
-    checksum character varying(64),
-    applied_at timestamp without time zone DEFAULT now()
+    applied_at timestamp without time zone DEFAULT now(),
+    checksum character varying(64)
 );
 
 
@@ -3050,22 +3032,6 @@ CREATE TABLE public.notifications (
     is_read boolean DEFAULT false,
     read_at timestamp without time zone,
     created_at timestamp without time zone DEFAULT now()
-);
-
-
---
--- Name: operations_staff; Type: TABLE; Schema: public; Owner: -
---
-
-CREATE TABLE public.operations_staff (
-    staff_id uuid DEFAULT gen_random_uuid() NOT NULL,
-    user_id uuid,
-    full_name character varying(100) NOT NULL,
-    role character varying(50) DEFAULT 'operator'::character varying,
-    permissions jsonb DEFAULT '{}'::jsonb,
-    is_active boolean DEFAULT true,
-    created_at timestamp without time zone DEFAULT now(),
-    updated_at timestamp without time zone DEFAULT now()
 );
 
 
@@ -3139,51 +3105,84 @@ COMMENT ON TABLE public.order_status_history IS 'Complete audit trail of all ord
 
 
 --
--- Name: partner_service_performance; Type: VIEW; Schema: public; Owner: -
+-- Name: part_price_history; Type: TABLE; Schema: public; Owner: -
 --
 
-CREATE VIEW public.partner_service_performance AS
-SELECT
-    NULL::uuid AS garage_id,
-    NULL::text AS partner_name,
-    NULL::boolean AS sells_parts,
-    NULL::boolean AS provides_repairs,
-    NULL::boolean AS provides_quick_services,
-    NULL::boolean AS has_mobile_technicians,
-    NULL::bigint AS total_part_requests,
-    NULL::bigint AS completed_part_orders,
-    NULL::bigint AS total_quick_services,
-    NULL::bigint AS completed_quick_services,
-    NULL::numeric AS avg_quick_service_rating,
-    NULL::numeric(3,2) AS overall_rating,
-    NULL::integer AS total_services_completed;
-
-
---
--- Name: payment_audit_logs; Type: TABLE; Schema: public; Owner: -
---
-
-CREATE TABLE public.payment_audit_logs (
-    log_id uuid DEFAULT public.uuid_generate_v4() NOT NULL,
-    transaction_id uuid,
-    action character varying(50) NOT NULL,
-    ip_address inet,
-    user_agent text,
-    request_method character varying(10),
-    request_path text,
-    request_data jsonb,
-    response_data jsonb,
-    processing_time_ms integer,
-    created_at timestamp without time zone DEFAULT CURRENT_TIMESTAMP NOT NULL,
-    CONSTRAINT valid_action CHECK (((action)::text = ANY ((ARRAY['initiated'::character varying, 'validated'::character varying, 'processing'::character varying, 'completed'::character varying, 'failed'::character varying, 'refunded'::character varying, 'cancelled'::character varying])::text[])))
+CREATE TABLE public.part_price_history (
+    price_record_id uuid DEFAULT gen_random_uuid() NOT NULL,
+    part_name character varying(255) NOT NULL,
+    part_category character varying(100),
+    part_number character varying(100),
+    vehicle_make character varying(100),
+    vehicle_model character varying(100),
+    vehicle_year integer,
+    price numeric(10,2) NOT NULL,
+    currency character varying(3) DEFAULT 'QAR'::character varying,
+    source character varying(50) NOT NULL,
+    source_id uuid,
+    garage_id uuid,
+    recorded_at timestamp without time zone DEFAULT now(),
+    created_at timestamp without time zone DEFAULT now()
 );
 
 
 --
--- Name: TABLE payment_audit_logs; Type: COMMENT; Schema: public; Owner: -
+-- Name: part_price_benchmarks; Type: MATERIALIZED VIEW; Schema: public; Owner: -
 --
 
-COMMENT ON TABLE public.payment_audit_logs IS 'Append-only audit trail for compliance and forensics';
+CREATE MATERIALIZED VIEW public.part_price_benchmarks AS
+ SELECT part_price_history.part_name,
+    part_price_history.vehicle_make,
+    part_price_history.vehicle_model,
+    count(*) AS sample_size,
+    avg(part_price_history.price) AS avg_price,
+    min(part_price_history.price) AS min_price,
+    max(part_price_history.price) AS max_price,
+    percentile_cont((0.5)::double precision) WITHIN GROUP (ORDER BY ((part_price_history.price)::double precision)) AS median_price,
+    stddev(part_price_history.price) AS std_dev,
+    percentile_cont((0.25)::double precision) WITHIN GROUP (ORDER BY ((part_price_history.price)::double precision)) AS p25,
+    percentile_cont((0.75)::double precision) WITHIN GROUP (ORDER BY ((part_price_history.price)::double precision)) AS p75,
+    max(part_price_history.recorded_at) AS last_updated
+   FROM public.part_price_history
+  WHERE (part_price_history.recorded_at > (now() - '180 days'::interval))
+  GROUP BY part_price_history.part_name, part_price_history.vehicle_make, part_price_history.vehicle_model
+ HAVING (count(*) >= 3)
+  WITH NO DATA;
+
+
+--
+-- Name: password_reset_tokens; Type: TABLE; Schema: public; Owner: -
+--
+
+CREATE TABLE public.password_reset_tokens (
+    id integer NOT NULL,
+    user_id uuid NOT NULL,
+    token_hash character varying(64) NOT NULL,
+    token_type character varying(50) DEFAULT 'password_reset'::character varying,
+    expires_at timestamp with time zone NOT NULL,
+    used_at timestamp with time zone,
+    created_at timestamp with time zone DEFAULT now()
+);
+
+
+--
+-- Name: password_reset_tokens_id_seq; Type: SEQUENCE; Schema: public; Owner: -
+--
+
+CREATE SEQUENCE public.password_reset_tokens_id_seq
+    AS integer
+    START WITH 1
+    INCREMENT BY 1
+    NO MINVALUE
+    NO MAXVALUE
+    CACHE 1;
+
+
+--
+-- Name: password_reset_tokens_id_seq; Type: SEQUENCE OWNED BY; Schema: public; Owner: -
+--
+
+ALTER SEQUENCE public.password_reset_tokens_id_seq OWNED BY public.password_reset_tokens.id;
 
 
 --
@@ -3200,7 +3199,7 @@ CREATE TABLE public.payment_intents (
     provider character varying(20) NOT NULL,
     provider_intent_id character varying(255),
     provider_client_secret character varying(255),
-    status character varying(20) DEFAULT 'pending'::character varying,
+    status character varying(50) DEFAULT 'pending'::character varying,
     failure_reason text,
     metadata jsonb DEFAULT '{}'::jsonb,
     created_at timestamp with time zone DEFAULT now(),
@@ -3269,72 +3268,6 @@ COMMENT ON TABLE public.payment_refunds IS 'Refund records linked to payment int
 
 
 --
--- Name: payment_transactions; Type: TABLE; Schema: public; Owner: -
---
-
-CREATE TABLE public.payment_transactions (
-    transaction_id uuid DEFAULT public.uuid_generate_v4() NOT NULL,
-    order_id uuid NOT NULL,
-    user_id uuid NOT NULL,
-    amount numeric(10,2) NOT NULL,
-    currency character varying(3) DEFAULT 'QAR'::character varying NOT NULL,
-    payment_method character varying(20) NOT NULL,
-    status character varying(20) DEFAULT 'pending'::character varying NOT NULL,
-    card_last4 character varying(4),
-    card_brand character varying(20),
-    card_expiry_month integer,
-    card_expiry_year integer,
-    provider_response jsonb,
-    provider_transaction_id character varying(255),
-    idempotency_key character varying(255),
-    refund_amount numeric(10,2) DEFAULT 0,
-    refund_reason text,
-    refunded_at timestamp without time zone,
-    created_at timestamp without time zone DEFAULT CURRENT_TIMESTAMP NOT NULL,
-    updated_at timestamp without time zone DEFAULT CURRENT_TIMESTAMP NOT NULL,
-    completed_at timestamp without time zone,
-    failed_at timestamp without time zone,
-    failure_reason text,
-    error_code character varying(50),
-    metadata jsonb DEFAULT '{}'::jsonb,
-    CONSTRAINT payment_transactions_amount_check CHECK ((amount > (0)::numeric)),
-    CONSTRAINT payment_transactions_card_expiry_month_check CHECK (((card_expiry_month >= 1) AND (card_expiry_month <= 12))),
-    CONSTRAINT payment_transactions_card_expiry_year_check CHECK (((card_expiry_year)::numeric >= EXTRACT(year FROM CURRENT_DATE))),
-    CONSTRAINT payment_transactions_check CHECK (((refund_amount >= (0)::numeric) AND (refund_amount <= amount))),
-    CONSTRAINT valid_payment_method CHECK (((payment_method)::text = ANY ((ARRAY['mock_card'::character varying, 'cash'::character varying, 'qpay'::character varying])::text[]))),
-    CONSTRAINT valid_status CHECK (((status)::text = ANY ((ARRAY['pending'::character varying, 'processing'::character varying, 'success'::character varying, 'failed'::character varying, 'refunded'::character varying, 'cancelled'::character varying])::text[])))
-);
-
-
---
--- Name: TABLE payment_transactions; Type: COMMENT; Schema: public; Owner: -
---
-
-COMMENT ON TABLE public.payment_transactions IS 'Stores all payment transactions with PCI-DSS compliant card storage (last 4 digits only)';
-
-
---
--- Name: COLUMN payment_transactions.card_last4; Type: COMMENT; Schema: public; Owner: -
---
-
-COMMENT ON COLUMN public.payment_transactions.card_last4 IS 'Last 4 digits of card - PCI-DSS compliant';
-
-
---
--- Name: COLUMN payment_transactions.provider_response; Type: COMMENT; Schema: public; Owner: -
---
-
-COMMENT ON COLUMN public.payment_transactions.provider_response IS 'Encrypted response from payment provider';
-
-
---
--- Name: COLUMN payment_transactions.idempotency_key; Type: COMMENT; Schema: public; Owner: -
---
-
-COMMENT ON COLUMN public.payment_transactions.idempotency_key IS 'Client-generated UUID to prevent duplicate charges';
-
-
---
 -- Name: payout_reversals; Type: TABLE; Schema: public; Owner: -
 --
 
@@ -3347,6 +3280,7 @@ CREATE TABLE public.payout_reversals (
     status text DEFAULT 'pending'::text,
     created_at timestamp without time zone DEFAULT now(),
     processed_at timestamp without time zone,
+    order_id uuid,
     CONSTRAINT payout_reversals_status_check CHECK ((status = ANY (ARRAY['pending'::text, 'processing'::text, 'processed'::text, 'failed'::text])))
 );
 
@@ -3356,21 +3290,6 @@ CREATE TABLE public.payout_reversals (
 --
 
 COMMENT ON TABLE public.payout_reversals IS 'Tracks reversals for garage payouts that were already sent';
-
-
---
--- Name: product_inquiries; Type: TABLE; Schema: public; Owner: -
---
-
-CREATE TABLE public.product_inquiries (
-    inquiry_id uuid DEFAULT gen_random_uuid() NOT NULL,
-    product_id uuid NOT NULL,
-    customer_id uuid NOT NULL,
-    message text,
-    status character varying(20) DEFAULT 'pending'::character varying,
-    created_at timestamp without time zone DEFAULT now(),
-    responded_at timestamp without time zone
-);
 
 
 --
@@ -3425,52 +3344,6 @@ CREATE TABLE public.push_tokens (
 
 
 --
--- Name: quality_inspections; Type: TABLE; Schema: public; Owner: -
---
-
-CREATE TABLE public.quality_inspections (
-    inspection_id uuid DEFAULT gen_random_uuid() NOT NULL,
-    order_id uuid,
-    inspector_id uuid,
-    status character varying(20) DEFAULT 'pending'::character varying,
-    checklist_results jsonb DEFAULT '[]'::jsonb,
-    notes text,
-    failure_reason text,
-    photo_urls text[] DEFAULT '{}'::text[],
-    started_at timestamp without time zone,
-    completed_at timestamp without time zone,
-    created_at timestamp without time zone DEFAULT now(),
-    part_grade character varying(10),
-    condition_assessment character varying(20),
-    item_notes jsonb DEFAULT '{}'::jsonb,
-    failure_category character varying(50),
-    result character varying(20),
-    inspector_remarks text,
-    CONSTRAINT quality_inspections_condition_assessment_check CHECK (((condition_assessment)::text = ANY (ARRAY[('excellent'::character varying)::text, ('good'::character varying)::text, ('fair'::character varying)::text, ('poor'::character varying)::text, ('defective'::character varying)::text]))),
-    CONSTRAINT quality_inspections_failure_category_check CHECK (((failure_category)::text = ANY (ARRAY[('damaged'::character varying)::text, ('wrong_part'::character varying)::text, ('missing_components'::character varying)::text, ('quality_mismatch'::character varying)::text, ('counterfeit'::character varying)::text, ('rust_corrosion'::character varying)::text, ('non_functional'::character varying)::text, ('packaging_issue'::character varying)::text, ('other'::character varying)::text]))),
-    CONSTRAINT quality_inspections_part_grade_check CHECK (((part_grade)::text = ANY (ARRAY[('A'::character varying)::text, ('B'::character varying)::text, ('C'::character varying)::text, ('reject'::character varying)::text]))),
-    CONSTRAINT quality_inspections_status_check CHECK (((status)::text = ANY (ARRAY[('pending'::character varying)::text, ('in_progress'::character varying)::text, ('passed'::character varying)::text, ('failed'::character varying)::text])))
-);
-
-
---
--- Name: quick_service_revenue; Type: VIEW; Schema: public; Owner: -
---
-
-CREATE VIEW public.quick_service_revenue AS
- SELECT NULL::timestamp with time zone AS date,
-    NULL::text AS service_type,
-    (0)::bigint AS total_requests,
-    (0)::bigint AS completed,
-    (0)::numeric AS total_revenue,
-    (0)::numeric AS platform_commission,
-    (0)::numeric AS garage_earnings,
-    NULL::numeric AS avg_price,
-    NULL::numeric AS avg_completion_minutes
-  WHERE false;
-
-
---
 -- Name: receipt_number_seq; Type: SEQUENCE; Schema: public; Owner: -
 --
 
@@ -3511,21 +3384,24 @@ CREATE TABLE public.refunds (
     payment_intent_id text,
     created_at timestamp without time zone DEFAULT now(),
     processed_at timestamp without time zone,
-    refund_type character varying(30),
-    delivery_fee_retained numeric(10,2) DEFAULT 0,
-    stripe_refund_id character varying(100),
-    refund_amount numeric(10,2),
+    cancellation_id uuid,
     original_amount numeric(10,2),
+    refund_amount numeric(10,2),
+    fee_retained numeric(10,2) DEFAULT 0,
+    delivery_fee_retained numeric(10,2) DEFAULT 0,
+    refund_status text DEFAULT 'pending'::text,
+    stripe_refund_id text,
     refund_reason text,
-    refund_status character varying(30) DEFAULT 'pending'::character varying,
-    refund_method text DEFAULT 'original_payment'::text,
     initiated_by text,
+    refund_type text DEFAULT 'support_refund'::text,
+    refund_method text DEFAULT 'original_payment'::text,
     idempotency_key character varying(255),
     stripe_refund_status character varying(50),
     last_synced_at timestamp with time zone,
     reconciliation_status character varying(20) DEFAULT 'pending'::character varying,
+    garage_compensation numeric(10,2) DEFAULT 0,
     CONSTRAINT refunds_reconciliation_status_check CHECK (((reconciliation_status)::text = ANY ((ARRAY['pending'::character varying, 'matched'::character varying, 'mismatch'::character varying, 'manual'::character varying])::text[]))),
-    CONSTRAINT refunds_refund_status_check CHECK (((refund_status)::text = ANY ((ARRAY['pending'::character varying, 'processing'::character varying, 'completed'::character varying, 'failed'::character varying, 'rejected'::character varying])::text[])))
+    CONSTRAINT refunds_refund_status_check CHECK ((refund_status = ANY (ARRAY['pending'::text, 'processing'::text, 'completed'::text, 'failed'::text, 'rejected'::text])))
 );
 
 
@@ -3541,14 +3417,15 @@ COMMENT ON TABLE public.refunds IS 'Customer refund records with race condition 
 --
 
 CREATE TABLE public.resolution_logs (
-    log_id integer NOT NULL,
-    order_id uuid,
+    log_id uuid DEFAULT gen_random_uuid() NOT NULL,
     customer_id uuid NOT NULL,
+    order_id uuid,
     agent_id uuid NOT NULL,
     action_type character varying(50) NOT NULL,
     action_details jsonb,
     notes text,
-    created_at timestamp without time zone DEFAULT now()
+    created_at timestamp with time zone DEFAULT now(),
+    ticket_id uuid
 );
 
 
@@ -3571,26 +3448,6 @@ COMMENT ON COLUMN public.resolution_logs.action_type IS 'Type of action: full_re
 --
 
 COMMENT ON COLUMN public.resolution_logs.action_details IS 'JSON data with action-specific details like amount, reason, etc.';
-
-
---
--- Name: resolution_logs_log_id_seq; Type: SEQUENCE; Schema: public; Owner: -
---
-
-CREATE SEQUENCE public.resolution_logs_log_id_seq
-    AS integer
-    START WITH 1
-    INCREMENT BY 1
-    NO MINVALUE
-    NO MAXVALUE
-    CACHE 1;
-
-
---
--- Name: resolution_logs_log_id_seq; Type: SEQUENCE OWNED BY; Schema: public; Owner: -
---
-
-ALTER SEQUENCE public.resolution_logs_log_id_seq OWNED BY public.resolution_logs.log_id;
 
 
 --
@@ -3662,6 +3519,22 @@ COMMENT ON TABLE public.reward_transactions IS 'Audit trail for loyalty points a
 
 
 --
+-- Name: service_definitions; Type: TABLE; Schema: public; Owner: -
+--
+
+CREATE TABLE public.service_definitions (
+    service_def_id uuid DEFAULT gen_random_uuid() NOT NULL,
+    name text NOT NULL,
+    category public.service_category_enum NOT NULL,
+    description text,
+    icon_url text,
+    is_active boolean DEFAULT true,
+    base_price_estimate numeric(10,2),
+    created_at timestamp without time zone DEFAULT now()
+);
+
+
+--
 -- Name: staff_profiles; Type: TABLE; Schema: public; Owner: -
 --
 
@@ -3676,7 +3549,7 @@ CREATE TABLE public.staff_profiles (
     is_active boolean DEFAULT true,
     created_at timestamp without time zone DEFAULT now(),
     updated_at timestamp without time zone DEFAULT now(),
-    CONSTRAINT staff_profiles_role_check CHECK (((role)::text = ANY (ARRAY[('operations'::character varying)::text, ('accounting'::character varying)::text, ('customer_service'::character varying)::text, ('quality_control'::character varying)::text, ('logistics'::character varying)::text, ('hr'::character varying)::text, ('management'::character varying)::text])))
+    CONSTRAINT staff_profiles_role_check CHECK (((role)::text = ANY ((ARRAY['operations'::character varying, 'finance'::character varying, 'customer_service'::character varying, 'quality_control'::character varying, 'logistics'::character varying, 'hr'::character varying, 'management'::character varying])::text[])))
 );
 
 
@@ -3710,13 +3583,6 @@ CREATE TABLE public.stripe_webhook_events (
     processed_at timestamp with time zone DEFAULT now(),
     status character varying(20) DEFAULT 'processed'::character varying
 );
-
-
---
--- Name: TABLE stripe_webhook_events; Type: COMMENT; Schema: public; Owner: -
---
-
-COMMENT ON TABLE public.stripe_webhook_events IS 'Log of processed Stripe webhook events';
 
 
 --
@@ -3838,13 +3704,6 @@ CREATE TABLE public.subscription_invoices (
 
 
 --
--- Name: TABLE subscription_invoices; Type: COMMENT; Schema: public; Owner: -
---
-
-COMMENT ON TABLE public.subscription_invoices IS 'Invoice records for subscription payments';
-
-
---
 -- Name: subscription_payments; Type: TABLE; Schema: public; Owner: -
 --
 
@@ -3881,18 +3740,7 @@ CREATE TABLE public.subscription_plans (
     is_featured boolean DEFAULT false,
     is_active boolean DEFAULT true,
     display_order integer DEFAULT 0,
-    created_at timestamp without time zone DEFAULT now(),
-    monthly_price_qar numeric(10,2),
-    annual_price_qar numeric(10,2),
-    max_monthly_orders integer,
-    analytics_enabled boolean DEFAULT false,
-    priority_support boolean DEFAULT false,
-    api_access boolean DEFAULT false,
-    ad_campaigns_allowed boolean DEFAULT false,
-    max_team_members integer DEFAULT 1,
-    features_json jsonb,
-    active boolean DEFAULT true,
-    CONSTRAINT subscription_plans_commission_rate_range CHECK (((commission_rate >= (0)::numeric) AND (commission_rate <= 0.15)))
+    created_at timestamp without time zone DEFAULT now()
 );
 
 
@@ -3901,31 +3749,6 @@ CREATE TABLE public.subscription_plans (
 --
 
 COMMENT ON TABLE public.subscription_plans IS 'Subscription tier definitions with features and pricing';
-
-
---
--- Name: subscription_revenue_stats; Type: VIEW; Schema: public; Owner: -
---
-
-CREATE VIEW public.subscription_revenue_stats AS
- SELECT sp.plan_code,
-    sp.plan_name,
-    count(g.garage_id) AS active_subscriptions,
-    sum(
-        CASE
-            WHEN ((g.billing_cycle)::text = 'monthly'::text) THEN sp.monthly_price_qar
-            ELSE (sp.annual_price_qar / (12)::numeric)
-        END) AS monthly_recurring_revenue,
-    avg(
-        CASE
-            WHEN ((g.billing_cycle)::text = 'monthly'::text) THEN sp.monthly_price_qar
-            ELSE sp.annual_price_qar
-        END) AS avg_subscription_value
-   FROM (public.subscription_plans sp
-     LEFT JOIN public.garages g ON (((sp.plan_code)::text = (g.subscription_plan)::text)))
-  WHERE (sp.active = true)
-  GROUP BY sp.plan_code, sp.plan_name, sp.display_order
-  ORDER BY sp.display_order;
 
 
 --
@@ -3945,9 +3768,9 @@ CREATE TABLE public.support_escalations (
     created_at timestamp with time zone DEFAULT now(),
     resolved_at timestamp with time zone,
     updated_at timestamp with time zone DEFAULT now(),
-    resolution_action character varying(50),
     ticket_id uuid,
     assigned_to uuid,
+    resolution_action character varying(50),
     CONSTRAINT support_escalations_priority_check CHECK (((priority)::text = ANY ((ARRAY['normal'::character varying, 'high'::character varying, 'urgent'::character varying])::text[]))),
     CONSTRAINT support_escalations_resolution_action_check CHECK (((resolution_action)::text = ANY ((ARRAY['refund'::character varying, 'partial_refund'::character varying, 'no_action'::character varying, 'reassign'::character varying, 'resolved'::character varying, 'approve_refund'::character varying, 'approve_cancellation'::character varying, 'reject'::character varying, 'acknowledge'::character varying])::text[]))),
     CONSTRAINT support_escalations_status_check CHECK (((status)::text = ANY ((ARRAY['pending'::character varying, 'acknowledged'::character varying, 'in_progress'::character varying, 'resolved'::character varying])::text[])))
@@ -4052,39 +3875,6 @@ COMMENT ON COLUMN public.support_tickets.reopened_count IS 'Number of times tick
 
 
 --
--- Name: technicians; Type: TABLE; Schema: public; Owner: -
---
-
-CREATE TABLE public.technicians (
-    technician_id uuid DEFAULT gen_random_uuid() NOT NULL,
-    garage_id uuid,
-    name character varying(255) NOT NULL,
-    phone character varying(20),
-    photo_url text,
-    specializations text[] DEFAULT '{}'::text[],
-    experience_years integer,
-    certification_urls text[],
-    is_available boolean DEFAULT true,
-    current_lat numeric(10,8),
-    current_lng numeric(11,8),
-    current_assignment_id uuid,
-    total_services_completed integer DEFAULT 0,
-    rating numeric(2,1),
-    average_service_time_minutes integer,
-    is_active boolean DEFAULT true,
-    created_at timestamp with time zone DEFAULT now(),
-    updated_at timestamp with time zone DEFAULT now()
-);
-
-
---
--- Name: TABLE technicians; Type: COMMENT; Schema: public; Owner: -
---
-
-COMMENT ON TABLE public.technicians IS 'Mobile technicians for quick services';
-
-
---
 -- Name: undo_audit_log; Type: TABLE; Schema: public; Owner: -
 --
 
@@ -4153,34 +3943,71 @@ CREATE TABLE public.users (
     suspension_reason text,
     settings jsonb DEFAULT '{"theme": "system", "language": "en", "notifications": {"bid": true, "push": true, "order": true, "delivery": true}}'::jsonb,
     deleted_at timestamp without time zone,
-    CONSTRAINT users_user_type_check CHECK ((user_type = ANY (ARRAY['customer'::text, 'garage'::text, 'driver'::text, 'staff'::text, 'admin'::text])))
+    insurance_company_id uuid,
+    email_verified boolean DEFAULT false,
+    CONSTRAINT users_user_type_check CHECK ((user_type = ANY (ARRAY['customer'::text, 'garage'::text, 'driver'::text, 'staff'::text, 'admin'::text, 'insurance_agent'::text])))
 );
 
 
 --
--- Name: v_garages_full_view; Type: VIEW; Schema: public; Owner: -
+-- Name: vehicle_history_events; Type: TABLE; Schema: public; Owner: -
 --
 
-CREATE VIEW public.v_garages_full_view AS
- SELECT g.garage_id,
-    g.garage_name,
-    g.cr_number,
-    g.location_lat,
-    g.location_lng,
-    g.approval_status,
-    s.auto_renew,
-    s.provides_repairs,
-    s.provides_quick_services,
-    s.mobile_service_radius_km,
-    s.max_concurrent_services,
-    s.service_capabilities,
-    st.total_services_completed,
-    st.quick_service_rating,
-    st.repair_rating,
-    st.average_response_time_minutes
-   FROM ((public.garages g
-     LEFT JOIN public.garage_settings s ON ((g.garage_id = s.garage_id)))
-     LEFT JOIN public.garage_stats st ON ((g.garage_id = st.garage_id)));
+CREATE TABLE public.vehicle_history_events (
+    event_id uuid DEFAULT gen_random_uuid() NOT NULL,
+    vin_number character varying(17) NOT NULL,
+    event_type text NOT NULL,
+    event_date timestamp without time zone DEFAULT now(),
+    order_id uuid,
+    service_request_id uuid,
+    garage_id uuid,
+    description text NOT NULL,
+    mileage_km integer,
+    is_verified_by_motar boolean DEFAULT true,
+    created_at timestamp without time zone DEFAULT now()
+);
+
+
+--
+-- Name: warranty_claims; Type: TABLE; Schema: public; Owner: -
+--
+
+CREATE TABLE public.warranty_claims (
+    claim_id uuid DEFAULT gen_random_uuid() NOT NULL,
+    order_id uuid NOT NULL,
+    customer_id uuid NOT NULL,
+    ticket_id uuid,
+    defect_description text NOT NULL,
+    evidence_urls text[],
+    claim_status character varying(50) DEFAULT 'pending_finance_review'::character varying NOT NULL,
+    resolution_type character varying(50),
+    refund_amount numeric(10,2),
+    created_at timestamp with time zone DEFAULT now(),
+    resolved_at timestamp with time zone,
+    resolved_by uuid,
+    resolution_notes text
+);
+
+
+--
+-- Name: TABLE warranty_claims; Type: COMMENT; Schema: public; Owner: -
+--
+
+COMMENT ON TABLE public.warranty_claims IS 'Warranty claims for defective parts post-delivery (beyond 7-day return window). Requires Finance approval.';
+
+
+--
+-- Name: COLUMN warranty_claims.claim_status; Type: COMMENT; Schema: public; Owner: -
+--
+
+COMMENT ON COLUMN public.warranty_claims.claim_status IS 'pending_finance_review, approved, rejected, fulfilled';
+
+
+--
+-- Name: COLUMN warranty_claims.resolution_type; Type: COMMENT; Schema: public; Owner: -
+--
+
+COMMENT ON COLUMN public.warranty_claims.resolution_type IS 'replacement (send new part), refund (full/partial), repair_credit (credit for repair costs)';
 
 
 --
@@ -4193,13 +4020,6 @@ CREATE SEQUENCE public.warranty_number_seq
     NO MINVALUE
     NO MAXVALUE
     CACHE 1;
-
-
---
--- Name: customer_notes note_id; Type: DEFAULT; Schema: public; Owner: -
---
-
-ALTER TABLE ONLY public.customer_notes ALTER COLUMN note_id SET DEFAULT nextval('public.customer_notes_note_id_seq'::regclass);
 
 
 --
@@ -4217,6 +4037,13 @@ ALTER TABLE ONLY public.delivery_zones ALTER COLUMN zone_id SET DEFAULT nextval(
 
 
 --
+-- Name: email_otps id; Type: DEFAULT; Schema: public; Owner: -
+--
+
+ALTER TABLE ONLY public.email_otps ALTER COLUMN id SET DEFAULT nextval('public.email_otps_id_seq'::regclass);
+
+
+--
 -- Name: hub_locations hub_id; Type: DEFAULT; Schema: public; Owner: -
 --
 
@@ -4231,10 +4058,10 @@ ALTER TABLE ONLY public.migrations ALTER COLUMN id SET DEFAULT nextval('public.m
 
 
 --
--- Name: resolution_logs log_id; Type: DEFAULT; Schema: public; Owner: -
+-- Name: password_reset_tokens id; Type: DEFAULT; Schema: public; Owner: -
 --
 
-ALTER TABLE ONLY public.resolution_logs ALTER COLUMN log_id SET DEFAULT nextval('public.resolution_logs_log_id_seq'::regclass);
+ALTER TABLE ONLY public.password_reset_tokens ALTER COLUMN id SET DEFAULT nextval('public.password_reset_tokens_id_seq'::regclass);
 
 
 --
@@ -4243,22 +4070,6 @@ ALTER TABLE ONLY public.resolution_logs ALTER COLUMN log_id SET DEFAULT nextval(
 
 ALTER TABLE ONLY public.ad_campaigns
     ADD CONSTRAINT ad_campaigns_pkey PRIMARY KEY (campaign_id);
-
-
---
--- Name: ad_impressions ad_impressions_pkey; Type: CONSTRAINT; Schema: public; Owner: -
---
-
-ALTER TABLE ONLY public.ad_impressions
-    ADD CONSTRAINT ad_impressions_pkey PRIMARY KEY (impression_id);
-
-
---
--- Name: ad_placements ad_placements_pkey; Type: CONSTRAINT; Schema: public; Owner: -
---
-
-ALTER TABLE ONLY public.ad_placements
-    ADD CONSTRAINT ad_placements_pkey PRIMARY KEY (placement_id);
 
 
 --
@@ -4438,6 +4249,22 @@ ALTER TABLE ONLY public.delivery_fee_tiers
 
 
 --
+-- Name: delivery_otps delivery_otps_order_id_unique; Type: CONSTRAINT; Schema: public; Owner: -
+--
+
+ALTER TABLE ONLY public.delivery_otps
+    ADD CONSTRAINT delivery_otps_order_id_unique UNIQUE (order_id);
+
+
+--
+-- Name: delivery_otps delivery_otps_pkey; Type: CONSTRAINT; Schema: public; Owner: -
+--
+
+ALTER TABLE ONLY public.delivery_otps
+    ADD CONSTRAINT delivery_otps_pkey PRIMARY KEY (otp_id);
+
+
+--
 -- Name: delivery_vouchers delivery_vouchers_code_key; Type: CONSTRAINT; Schema: public; Owner: -
 --
 
@@ -4566,6 +4393,14 @@ ALTER TABLE ONLY public.drivers
 
 
 --
+-- Name: email_otps email_otps_pkey; Type: CONSTRAINT; Schema: public; Owner: -
+--
+
+ALTER TABLE ONLY public.email_otps
+    ADD CONSTRAINT email_otps_pkey PRIMARY KEY (id);
+
+
+--
 -- Name: escrow_release_rules escrow_release_rules_pkey; Type: CONSTRAINT; Schema: public; Owner: -
 --
 
@@ -4582,27 +4417,19 @@ ALTER TABLE ONLY public.escrow_release_rules
 
 
 --
+-- Name: escrow_transactions escrow_transactions_order_unique; Type: CONSTRAINT; Schema: public; Owner: -
+--
+
+ALTER TABLE ONLY public.escrow_transactions
+    ADD CONSTRAINT escrow_transactions_order_unique UNIQUE (order_id);
+
+
+--
 -- Name: escrow_transactions escrow_transactions_pkey; Type: CONSTRAINT; Schema: public; Owner: -
 --
 
 ALTER TABLE ONLY public.escrow_transactions
     ADD CONSTRAINT escrow_transactions_pkey PRIMARY KEY (escrow_id);
-
-
---
--- Name: garage_analytics_summary garage_analytics_summary_garage_id_period_key; Type: CONSTRAINT; Schema: public; Owner: -
---
-
-ALTER TABLE ONLY public.garage_analytics_summary
-    ADD CONSTRAINT garage_analytics_summary_garage_id_period_key UNIQUE (garage_id, period);
-
-
---
--- Name: garage_analytics_summary garage_analytics_summary_pkey; Type: CONSTRAINT; Schema: public; Owner: -
---
-
-ALTER TABLE ONLY public.garage_analytics_summary
-    ADD CONSTRAINT garage_analytics_summary_pkey PRIMARY KEY (summary_id);
 
 
 --
@@ -4662,30 +4489,6 @@ ALTER TABLE ONLY public.garage_penalties
 
 
 --
--- Name: garage_products garage_products_pkey; Type: CONSTRAINT; Schema: public; Owner: -
---
-
-ALTER TABLE ONLY public.garage_products
-    ADD CONSTRAINT garage_products_pkey PRIMARY KEY (product_id);
-
-
---
--- Name: garage_settings garage_settings_pkey; Type: CONSTRAINT; Schema: public; Owner: -
---
-
-ALTER TABLE ONLY public.garage_settings
-    ADD CONSTRAINT garage_settings_pkey PRIMARY KEY (garage_id);
-
-
---
--- Name: garage_stats garage_stats_pkey; Type: CONSTRAINT; Schema: public; Owner: -
---
-
-ALTER TABLE ONLY public.garage_stats
-    ADD CONSTRAINT garage_stats_pkey PRIMARY KEY (garage_id);
-
-
---
 -- Name: garage_subscriptions garage_subscriptions_pkey; Type: CONSTRAINT; Schema: public; Owner: -
 --
 
@@ -4710,22 +4513,6 @@ ALTER TABLE ONLY public.hub_locations
 
 
 --
--- Name: idempotency_keys idempotency_keys_pkey; Type: CONSTRAINT; Schema: public; Owner: -
---
-
-ALTER TABLE ONLY public.idempotency_keys
-    ADD CONSTRAINT idempotency_keys_pkey PRIMARY KEY (key);
-
-
---
--- Name: inspection_criteria inspection_criteria_pkey; Type: CONSTRAINT; Schema: public; Owner: -
---
-
-ALTER TABLE ONLY public.inspection_criteria
-    ADD CONSTRAINT inspection_criteria_pkey PRIMARY KEY (criteria_id);
-
-
---
 -- Name: migrations migrations_name_key; Type: CONSTRAINT; Schema: public; Owner: -
 --
 
@@ -4747,14 +4534,6 @@ ALTER TABLE ONLY public.migrations
 
 ALTER TABLE ONLY public.notifications
     ADD CONSTRAINT notifications_pkey PRIMARY KEY (notification_id);
-
-
---
--- Name: operations_staff operations_staff_pkey; Type: CONSTRAINT; Schema: public; Owner: -
---
-
-ALTER TABLE ONLY public.operations_staff
-    ADD CONSTRAINT operations_staff_pkey PRIMARY KEY (staff_id);
 
 
 --
@@ -4798,6 +4577,14 @@ ALTER TABLE ONLY public.orders
 
 
 --
+-- Name: part_price_history part_price_history_pkey; Type: CONSTRAINT; Schema: public; Owner: -
+--
+
+ALTER TABLE ONLY public.part_price_history
+    ADD CONSTRAINT part_price_history_pkey PRIMARY KEY (price_record_id);
+
+
+--
 -- Name: part_requests part_requests_pkey; Type: CONSTRAINT; Schema: public; Owner: -
 --
 
@@ -4806,11 +4593,19 @@ ALTER TABLE ONLY public.part_requests
 
 
 --
--- Name: payment_audit_logs payment_audit_logs_pkey; Type: CONSTRAINT; Schema: public; Owner: -
+-- Name: password_reset_tokens password_reset_tokens_pkey; Type: CONSTRAINT; Schema: public; Owner: -
 --
 
-ALTER TABLE ONLY public.payment_audit_logs
-    ADD CONSTRAINT payment_audit_logs_pkey PRIMARY KEY (log_id);
+ALTER TABLE ONLY public.password_reset_tokens
+    ADD CONSTRAINT password_reset_tokens_pkey PRIMARY KEY (id);
+
+
+--
+-- Name: password_reset_tokens password_reset_tokens_user_id_key; Type: CONSTRAINT; Schema: public; Owner: -
+--
+
+ALTER TABLE ONLY public.password_reset_tokens
+    ADD CONSTRAINT password_reset_tokens_user_id_key UNIQUE (user_id);
 
 
 --
@@ -4838,35 +4633,11 @@ ALTER TABLE ONLY public.payment_refunds
 
 
 --
--- Name: payment_transactions payment_transactions_idempotency_key_key; Type: CONSTRAINT; Schema: public; Owner: -
---
-
-ALTER TABLE ONLY public.payment_transactions
-    ADD CONSTRAINT payment_transactions_idempotency_key_key UNIQUE (idempotency_key);
-
-
---
--- Name: payment_transactions payment_transactions_pkey; Type: CONSTRAINT; Schema: public; Owner: -
---
-
-ALTER TABLE ONLY public.payment_transactions
-    ADD CONSTRAINT payment_transactions_pkey PRIMARY KEY (transaction_id);
-
-
---
 -- Name: payout_reversals payout_reversals_pkey; Type: CONSTRAINT; Schema: public; Owner: -
 --
 
 ALTER TABLE ONLY public.payout_reversals
     ADD CONSTRAINT payout_reversals_pkey PRIMARY KEY (reversal_id);
-
-
---
--- Name: product_inquiries product_inquiries_pkey; Type: CONSTRAINT; Schema: public; Owner: -
---
-
-ALTER TABLE ONLY public.product_inquiries
-    ADD CONSTRAINT product_inquiries_pkey PRIMARY KEY (inquiry_id);
 
 
 --
@@ -4883,22 +4654,6 @@ ALTER TABLE ONLY public.proof_of_condition
 
 ALTER TABLE ONLY public.push_tokens
     ADD CONSTRAINT push_tokens_pkey PRIMARY KEY (id);
-
-
---
--- Name: quality_inspections quality_inspections_order_id_key; Type: CONSTRAINT; Schema: public; Owner: -
---
-
-ALTER TABLE ONLY public.quality_inspections
-    ADD CONSTRAINT quality_inspections_order_id_key UNIQUE (order_id);
-
-
---
--- Name: quality_inspections quality_inspections_pkey; Type: CONSTRAINT; Schema: public; Owner: -
---
-
-ALTER TABLE ONLY public.quality_inspections
-    ADD CONSTRAINT quality_inspections_pkey PRIMARY KEY (inspection_id);
 
 
 --
@@ -4955,6 +4710,14 @@ ALTER TABLE ONLY public.reward_tiers
 
 ALTER TABLE ONLY public.reward_transactions
     ADD CONSTRAINT reward_transactions_pkey PRIMARY KEY (transaction_id);
+
+
+--
+-- Name: service_definitions service_definitions_pkey; Type: CONSTRAINT; Schema: public; Owner: -
+--
+
+ALTER TABLE ONLY public.service_definitions
+    ADD CONSTRAINT service_definitions_pkey PRIMARY KEY (service_def_id);
 
 
 --
@@ -5078,14 +4841,6 @@ ALTER TABLE ONLY public.support_tickets
 
 
 --
--- Name: technicians technicians_pkey; Type: CONSTRAINT; Schema: public; Owner: -
---
-
-ALTER TABLE ONLY public.technicians
-    ADD CONSTRAINT technicians_pkey PRIMARY KEY (technician_id);
-
-
---
 -- Name: undo_audit_log undo_audit_log_pkey; Type: CONSTRAINT; Schema: public; Owner: -
 --
 
@@ -5099,6 +4854,21 @@ ALTER TABLE ONLY public.undo_audit_log
 
 ALTER TABLE ONLY public.refunds
     ADD CONSTRAINT unique_order_refund UNIQUE (order_id);
+
+
+--
+-- Name: refunds unique_order_refund_type; Type: CONSTRAINT; Schema: public; Owner: -
+--
+
+ALTER TABLE ONLY public.refunds
+    ADD CONSTRAINT unique_order_refund_type UNIQUE (order_id, refund_type);
+
+
+--
+-- Name: CONSTRAINT unique_order_refund_type ON refunds; Type: COMMENT; Schema: public; Owner: -
+--
+
+COMMENT ON CONSTRAINT unique_order_refund_type ON public.refunds IS 'Prevents double refunds - CR-01 fix from Jan 30 2026 audit';
 
 
 --
@@ -5123,6 +4893,22 @@ ALTER TABLE ONLY public.users
 
 ALTER TABLE ONLY public.users
     ADD CONSTRAINT users_pkey PRIMARY KEY (user_id);
+
+
+--
+-- Name: vehicle_history_events vehicle_history_events_pkey; Type: CONSTRAINT; Schema: public; Owner: -
+--
+
+ALTER TABLE ONLY public.vehicle_history_events
+    ADD CONSTRAINT vehicle_history_events_pkey PRIMARY KEY (event_id);
+
+
+--
+-- Name: warranty_claims warranty_claims_pkey; Type: CONSTRAINT; Schema: public; Owner: -
+--
+
+ALTER TABLE ONLY public.warranty_claims
+    ADD CONSTRAINT warranty_claims_pkey PRIMARY KEY (claim_id);
 
 
 --
@@ -5165,48 +4951,6 @@ CREATE INDEX idx_ad_campaigns_garage ON public.ad_campaigns USING btree (garage_
 --
 
 CREATE INDEX idx_ad_campaigns_status ON public.ad_campaigns USING btree (status, start_date);
-
-
---
--- Name: idx_ad_impressions_campaign; Type: INDEX; Schema: public; Owner: -
---
-
-CREATE INDEX idx_ad_impressions_campaign ON public.ad_impressions USING btree (campaign_id, "timestamp" DESC);
-
-
---
--- Name: idx_ad_impressions_timestamp_brin; Type: INDEX; Schema: public; Owner: -
---
-
-CREATE INDEX idx_ad_impressions_timestamp_brin ON public.ad_impressions USING brin ("timestamp");
-
-
---
--- Name: idx_ad_impressions_timestamp_desc; Type: INDEX; Schema: public; Owner: -
---
-
-CREATE INDEX idx_ad_impressions_timestamp_desc ON public.ad_impressions USING btree ("timestamp" DESC);
-
-
---
--- Name: idx_ad_impressions_type; Type: INDEX; Schema: public; Owner: -
---
-
-CREATE INDEX idx_ad_impressions_type ON public.ad_impressions USING btree (impression_type, "timestamp" DESC);
-
-
---
--- Name: idx_ad_placements_campaign; Type: INDEX; Schema: public; Owner: -
---
-
-CREATE INDEX idx_ad_placements_campaign ON public.ad_placements USING btree (campaign_id);
-
-
---
--- Name: idx_ad_placements_type; Type: INDEX; Schema: public; Owner: -
---
-
-CREATE INDEX idx_ad_placements_type ON public.ad_placements USING btree (placement_type, active);
 
 
 --
@@ -5259,17 +5003,17 @@ CREATE INDEX idx_audit_log_target ON public.admin_audit_log USING btree (target_
 
 
 --
--- Name: idx_audit_logs_created_at_desc; Type: INDEX; Schema: public; Owner: -
---
-
-CREATE INDEX idx_audit_logs_created_at_desc ON public.audit_logs USING btree (created_at DESC);
-
-
---
 -- Name: idx_audit_target; Type: INDEX; Schema: public; Owner: -
 --
 
 CREATE INDEX idx_audit_target ON public.admin_audit_log USING btree (target_type, target_id);
+
+
+--
+-- Name: idx_benchmark_lookup; Type: INDEX; Schema: public; Owner: -
+--
+
+CREATE UNIQUE INDEX idx_benchmark_lookup ON public.part_price_benchmarks USING btree (part_name, vehicle_make, vehicle_model);
 
 
 --
@@ -5322,6 +5066,13 @@ CREATE INDEX idx_bids_request_created ON public.bids USING btree (request_id, cr
 
 
 --
+-- Name: idx_bids_request_id_status; Type: INDEX; Schema: public; Owner: -
+--
+
+CREATE INDEX idx_bids_request_id_status ON public.bids USING btree (request_id, status);
+
+
+--
 -- Name: idx_bids_request_status; Type: INDEX; Schema: public; Owner: -
 --
 
@@ -5333,6 +5084,27 @@ CREATE INDEX idx_bids_request_status ON public.bids USING btree (request_id, sta
 --
 
 CREATE INDEX idx_bids_status ON public.bids USING btree (status);
+
+
+--
+-- Name: idx_bids_status_flagged; Type: INDEX; Schema: public; Owner: -
+--
+
+CREATE INDEX idx_bids_status_flagged ON public.bids USING btree (garage_id, status) WHERE (status = 'flagged'::text);
+
+
+--
+-- Name: idx_bids_superseded_by; Type: INDEX; Schema: public; Owner: -
+--
+
+CREATE INDEX idx_bids_superseded_by ON public.bids USING btree (superseded_by) WHERE (superseded_by IS NOT NULL);
+
+
+--
+-- Name: idx_bids_supersedes_bid_id; Type: INDEX; Schema: public; Owner: -
+--
+
+CREATE INDEX idx_bids_supersedes_bid_id ON public.bids USING btree (supersedes_bid_id) WHERE (supersedes_bid_id IS NOT NULL);
 
 
 --
@@ -5448,24 +5220,10 @@ CREATE INDEX idx_customer_vehicles_last_used ON public.customer_vehicles USING b
 
 
 --
--- Name: idx_customer_vehicles_vin; Type: INDEX; Schema: public; Owner: -
---
-
-CREATE INDEX idx_customer_vehicles_vin ON public.customer_vehicles USING btree (vin_number) WHERE ((vin_number IS NOT NULL) AND ((vin_number)::text <> ''::text));
-
-
---
 -- Name: idx_customer_vehicles_vin_unique; Type: INDEX; Schema: public; Owner: -
 --
 
 CREATE UNIQUE INDEX idx_customer_vehicles_vin_unique ON public.customer_vehicles USING btree (customer_id, vin_number) WHERE ((vin_number IS NOT NULL) AND ((vin_number)::text <> ''::text));
-
-
---
--- Name: idx_default_template_type; Type: INDEX; Schema: public; Owner: -
---
-
-CREATE UNIQUE INDEX idx_default_template_type ON public.document_templates USING btree (document_type) WHERE (is_default = true);
 
 
 --
@@ -5539,6 +5297,20 @@ CREATE INDEX idx_delivery_order ON public.delivery_assignments USING btree (orde
 
 
 --
+-- Name: idx_delivery_otps_expires_at; Type: INDEX; Schema: public; Owner: -
+--
+
+CREATE INDEX idx_delivery_otps_expires_at ON public.delivery_otps USING btree (expires_at);
+
+
+--
+-- Name: idx_delivery_otps_order_id; Type: INDEX; Schema: public; Owner: -
+--
+
+CREATE INDEX idx_delivery_otps_order_id ON public.delivery_otps USING btree (order_id);
+
+
+--
 -- Name: idx_delivery_zones_distance; Type: INDEX; Schema: public; Owner: -
 --
 
@@ -5599,13 +5371,6 @@ CREATE INDEX idx_doc_access_document ON public.document_access_log USING btree (
 --
 
 CREATE INDEX idx_documents_created ON public.documents USING btree (generated_at);
-
-
---
--- Name: idx_documents_created_at_desc; Type: INDEX; Schema: public; Owner: -
---
-
-CREATE INDEX idx_documents_created_at_desc ON public.documents USING btree (created_at DESC);
 
 
 --
@@ -5686,10 +5451,24 @@ CREATE INDEX idx_driver_transactions_created_at ON public.driver_transactions US
 
 
 --
+-- Name: idx_driver_transactions_type; Type: INDEX; Schema: public; Owner: -
+--
+
+CREATE INDEX idx_driver_transactions_type ON public.driver_transactions USING btree (type);
+
+
+--
 -- Name: idx_driver_transactions_wallet_id; Type: INDEX; Schema: public; Owner: -
 --
 
 CREATE INDEX idx_driver_transactions_wallet_id ON public.driver_transactions USING btree (wallet_id);
+
+
+--
+-- Name: idx_driver_wallets_driver_id; Type: INDEX; Schema: public; Owner: -
+--
+
+CREATE INDEX idx_driver_wallets_driver_id ON public.driver_wallets USING btree (driver_id);
 
 
 --
@@ -5704,6 +5483,27 @@ CREATE INDEX idx_drivers_available ON public.drivers USING btree (status) WHERE 
 --
 
 CREATE INDEX idx_drivers_status ON public.drivers USING btree (status);
+
+
+--
+-- Name: idx_email_otps_email; Type: INDEX; Schema: public; Owner: -
+--
+
+CREATE INDEX idx_email_otps_email ON public.email_otps USING btree (email);
+
+
+--
+-- Name: idx_email_otps_expiry; Type: INDEX; Schema: public; Owner: -
+--
+
+CREATE INDEX idx_email_otps_expiry ON public.email_otps USING btree (expires_at);
+
+
+--
+-- Name: idx_email_otps_purpose; Type: INDEX; Schema: public; Owner: -
+--
+
+CREATE INDEX idx_email_otps_purpose ON public.email_otps USING btree (purpose);
 
 
 --
@@ -5746,13 +5546,6 @@ CREATE INDEX idx_escrow_seller ON public.escrow_transactions USING btree (seller
 --
 
 CREATE INDEX idx_escrow_status ON public.escrow_transactions USING btree (status);
-
-
---
--- Name: idx_garage_analytics_summary_garage; Type: INDEX; Schema: public; Owner: -
---
-
-CREATE INDEX idx_garage_analytics_summary_garage ON public.garage_analytics_summary USING btree (garage_id);
 
 
 --
@@ -5840,13 +5633,6 @@ CREATE INDEX idx_garage_payouts_status ON public.garage_payouts USING btree (pay
 
 
 --
--- Name: idx_garage_payouts_unique_reference; Type: INDEX; Schema: public; Owner: -
---
-
-CREATE UNIQUE INDEX idx_garage_payouts_unique_reference ON public.garage_payouts USING btree (payout_reference) WHERE (payout_reference IS NOT NULL);
-
-
---
 -- Name: idx_garage_penalties_created; Type: INDEX; Schema: public; Owner: -
 --
 
@@ -5875,17 +5661,10 @@ CREATE INDEX idx_garage_popular_parts_garage ON public.garage_popular_parts USIN
 
 
 --
--- Name: idx_garage_settings_capabilities; Type: INDEX; Schema: public; Owner: -
+-- Name: idx_garage_subs_next_plan; Type: INDEX; Schema: public; Owner: -
 --
 
-CREATE INDEX idx_garage_settings_capabilities ON public.garage_settings USING gin (service_capabilities);
-
-
---
--- Name: idx_garage_stats_rating; Type: INDEX; Schema: public; Owner: -
---
-
-CREATE INDEX idx_garage_stats_rating ON public.garage_stats USING btree (quick_service_rating DESC) WHERE (quick_service_rating IS NOT NULL);
+CREATE INDEX idx_garage_subs_next_plan ON public.garage_subscriptions USING btree (next_plan_id);
 
 
 --
@@ -5906,7 +5685,7 @@ CREATE INDEX idx_garages_approval_status ON public.garages USING btree (approval
 -- Name: idx_garages_approved; Type: INDEX; Schema: public; Owner: -
 --
 
-CREATE INDEX idx_garages_approved ON public.garages USING btree (approval_status) WHERE ((approval_status)::text = 'approved'::text);
+CREATE INDEX idx_garages_approved ON public.garages USING btree (approval_status, rating_average DESC) WHERE ((approval_status)::text = 'approved'::text);
 
 
 --
@@ -5921,13 +5700,6 @@ CREATE INDEX idx_garages_brands ON public.garages USING gin (specialized_brands)
 --
 
 CREATE INDEX idx_garages_demo_expiry ON public.garages USING btree (demo_expires_at) WHERE ((approval_status)::text = 'demo'::text);
-
-
---
--- Name: idx_garages_mobile_location; Type: INDEX; Schema: public; Owner: -
---
-
-CREATE INDEX idx_garages_mobile_location ON public.garages USING btree (location_lat, location_lng) WHERE (has_mobile_technicians = true);
 
 
 --
@@ -5952,38 +5724,10 @@ CREATE INDEX idx_garages_pending ON public.garages USING btree (created_at) WHER
 
 
 --
--- Name: idx_garages_quick_services; Type: INDEX; Schema: public; Owner: -
+-- Name: idx_garages_specialized_brands; Type: INDEX; Schema: public; Owner: -
 --
 
-CREATE INDEX idx_garages_quick_services ON public.garages USING btree (garage_id) WHERE (provides_quick_services = true);
-
-
---
--- Name: idx_garages_quick_services_array; Type: INDEX; Schema: public; Owner: -
---
-
-CREATE INDEX idx_garages_quick_services_array ON public.garages USING gin (quick_services_offered);
-
-
---
--- Name: idx_garages_repair_specializations_array; Type: INDEX; Schema: public; Owner: -
---
-
-CREATE INDEX idx_garages_repair_specializations_array ON public.garages USING gin (repair_specializations);
-
-
---
--- Name: idx_garages_repairs; Type: INDEX; Schema: public; Owner: -
---
-
-CREATE INDEX idx_garages_repairs ON public.garages USING btree (garage_id) WHERE (provides_repairs = true);
-
-
---
--- Name: idx_garages_services_location; Type: INDEX; Schema: public; Owner: -
---
-
-CREATE INDEX idx_garages_services_location ON public.garages USING btree (location_lat, location_lng);
+CREATE INDEX idx_garages_specialized_brands ON public.garages USING gin (specialized_brands);
 
 
 --
@@ -6001,55 +5745,6 @@ CREATE INDEX idx_garages_supplier_type ON public.garages USING btree (supplier_t
 
 
 --
--- Name: idx_idempotency_keys_expires_at; Type: INDEX; Schema: public; Owner: -
---
-
-CREATE INDEX idx_idempotency_keys_expires_at ON public.idempotency_keys USING btree (expires_at);
-
-
---
--- Name: idx_idempotency_keys_user_id; Type: INDEX; Schema: public; Owner: -
---
-
-CREATE INDEX idx_idempotency_keys_user_id ON public.idempotency_keys USING btree (user_id);
-
-
---
--- Name: idx_inquiries_customer; Type: INDEX; Schema: public; Owner: -
---
-
-CREATE INDEX idx_inquiries_customer ON public.product_inquiries USING btree (customer_id);
-
-
---
--- Name: idx_inquiries_product; Type: INDEX; Schema: public; Owner: -
---
-
-CREATE INDEX idx_inquiries_product ON public.product_inquiries USING btree (product_id);
-
-
---
--- Name: idx_inspections_order; Type: INDEX; Schema: public; Owner: -
---
-
-CREATE INDEX idx_inspections_order ON public.quality_inspections USING btree (order_id);
-
-
---
--- Name: idx_inspections_pending; Type: INDEX; Schema: public; Owner: -
---
-
-CREATE INDEX idx_inspections_pending ON public.quality_inspections USING btree (status) WHERE ((status)::text = 'pending'::text);
-
-
---
--- Name: idx_inspections_status; Type: INDEX; Schema: public; Owner: -
---
-
-CREATE INDEX idx_inspections_status ON public.quality_inspections USING btree (status);
-
-
---
 -- Name: idx_messages_created; Type: INDEX; Schema: public; Owner: -
 --
 
@@ -6064,10 +5759,17 @@ CREATE INDEX idx_messages_ticket ON public.chat_messages USING btree (ticket_id)
 
 
 --
--- Name: idx_notifications_user_recent; Type: INDEX; Schema: public; Owner: -
+-- Name: idx_notifications_is_read; Type: INDEX; Schema: public; Owner: -
 --
 
-CREATE INDEX idx_notifications_user_recent ON public.notifications USING btree (user_id, created_at DESC);
+CREATE INDEX idx_notifications_is_read ON public.notifications USING btree (is_read);
+
+
+--
+-- Name: idx_notifications_user_id; Type: INDEX; Schema: public; Owner: -
+--
+
+CREATE INDEX idx_notifications_user_id ON public.notifications USING btree (user_id);
 
 
 --
@@ -6099,6 +5801,13 @@ CREATE INDEX idx_orders_active ON public.orders USING btree (order_status, creat
 
 
 --
+-- Name: idx_orders_active_status; Type: INDEX; Schema: public; Owner: -
+--
+
+CREATE INDEX idx_orders_active_status ON public.orders USING btree (order_status, created_at DESC) WHERE (order_status = ANY (ARRAY['confirmed'::text, 'preparing'::text, 'ready_for_pickup'::text, 'in_transit'::text, 'out_for_delivery'::text]));
+
+
+--
 -- Name: idx_orders_completed_date; Type: INDEX; Schema: public; Owner: -
 --
 
@@ -6110,20 +5819,6 @@ CREATE INDEX idx_orders_completed_date ON public.orders USING btree (created_at 
 --
 
 CREATE INDEX idx_orders_created ON public.orders USING btree (created_at DESC);
-
-
---
--- Name: idx_orders_created_at_date; Type: INDEX; Schema: public; Owner: -
---
-
-CREATE INDEX idx_orders_created_at_date ON public.orders USING btree (created_at DESC);
-
-
---
--- Name: idx_orders_created_at_desc; Type: INDEX; Schema: public; Owner: -
---
-
-CREATE INDEX idx_orders_created_at_desc ON public.orders USING btree (created_at DESC);
 
 
 --
@@ -6148,6 +5843,13 @@ CREATE INDEX idx_orders_driver_status ON public.orders USING btree (driver_id, o
 
 
 --
+-- Name: idx_orders_fts; Type: INDEX; Schema: public; Owner: -
+--
+
+CREATE INDEX idx_orders_fts ON public.orders USING gin (search_vector);
+
+
+--
 -- Name: idx_orders_garage_created; Type: INDEX; Schema: public; Owner: -
 --
 
@@ -6159,6 +5861,13 @@ CREATE INDEX idx_orders_garage_created ON public.orders USING btree (garage_id, 
 --
 
 CREATE INDEX idx_orders_garage_id ON public.orders USING btree (garage_id);
+
+
+--
+-- Name: idx_orders_garage_performance; Type: INDEX; Schema: public; Owner: -
+--
+
+CREATE INDEX idx_orders_garage_performance ON public.orders USING btree (garage_id, order_status, completed_at);
 
 
 --
@@ -6183,10 +5892,31 @@ CREATE INDEX idx_orders_order_number ON public.orders USING btree (order_number)
 
 
 --
+-- Name: idx_orders_pending_payment_created; Type: INDEX; Schema: public; Owner: -
+--
+
+CREATE INDEX idx_orders_pending_payment_created ON public.orders USING btree (created_at) WHERE (order_status = 'pending_payment'::text);
+
+
+--
+-- Name: idx_orders_preparing_updated; Type: INDEX; Schema: public; Owner: -
+--
+
+CREATE INDEX idx_orders_preparing_updated ON public.orders USING btree (updated_at) WHERE (order_status = 'preparing'::text);
+
+
+--
 -- Name: idx_orders_qc_pending; Type: INDEX; Schema: public; Owner: -
 --
 
 CREATE INDEX idx_orders_qc_pending ON public.orders USING btree (order_status) WHERE (order_status = ANY (ARRAY['preparing'::text, 'collected'::text, 'qc_in_progress'::text]));
+
+
+--
+-- Name: idx_orders_revenue_date; Type: INDEX; Schema: public; Owner: -
+--
+
+CREATE INDEX idx_orders_revenue_date ON public.orders USING btree (created_at, total_amount) WHERE (order_status = 'completed'::text);
 
 
 --
@@ -6211,10 +5941,59 @@ CREATE INDEX idx_orders_zone ON public.orders USING btree (delivery_zone_id);
 
 
 --
+-- Name: idx_part_price_category; Type: INDEX; Schema: public; Owner: -
+--
+
+CREATE INDEX idx_part_price_category ON public.part_price_history USING btree (part_category, recorded_at);
+
+
+--
+-- Name: idx_part_price_lookup; Type: INDEX; Schema: public; Owner: -
+--
+
+CREATE INDEX idx_part_price_lookup ON public.part_price_history USING btree (part_name, vehicle_make, vehicle_model);
+
+
+--
+-- Name: idx_part_price_source; Type: INDEX; Schema: public; Owner: -
+--
+
+CREATE INDEX idx_part_price_source ON public.part_price_history USING btree (source, source_id);
+
+
+--
+-- Name: idx_part_price_stats; Type: INDEX; Schema: public; Owner: -
+--
+
+CREATE INDEX idx_part_price_stats ON public.part_price_history USING btree (part_name, recorded_at);
+
+
+--
+-- Name: idx_part_price_vehicle; Type: INDEX; Schema: public; Owner: -
+--
+
+CREATE INDEX idx_part_price_vehicle ON public.part_price_history USING btree (vehicle_make, vehicle_model, vehicle_year);
+
+
+--
 -- Name: idx_part_requests_active; Type: INDEX; Schema: public; Owner: -
 --
 
 CREATE INDEX idx_part_requests_active ON public.part_requests USING btree (status, created_at DESC) WHERE (status = 'active'::text);
+
+
+--
+-- Name: idx_part_requests_car_make; Type: INDEX; Schema: public; Owner: -
+--
+
+CREATE INDEX idx_part_requests_car_make ON public.part_requests USING btree (car_make, car_model, status);
+
+
+--
+-- Name: idx_part_requests_category_status; Type: INDEX; Schema: public; Owner: -
+--
+
+CREATE INDEX idx_part_requests_category_status ON public.part_requests USING btree (part_category, status, created_at DESC);
 
 
 --
@@ -6229,6 +6008,13 @@ CREATE INDEX idx_part_requests_customer ON public.part_requests USING btree (cus
 --
 
 CREATE INDEX idx_part_requests_customer_id ON public.part_requests USING btree (customer_id);
+
+
+--
+-- Name: idx_part_requests_fts; Type: INDEX; Schema: public; Owner: -
+--
+
+CREATE INDEX idx_part_requests_fts ON public.part_requests USING gin (search_vector);
 
 
 --
@@ -6253,31 +6039,17 @@ CREATE INDEX idx_part_requests_subcategory ON public.part_requests USING btree (
 
 
 --
--- Name: idx_payment_audit_logs_action; Type: INDEX; Schema: public; Owner: -
+-- Name: idx_password_reset_tokens_expires; Type: INDEX; Schema: public; Owner: -
 --
 
-CREATE INDEX idx_payment_audit_logs_action ON public.payment_audit_logs USING btree (action);
-
-
---
--- Name: idx_payment_audit_logs_created_at; Type: INDEX; Schema: public; Owner: -
---
-
-CREATE INDEX idx_payment_audit_logs_created_at ON public.payment_audit_logs USING btree (created_at DESC);
+CREATE INDEX idx_password_reset_tokens_expires ON public.password_reset_tokens USING btree (expires_at);
 
 
 --
--- Name: idx_payment_audit_logs_ip_address; Type: INDEX; Schema: public; Owner: -
+-- Name: idx_password_reset_tokens_user_id; Type: INDEX; Schema: public; Owner: -
 --
 
-CREATE INDEX idx_payment_audit_logs_ip_address ON public.payment_audit_logs USING btree (ip_address);
-
-
---
--- Name: idx_payment_audit_logs_transaction_id; Type: INDEX; Schema: public; Owner: -
---
-
-CREATE INDEX idx_payment_audit_logs_transaction_id ON public.payment_audit_logs USING btree (transaction_id);
+CREATE INDEX idx_password_reset_tokens_user_id ON public.password_reset_tokens USING btree (user_id);
 
 
 --
@@ -6337,48 +6109,6 @@ CREATE INDEX idx_payment_refunds_status ON public.payment_refunds USING btree (s
 
 
 --
--- Name: idx_payment_transactions_created_at; Type: INDEX; Schema: public; Owner: -
---
-
-CREATE INDEX idx_payment_transactions_created_at ON public.payment_transactions USING btree (created_at DESC);
-
-
---
--- Name: idx_payment_transactions_idempotency_key; Type: INDEX; Schema: public; Owner: -
---
-
-CREATE INDEX idx_payment_transactions_idempotency_key ON public.payment_transactions USING btree (idempotency_key) WHERE (idempotency_key IS NOT NULL);
-
-
---
--- Name: idx_payment_transactions_order_id; Type: INDEX; Schema: public; Owner: -
---
-
-CREATE INDEX idx_payment_transactions_order_id ON public.payment_transactions USING btree (order_id);
-
-
---
--- Name: idx_payment_transactions_status; Type: INDEX; Schema: public; Owner: -
---
-
-CREATE INDEX idx_payment_transactions_status ON public.payment_transactions USING btree (status);
-
-
---
--- Name: idx_payment_transactions_user_id; Type: INDEX; Schema: public; Owner: -
---
-
-CREATE INDEX idx_payment_transactions_user_id ON public.payment_transactions USING btree (user_id);
-
-
---
--- Name: idx_payment_transactions_user_status; Type: INDEX; Schema: public; Owner: -
---
-
-CREATE INDEX idx_payment_transactions_user_status ON public.payment_transactions USING btree (user_id, status);
-
-
---
 -- Name: idx_payout_reversals_garage; Type: INDEX; Schema: public; Owner: -
 --
 
@@ -6421,55 +6151,6 @@ CREATE INDEX idx_payouts_pending ON public.garage_payouts USING btree (payout_st
 
 
 --
--- Name: idx_products_category; Type: INDEX; Schema: public; Owner: -
---
-
-CREATE INDEX idx_products_category ON public.garage_products USING btree (category);
-
-
---
--- Name: idx_products_featured; Type: INDEX; Schema: public; Owner: -
---
-
-CREATE INDEX idx_products_featured ON public.garage_products USING btree (is_featured) WHERE (is_featured = true);
-
-
---
--- Name: idx_products_garage; Type: INDEX; Schema: public; Owner: -
---
-
-CREATE INDEX idx_products_garage ON public.garage_products USING btree (garage_id);
-
-
---
--- Name: idx_products_makes; Type: INDEX; Schema: public; Owner: -
---
-
-CREATE INDEX idx_products_makes ON public.garage_products USING gin (compatible_makes);
-
-
---
--- Name: idx_products_models; Type: INDEX; Schema: public; Owner: -
---
-
-CREATE INDEX idx_products_models ON public.garage_products USING gin (compatible_models);
-
-
---
--- Name: idx_products_price; Type: INDEX; Schema: public; Owner: -
---
-
-CREATE INDEX idx_products_price ON public.garage_products USING btree (price);
-
-
---
--- Name: idx_products_status; Type: INDEX; Schema: public; Owner: -
---
-
-CREATE INDEX idx_products_status ON public.garage_products USING btree (status);
-
-
---
 -- Name: idx_proof_escrow; Type: INDEX; Schema: public; Owner: -
 --
 
@@ -6505,20 +6186,6 @@ CREATE UNIQUE INDEX idx_push_tokens_user_token ON public.push_tokens USING btree
 
 
 --
--- Name: idx_qc_order; Type: INDEX; Schema: public; Owner: -
---
-
-CREATE INDEX idx_qc_order ON public.quality_inspections USING btree (order_id);
-
-
---
--- Name: idx_qc_passed; Type: INDEX; Schema: public; Owner: -
---
-
-CREATE INDEX idx_qc_passed ON public.quality_inspections USING btree (result, created_at DESC);
-
-
---
 -- Name: idx_refresh_tokens_expires; Type: INDEX; Schema: public; Owner: -
 --
 
@@ -6540,6 +6207,13 @@ CREATE INDEX idx_refresh_tokens_user ON public.refresh_tokens USING btree (user_
 
 
 --
+-- Name: idx_refunds_cancellation; Type: INDEX; Schema: public; Owner: -
+--
+
+CREATE INDEX idx_refunds_cancellation ON public.refunds USING btree (cancellation_id);
+
+
+--
 -- Name: idx_refunds_created_at; Type: INDEX; Schema: public; Owner: -
 --
 
@@ -6557,7 +6231,7 @@ CREATE INDEX idx_refunds_customer ON public.refunds USING btree (customer_id);
 -- Name: idx_refunds_failed_only; Type: INDEX; Schema: public; Owner: -
 --
 
-CREATE INDEX idx_refunds_failed_only ON public.refunds USING btree (created_at DESC) WHERE ((refund_status)::text = 'failed'::text);
+CREATE INDEX idx_refunds_failed_only ON public.refunds USING btree (created_at DESC) WHERE (refund_status = 'failed'::text);
 
 
 --
@@ -6568,10 +6242,17 @@ CREATE UNIQUE INDEX idx_refunds_idempotency_key ON public.refunds USING btree (i
 
 
 --
+-- Name: idx_refunds_order; Type: INDEX; Schema: public; Owner: -
+--
+
+CREATE INDEX idx_refunds_order ON public.refunds USING btree (order_id);
+
+
+--
 -- Name: idx_refunds_pending_only; Type: INDEX; Schema: public; Owner: -
 --
 
-CREATE INDEX idx_refunds_pending_only ON public.refunds USING btree (created_at DESC) WHERE ((refund_status)::text = 'pending'::text);
+CREATE INDEX idx_refunds_pending_only ON public.refunds USING btree (created_at DESC) WHERE (refund_status = 'pending'::text);
 
 
 --
@@ -6579,6 +6260,13 @@ CREATE INDEX idx_refunds_pending_only ON public.refunds USING btree (created_at 
 --
 
 CREATE INDEX idx_refunds_refund_status ON public.refunds USING btree (refund_status);
+
+
+--
+-- Name: idx_refunds_stripe; Type: INDEX; Schema: public; Owner: -
+--
+
+CREATE INDEX idx_refunds_stripe ON public.refunds USING btree (stripe_refund_id) WHERE (stripe_refund_id IS NOT NULL);
 
 
 --
@@ -6677,13 +6365,6 @@ CREATE INDEX idx_return_requests_order ON public.return_requests USING btree (or
 --
 
 CREATE INDEX idx_return_requests_status ON public.return_requests USING btree (status);
-
-
---
--- Name: idx_reward_transactions_created; Type: INDEX; Schema: public; Owner: -
---
-
-CREATE INDEX idx_reward_transactions_created ON public.reward_transactions USING btree (created_at DESC);
 
 
 --
@@ -6862,27 +6543,6 @@ CREATE INDEX idx_support_tickets_stale ON public.support_tickets USING btree (cr
 
 
 --
--- Name: idx_technicians_available; Type: INDEX; Schema: public; Owner: -
---
-
-CREATE INDEX idx_technicians_available ON public.technicians USING btree (technician_id) WHERE ((is_available = true) AND (is_active = true));
-
-
---
--- Name: idx_technicians_garage; Type: INDEX; Schema: public; Owner: -
---
-
-CREATE INDEX idx_technicians_garage ON public.technicians USING btree (garage_id);
-
-
---
--- Name: idx_technicians_location; Type: INDEX; Schema: public; Owner: -
---
-
-CREATE INDEX idx_technicians_location ON public.technicians USING btree (current_lat, current_lng) WHERE (is_available = true);
-
-
---
 -- Name: idx_tickets_customer; Type: INDEX; Schema: public; Owner: -
 --
 
@@ -6932,6 +6592,13 @@ CREATE INDEX idx_users_active ON public.users USING btree (is_active, user_type)
 
 
 --
+-- Name: idx_users_email_unique; Type: INDEX; Schema: public; Owner: -
+--
+
+CREATE UNIQUE INDEX idx_users_email_unique ON public.users USING btree (lower(email)) WHERE (email IS NOT NULL);
+
+
+--
 -- Name: idx_users_not_deleted; Type: INDEX; Schema: public; Owner: -
 --
 
@@ -6960,6 +6627,13 @@ CREATE INDEX idx_users_type ON public.users USING btree (user_type);
 
 
 --
+-- Name: idx_vehicle_history_vin; Type: INDEX; Schema: public; Owner: -
+--
+
+CREATE INDEX idx_vehicle_history_vin ON public.vehicle_history_events USING btree (vin_number);
+
+
+--
 -- Name: idx_vouchers_customer; Type: INDEX; Schema: public; Owner: -
 --
 
@@ -6974,31 +6648,31 @@ CREATE INDEX idx_vouchers_expires ON public.delivery_vouchers USING btree (expir
 
 
 --
--- Name: partner_service_performance _RETURN; Type: RULE; Schema: public; Owner: -
+-- Name: idx_warranty_claims_created; Type: INDEX; Schema: public; Owner: -
 --
 
-CREATE OR REPLACE VIEW public.partner_service_performance AS
- SELECT g.garage_id,
-    g.garage_name AS partner_name,
-    g.sells_parts,
-    g.provides_repairs,
-    g.provides_quick_services,
-    g.has_mobile_technicians,
-    count(DISTINCT b.request_id) AS total_part_requests,
-    count(DISTINCT
-        CASE
-            WHEN (o.order_status = 'completed'::text) THEN o.order_id
-            ELSE NULL::uuid
-        END) AS completed_part_orders,
-    (0)::bigint AS total_quick_services,
-    (0)::bigint AS completed_quick_services,
-    NULL::numeric AS avg_quick_service_rating,
-    g.rating_average AS overall_rating,
-    g.total_services_completed
-   FROM ((public.garages g
-     LEFT JOIN public.bids b ON ((g.garage_id = b.garage_id)))
-     LEFT JOIN public.orders o ON ((b.bid_id = o.bid_id)))
-  GROUP BY g.garage_id, g.garage_name, g.rating_average, g.total_services_completed;
+CREATE INDEX idx_warranty_claims_created ON public.warranty_claims USING btree (created_at DESC);
+
+
+--
+-- Name: idx_warranty_claims_customer; Type: INDEX; Schema: public; Owner: -
+--
+
+CREATE INDEX idx_warranty_claims_customer ON public.warranty_claims USING btree (customer_id);
+
+
+--
+-- Name: idx_warranty_claims_order; Type: INDEX; Schema: public; Owner: -
+--
+
+CREATE INDEX idx_warranty_claims_order ON public.warranty_claims USING btree (order_id);
+
+
+--
+-- Name: idx_warranty_claims_status; Type: INDEX; Schema: public; Owner: -
+--
+
+CREATE INDEX idx_warranty_claims_status ON public.warranty_claims USING btree (claim_status);
 
 
 --
@@ -7023,13 +6697,6 @@ CREATE TRIGGER garage_capabilities_trigger BEFORE UPDATE ON public.garages FOR E
 
 
 --
--- Name: payment_transactions payment_transactions_updated_at; Type: TRIGGER; Schema: public; Owner: -
---
-
-CREATE TRIGGER payment_transactions_updated_at BEFORE UPDATE ON public.payment_transactions FOR EACH ROW EXECUTE FUNCTION public.update_payment_transactions_updated_at();
-
-
---
 -- Name: orders set_order_number; Type: TRIGGER; Schema: public; Owner: -
 --
 
@@ -7041,6 +6708,27 @@ CREATE TRIGGER set_order_number BEFORE INSERT ON public.orders FOR EACH ROW WHEN
 --
 
 CREATE TRIGGER trg_documents_updated BEFORE UPDATE ON public.documents FOR EACH ROW EXECUTE FUNCTION public.update_document_timestamp();
+
+
+--
+-- Name: garages trg_enforce_subscription_integrity; Type: TRIGGER; Schema: public; Owner: -
+--
+
+CREATE TRIGGER trg_enforce_subscription_integrity BEFORE UPDATE ON public.garages FOR EACH ROW EXECUTE FUNCTION public.enforce_subscription_integrity();
+
+
+--
+-- Name: orders trg_orders_search_update; Type: TRIGGER; Schema: public; Owner: -
+--
+
+CREATE TRIGGER trg_orders_search_update BEFORE INSERT OR UPDATE ON public.orders FOR EACH ROW EXECUTE FUNCTION public.orders_search_vector_trigger();
+
+
+--
+-- Name: part_requests trg_part_requests_search_update; Type: TRIGGER; Schema: public; Owner: -
+--
+
+CREATE TRIGGER trg_part_requests_search_update BEFORE INSERT OR UPDATE ON public.part_requests FOR EACH ROW EXECUTE FUNCTION public.part_requests_search_vector_trigger();
 
 
 --
@@ -7144,38 +6832,6 @@ ALTER TABLE ONLY public.ad_campaigns
 
 
 --
--- Name: ad_impressions ad_impressions_campaign_id_fkey; Type: FK CONSTRAINT; Schema: public; Owner: -
---
-
-ALTER TABLE ONLY public.ad_impressions
-    ADD CONSTRAINT ad_impressions_campaign_id_fkey FOREIGN KEY (campaign_id) REFERENCES public.ad_campaigns(campaign_id) ON DELETE CASCADE;
-
-
---
--- Name: ad_impressions ad_impressions_customer_id_fkey; Type: FK CONSTRAINT; Schema: public; Owner: -
---
-
-ALTER TABLE ONLY public.ad_impressions
-    ADD CONSTRAINT ad_impressions_customer_id_fkey FOREIGN KEY (customer_id) REFERENCES public.users(user_id) ON DELETE SET NULL;
-
-
---
--- Name: ad_impressions ad_impressions_placement_id_fkey; Type: FK CONSTRAINT; Schema: public; Owner: -
---
-
-ALTER TABLE ONLY public.ad_impressions
-    ADD CONSTRAINT ad_impressions_placement_id_fkey FOREIGN KEY (placement_id) REFERENCES public.ad_placements(placement_id) ON DELETE SET NULL;
-
-
---
--- Name: ad_placements ad_placements_campaign_id_fkey; Type: FK CONSTRAINT; Schema: public; Owner: -
---
-
-ALTER TABLE ONLY public.ad_placements
-    ADD CONSTRAINT ad_placements_campaign_id_fkey FOREIGN KEY (campaign_id) REFERENCES public.ad_campaigns(campaign_id) ON DELETE CASCADE;
-
-
---
 -- Name: admin_audit_log admin_audit_log_admin_id_fkey; Type: FK CONSTRAINT; Schema: public; Owner: -
 --
 
@@ -7205,6 +6861,22 @@ ALTER TABLE ONLY public.bids
 
 ALTER TABLE ONLY public.bids
     ADD CONSTRAINT bids_request_id_fkey FOREIGN KEY (request_id) REFERENCES public.part_requests(request_id) ON DELETE CASCADE;
+
+
+--
+-- Name: bids bids_superseded_by_fkey; Type: FK CONSTRAINT; Schema: public; Owner: -
+--
+
+ALTER TABLE ONLY public.bids
+    ADD CONSTRAINT bids_superseded_by_fkey FOREIGN KEY (superseded_by) REFERENCES public.bids(bid_id);
+
+
+--
+-- Name: bids bids_supersedes_bid_id_fkey; Type: FK CONSTRAINT; Schema: public; Owner: -
+--
+
+ALTER TABLE ONLY public.bids
+    ADD CONSTRAINT bids_supersedes_bid_id_fkey FOREIGN KEY (supersedes_bid_id) REFERENCES public.bids(bid_id);
 
 
 --
@@ -7292,7 +6964,7 @@ ALTER TABLE ONLY public.customer_notes
 --
 
 ALTER TABLE ONLY public.customer_notes
-    ADD CONSTRAINT customer_notes_customer_id_fkey FOREIGN KEY (customer_id) REFERENCES public.users(user_id) ON DELETE CASCADE;
+    ADD CONSTRAINT customer_notes_customer_id_fkey FOREIGN KEY (customer_id) REFERENCES public.users(user_id);
 
 
 --
@@ -7357,6 +7029,22 @@ ALTER TABLE ONLY public.delivery_assignments
 
 ALTER TABLE ONLY public.delivery_chats
     ADD CONSTRAINT delivery_chats_assignment_id_fkey FOREIGN KEY (assignment_id) REFERENCES public.delivery_assignments(assignment_id) ON DELETE CASCADE;
+
+
+--
+-- Name: delivery_chats delivery_chats_order_id_fkey; Type: FK CONSTRAINT; Schema: public; Owner: -
+--
+
+ALTER TABLE ONLY public.delivery_chats
+    ADD CONSTRAINT delivery_chats_order_id_fkey FOREIGN KEY (order_id) REFERENCES public.orders(order_id);
+
+
+--
+-- Name: delivery_otps delivery_otps_order_id_fkey; Type: FK CONSTRAINT; Schema: public; Owner: -
+--
+
+ALTER TABLE ONLY public.delivery_otps
+    ADD CONSTRAINT delivery_otps_order_id_fkey FOREIGN KEY (order_id) REFERENCES public.orders(order_id) ON DELETE CASCADE;
 
 
 --
@@ -7456,11 +7144,27 @@ ALTER TABLE ONLY public.driver_locations
 
 
 --
+-- Name: driver_payouts driver_payouts_assignment_id_fkey; Type: FK CONSTRAINT; Schema: public; Owner: -
+--
+
+ALTER TABLE ONLY public.driver_payouts
+    ADD CONSTRAINT driver_payouts_assignment_id_fkey FOREIGN KEY (assignment_id) REFERENCES public.delivery_assignments(assignment_id);
+
+
+--
 -- Name: driver_payouts driver_payouts_driver_id_fkey; Type: FK CONSTRAINT; Schema: public; Owner: -
 --
 
 ALTER TABLE ONLY public.driver_payouts
     ADD CONSTRAINT driver_payouts_driver_id_fkey FOREIGN KEY (driver_id) REFERENCES public.drivers(driver_id) ON DELETE CASCADE;
+
+
+--
+-- Name: driver_payouts driver_payouts_order_id_fkey; Type: FK CONSTRAINT; Schema: public; Owner: -
+--
+
+ALTER TABLE ONLY public.driver_payouts
+    ADD CONSTRAINT driver_payouts_order_id_fkey FOREIGN KEY (order_id) REFERENCES public.orders(order_id);
 
 
 --
@@ -7525,14 +7229,6 @@ ALTER TABLE ONLY public.escrow_transactions
 
 ALTER TABLE ONLY public.support_escalations
     ADD CONSTRAINT fk_escalations_ticket FOREIGN KEY (ticket_id) REFERENCES public.support_tickets(ticket_id) ON DELETE SET NULL;
-
-
---
--- Name: garage_analytics_summary garage_analytics_summary_garage_id_fkey; Type: FK CONSTRAINT; Schema: public; Owner: -
---
-
-ALTER TABLE ONLY public.garage_analytics_summary
-    ADD CONSTRAINT garage_analytics_summary_garage_id_fkey FOREIGN KEY (garage_id) REFERENCES public.garages(garage_id) ON DELETE CASCADE;
 
 
 --
@@ -7624,30 +7320,6 @@ ALTER TABLE ONLY public.garage_penalties
 
 
 --
--- Name: garage_products garage_products_garage_id_fkey; Type: FK CONSTRAINT; Schema: public; Owner: -
---
-
-ALTER TABLE ONLY public.garage_products
-    ADD CONSTRAINT garage_products_garage_id_fkey FOREIGN KEY (garage_id) REFERENCES public.garages(garage_id) ON DELETE CASCADE;
-
-
---
--- Name: garage_settings garage_settings_garage_id_fkey; Type: FK CONSTRAINT; Schema: public; Owner: -
---
-
-ALTER TABLE ONLY public.garage_settings
-    ADD CONSTRAINT garage_settings_garage_id_fkey FOREIGN KEY (garage_id) REFERENCES public.garages(garage_id) ON DELETE CASCADE;
-
-
---
--- Name: garage_stats garage_stats_garage_id_fkey; Type: FK CONSTRAINT; Schema: public; Owner: -
---
-
-ALTER TABLE ONLY public.garage_stats
-    ADD CONSTRAINT garage_stats_garage_id_fkey FOREIGN KEY (garage_id) REFERENCES public.garages(garage_id) ON DELETE CASCADE;
-
-
---
 -- Name: garage_subscriptions garage_subscriptions_garage_id_fkey; Type: FK CONSTRAINT; Schema: public; Owner: -
 --
 
@@ -7696,35 +7368,11 @@ ALTER TABLE ONLY public.garages
 
 
 --
--- Name: idempotency_keys idempotency_keys_transaction_id_fkey; Type: FK CONSTRAINT; Schema: public; Owner: -
---
-
-ALTER TABLE ONLY public.idempotency_keys
-    ADD CONSTRAINT idempotency_keys_transaction_id_fkey FOREIGN KEY (transaction_id) REFERENCES public.payment_transactions(transaction_id) ON DELETE CASCADE;
-
-
---
--- Name: idempotency_keys idempotency_keys_user_id_fkey; Type: FK CONSTRAINT; Schema: public; Owner: -
---
-
-ALTER TABLE ONLY public.idempotency_keys
-    ADD CONSTRAINT idempotency_keys_user_id_fkey FOREIGN KEY (user_id) REFERENCES public.users(user_id);
-
-
---
 -- Name: notifications notifications_user_id_fkey; Type: FK CONSTRAINT; Schema: public; Owner: -
 --
 
 ALTER TABLE ONLY public.notifications
     ADD CONSTRAINT notifications_user_id_fkey FOREIGN KEY (user_id) REFERENCES public.users(user_id) ON DELETE CASCADE;
-
-
---
--- Name: operations_staff operations_staff_user_id_fkey; Type: FK CONSTRAINT; Schema: public; Owner: -
---
-
-ALTER TABLE ONLY public.operations_staff
-    ADD CONSTRAINT operations_staff_user_id_fkey FOREIGN KEY (user_id) REFERENCES public.users(user_id) ON DELETE CASCADE;
 
 
 --
@@ -7840,6 +7488,14 @@ ALTER TABLE ONLY public.orders
 
 
 --
+-- Name: part_price_history part_price_history_garage_id_fkey; Type: FK CONSTRAINT; Schema: public; Owner: -
+--
+
+ALTER TABLE ONLY public.part_price_history
+    ADD CONSTRAINT part_price_history_garage_id_fkey FOREIGN KEY (garage_id) REFERENCES public.users(user_id) ON DELETE SET NULL;
+
+
+--
 -- Name: part_requests part_requests_customer_id_fkey; Type: FK CONSTRAINT; Schema: public; Owner: -
 --
 
@@ -7864,11 +7520,11 @@ ALTER TABLE ONLY public.part_requests
 
 
 --
--- Name: payment_audit_logs payment_audit_logs_transaction_id_fkey; Type: FK CONSTRAINT; Schema: public; Owner: -
+-- Name: password_reset_tokens password_reset_tokens_user_id_fkey; Type: FK CONSTRAINT; Schema: public; Owner: -
 --
 
-ALTER TABLE ONLY public.payment_audit_logs
-    ADD CONSTRAINT payment_audit_logs_transaction_id_fkey FOREIGN KEY (transaction_id) REFERENCES public.payment_transactions(transaction_id) ON DELETE CASCADE;
+ALTER TABLE ONLY public.password_reset_tokens
+    ADD CONSTRAINT password_reset_tokens_user_id_fkey FOREIGN KEY (user_id) REFERENCES public.users(user_id) ON DELETE CASCADE;
 
 
 --
@@ -7893,38 +7549,6 @@ ALTER TABLE ONLY public.payment_refunds
 
 ALTER TABLE ONLY public.payment_refunds
     ADD CONSTRAINT payment_refunds_order_id_fkey FOREIGN KEY (order_id) REFERENCES public.orders(order_id);
-
-
---
--- Name: payment_transactions payment_transactions_order_id_fkey; Type: FK CONSTRAINT; Schema: public; Owner: -
---
-
-ALTER TABLE ONLY public.payment_transactions
-    ADD CONSTRAINT payment_transactions_order_id_fkey FOREIGN KEY (order_id) REFERENCES public.orders(order_id) ON DELETE CASCADE;
-
-
---
--- Name: payment_transactions payment_transactions_user_id_fkey; Type: FK CONSTRAINT; Schema: public; Owner: -
---
-
-ALTER TABLE ONLY public.payment_transactions
-    ADD CONSTRAINT payment_transactions_user_id_fkey FOREIGN KEY (user_id) REFERENCES public.users(user_id) ON DELETE CASCADE;
-
-
---
--- Name: product_inquiries product_inquiries_customer_id_fkey; Type: FK CONSTRAINT; Schema: public; Owner: -
---
-
-ALTER TABLE ONLY public.product_inquiries
-    ADD CONSTRAINT product_inquiries_customer_id_fkey FOREIGN KEY (customer_id) REFERENCES public.users(user_id);
-
-
---
--- Name: product_inquiries product_inquiries_product_id_fkey; Type: FK CONSTRAINT; Schema: public; Owner: -
---
-
-ALTER TABLE ONLY public.product_inquiries
-    ADD CONSTRAINT product_inquiries_product_id_fkey FOREIGN KEY (product_id) REFERENCES public.garage_products(product_id) ON DELETE CASCADE;
 
 
 --
@@ -7957,22 +7581,6 @@ ALTER TABLE ONLY public.proof_of_condition
 
 ALTER TABLE ONLY public.push_tokens
     ADD CONSTRAINT push_tokens_user_id_fkey FOREIGN KEY (user_id) REFERENCES public.users(user_id) ON DELETE CASCADE;
-
-
---
--- Name: quality_inspections quality_inspections_inspector_id_fkey; Type: FK CONSTRAINT; Schema: public; Owner: -
---
-
-ALTER TABLE ONLY public.quality_inspections
-    ADD CONSTRAINT quality_inspections_inspector_id_fkey FOREIGN KEY (inspector_id) REFERENCES public.users(user_id);
-
-
---
--- Name: quality_inspections quality_inspections_order_id_fkey; Type: FK CONSTRAINT; Schema: public; Owner: -
---
-
-ALTER TABLE ONLY public.quality_inspections
-    ADD CONSTRAINT quality_inspections_order_id_fkey FOREIGN KEY (order_id) REFERENCES public.orders(order_id) ON DELETE CASCADE;
 
 
 --
@@ -8012,7 +7620,7 @@ ALTER TABLE ONLY public.resolution_logs
 --
 
 ALTER TABLE ONLY public.resolution_logs
-    ADD CONSTRAINT resolution_logs_customer_id_fkey FOREIGN KEY (customer_id) REFERENCES public.users(user_id) ON DELETE CASCADE;
+    ADD CONSTRAINT resolution_logs_customer_id_fkey FOREIGN KEY (customer_id) REFERENCES public.users(user_id);
 
 
 --
@@ -8020,7 +7628,15 @@ ALTER TABLE ONLY public.resolution_logs
 --
 
 ALTER TABLE ONLY public.resolution_logs
-    ADD CONSTRAINT resolution_logs_order_id_fkey FOREIGN KEY (order_id) REFERENCES public.orders(order_id) ON DELETE CASCADE;
+    ADD CONSTRAINT resolution_logs_order_id_fkey FOREIGN KEY (order_id) REFERENCES public.orders(order_id);
+
+
+--
+-- Name: resolution_logs resolution_logs_ticket_id_fkey; Type: FK CONSTRAINT; Schema: public; Owner: -
+--
+
+ALTER TABLE ONLY public.resolution_logs
+    ADD CONSTRAINT resolution_logs_ticket_id_fkey FOREIGN KEY (ticket_id) REFERENCES public.support_tickets(ticket_id);
 
 
 --
@@ -8144,22 +7760,6 @@ ALTER TABLE ONLY public.subscription_invoices
 
 
 --
--- Name: subscription_invoices subscription_invoices_request_id_fkey; Type: FK CONSTRAINT; Schema: public; Owner: -
---
-
-ALTER TABLE ONLY public.subscription_invoices
-    ADD CONSTRAINT subscription_invoices_request_id_fkey FOREIGN KEY (request_id) REFERENCES public.subscription_change_requests(request_id);
-
-
---
--- Name: subscription_invoices subscription_invoices_subscription_id_fkey; Type: FK CONSTRAINT; Schema: public; Owner: -
---
-
-ALTER TABLE ONLY public.subscription_invoices
-    ADD CONSTRAINT subscription_invoices_subscription_id_fkey FOREIGN KEY (subscription_id) REFERENCES public.garage_subscriptions(subscription_id);
-
-
---
 -- Name: subscription_payments subscription_payments_subscription_id_fkey; Type: FK CONSTRAINT; Schema: public; Owner: -
 --
 
@@ -8192,14 +7792,6 @@ ALTER TABLE ONLY public.support_tickets
 
 
 --
--- Name: technicians technicians_garage_id_fkey; Type: FK CONSTRAINT; Schema: public; Owner: -
---
-
-ALTER TABLE ONLY public.technicians
-    ADD CONSTRAINT technicians_garage_id_fkey FOREIGN KEY (garage_id) REFERENCES public.garages(garage_id) ON DELETE CASCADE;
-
-
---
 -- Name: undo_audit_log undo_audit_log_order_id_fkey; Type: FK CONSTRAINT; Schema: public; Owner: -
 --
 
@@ -8216,173 +7808,136 @@ ALTER TABLE ONLY public.user_addresses
 
 
 --
--- PostgreSQL database dump complete
+-- Name: warranty_claims warranty_claims_customer_id_fkey; Type: FK CONSTRAINT; Schema: public; Owner: -
 --
 
+ALTER TABLE ONLY public.warranty_claims
+    ADD CONSTRAINT warranty_claims_customer_id_fkey FOREIGN KEY (customer_id) REFERENCES public.users(user_id) ON DELETE CASCADE;
+
 
 --
--- PostgreSQL database dump
+-- Name: warranty_claims warranty_claims_order_id_fkey; Type: FK CONSTRAINT; Schema: public; Owner: -
 --
 
-\restrict m6dmwoKOlhavXwe31QLFea3QwNfln84ue5HUUeSrCumcWjdDtg3iFwsRx4cBakg
+ALTER TABLE ONLY public.warranty_claims
+    ADD CONSTRAINT warranty_claims_order_id_fkey FOREIGN KEY (order_id) REFERENCES public.orders(order_id) ON DELETE CASCADE;
 
--- Dumped from database version 16.11
--- Dumped by pg_dump version 16.11
-
-SET statement_timeout = 0;
-SET lock_timeout = 0;
-SET idle_in_transaction_session_timeout = 0;
-SET client_encoding = 'UTF8';
-SET standard_conforming_strings = on;
-SELECT pg_catalog.set_config('search_path', '', false);
-SET check_function_bodies = false;
-SET xmloption = content;
-SET client_min_messages = warning;
-SET row_security = off;
 
 --
--- Data for Name: subscription_plans; Type: TABLE DATA; Schema: public; Owner: sammil_admin
+-- Name: warranty_claims warranty_claims_resolved_by_fkey; Type: FK CONSTRAINT; Schema: public; Owner: -
 --
 
-INSERT INTO public.subscription_plans (plan_id, plan_code, plan_name, plan_name_ar, monthly_fee, commission_rate, max_bids_per_month, features, is_featured, is_active, display_order, created_at, monthly_price_qar, annual_price_qar, max_monthly_orders, analytics_enabled, priority_support, api_access, ad_campaigns_allowed, max_team_members, features_json, active) VALUES ('61c9e184-0213-4f78-855d-829e40021c6b', 'professional', 'Professional', 'المحترف', 299.00, 0.150, 200, '{"featured_listing": true, "bid_limit_per_day": 100, "showcase_products": 50, "analytics_retention_days": 90}', false, true, 2, '2026-02-15 20:21:33.861741', 299.00, 2990.00, 200, true, false, false, true, 3, '{"featured_listing": true, "bid_limit_per_day": 100, "showcase_products": 50, "analytics_retention_days": 90}', true);
-INSERT INTO public.subscription_plans (plan_id, plan_code, plan_name, plan_name_ar, monthly_fee, commission_rate, max_bids_per_month, features, is_featured, is_active, display_order, created_at, monthly_price_qar, annual_price_qar, max_monthly_orders, analytics_enabled, priority_support, api_access, ad_campaigns_allowed, max_team_members, features_json, active) VALUES ('7412f176-1c13-4391-8eae-f9e8bc6786a9', 'enterprise', 'Enterprise', 'المؤسسة', 799.00, 0.120, NULL, '{"custom_branding": true, "featured_listing": true, "bid_limit_per_day": -1, "dedicated_support": true, "showcase_products": -1, "analytics_retention_days": 365}', false, true, 3, '2026-02-15 20:21:33.861741', 799.00, 7990.00, -1, true, true, true, true, 10, '{"custom_branding": true, "featured_listing": true, "bid_limit_per_day": -1, "dedicated_support": true, "showcase_products": -1, "analytics_retention_days": 365}', true);
-INSERT INTO public.subscription_plans (plan_id, plan_code, plan_name, plan_name_ar, monthly_fee, commission_rate, max_bids_per_month, features, is_featured, is_active, display_order, created_at, monthly_price_qar, annual_price_qar, max_monthly_orders, analytics_enabled, priority_support, api_access, ad_campaigns_allowed, max_team_members, features_json, active) VALUES ('8196dc87-8837-45bc-adaf-91cff76ab186', 'demo', 'Demo Trial', NULL, 0.00, 0.000, NULL, '{"trial_days": 30, "full_access": true, "no_monthly_fee": true, "unlimited_bids": true}', false, true, 0, '2026-02-16 03:08:04.883864', NULL, NULL, NULL, false, false, false, false, 1, NULL, true);
-INSERT INTO public.subscription_plans (plan_id, plan_code, plan_name, plan_name_ar, monthly_fee, commission_rate, max_bids_per_month, features, is_featured, is_active, display_order, created_at, monthly_price_qar, annual_price_qar, max_monthly_orders, analytics_enabled, priority_support, api_access, ad_campaigns_allowed, max_team_members, features_json, active) VALUES ('d4ccb550-e450-4a31-b08b-252bafbd349a', 'free', 'Pay-Per-Sale', NULL, 0.00, 0.150, NULL, '{"7_day_payout": true, "zero_monthly": true, "all_customers": true, "email_support": true, "standard_dashboard": true}', false, true, 0, '2026-02-16 03:08:04.883864', NULL, NULL, NULL, false, false, false, false, 1, NULL, true);
-INSERT INTO public.subscription_plans (plan_id, plan_code, plan_name, plan_name_ar, monthly_fee, commission_rate, max_bids_per_month, features, is_featured, is_active, display_order, created_at, monthly_price_qar, annual_price_qar, max_monthly_orders, analytics_enabled, priority_support, api_access, ad_campaigns_allowed, max_team_members, features_json, active) VALUES ('755d669a-59fe-473d-88c9-8a9553b2afdc', 'starter', 'Starter', 'المبتدئ', 299.00, 0.080, 50, '{"monthly_fee": 299, "7_day_payout": true, "basic_analytics": true, "priority_listing": true, "email_chat_support": true, "showcase_20_products": true}', false, true, 1, '2026-02-15 20:21:33.861741', 0.00, 0.00, 50, false, false, false, false, 1, '{"featured_listing": false, "bid_limit_per_day": 20, "showcase_products": 5}', true);
-INSERT INTO public.subscription_plans (plan_id, plan_code, plan_name, plan_name_ar, monthly_fee, commission_rate, max_bids_per_month, features, is_featured, is_active, display_order, created_at, monthly_price_qar, annual_price_qar, max_monthly_orders, analytics_enabled, priority_support, api_access, ad_campaigns_allowed, max_team_members, features_json, active) VALUES ('3a5bdec2-3a99-4908-ae98-a357bced70a3', 'gold', 'Gold Partner', NULL, 999.00, 0.050, NULL, '{"monthly_fee": 999, "priority_payout": true, "priority_listing": true, "advanced_analytics": true, "promotional_features": true, "priority_phone_support": true}', false, true, 0, '2026-02-16 03:08:04.883864', NULL, NULL, NULL, false, false, false, false, 1, NULL, true);
-INSERT INTO public.subscription_plans (plan_id, plan_code, plan_name, plan_name_ar, monthly_fee, commission_rate, max_bids_per_month, features, is_featured, is_active, display_order, created_at, monthly_price_qar, annual_price_qar, max_monthly_orders, analytics_enabled, priority_support, api_access, ad_campaigns_allowed, max_team_members, features_json, active) VALUES ('7ccdf303-e4b7-4791-81be-a0bf84a44162', 'platinum', 'Platinum Partner', NULL, 2499.00, 0.030, NULL, '{"monthly_fee": 2499, "custom_reports": true, "express_payout": true, "dedicated_manager": true, "featured_placement": true, "marketing_coinvest": true}', false, true, 0, '2026-02-16 03:08:04.883864', NULL, NULL, NULL, false, false, false, false, 1, NULL, true);
+ALTER TABLE ONLY public.warranty_claims
+    ADD CONSTRAINT warranty_claims_resolved_by_fkey FOREIGN KEY (resolved_by) REFERENCES public.users(user_id) ON DELETE SET NULL;
+
+
+--
+-- Name: warranty_claims warranty_claims_ticket_id_fkey; Type: FK CONSTRAINT; Schema: public; Owner: -
+--
+
+ALTER TABLE ONLY public.warranty_claims
+    ADD CONSTRAINT warranty_claims_ticket_id_fkey FOREIGN KEY (ticket_id) REFERENCES public.support_tickets(ticket_id) ON DELETE SET NULL;
 
 
 --
 -- PostgreSQL database dump complete
 --
 
-
---
--- PostgreSQL database dump
---
-
-\restrict MyBJsYUpkBNRUspzKEQgv8k6NdtSj9EguWjtYwGN8aKLKdNAo3moRaNsw8eFe4G
-
--- Dumped from database version 16.11
--- Dumped by pg_dump version 16.11
-
-SET statement_timeout = 0;
-SET lock_timeout = 0;
-SET idle_in_transaction_session_timeout = 0;
-SET client_encoding = 'UTF8';
-SET standard_conforming_strings = on;
-SELECT pg_catalog.set_config('search_path', '', false);
-SET check_function_bodies = false;
-SET xmloption = content;
-SET client_min_messages = warning;
-SET row_security = off;
-
---
--- Data for Name: migrations; Type: TABLE DATA; Schema: public; Owner: sammil_admin
---
-
-INSERT INTO public.migrations (id, name, checksum, applied_at) VALUES (1, '081_cleanup_orphan_objects.sql', '01846604a61f9119', '2026-02-15 20:15:15.712809');
-INSERT INTO public.migrations (id, name, checksum, applied_at) VALUES (2, '20241212_enhanced_qc.sql', 'c687e34c9bd0a274', '2026-02-15 20:16:08.557783');
-INSERT INTO public.migrations (id, name, checksum, applied_at) VALUES (3, '20241212_qc_delivery_flow.sql', '077436743b2e806c', '2026-02-15 20:16:08.573638');
-INSERT INTO public.migrations (id, name, checksum, applied_at) VALUES (4, '20241213_comprehensive_audit.sql', 'd6bbd229ec3b8832', '2026-02-15 20:16:08.585364');
-INSERT INTO public.migrations (id, name, checksum, applied_at) VALUES (5, '20241213_support_chat.sql', '978548dcf77b49ff', '2026-02-15 20:16:08.682344');
-INSERT INTO public.migrations (id, name, checksum, applied_at) VALUES (6, '20241216_documents_module.sql', 'a4ad82685a845bb7', '2026-02-15 20:16:08.687149');
-INSERT INTO public.migrations (id, name, checksum, applied_at) VALUES (7, '20241216_payout_confirmation.sql', '6ab3a32bad980962', '2026-02-15 20:16:08.699468');
-INSERT INTO public.migrations (id, name, checksum, applied_at) VALUES (8, '20241217_fix_delivery_assignments.sql', 'f2806ce915375e43', '2026-02-15 20:16:08.723419');
-INSERT INTO public.migrations (id, name, checksum, applied_at) VALUES (9, '20241217_fix_missing_columns.sql', '8c2f9952da4fc0d3', '2026-02-15 20:16:08.759688');
-INSERT INTO public.migrations (id, name, checksum, applied_at) VALUES (10, '20241217_review_moderation.sql', '8b4084a584dff269', '2026-02-15 20:16:08.771217');
-INSERT INTO public.migrations (id, name, checksum, applied_at) VALUES (11, '20241219_delivery_location.sql', 'e03bcf4b5ffade58', '2026-02-15 20:16:08.777094');
-INSERT INTO public.migrations (id, name, checksum, applied_at) VALUES (12, '20241219_driver_payouts_chat.sql', 'becdc0fcb70a59c8', '2026-02-15 20:16:08.783096');
-INSERT INTO public.migrations (id, name, checksum, applied_at) VALUES (13, '20241220_driver_reassignment.sql', 'ca4e4fdcf1a54182', '2026-02-15 20:16:08.789111');
-INSERT INTO public.migrations (id, name, checksum, applied_at) VALUES (14, '20241222_refunds_columns.sql', '839acc260243e788', '2026-02-15 20:16:08.795104');
-INSERT INTO public.migrations (id, name, checksum, applied_at) VALUES (15, '20241223_admin_module.sql', 'd12b8eacd808f279', '2026-02-15 20:16:08.801085');
-INSERT INTO public.migrations (id, name, checksum, applied_at) VALUES (16, '20241224_delivery_zones.sql', '097b50cc897ecbc4', '2026-02-15 20:16:08.807295');
-INSERT INTO public.migrations (id, name, checksum, applied_at) VALUES (17, '20241224_demo_bid_fix.sql', 'e10605ba42e6ec8f', '2026-02-15 20:16:08.819218');
-INSERT INTO public.migrations (id, name, checksum, applied_at) VALUES (18, '20241224_performance_indexes.sql', 'db1fc4d64f6d2e85', '2026-02-15 20:16:08.831304');
-INSERT INTO public.migrations (id, name, checksum, applied_at) VALUES (19, '20241227_staff_profiles.sql', 'f8b7cb5da2f6b17d', '2026-02-15 20:16:08.861536');
-INSERT INTO public.migrations (id, name, checksum, applied_at) VALUES (20, '20241228_fix_payout_status_length.sql', 'f93144d7427d0b42', '2026-02-15 20:16:08.873143');
-INSERT INTO public.migrations (id, name, checksum, applied_at) VALUES (21, '20241229_garage_specialization.sql', '231de597b663b9ba', '2026-02-15 20:16:08.94577');
-INSERT INTO public.migrations (id, name, checksum, applied_at) VALUES (22, '20241229_indexes_constraints_cleanup.sql', 'd115b133578e46fc', '2026-02-15 20:20:46.530594');
-INSERT INTO public.migrations (id, name, checksum, applied_at) VALUES (23, '20241229_payout_adjustments', NULL, '2026-02-15 20:20:46.544078');
-INSERT INTO public.migrations (id, name, checksum, applied_at) VALUES (24, '20241229_payout_adjustments.sql', '3dba780996dbbc11', '2026-02-15 20:20:46.556083');
-INSERT INTO public.migrations (id, name, checksum, applied_at) VALUES (25, '20241229_support_ticket_sla', NULL, '2026-02-15 20:20:46.562328');
-INSERT INTO public.migrations (id, name, checksum, applied_at) VALUES (26, '20241229_support_ticket_sla.sql', 'b5b8a23bf10c6d26', '2026-02-15 20:20:46.574264');
-INSERT INTO public.migrations (id, name, checksum, applied_at) VALUES (27, '20241231_cleanup_duplicates', NULL, '2026-02-15 20:20:46.580757');
-INSERT INTO public.migrations (id, name, checksum, applied_at) VALUES (28, '20241231_cleanup_duplicates.sql', '1cd09f22d8aad584', '2026-02-15 20:20:46.592845');
-INSERT INTO public.migrations (id, name, checksum, applied_at) VALUES (29, '20241231_parts_showcase.sql', 'cca4ee54e9401001', '2026-02-15 20:20:46.603103');
-INSERT INTO public.migrations (id, name, checksum, applied_at) VALUES (30, '20251224_address_module.sql', 'fc46411453853f7c', '2026-02-15 20:20:46.616539');
-INSERT INTO public.migrations (id, name, checksum, applied_at) VALUES (31, '20251226_user_settings.sql', 'b41f242e1a705fd2', '2026-02-15 20:20:46.628538');
-INSERT INTO public.migrations (id, name, checksum, applied_at) VALUES (32, '20251231_add_original_bid_amount.sql', '73fd4f7d1773e3a2', '2026-02-15 20:20:46.64066');
-INSERT INTO public.migrations (id, name, checksum, applied_at) VALUES (33, '20260108_driver_locations.sql', '9f9468ec0548dbe4', '2026-02-15 20:20:46.648325');
-INSERT INTO public.migrations (id, name, checksum, applied_at) VALUES (34, '20260111_add_driver_bank_details.sql', '85857854afb96eda', '2026-02-15 20:20:46.658597');
-INSERT INTO public.migrations (id, name, checksum, applied_at) VALUES (35, '20260111_add_part_category.sql', 'b9c609cc49647bfb', '2026-02-15 20:20:46.67094');
-INSERT INTO public.migrations (id, name, checksum, applied_at) VALUES (36, '20260113_add_resolved_by_to_payouts.sql', '45cf0b07fa45b9f3', '2026-02-15 20:20:46.70213');
-INSERT INTO public.migrations (id, name, checksum, applied_at) VALUES (37, '20260113_create_driver_wallets.sql', 'e4efb098a18f8a5e', '2026-02-15 20:20:46.710425');
-INSERT INTO public.migrations (id, name, checksum, applied_at) VALUES (38, '20260114_customer_vehicles.sql', '242be30ad048b3dc', '2026-02-15 20:20:46.8463');
-INSERT INTO public.migrations (id, name, checksum, applied_at) VALUES (39, '20260115_performance_indexes_scale.sql', '501892a1bf4f33c2', '2026-02-15 20:20:46.978662');
-INSERT INTO public.migrations (id, name, checksum, applied_at) VALUES (40, '20260115_service_expansion.sql', '6002f70b7730b9e5', '2026-02-15 20:20:47.208417');
-INSERT INTO public.migrations (id, name, checksum, applied_at) VALUES (41, '20260116_ad_marketplace.sql', 'ed969d3930b15458', '2026-02-15 20:20:47.839857');
-INSERT INTO public.migrations (id, name, checksum, applied_at) VALUES (42, '20260116_customer_loyalty.sql', 'edf80284f43a2b4d', '2026-02-15 20:20:48.080344');
-INSERT INTO public.migrations (id, name, checksum, applied_at) VALUES (43, '20260116_garage_analytics.sql', '0abfd8a6ff9b1733', '2026-02-15 20:20:48.279168');
-INSERT INTO public.migrations (id, name, checksum, applied_at) VALUES (44, '20260116_performance_optimization.sql', '3d77f6b9ad8b2f80', '2026-02-15 20:20:48.447976');
-INSERT INTO public.migrations (id, name, checksum, applied_at) VALUES (45, '20260116_price_benchmarking.sql', '01ff8db4e96bf03e', '2026-02-15 20:27:09.299887');
-INSERT INTO public.migrations (id, name, checksum, applied_at) VALUES (46, '20260204_undo_grace_window', NULL, '2026-02-15 20:31:35.212661');
-INSERT INTO public.migrations (id, name, checksum, applied_at) VALUES (47, '20260116_subscription_tiers.sql', 'fc3769073490a693', '2026-02-16 03:07:20.864211');
-INSERT INTO public.migrations (id, name, checksum, applied_at) VALUES (48, '20260116_unified_partner_model.sql', '1cf600109d9f631c', '2026-02-16 03:07:20.988479');
-INSERT INTO public.migrations (id, name, checksum, applied_at) VALUES (49, '20260118_certified_schema_optimization.sql', '27caea0b6a1d94d9', '2026-02-16 03:07:21.217081');
-INSERT INTO public.migrations (id, name, checksum, applied_at) VALUES (50, '20260118_escrow_system.sql', 'a8c2f0e36d7604f9', '2026-02-16 03:07:21.451694');
-INSERT INTO public.migrations (id, name, checksum, applied_at) VALUES (51, '20260118_loyalty_functions.sql', '8d3f57a49391fedd', '2026-02-16 03:07:21.752263');
-INSERT INTO public.migrations (id, name, checksum, applied_at) VALUES (52, '20260118_payment_system.sql', '834911d8107f3800', '2026-02-16 03:07:21.78847');
-INSERT INTO public.migrations (id, name, checksum, applied_at) VALUES (53, '20260118_schema_optimization.sql', 'b52b2df22f787775', '2026-02-16 03:07:22.235098');
-INSERT INTO public.migrations (id, name, checksum, applied_at) VALUES (54, '20260119_remove_services.sql', '14935a1f79b4b691', '2026-02-16 03:07:22.288593');
-INSERT INTO public.migrations (id, name, checksum, applied_at) VALUES (55, '20260119_vehicle_id_photos.sql', '2276e6660301a535', '2026-02-16 03:07:22.299935');
-INSERT INTO public.migrations (id, name, checksum, applied_at) VALUES (56, '20260120_vin_capture.sql', '6d383d1f70a7c74f', '2026-02-16 03:08:01.86649');
-INSERT INTO public.migrations (id, name, checksum, applied_at) VALUES (57, '20260122_delivery_fee_tiers.sql', '17c749f6a1260950', '2026-02-16 03:08:01.943911');
-INSERT INTO public.migrations (id, name, checksum, applied_at) VALUES (58, '20260122_drop_insurance_tables.sql', '6eb45e0be2707838', '2026-02-16 03:08:02.045516');
-INSERT INTO public.migrations (id, name, checksum, applied_at) VALUES (59, '20260122_fix_dispute_status.sql', 'e41fb54196d5ef11', '2026-02-16 03:08:02.063764');
-INSERT INTO public.migrations (id, name, checksum, applied_at) VALUES (60, '20260122_fix_payout_cancellation_columns.sql', '5323ca04a5f258f2', '2026-02-16 03:08:02.081574');
-INSERT INTO public.migrations (id, name, checksum, applied_at) VALUES (61, '20260122_fix_payout_type_column.sql', '4d3ad172a1bafeb6', '2026-02-16 03:08:02.093366');
-INSERT INTO public.migrations (id, name, checksum, applied_at) VALUES (62, '20260122_fix_refunds_initiated_by.sql', 'ce46ee829261285f', '2026-02-16 03:08:02.105965');
-INSERT INTO public.migrations (id, name, checksum, applied_at) VALUES (63, '20260122_remove_insurance_services.sql', '7ff51ea4e6be9013', '2026-02-16 03:08:02.123271');
-INSERT INTO public.migrations (id, name, checksum, applied_at) VALUES (64, '20260123_payout_reversals.sql', 'f04626830a3cfb64', '2026-02-16 03:08:02.162366');
-INSERT INTO public.migrations (id, name, checksum, applied_at) VALUES (65, '20260123_ticket_escalation.sql', '83a365fe4bf9953d', '2026-02-16 03:08:02.341447');
-INSERT INTO public.migrations (id, name, checksum, applied_at) VALUES (66, '20260124_add_payment_tables.sql', '664104e4b4674a16', '2026-02-16 03:08:02.425614');
-INSERT INTO public.migrations (id, name, checksum, applied_at) VALUES (67, '20260126_support_actions_tables.sql', '38f4acca46ac18a3', '2026-02-16 03:08:02.437449');
-INSERT INTO public.migrations (id, name, checksum, applied_at) VALUES (68, '20260126_support_phase3_enhancements.sql', 'd7374a668156eec5', '2026-02-16 03:08:02.66001');
-INSERT INTO public.migrations (id, name, checksum, applied_at) VALUES (69, '20260127_add_resolution_action_column.sql', '27b812b6c3e84dd8', '2026-02-16 03:08:03.074699');
-INSERT INTO public.migrations (id, name, checksum, applied_at) VALUES (70, '20260127_add_ticket_id_to_escalations.sql', '294fd9b3feca13fa', '2026-02-16 03:08:03.092361');
-INSERT INTO public.migrations (id, name, checksum, applied_at) VALUES (71, '20260127_comprehensive_constraint_audit.sql', '0d84fa3793b02243', '2026-02-16 03:08:03.140435');
-INSERT INTO public.migrations (id, name, checksum, applied_at) VALUES (72, '20260127_fix_order_status_history_constraint.sql', '9860e3ccea2a0b4c', '2026-02-16 03:08:03.266852');
-INSERT INTO public.migrations (id, name, checksum, applied_at) VALUES (73, '20260127_fix_refunds_schema_alignment.sql', '3c4ac181dddf847b', '2026-02-16 03:08:03.272424');
-INSERT INTO public.migrations (id, name, checksum, applied_at) VALUES (74, '20260127_support_audit_fixes.sql', '58b5e37e7484a7ab', '2026-02-16 03:08:03.368635');
-INSERT INTO public.migrations (id, name, checksum, applied_at) VALUES (75, '20260128_add_customer_notes_resolution_logs.sql', '0b7ed469b86bedff', '2026-02-16 03:08:04.001394');
-INSERT INTO public.migrations (id, name, checksum, applied_at) VALUES (76, '20260128_cancellation_compliance', NULL, '2026-02-16 03:08:04.192624');
-INSERT INTO public.migrations (id, name, checksum, applied_at) VALUES (77, '20260128_cancellation_compliance.sql', '7aee9f7d2d442253', '2026-02-16 03:08:04.192624');
-INSERT INTO public.migrations (id, name, checksum, applied_at) VALUES (78, '20260128_drop_legacy_reviews_table.sql', 'e015a1c0c6336d68', '2026-02-16 03:08:04.631659');
-INSERT INTO public.migrations (id, name, checksum, applied_at) VALUES (79, '20260129_complete_refunds_schema.sql', '709761b2e74b2f57', '2026-02-16 03:08:04.650008');
-INSERT INTO public.migrations (id, name, checksum, applied_at) VALUES (80, '20260129b_fix_refunds_data.sql', 'dc2281d2b3a38e08', '2026-02-16 03:08:04.764011');
-INSERT INTO public.migrations (id, name, checksum, applied_at) VALUES (81, '20260130_refund_system_hardening.sql', 'd6525a11b75157a3', '2026-02-16 03:08:04.769227');
-INSERT INTO public.migrations (id, name, checksum, applied_at) VALUES (82, '20260202_auto_demo_registration.sql', '877279f0f12929d8', '2026-02-16 03:08:04.883864');
-INSERT INTO public.migrations (id, name, checksum, applied_at) VALUES (83, '20260202_enterprise_infrastructure.sql', '43cb389fe0c160e4', '2026-02-16 03:08:04.907506');
-INSERT INTO public.migrations (id, name, checksum, applied_at) VALUES (84, '20260202_moci_delivery_fee_compliance.sql', '122adddc98ce7e9d', '2026-02-16 03:08:05.154271');
-INSERT INTO public.migrations (id, name, checksum, applied_at) VALUES (85, '20260202_subscription_upgrade_payments.sql', '1b654fa5461ea8e3', '2026-02-16 03:08:05.159913');
-INSERT INTO public.migrations (id, name, checksum, applied_at) VALUES (86, '20260203_add_cancelled_to_request_status.sql', 'e5cfb8d429c4d57e', '2026-02-16 03:08:05.1965');
-INSERT INTO public.migrations (id, name, checksum, applied_at) VALUES (87, '20260208_commission_rate_check.sql', '16158734c24488c8', '2026-02-16 03:08:05.203691');
-INSERT INTO public.migrations (id, name, checksum, applied_at) VALUES (88, '20260208_refresh_tokens.sql', '9c4f55f381d4836e', '2026-02-16 03:08:05.2153');
-INSERT INTO public.migrations (id, name, checksum, applied_at) VALUES (89, '20260213_update_escalation_resolution_actions.sql', 'dceea8a762d82349', '2026-02-16 03:08:05.22653');
-INSERT INTO public.migrations (id, name, checksum, applied_at) VALUES (90, '20260215_schema_alignment_push_tokens_part_subcategory.sql', '720fe6f3b8e5b99c', '2026-02-16 03:08:05.238618');
+\unrestrict xOBWKHPiFfOEKGKTMXzRylMkXmLo55qYKy303w8ReOlDQN48MEUvKXJlxOdy9A7
 
 
---
--- Name: migrations_id_seq; Type: SEQUENCE SET; Schema: public; Owner: sammil_admin
---
+-- Reconciled Tables (from 20260425_reconcile_missing_tables.sql)
 
-SELECT pg_catalog.setval('public.migrations_id_seq', 90, true);
+CREATE TABLE public.idempotency_keys (
+    key character varying(255) NOT NULL,
+    transaction_id uuid,
+    response jsonb NOT NULL,
+    created_at timestamp without time zone DEFAULT CURRENT_TIMESTAMP NOT NULL,
+    expires_at timestamp without time zone DEFAULT (CURRENT_TIMESTAMP + '24:00:00'::interval) NOT NULL,
+    request_hash character varying(64),
+    user_id uuid
+);
 
 
---
--- PostgreSQL database dump complete
---
+
+
+CREATE TABLE public.payment_audit_logs (
+    log_id uuid DEFAULT public.uuid_generate_v4() NOT NULL,
+    transaction_id uuid,
+    action character varying(50) NOT NULL,
+    ip_address inet,
+    user_agent text,
+    request_method character varying(10),
+    request_path text,
+    request_data jsonb,
+    response_data jsonb,
+    processing_time_ms integer,
+    created_at timestamp without time zone DEFAULT CURRENT_TIMESTAMP NOT NULL,
+    CONSTRAINT valid_action CHECK (((action)::text = ANY ((ARRAY['initiated'::character varying, 'validated'::character varying, 'processing'::character varying, 'completed'::character varying, 'failed'::character varying, 'refunded'::character varying, 'cancelled'::character varying])::text[])))
+);
+
+
+
+
+CREATE TABLE public.payment_transactions (
+    transaction_id uuid DEFAULT public.uuid_generate_v4() NOT NULL,
+    order_id uuid NOT NULL,
+    user_id uuid NOT NULL,
+    amount numeric(10,2) NOT NULL,
+    currency character varying(3) DEFAULT 'QAR'::character varying NOT NULL,
+    payment_method character varying(20) NOT NULL,
+    status character varying(20) DEFAULT 'pending'::character varying NOT NULL,
+    card_last4 character varying(4),
+    card_brand character varying(20),
+    card_expiry_month integer,
+    card_expiry_year integer,
+    provider_response jsonb,
+    provider_transaction_id character varying(255),
+    idempotency_key character varying(255),
+    refund_amount numeric(10,2) DEFAULT 0,
+    refund_reason text,
+    refunded_at timestamp without time zone,
+    created_at timestamp without time zone DEFAULT CURRENT_TIMESTAMP NOT NULL,
+    updated_at timestamp without time zone DEFAULT CURRENT_TIMESTAMP NOT NULL,
+    completed_at timestamp without time zone,
+    failed_at timestamp without time zone,
+    failure_reason text,
+    error_code character varying(50),
+    metadata jsonb DEFAULT '{}'::jsonb,
+    CONSTRAINT payment_transactions_amount_check CHECK ((amount > (0)::numeric)),
+    CONSTRAINT payment_transactions_card_expiry_month_check CHECK (((card_expiry_month >= 1) AND (card_expiry_month <= 12))),
+    CONSTRAINT payment_transactions_card_expiry_year_check CHECK (((card_expiry_year)::numeric >= EXTRACT(year FROM CURRENT_DATE))),
+    CONSTRAINT payment_transactions_check CHECK (((refund_amount >= (0)::numeric) AND (refund_amount <= amount))),
+    CONSTRAINT valid_payment_method CHECK (((payment_method)::text = ANY ((ARRAY['mock_card'::character varying, 'cash'::character varying, 'qpay'::character varying])::text[]))),
+    CONSTRAINT valid_status CHECK (((status)::text = ANY ((ARRAY['pending'::character varying, 'processing'::character varying, 'success'::character varying, 'failed'::character varying, 'refunded'::character varying, 'cancelled'::character varying])::text[])))
+);
+
+
+
+
+CREATE TABLE public.quality_inspections (
+    inspection_id uuid DEFAULT gen_random_uuid() NOT NULL,
+    order_id uuid,
+    inspector_id uuid,
+    status character varying(20) DEFAULT 'pending'::character varying,
+    checklist_results jsonb DEFAULT '[]'::jsonb,
+    notes text,
+    failure_reason text,
+    photo_urls text[] DEFAULT '{}'::text[],
+    started_at timestamp without time zone,
+    completed_at timestamp without time zone,
+    created_at timestamp without time zone DEFAULT now(),
+    part_grade character varying(10),
+    condition_assessment character varying(20),
+    item_notes jsonb DEFAULT '{}'::jsonb,
+    failure_category character varying(50),
+    result character varying(20),
+    inspector_remarks text,
+    CONSTRAINT quality_inspections_condition_assessment_check CHECK (((condition_assessment)::text = ANY (ARRAY[('excellent'::character varying)::text, ('good'::character varying)::text, ('fair'::character varying)::text, ('poor'::character varying)::text, ('defective'::character varying)::text]))),
+    CONSTRAINT quality_inspections_failure_category_check CHECK (((failure_category)::text = ANY (ARRAY[('damaged'::character varying)::text, ('wrong_part'::character varying)::text, ('missing_components'::character varying)::text, ('quality_mismatch'::character varying)::text, ('counterfeit'::character varying)::text, ('rust_corrosion'::character varying)::text, ('non_functional'::character varying)::text, ('packaging_issue'::character varying)::text, ('other'::character varying)::text]))),
+    CONSTRAINT quality_inspections_part_grade_check CHECK (((part_grade)::text = ANY (ARRAY[('A'::character varying)::text, ('B'::character varying)::text, ('C'::character varying)::text, ('reject'::character varying)::text]))),
+    CONSTRAINT quality_inspections_status_check CHECK (((status)::text = ANY (ARRAY[('pending'::character varying)::text, ('in_progress'::character varying)::text, ('passed'::character varying)::text, ('failed'::character varying)::text])))
+);
+
 
 
