@@ -106,16 +106,10 @@ export default function HomeScreen() {
         };
 
         socket.on('new_assignment', handleNewAssignment);
-        socket.on('assignment_cancelled', handleUpdate);
-        socket.on('assignment_removed', handleUpdate);
-        socket.on('order_status_updated', handleUpdate);
         socket.on('driver_status_changed', handleDriverStatusChange);
 
         return () => {
             socket.off('new_assignment', handleNewAssignment);
-            socket.off('assignment_cancelled', handleUpdate);
-            socket.off('assignment_removed', handleUpdate);
-            socket.off('order_status_updated', handleUpdate);
             socket.off('driver_status_changed', handleDriverStatusChange);
         };
     }, [isConnected]);

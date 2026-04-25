@@ -172,6 +172,25 @@ export const en = {
     account_deleted: 'Your account has been deleted.',
     profile_updated: 'Profile updated successfully',
 
+    // Vehicle Types
+    motorcycle: 'Motorcycle',
+    car: 'Car / Sedan',
+    van: 'Van / Pickup',
+    truck: 'Truck',
+    select_vehicle_type: 'Select Vehicle Type',
+    choose_vehicle_type: 'What type of vehicle do you use for deliveries?',
+    vehicle_plate_display: 'Plate: {{plate}}',
+    member_since: 'Member since {{date}}',
+    total_earnings: 'Total Earnings',
+    ratings_count: '{{count}} ratings',
+
+    // Bank / Payment Details  
+    payment_details: 'Payment Details',
+    bank_details_description: 'Required for receiving your delivery payouts',
+    bank_name_placeholder: 'e.g. Qatar National Bank',
+    iban_placeholder: 'e.g. QA58QNBA000000000000693740001',
+    account_name_placeholder: 'Account holder full name',
+
     // Settings
     language: 'Language',
     english: 'English',

@@ -23,9 +23,12 @@ export interface Driver {
     status: 'available' | 'busy' | 'offline';
     total_deliveries: number;
     rating_average: number;
+    rating_count?: number;
+    total_earnings?: number;
     bank_name?: string;
     bank_account_iban?: string;
     bank_account_name?: string;
+    created_at?: string;
 }
 
 export interface Assignment {

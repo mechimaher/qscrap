@@ -45,11 +45,23 @@ export default function ProfileScreen() {
     const [isEditModalVisible, setIsEditModalVisible] = useState(false);
     const [isSaving, setIsSaving] = useState(false);
 
+    // Vehicle type options for Qatar delivery market
+    const VEHICLE_TYPES = [
+        { value: 'motorcycle', icon: 'bicycle-outline' as const, label: t('motorcycle') },
+        { value: 'car', icon: 'car-outline' as const, label: t('car') },
+        { value: 'van', icon: 'car-sport-outline' as const, label: t('van') },
+        { value: 'truck', icon: 'bus-outline' as const, label: t('truck') },
+    ];
+
     const [editForm, setEditForm] = useState({
         full_name: driver?.full_name || '',
         email: driver?.email || '',
+        vehicle_type: driver?.vehicle_type || 'motorcycle',
         vehicle_model: driver?.vehicle_model || '',
         vehicle_plate: driver?.vehicle_plate || '',
+        bank_name: driver?.bank_name || '',
+        bank_account_iban: driver?.bank_account_iban || '',
+        bank_account_name: driver?.bank_account_name || '',
     });
 
 
@@ -58,8 +70,12 @@ export default function ProfileScreen() {
             setEditForm({
                 full_name: driver.full_name || '',
                 email: driver.email || '',
+                vehicle_type: driver.vehicle_type || 'motorcycle',
                 vehicle_model: driver.vehicle_model || '',
                 vehicle_plate: driver.vehicle_plate || '',
+                bank_name: driver.bank_name || '',
+                bank_account_iban: driver.bank_account_iban || '',
+                bank_account_name: driver.bank_account_name || '',
             });
         }
     }, [driver]);
@@ -195,6 +211,20 @@ export default function ProfileScreen() {
         }
     };
 
+    const getVehicleIcon = (): React.ComponentProps<typeof Ionicons>['name'] => {
+        switch (driver?.vehicle_type) {
+            case 'car': return 'car-outline';
+            case 'van': return 'car-sport-outline';
+            case 'truck': return 'bus-outline';
+            default: return 'bicycle-outline';
+        }
+    };
+
+    const getVehicleLabel = (): string => {
+        const match = VEHICLE_TYPES.find(v => v.value === driver?.vehicle_type);
+        return match?.label || driver?.vehicle_type || t('motorcycle');
+    };
+
     // Menu Item Component (like customer app)
     const MenuItem = ({
         icon,
@@ -314,23 +344,71 @@ export default function ProfileScreen() {
                             </View>
                             <View style={styles.profileStatDivider} />
                             <View style={styles.profileStat}>
-                                <View style={[styles.statusBadgeSmall, { backgroundColor: getStatusColor() + '30' }]}>
-                                    <View style={[styles.statusDotSmall, { backgroundColor: getStatusColor() }]} />
-                                </View>
-                                <Text style={styles.profileStatLabel}>{getStatusText()}</Text>
+                                <Text style={styles.profileStatNumber}>
+                                    {driver.total_earnings ? `${driver.total_earnings} QAR` : '0 QAR'}
+                                </Text>
+                                <Text style={styles.profileStatLabel}>{t('total_earnings')}</Text>
                             </View>
+                        </View>
+                        
+                        {/* Member Status Row */}
+                        <View style={{ flexDirection: 'row', marginTop: 16, alignItems: 'center', gap: 8 }}>
+                            <View style={[styles.statusBadgeSmall, { backgroundColor: getStatusColor() + '30', width: 24, height: 24 }]} >
+                                <View style={[styles.statusDotSmall, { backgroundColor: getStatusColor(), width: 8, height: 8 }]} />
+                            </View>
+                            <Text style={{ color: 'rgba(255,255,255,0.9)', fontSize: 13, fontWeight: '600' }}>
+                                {getStatusText()}
+                            </Text>
+                            <View style={{ width: 4, height: 4, borderRadius: 2, backgroundColor: 'rgba(255,255,255,0.4)', marginHorizontal: 4 }} />
+                            <Text style={{ color: 'rgba(255,255,255,0.7)', fontSize: 13 }}>
+                                {driver.vehicle_plate ? t('vehicle_plate_display', { plate: driver.vehicle_plate }) : t('motorcycle')}
+                            </Text>
                         </View>
                     </LinearGradient>
                 </View>
 
-                {/* Driver Info Section */}
+                {/* Vehicle Info Section — Enhanced */}
                 <View style={styles.menuSection}>
-                    <Text style={[styles.menuTitle, { color: colors.textSecondary }]}>{t('driver_info')}</Text>
+                    <Text style={[styles.menuTitle, { color: colors.textSecondary }]}>{t('vehicle_details')}</Text>
                     <View style={[styles.menuCard, { backgroundColor: colors.surface }]}>
                         <MenuItem
-                            icon="car-outline"
-                            label={t('vehicle_details')}
-                            value={driver.vehicle_type || ''}
+                            icon={getVehicleIcon()}
+                            label={t('vehicle_type')}
+                            value={getVehicleLabel()}
+                            onPress={() => setIsEditModalVisible(true)}
+                        />
+                        <View style={[styles.menuDivider, { backgroundColor: colors.border }]} />
+                        <MenuItem
+                            icon="speedometer-outline"
+                            label={t('vehicle_model')}
+                            value={driver.vehicle_model || '—'}
+                            onPress={() => setIsEditModalVisible(true)}
+                        />
+                        <View style={[styles.menuDivider, { backgroundColor: colors.border }]} />
+                        <MenuItem
+                            icon="card-outline"
+                            label={t('license_plate')}
+                            value={driver.vehicle_plate || '—'}
+                            onPress={() => setIsEditModalVisible(true)}
+                        />
+                    </View>
+                </View>
+
+                {/* Payment Details Section */}
+                <View style={styles.menuSection}>
+                    <Text style={[styles.menuTitle, { color: colors.textSecondary }]}>{t('payment_details')}</Text>
+                    <View style={[styles.menuCard, { backgroundColor: colors.surface }]}>
+                        <MenuItem
+                            icon="wallet-outline"
+                            label={t('bank_name')}
+                            value={driver.bank_name || '—'}
+                            onPress={() => setIsEditModalVisible(true)}
+                        />
+                        <View style={[styles.menuDivider, { backgroundColor: colors.border }]} />
+                        <MenuItem
+                            icon="document-text-outline"
+                            label={t('iban')}
+                            value={driver.bank_account_iban ? '••••' + driver.bank_account_iban.slice(-4) : '—'}
                             onPress={() => setIsEditModalVisible(true)}
                         />
                     </View>
@@ -433,6 +511,8 @@ export default function ProfileScreen() {
                         <Text style={[styles.modalTitle, { color: colors.text }]}>{t('edit_profile')}</Text>
 
                         <ScrollView style={styles.modalForm}>
+                            <Text style={[styles.sectionHeading, { color: colors.text }]}>{t('driver_info')}</Text>
+
                             <Text style={[styles.inputLabel, { color: colors.textSecondary }]}>{t('full_name')}</Text>
                             <TextInput
                                 style={[styles.input, { color: colors.text, borderColor: colors.border, backgroundColor: colors.background }]}
@@ -453,12 +533,42 @@ export default function ProfileScreen() {
                                 autoCapitalize="none"
                             />
 
+                            <Text style={[styles.sectionHeading, { color: colors.text, marginTop: 12 }]}>{t('vehicle_info')}</Text>
+                            
+                            <Text style={[styles.inputLabel, { color: colors.textSecondary }]}>{t('vehicle_type')}</Text>
+                            <View style={styles.vehicleTypeSelector}>
+                                {VEHICLE_TYPES.map((type) => (
+                                    <TouchableOpacity
+                                        key={type.value}
+                                        style={[
+                                            styles.vehicleTypeOption,
+                                            { borderColor: editForm.vehicle_type === type.value ? Colors.primary : colors.border },
+                                            editForm.vehicle_type === type.value && { backgroundColor: Colors.primary + '10' }
+                                        ]}
+                                        onPress={() => setEditForm({ ...editForm, vehicle_type: type.value })}
+                                    >
+                                        <Ionicons 
+                                            name={type.icon} 
+                                            size={24} 
+                                            color={editForm.vehicle_type === type.value ? Colors.primary : colors.textMuted} 
+                                        />
+                                        <Text style={[
+                                            styles.vehicleTypeText,
+                                            { color: editForm.vehicle_type === type.value ? Colors.primary : colors.textSecondary },
+                                            editForm.vehicle_type === type.value && { fontWeight: '700' }
+                                        ]}>
+                                            {type.label}
+                                        </Text>
+                                    </TouchableOpacity>
+                                ))}
+                            </View>
+
                             <Text style={[styles.inputLabel, { color: colors.textSecondary }]}>{t('vehicle_model')}</Text>
                             <TextInput
                                 style={[styles.input, { color: colors.text, borderColor: colors.border, backgroundColor: colors.background }]}
                                 value={editForm.vehicle_model}
                                 onChangeText={(val) => setEditForm({ ...editForm, vehicle_model: val })}
-                                placeholder="e.g. Honda Shadow"
+                                placeholder="e.g. Toyota Hilux / Honda PCX"
                                 placeholderTextColor={colors.textMuted}
                             />
 
@@ -467,9 +577,45 @@ export default function ProfileScreen() {
                                 style={[styles.input, { color: colors.text, borderColor: colors.border, backgroundColor: colors.background }]}
                                 value={editForm.vehicle_plate}
                                 onChangeText={(val) => setEditForm({ ...editForm, vehicle_plate: val })}
-                                placeholder="e.g. 12345"
+                                placeholder="e.g. 123456"
+                                placeholderTextColor={colors.textMuted}
+                                keyboardType="number-pad"
+                            />
+
+                            <Text style={[styles.sectionHeading, { color: colors.text, marginTop: 12 }]}>{t('payment_details')}</Text>
+                            <Text style={[styles.inputSubtext, { color: colors.textMuted }]}>{t('bank_details_description')}</Text>
+
+                            <Text style={[styles.inputLabel, { color: colors.textSecondary }]}>{t('bank_name')}</Text>
+                            <TextInput
+                                style={[styles.input, { color: colors.text, borderColor: colors.border, backgroundColor: colors.background }]}
+                                value={editForm.bank_name}
+                                onChangeText={(val) => setEditForm({ ...editForm, bank_name: val })}
+                                placeholder={t('bank_name_placeholder')}
                                 placeholderTextColor={colors.textMuted}
                             />
+
+                            <Text style={[styles.inputLabel, { color: colors.textSecondary }]}>{t('account_name')}</Text>
+                            <TextInput
+                                style={[styles.input, { color: colors.text, borderColor: colors.border, backgroundColor: colors.background }]}
+                                value={editForm.bank_account_name}
+                                onChangeText={(val) => setEditForm({ ...editForm, bank_account_name: val })}
+                                placeholder={t('account_name_placeholder')}
+                                placeholderTextColor={colors.textMuted}
+                                autoCapitalize="words"
+                            />
+
+                            <Text style={[styles.inputLabel, { color: colors.textSecondary }]}>{t('iban')}</Text>
+                            <TextInput
+                                style={[styles.input, { color: colors.text, borderColor: colors.border, backgroundColor: colors.background }]}
+                                value={editForm.bank_account_iban}
+                                onChangeText={(val) => setEditForm({ ...editForm, bank_account_iban: val })}
+                                placeholder={t('iban_placeholder')}
+                                placeholderTextColor={colors.textMuted}
+                                autoCapitalize="characters"
+                            />
+                            
+                            {/* Bottom spacing for scroll area */}
+                            <View style={{ height: 40 }} />
                         </ScrollView>
 
                         <View style={styles.modalButtons}>
@@ -783,5 +929,37 @@ const styles = StyleSheet.create({
         color: '#fff',
         fontWeight: '700',
         fontSize: 16,
+    },
+    sectionHeading: {
+        fontSize: 18,
+        fontWeight: '700',
+        marginBottom: 16,
+        letterSpacing: -0.3,
+    },
+    inputSubtext: {
+        fontSize: 13,
+        marginBottom: 16,
+        marginTop: -10,
+    },
+    vehicleTypeSelector: {
+        flexDirection: 'row',
+        flexWrap: 'wrap',
+        gap: 10,
+        marginBottom: 20,
+    },
+    vehicleTypeOption: {
+        flexDirection: 'row',
+        alignItems: 'center',
+        paddingVertical: 10,
+        paddingHorizontal: 14,
+        borderRadius: 12,
+        borderWidth: 1.5,
+        gap: 8,
+        flex: 1,
+        minWidth: '45%',
+    },
+    vehicleTypeText: {
+        fontSize: 14,
+        fontWeight: '600',
     },
 });
