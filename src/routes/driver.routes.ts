@@ -20,6 +20,7 @@ import {
     rejectAssignment,
     updateAssignmentStatus,
     updateMyLocation,
+    triggerSOS,
 } from '../controllers/driver.controller';
 
 const router = Router();
@@ -73,5 +74,8 @@ router.post('/assignments/:assignment_id/proof', validate(uploadProofSchema), up
 
 // Update driver's current location - RATE LIMITED: 1 per 5 seconds
 router.post('/location', driverLocationLimiter, validate(updateLocationSchema), updateMyLocation as unknown as RequestHandler);
+
+// Emergency SOS
+router.post('/sos', triggerSOS as unknown as RequestHandler);
 
 export default router;

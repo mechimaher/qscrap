@@ -440,3 +440,30 @@ export const toggleAvailability = async (req: AuthRequest, res: Response) => {
         res.status(500).json({ error: errorMessage });
     }
 };
+
+export const triggerSOS = async (req: AuthRequest, res: Response) => {
+    const userId = getUserId(req);
+    if (!userId) {
+        return res.status(401).json({ error: 'Authentication required' });
+    }
+
+    try {
+        const { location, timestamp } = req.body;
+        
+        const io = getIO();
+        if (io) {
+            io.to('operations').emit('driver_sos_triggered', {
+                user_id: userId,
+                location,
+                timestamp: timestamp || new Date().toISOString()
+            });
+        }
+        
+        logger.error(`[SOS EMERGENCY] Driver ${userId} triggered SOS at ${JSON.stringify(location)}`);
+
+        res.json({ success: true, message: 'SOS Alert broadcasted to operations' });
+    } catch (err) {
+        const errorMessage = logControllerError('triggerSOS Error', err);
+        res.status(500).json({ error: errorMessage });
+    }
+};

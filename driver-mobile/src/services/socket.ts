@@ -104,42 +104,42 @@ export const initSocket = async (): Promise<Socket | null> => {
         );
     });
 
-    socket.on('assignment_updated', (data: any) => {
+    socket.on('assignment_accepted', (data: any) => {
         Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success);
         Vibration.vibrate([0, 250, 250, 250]);
 
         scheduleLocalNotification(
-            'Assignment Updated',
+            'Assignment Accepted',
             data.message || `Order #${data.order_number || 'Unknown'} has been updated`,
             {
-                type: 'assignment_updated',
+                type: 'assignment_accepted',
                 assignmentId: data.assignment_id,
             },
             'status'
         );
     });
 
-    socket.on('assignment_cancelled', (data: any) => {
+    socket.on('assignment_rejected', (data: any) => {
         Haptics.notificationAsync(Haptics.NotificationFeedbackType.Error);
 
         scheduleLocalNotification(
-            'Assignment Cancelled',
+            'Assignment Rejected',
             data.reason || `Order #${data.order_number || 'Unknown'} has been cancelled`,
             {
-                type: 'assignment_cancelled',
+                type: 'assignment_rejected',
                 assignmentId: data.assignment_id,
             }
         );
     });
 
-    socket.on('assignment_removed', (data: any) => {
+    socket.on('return_assignment_created', (data: any) => {
         Haptics.notificationAsync(Haptics.NotificationFeedbackType.Warning);
 
         scheduleLocalNotification(
-            'Assignment Reassigned',
+            'Return Assignment Created',
             data.message || 'Your assignment has been reassigned to another driver',
             {
-                type: 'assignment_removed',
+                type: 'return_assignment_created',
                 assignmentId: data.assignment_id,
             }
         );
@@ -169,61 +169,13 @@ export const initSocket = async (): Promise<Socket | null> => {
         }
     });
 
-    socket.on('chat_notification', (data: any) => {
-        Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success);
-        Vibration.vibrate([0, 200, 100, 200]);
-        playAssignmentAlert();
-
-        scheduleLocalNotification(
-            'Customer Message',
-            data.message || 'You have a new message',
-            {
-                type: 'chat_message',
-                orderId: data.order_id,
-                orderNumber: data.order_number,
-            },
-            'chat'
-        );
-    });
-
-    socket.on('chat_message', (data: any) => {
-        if (data.sender_type === 'customer') {
-            // Customer sent a message — alert the driver with sound + vibration
-            Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success);
-            Vibration.vibrate([0, 200, 100, 200]);
-            playAssignmentAlert();
-
-            scheduleLocalNotification(
-                'Customer Message',
-                data.message?.substring(0, 100) || 'Tap to reply',
-                {
-                    type: 'chat_message',
-                    assignmentId: data.assignment_id,
-                },
-                'chat'
-            );
-        }
-    });
-
+    
+    
     // ==============================
     // ORDER STATUS EVENTS
     // ==============================
 
-    socket.on('order_status_updated', (data: any) => {
-        Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success);
-        Vibration.vibrate([0, 200, 100, 200]);
-
-        scheduleLocalNotification(
-            'Order Status Update',
-            data.message || `Order #${data.order_number || ''} status changed`,
-            {
-                type: 'order_status_updated',
-                orderId: data.order_id,
-            },
-            'status'
-        );
-    });
-
+    
     // ==============================
     // DRIVER STATUS LISTENERS
     // ==============================
@@ -252,19 +204,19 @@ export const onNewAssignment = (callback: (data: any) => void) => {
     return () => socket?.off('new_assignment', callback);
 };
 
-export const onAssignmentUpdated = (callback: (data: any) => void) => {
-    socket?.on('assignment_updated', callback);
-    return () => socket?.off('assignment_updated', callback);
+export const onAssignmentAccepted = (callback: (data: any) => void) => {
+    socket?.on('assignment_accepted', callback);
+    return () => socket?.off('assignment_accepted', callback);
 };
 
-export const onAssignmentCancelled = (callback: (data: any) => void) => {
-    socket?.on('assignment_cancelled', callback);
-    return () => socket?.off('assignment_cancelled', callback);
+export const onAssignmentRejected = (callback: (data: any) => void) => {
+    socket?.on('assignment_rejected', callback);
+    return () => socket?.off('assignment_rejected', callback);
 };
 
-export const onAssignmentRemoved = (callback: (data: any) => void) => {
-    socket?.on('assignment_removed', callback);
-    return () => socket?.off('assignment_removed', callback);
+export const onReturnAssignmentCreated = (callback: (data: any) => void) => {
+    socket?.on('return_assignment_created', callback);
+    return () => socket?.off('return_assignment_created', callback);
 };
 
 // ==============================
