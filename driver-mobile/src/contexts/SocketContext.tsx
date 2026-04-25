@@ -7,8 +7,8 @@ import {
     disconnectSocket,
     getSocket,
     onNewAssignment,
-    onAssignmentUpdated,
-    onAssignmentCancelled,
+    onAssignmentAccepted,
+    onAssignmentRejected,
     onNewMessage,
 } from '../services/socket';
 import { useAuth } from './AuthContext';
@@ -83,13 +83,13 @@ export function SocketProvider({ children }: { children: ReactNode }) {
             setNewAssignmentAlert(data);
         });
 
-        // ASSIGNMENT UPDATED - No UI state needed (socket.ts handles notification)
-        onAssignmentUpdated((_data) => {
+        // ASSIGNMENT ACCEPTED - No UI state needed (socket.ts handles notification)
+        onAssignmentAccepted((_data) => {
             // Refresh handled by screen-level focus listeners
         });
 
-        // ASSIGNMENT CANCELLED - No UI state needed (socket.ts handles notification)
-        onAssignmentCancelled((_data) => {
+        // ASSIGNMENT REJECTED - No UI state needed (socket.ts handles notification)
+        onAssignmentRejected((_data) => {
             // Refresh handled by screen-level focus listeners
         });
 

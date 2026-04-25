@@ -169,13 +169,6 @@ export const initSocket = async (): Promise<Socket | null> => {
         }
     });
 
-    
-    
-    // ==============================
-    // ORDER STATUS EVENTS
-    // ==============================
-
-    
     // ==============================
     // DRIVER STATUS LISTENERS
     // ==============================
