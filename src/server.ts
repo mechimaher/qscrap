@@ -438,6 +438,76 @@ io.on('connection', (socket) => {
         }
     });
 
+    // ============================================
+    // CHAT ROOM JOIN HANDLERS (CRITICAL for real-time messaging)
+    // Both customer and driver apps emit these to join order-specific chat rooms
+    // ============================================
+    socket.on('join_order_chat', async (data: unknown) => {
+        const user = socket.data.user as SocketUser | undefined;
+        if (!user) { return; }
+
+        try {
+            const orderId = getOrderIdFromPayload(data);
+            if (!orderId) { return; }
+
+            const allowed = await canTrackOrder(orderId, user);
+            if (!allowed) {
+                logger.warn('Blocked unauthorized chat room join', { socketId: socket.id, userId: user.id, orderId });
+                return;
+            }
+
+            socket.join(`order_${orderId}`);
+            socket.join(`chat_${orderId}`);
+        } catch (err: unknown) {
+            logger.error('Failed to join chat room', {
+                socketId: socket.id,
+                userId: user.id,
+                error: err instanceof Error ? err.message : String(err)
+            });
+        }
+    });
+
+    socket.on('join_room', async (roomId: unknown) => {
+        const user = socket.data.user as SocketUser | undefined;
+        if (!user) { return; }
+
+        if (typeof roomId !== 'string' || !roomId.trim()) { return; }
+
+        // Only allow joining order_ prefixed rooms (chat rooms)
+        if (roomId.startsWith('order_')) {
+            const orderId = roomId.replace('order_', '');
+            try {
+                const allowed = await canTrackOrder(orderId, user);
+                if (!allowed) {
+                    logger.warn('Blocked unauthorized room join', { socketId: socket.id, userId: user.id, room: roomId });
+                    return;
+                }
+                socket.join(roomId);
+            } catch (err: unknown) {
+                logger.error('Failed to join room', {
+                    socketId: socket.id,
+                    userId: user.id,
+                    room: roomId,
+                    error: err instanceof Error ? err.message : String(err)
+                });
+            }
+        }
+        // Silently ignore other room join attempts (security)
+    });
+
+    // ============================================
+    // DRIVER ROOM JOIN (for targeted assignment events)
+    // ============================================
+    socket.on('join_driver_room', (driverUserId: unknown) => {
+        const user = socket.data.user as SocketUser | undefined;
+        if (!user || user.userType !== 'driver') { return; }
+
+        // Driver can only join their own room
+        if (typeof driverUserId === 'string' && driverUserId === user.id) {
+            socket.join(`driver_${user.id}`);
+        }
+    });
+
     socket.on('disconnect', () => {
         // Cleanup tracking
         requestViewers.forEach((viewers, requestId) => {

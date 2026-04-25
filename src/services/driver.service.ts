@@ -67,6 +67,17 @@ export class DriverService {
                 timestamp: new Date().toISOString()
             });
 
+            // Also emit to tracking room (TrackingScreen joins tracking_{orderId})
+            io?.to(`tracking_${row.order_id}`).emit('driver_location_update', {
+                order_id: row.order_id,
+                order_number: row.order_number,
+                latitude: lat,
+                longitude: lng,
+                heading: heading ? parseFloat(heading) : 0,
+                speed: speed ? parseFloat(speed) : 0,
+                timestamp: new Date().toISOString()
+            });
+
             notifiedOrderIds.add(row.order_id);
             notifiedCustomers++;
         }

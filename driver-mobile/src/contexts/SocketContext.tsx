@@ -13,6 +13,7 @@ import {
 } from '../services/socket';
 import { useAuth } from './AuthContext';
 import { Assignment } from '../services/api';
+import { stopAssignmentAlert } from '../services/SoundService';
 import { error as logError } from '../utils/logger';
 
 interface SocketContextType {
@@ -101,6 +102,7 @@ export function SocketProvider({ children }: { children: ReactNode }) {
 
     const dismissAssignmentAlert = useCallback(() => {
         setNewAssignmentAlert(null);
+        stopAssignmentAlert(); // Stop the looping alert sound
     }, []);
 
     return (
