@@ -433,7 +433,7 @@ export default function MyVehiclesScreen() {
                                     placeholderTextColor={colors.textMuted}
                                     maxLength={17}
                                     autoCapitalize="characters"
-                                    editable={!editingVehicle && !isAdding}
+                                    editable={!isAdding}
                                 />
                                 <Text style={[styles.inputLabel, { color: colors.textSecondary, fontSize: 11, textAlign: rtlTextAlign(isRTL) }]}>
                                     {t('vehicles.vinHelp')}

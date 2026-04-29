@@ -128,16 +128,14 @@ describe('useStripeCheckout', () => {
 
     it('should handle FREE_ORDER execution', async () => {
         (api.confirmFreeOrder as jest.Mock).mockResolvedValue({});
-        const discountObj = { discountOnTotal: 100 };
-
         const { result } = renderHook(() => useStripeCheckout(baseParams));
 
         act(() => {
-            result.current.handleFreeOrder(discountObj);
+            result.current.handleFreeOrder();
         });
 
         await waitFor(() => {
-            expect(api.confirmFreeOrder).toHaveBeenCalledWith('order-123', 100);
+            expect(api.confirmFreeOrder).toHaveBeenCalledWith('order-123', true);
             expect(Haptics.notificationAsync).toHaveBeenCalledWith('Success');
             expect(mockToast.show).toHaveBeenCalledWith(expect.objectContaining({ type: 'success' }));
         });

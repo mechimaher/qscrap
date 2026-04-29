@@ -7,6 +7,29 @@ import React from 'react';
 import { render, fireEvent, screen } from '@testing-library/react-native';
 import RequestPhotosStep from '../../../components/request/RequestPhotosStep';
 
+jest.mock('../../../contexts/LanguageContext', () => ({
+    useTranslation: () => ({
+        t: (key: string) => {
+            const translations: Record<string, string> = {
+                'common.gallery': 'Gallery',
+                'common.camera': 'Camera',
+            };
+            return translations[key] || key;
+        },
+        isRTL: false,
+    }),
+}));
+
+jest.mock('../../../contexts', () => ({
+    useTheme: () => ({
+        colors: {
+            background: '#F9FAFB',
+            border: '#E5E7EB',
+            textSecondary: '#6B7280',
+        },
+    }),
+}));
+
 describe('RequestPhotosStep', () => {
     const defaultProps = {
         colors: {
@@ -16,10 +39,8 @@ describe('RequestPhotosStep', () => {
         },
         t: (key: string) => {
             const translations: Record<string, string> = {
-                'newRequest.partPhotos': 'Part Photos',
-                'newRequest.uploadDamagePhotos': 'Upload photos of part damage',
-                'newRequest.addPhoto': 'Add Photo',
-                'newRequest.takePhoto': 'Take Photo',
+                'newRequest.photosOptional': 'Part Photos',
+                'newRequest.addUpTo5': 'Upload photos of part damage',
             };
             return translations[key] || key;
         },
@@ -29,7 +50,7 @@ describe('RequestPhotosStep', () => {
         images: [],
         handlePickImage: jest.fn(),
         handleTakePhoto: jest.fn(),
-        removeImage: jest.fn(),
+        handleRemoveImage: jest.fn(),
     };
 
     beforeEach(() => {
@@ -57,20 +78,20 @@ describe('RequestPhotosStep', () => {
     it('should render add photo button when no images', () => {
         render(<RequestPhotosStep {...defaultProps} />);
         
-        expect(screen.getByText('Add Photo')).toBeTruthy();
+        expect(screen.getByTestId('image-pick-image')).toBeTruthy();
     });
 
     it('should render take photo button', () => {
         render(<RequestPhotosStep {...defaultProps} />);
         
-        expect(screen.getByText('Take Photo')).toBeTruthy();
+        expect(screen.getByTestId('image-take-photo')).toBeTruthy();
     });
 
     it('should call handlePickImage when add photo is pressed', () => {
         const handlePickImageMock = jest.fn();
         render(<RequestPhotosStep {...defaultProps} handlePickImage={handlePickImageMock} />);
         
-        const addButton = screen.getByText('Add Photo');
+        const addButton = screen.getByTestId('image-pick-image');
         fireEvent.press(addButton);
         
         expect(handlePickImageMock).toHaveBeenCalled();
@@ -80,7 +101,7 @@ describe('RequestPhotosStep', () => {
         const handleTakePhotoMock = jest.fn();
         render(<RequestPhotosStep {...defaultProps} handleTakePhoto={handleTakePhotoMock} />);
         
-        const takeButton = screen.getByText('Take Photo');
+        const takeButton = screen.getByTestId('image-take-photo');
         fireEvent.press(takeButton);
         
         expect(handleTakePhotoMock).toHaveBeenCalled();
@@ -96,7 +117,7 @@ describe('RequestPhotosStep', () => {
     it('should call removeImage when remove button is pressed', () => {
         const removeImageMock = jest.fn();
         const images = ['image1.jpg'];
-        render(<RequestPhotosStep {...defaultProps} images={images} removeImage={removeImageMock} />);
+        render(<RequestPhotosStep {...defaultProps} images={images} handleRemoveImage={removeImageMock} />);
         
         const removeButton = screen.getByTestId('remove-image-0');
         if (removeButton) {
@@ -111,7 +132,7 @@ describe('RequestPhotosStep', () => {
         render(<RequestPhotosStep {...defaultProps} images={images} />);
         
         // Add photo button should be disabled or hidden when max reached
-        const addButton = screen.queryByText('Add Photo');
+        const addButton = screen.queryByTestId('image-pick-image');
         expect(addButton).toBeNull();
     });
 

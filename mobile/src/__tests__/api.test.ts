@@ -506,19 +506,19 @@ describe('API Service', () => {
                 breakdown: { partPrice: 100, deliveryFee: 25, loyaltyDiscount: 0, originalTotal: 125, codAmount: 100, total: 25 },
             });
 
-            const result = await api.createDeliveryFeeIntent('order-123', 5);
+            const result = await api.createDeliveryFeeIntent('order-123', true);
 
             expect(global.fetch).toHaveBeenCalledWith(
                 `${API_BASE_URL}/payments/deposit/order-123`,
                 expect.objectContaining({
                     method: 'POST',
-                    body: JSON.stringify({ loyaltyDiscount: 5 }),
+                    body: JSON.stringify({ applyLoyalty: true }),
                 })
             );
             expect(result.intent.clientSecret).toBe('cs_123');
         });
 
-        it('createDeliveryFeeIntent should default loyaltyDiscount to 0', async () => {
+        it('createDeliveryFeeIntent should default applyLoyalty to false', async () => {
             mockFetchSuccess({
                 success: true,
                 intent: { id: 'pi_123', clientSecret: 'cs_123', amount: 2500, currency: 'qar' },
@@ -529,7 +529,7 @@ describe('API Service', () => {
             expect(global.fetch).toHaveBeenCalledWith(
                 `${API_BASE_URL}/payments/deposit/order-123`,
                 expect.objectContaining({
-                    body: JSON.stringify({ loyaltyDiscount: 0 }),
+                    body: JSON.stringify({ applyLoyalty: false }),
                 })
             );
         });
@@ -541,13 +541,13 @@ describe('API Service', () => {
                 breakdown: { partPrice: 100, deliveryFee: 25, total: 125 },
             });
 
-            const result = await api.createFullPaymentIntent('order-123', 10);
+            const result = await api.createFullPaymentIntent('order-123', true);
 
             expect(global.fetch).toHaveBeenCalledWith(
                 `${API_BASE_URL}/payments/full/order-123`,
                 expect.objectContaining({
                     method: 'POST',
-                    body: JSON.stringify({ loyaltyDiscount: 10 }),
+                    body: JSON.stringify({ applyLoyalty: true }),
                 })
             );
             expect(result.breakdown.total).toBe(125);
@@ -565,16 +565,16 @@ describe('API Service', () => {
             expect(result.success).toBe(true);
         });
 
-        it('confirmFreeOrder should POST to /payments/free/:orderId with discount', async () => {
+        it('confirmFreeOrder should POST to /payments/free/:orderId with loyalty intent', async () => {
             mockFetchSuccess({ success: true, message: 'Free order confirmed', order_id: 'order-123' });
 
-            const result = await api.confirmFreeOrder('order-123', 125);
+            const result = await api.confirmFreeOrder('order-123');
 
             expect(global.fetch).toHaveBeenCalledWith(
                 `${API_BASE_URL}/payments/free/order-123`,
                 expect.objectContaining({
                     method: 'POST',
-                    body: JSON.stringify({ loyaltyDiscount: 125 }),
+                    body: JSON.stringify({ applyLoyalty: true }),
                 })
             );
             expect(result.success).toBe(true);

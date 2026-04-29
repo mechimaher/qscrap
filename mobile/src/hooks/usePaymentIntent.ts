@@ -55,14 +55,18 @@ export function usePaymentIntent({
                     return;
                 }
 
+                const applyLoyalty = applyDiscount && (
+                    paymentType === 'full' ? discountOnTotal > 0 : discountOnPart > 0
+                );
                 let paymentResult;
                 if (paymentType === 'full') {
-                    paymentResult = await api.createFullPaymentIntent(orderId, discountOnTotal);
+                    paymentResult = await api.createFullPaymentIntent(orderId, applyLoyalty);
                     setPaymentAmount(paymentResult.breakdown?.total || payNowAmount);
                 } else {
-                    paymentResult = await api.createDeliveryFeeIntent(orderId, discountOnPart);
+                    paymentResult = await api.createDeliveryFeeIntent(orderId, applyLoyalty);
                     setPaymentAmount(deliveryFee);
                 }
+                setDiscountAmount(paymentResult.breakdown?.loyaltyDiscount || 0);
 
                 if (thisVersion !== requestVersion.current) return;
 

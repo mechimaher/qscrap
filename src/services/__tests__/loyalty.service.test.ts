@@ -46,6 +46,35 @@ describe('Loyalty Service', () => {
             const discount = LoyaltyService.calculateDiscountFromPoints(200);
             expect(discount).toBe(20);
         });
+
+        it('should calculate tier discount from server-side reward data', async () => {
+            (mockPool.query as jest.Mock).mockResolvedValueOnce({
+                rows: [{ tier: 'gold', discount_percentage: '10.00' }]
+            });
+
+            const quote = await LoyaltyService.calculateTierDiscount(testCustomerId, 125);
+
+            expect(quote).toEqual({
+                discountAmount: 13,
+                discountPercentage: 10,
+                tier: 'gold',
+            });
+            expect(mockPool.query).toHaveBeenCalledWith(
+                expect.stringContaining('FROM customer_rewards cr'),
+                [testCustomerId]
+            );
+        });
+
+        it('should cap tier discount at the eligible amount', async () => {
+            (mockPool.query as jest.Mock).mockResolvedValueOnce({
+                rows: [{ tier: 'platinum', discount_percentage: '150.00' }]
+            });
+
+            const quote = await LoyaltyService.calculateTierDiscount(testCustomerId, 50);
+
+            expect(quote.discountAmount).toBe(50);
+            expect(quote.discountPercentage).toBe(100);
+        });
     });
 
     describe('Award Points', () => {

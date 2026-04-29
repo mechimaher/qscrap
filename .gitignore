@@ -76,6 +76,7 @@ driver-mobile/google-services.json
 # Android build artifacts
 mobile/android/
 driver-mobile/android/
+customer-mobile/
 
 # Expo
 .expo/

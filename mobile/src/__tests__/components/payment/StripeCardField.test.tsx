@@ -10,12 +10,17 @@ import { StripeCardField } from '../../../components/payment/StripeCardField';
 // Mock Stripe provider and CardField
 const mockSetCardComplete = jest.fn();
 jest.mock('@stripe/stripe-react-native', () => ({
-    CardField: ({ onCardChange }: any) => (
-        <div 
-            testID="card-field"
-            onChange={() => onCardChange({ complete: true })}
-        />
-    ),
+    CardField: ({ onCardChange, ...props }: any) => {
+        const React = require('react');
+        const { View } = require('react-native');
+
+        return (
+            <View
+                {...props}
+                onChange={(cardDetails: any) => onCardChange(cardDetails)}
+            />
+        );
+    },
 }));
 
 describe('StripeCardField', () => {
@@ -104,13 +109,11 @@ describe('StripeCardField', () => {
         render(<StripeCardField {...defaultProps} />);
         
         const cardField = screen.getByTestId('card-field');
-        expect(cardField.props.style).toEqual(
-            expect.arrayContaining([
-                expect.objectContaining({
-                    backgroundColor: '#FFFFFF',
-                    textColor: '#1F2937',
-                }),
-            ])
+        expect(cardField.props.cardStyle).toEqual(
+            expect.objectContaining({
+                backgroundColor: '#FFFFFF',
+                textColor: '#1F2937',
+            })
         );
     });
 

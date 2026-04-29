@@ -16,6 +16,14 @@ npx expo prebuild --clean --platform android
 echo "[3/4] Gradle Build..."
 cd android
 chmod +x gradlew
+if grep -q "signingConfig signingConfigs.debug" app/build.gradle; then
+  if [ "${QS_ALLOW_DEBUG_SIGNED_RELEASE:-}" != "1" ]; then
+    echo "✗ Refusing to build a release APK signed with the Android debug keystore."
+    echo "  Use EAS production signing, or set QS_ALLOW_DEBUG_SIGNED_RELEASE=1 for a local-only APK."
+    exit 1
+  fi
+  echo "⚠ Building a debug-signed release APK because QS_ALLOW_DEBUG_SIGNED_RELEASE=1"
+fi
 ./gradlew assembleRelease
 
 # 4. Copy Output

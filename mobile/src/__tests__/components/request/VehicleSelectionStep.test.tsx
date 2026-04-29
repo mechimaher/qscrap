@@ -10,16 +10,17 @@ import VehicleSelectionStep from '../../../components/request/VehicleSelectionSt
 // Mock MyVehiclesSelector
 jest.mock('../../../components/MyVehiclesSelector', () => {
     return function MockMyVehiclesSelector({ onSelect, selectedVehicleId, onVehiclesLoaded }: any) {
+        const { View, Text, TouchableOpacity } = require('react-native');
         return (
-            <div testID="my-vehicles-selector">
-                <button onClick={() => onSelect({ vehicle_id: 'v1', car_make: 'Toyota', car_model: 'Camry', car_year: 2024 })}>
-                    Select Vehicle
-                </button>
-                <button onClick={() => onVehiclesLoaded([{ vehicle_id: 'v1', car_make: 'Toyota', car_model: 'Camry', car_year: 2024 }])}>
-                    Load Vehicles
-                </button>
-                {selectedVehicleId && <span data-testid="selected-id">{selectedVehicleId}</span>}
-            </div>
+            <View testID="my-vehicles-selector">
+                <TouchableOpacity testID="select-vehicle" onPress={() => onSelect({ vehicle_id: 'v1', car_make: 'Toyota', car_model: 'Camry', car_year: 2024 })}>
+                    <Text>Mock Vehicle</Text>
+                </TouchableOpacity>
+                <TouchableOpacity testID="load-vehicles" onPress={() => onVehiclesLoaded([{ vehicle_id: 'v1', car_make: 'Toyota', car_model: 'Camry', car_year: 2024 }])}>
+                    <Text>Load Vehicles</Text>
+                </TouchableOpacity>
+                {selectedVehicleId && <Text testID="selected-id">{selectedVehicleId}</Text>}
+            </View>
         );
     };
 });
@@ -31,13 +32,13 @@ describe('VehicleSelectionStep', () => {
             text: '#1F2937',
             textSecondary: '#6B7280',
         },
-        t: (key: string) => {
+        t: (key: string, params?: any) => {
             const translations: Record<string, string> = {
                 'newRequest.selectVehicle': 'Select Vehicle',
                 'newRequest.chooseFromCars': 'Choose from your saved vehicles',
                 'newRequest.vinVerified': 'VIN {{vin}} verified',
             };
-            return translations[key] || key;
+            return (translations[key] || key).replace('{{vin}}', params?.vin || '');
         },
         isRTL: false,
         rtlFlexDirection: (isRTL: boolean) => isRTL ? 'row-reverse' : 'row',
@@ -80,8 +81,7 @@ describe('VehicleSelectionStep', () => {
         const handleVehicleSelectMock = jest.fn();
         render(<VehicleSelectionStep {...defaultProps} handleVehicleSelect={handleVehicleSelectMock} />);
         
-        const selectButton = screen.getByText('Select Vehicle');
-        fireEvent.click(selectButton);
+        fireEvent.press(screen.getByTestId('select-vehicle'));
         
         expect(handleVehicleSelectMock).toHaveBeenCalledWith({
             vehicle_id: 'v1',
@@ -95,8 +95,7 @@ describe('VehicleSelectionStep', () => {
         const handleVehiclesLoadedMock = jest.fn();
         render(<VehicleSelectionStep {...defaultProps} handleVehiclesLoaded={handleVehiclesLoadedMock} />);
         
-        const loadButton = screen.getByText('Load Vehicles');
-        fireEvent.click(loadButton);
+        fireEvent.press(screen.getByTestId('load-vehicles'));
         
         expect(handleVehiclesLoadedMock).toHaveBeenCalledWith([
             { vehicle_id: 'v1', car_make: 'Toyota', car_model: 'Camry', car_year: 2024 },

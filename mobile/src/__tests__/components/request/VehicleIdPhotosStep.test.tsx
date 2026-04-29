@@ -7,6 +7,29 @@ import React from 'react';
 import { render, fireEvent, screen } from '@testing-library/react-native';
 import VehicleIdPhotosStep from '../../../components/request/VehicleIdPhotosStep';
 
+jest.mock('../../../contexts/LanguageContext', () => ({
+    useTranslation: () => ({
+        t: (key: string) => {
+            const translations: Record<string, string> = {
+                'common.gallery': 'Gallery',
+                'common.camera': 'Camera',
+            };
+            return translations[key] || key;
+        },
+        isRTL: false,
+    }),
+}));
+
+jest.mock('../../../contexts', () => ({
+    useTheme: () => ({
+        colors: {
+            background: '#F9FAFB',
+            border: '#E5E7EB',
+            textSecondary: '#6B7280',
+        },
+    }),
+}));
+
 describe('VehicleIdPhotosStep', () => {
     const defaultProps = {
         colors: {
@@ -17,13 +40,9 @@ describe('VehicleIdPhotosStep', () => {
         t: (key: string) => {
             const translations: Record<string, string> = {
                 'newRequest.vehicleIdPhotos': 'Vehicle ID Photos',
-                'newRequest.uploadFrontRearPhotos': 'Upload front and rear vehicle photos',
-                'newRequest.frontPhoto': 'Front Photo',
-                'newRequest.rearPhoto': 'Rear Photo',
-                'newRequest.addFrontPhoto': 'Add Front Photo',
-                'newRequest.addRearPhoto': 'Add Rear Photo',
-                'newRequest.takeFrontPhoto': 'Take Front Photo',
-                'newRequest.takeRearPhoto': 'Take Rear Photo',
+                'newRequest.helpGaragesIdentify': 'Upload front and rear vehicle photos',
+                'newRequest.frontView': 'Front Photo',
+                'newRequest.rearView': 'Rear Photo',
             };
             return translations[key] || key;
         },
@@ -36,8 +55,8 @@ describe('VehicleIdPhotosStep', () => {
         handlePickCarRearImage: jest.fn(),
         handleTakeCarFrontPhoto: jest.fn(),
         handleTakeCarRearPhoto: jest.fn(),
-        removeCarFrontImage: jest.fn(),
-        removeCarRearImage: jest.fn(),
+        setCarFrontImage: jest.fn(),
+        setCarRearImage: jest.fn(),
     };
 
     beforeEach(() => {
@@ -77,20 +96,20 @@ describe('VehicleIdPhotosStep', () => {
     it('should render add front photo button', () => {
         render(<VehicleIdPhotosStep {...defaultProps} />);
         
-        expect(screen.getByText('Add Front Photo')).toBeTruthy();
+        expect(screen.getByTestId('front-pick-image')).toBeTruthy();
     });
 
     it('should render add rear photo button', () => {
         render(<VehicleIdPhotosStep {...defaultProps} />);
         
-        expect(screen.getByText('Add Rear Photo')).toBeTruthy();
+        expect(screen.getByTestId('rear-pick-image')).toBeTruthy();
     });
 
     it('should call handlePickCarFrontImage when add front photo is pressed', () => {
         const handlePickCarFrontImageMock = jest.fn();
         render(<VehicleIdPhotosStep {...defaultProps} handlePickCarFrontImage={handlePickCarFrontImageMock} />);
         
-        const addButton = screen.getByText('Add Front Photo');
+        const addButton = screen.getByTestId('front-pick-image');
         fireEvent.press(addButton);
         
         expect(handlePickCarFrontImageMock).toHaveBeenCalled();
@@ -100,7 +119,7 @@ describe('VehicleIdPhotosStep', () => {
         const handlePickCarRearImageMock = jest.fn();
         render(<VehicleIdPhotosStep {...defaultProps} handlePickCarRearImage={handlePickCarRearImageMock} />);
         
-        const addButton = screen.getByText('Add Rear Photo');
+        const addButton = screen.getByTestId('rear-pick-image');
         fireEvent.press(addButton);
         
         expect(handlePickCarRearImageMock).toHaveBeenCalled();
@@ -109,20 +128,20 @@ describe('VehicleIdPhotosStep', () => {
     it('should render take front photo button', () => {
         render(<VehicleIdPhotosStep {...defaultProps} />);
         
-        expect(screen.getByText('Take Front Photo')).toBeTruthy();
+        expect(screen.getByTestId('front-take-photo')).toBeTruthy();
     });
 
     it('should render take rear photo button', () => {
         render(<VehicleIdPhotosStep {...defaultProps} />);
         
-        expect(screen.getByText('Take Rear Photo')).toBeTruthy();
+        expect(screen.getByTestId('rear-take-photo')).toBeTruthy();
     });
 
     it('should call handleTakeCarFrontPhoto when take front photo is pressed', () => {
         const handleTakeCarFrontPhotoMock = jest.fn();
         render(<VehicleIdPhotosStep {...defaultProps} handleTakeCarFrontPhoto={handleTakeCarFrontPhotoMock} />);
         
-        const takeButton = screen.getByText('Take Front Photo');
+        const takeButton = screen.getByTestId('front-take-photo');
         fireEvent.press(takeButton);
         
         expect(handleTakeCarFrontPhotoMock).toHaveBeenCalled();
@@ -132,7 +151,7 @@ describe('VehicleIdPhotosStep', () => {
         const handleTakeCarRearPhotoMock = jest.fn();
         render(<VehicleIdPhotosStep {...defaultProps} handleTakeCarRearPhoto={handleTakeCarRearPhotoMock} />);
         
-        const takeButton = screen.getByText('Take Rear Photo');
+        const takeButton = screen.getByTestId('rear-take-photo');
         fireEvent.press(takeButton);
         
         expect(handleTakeCarRearPhotoMock).toHaveBeenCalled();
@@ -151,27 +170,27 @@ describe('VehicleIdPhotosStep', () => {
     });
 
     it('should call removeCarFrontImage when remove front is pressed', () => {
-        const removeCarFrontImageMock = jest.fn();
-        render(<VehicleIdPhotosStep {...defaultProps} carFrontImage="front.jpg" removeCarFrontImage={removeCarFrontImageMock} />);
+        const setCarFrontImageMock = jest.fn();
+        render(<VehicleIdPhotosStep {...defaultProps} carFrontImage="front.jpg" setCarFrontImage={setCarFrontImageMock} />);
         
         const removeButton = screen.getByTestId('remove-front-image');
         if (removeButton) {
             fireEvent.press(removeButton);
         }
         
-        expect(removeCarFrontImageMock).toHaveBeenCalled();
+        expect(setCarFrontImageMock).toHaveBeenCalledWith(null);
     });
 
     it('should call removeCarRearImage when remove rear is pressed', () => {
-        const removeCarRearImageMock = jest.fn();
-        render(<VehicleIdPhotosStep {...defaultProps} carRearImage="rear.jpg" removeCarRearImage={removeCarRearImageMock} />);
+        const setCarRearImageMock = jest.fn();
+        render(<VehicleIdPhotosStep {...defaultProps} carRearImage="rear.jpg" setCarRearImage={setCarRearImageMock} />);
         
         const removeButton = screen.getByTestId('remove-rear-image');
         if (removeButton) {
             fireEvent.press(removeButton);
         }
         
-        expect(removeCarRearImageMock).toHaveBeenCalled();
+        expect(setCarRearImageMock).toHaveBeenCalledWith(null);
     });
 
     it('should support RTL layout', () => {
@@ -185,7 +204,7 @@ describe('VehicleIdPhotosStep', () => {
     it('should hide add buttons when images are provided', () => {
         render(<VehicleIdPhotosStep {...defaultProps} carFrontImage="front.jpg" carRearImage="rear.jpg" />);
         
-        expect(screen.queryByText('Add Front Photo')).toBeNull();
-        expect(screen.queryByText('Add Rear Photo')).toBeNull();
+        expect(screen.queryByTestId('front-pick-image')).toBeNull();
+        expect(screen.queryByTestId('rear-pick-image')).toBeNull();
     });
 });

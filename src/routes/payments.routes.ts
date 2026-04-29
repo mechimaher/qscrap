@@ -8,11 +8,15 @@ import { authenticate } from '../middleware/auth.middleware';
 import { paymentService } from '../services/payments';
 import { getPaymentService } from '../services/payment/payment.service';
 import { getWritePool } from '../config/db';
+import { LoyaltyService } from '../services/loyalty.service';
 
 const router = express.Router();
 
 // Deposit payment service (Stripe integration)
 const depositService = getPaymentService(getWritePool());
+
+const shouldApplyLoyalty = (body: any): boolean =>
+    body?.applyLoyalty === true || (parseFloat(body?.loyaltyDiscount) || 0) > 0;
 
 // ============================================================================
 // RATE LIMITERS
@@ -324,8 +328,10 @@ router.post('/deposit/:orderId',
             const deliveryFee = parseFloat(order.delivery_fee) || 0;
             const originalTotal = partPrice + deliveryFee;
 
-            // Accept loyalty discount from request body
-            const loyaltyDiscount = parseFloat(req.body.loyaltyDiscount) || 0;
+            const loyaltyQuote = shouldApplyLoyalty(req.body)
+                ? await LoyaltyService.calculateTierDiscount(userId, partPrice)
+                : { discountAmount: 0, discountPercentage: 0, tier: 'bronze' };
+            const loyaltyDiscount = loyaltyQuote.discountAmount;
 
             // For deposit-only payments, discount applies to COD amount (part price)
             // Customer pays: delivery fee (upfront) + (part_price - discount) (COD)
@@ -336,13 +342,22 @@ router.post('/deposit/:orderId',
                 return res.status(400).json({ success: false, error: 'No delivery fee to pay' });
             }
 
-            // Save discount info to order if provided
+            await pool.query(
+                'UPDATE orders SET loyalty_discount = $2, total_amount = $3 WHERE order_id = $1',
+                [orderId, loyaltyDiscount, newTotal]
+            );
+
             if (loyaltyDiscount > 0) {
-                await pool.query(
-                    'UPDATE orders SET loyalty_discount = $2, total_amount = $3 WHERE order_id = $1',
-                    [orderId, loyaltyDiscount, newTotal]
-                );
-                logger.info('Deposit discount applied', { loyaltyDiscount, discountedPartPrice, partPrice, newTotal });
+                logger.info('Deposit discount applied', {
+                    orderId,
+                    userId,
+                    loyaltyDiscount,
+                    discountPercentage: loyaltyQuote.discountPercentage,
+                    tier: loyaltyQuote.tier,
+                    discountedPartPrice,
+                    partPrice,
+                    newTotal
+                });
             }
 
             const result = await depositService.createDeliveryFeeDeposit(
@@ -364,6 +379,8 @@ router.post('/deposit/:orderId',
                     partPrice,
                     deliveryFee,
                     loyaltyDiscount,
+                    loyaltyTier: loyaltyQuote.tier,
+                    loyaltyDiscountPercentage: loyaltyQuote.discountPercentage,
                     originalTotal,
                     codAmount: discountedPartPrice,
                     total: newTotal
@@ -411,22 +428,30 @@ router.post('/full/:orderId',
             const deliveryFee = parseFloat(order.delivery_fee) || 0;
             const totalAmount = partPrice + deliveryFee;
 
-            // Accept loyalty discount from request body (platform absorbs this)
-            const loyaltyDiscount = parseFloat(req.body.loyaltyDiscount) || 0;
+            const loyaltyQuote = shouldApplyLoyalty(req.body)
+                ? await LoyaltyService.calculateTierDiscount(userId, totalAmount)
+                : { discountAmount: 0, discountPercentage: 0, tier: 'bronze' };
+            const loyaltyDiscount = loyaltyQuote.discountAmount;
             const chargeAmount = Math.max(0, totalAmount - loyaltyDiscount);
 
             if (chargeAmount <= 0) {
                 return res.status(400).json({ success: false, error: 'No amount to pay' });
             }
 
-            // Update order with discount info and adjusted total
+            await pool.query(
+                'UPDATE orders SET loyalty_discount = $2, total_amount = $3 WHERE order_id = $1',
+                [orderId, loyaltyDiscount, chargeAmount]
+            );
+
             if (loyaltyDiscount > 0) {
-                // Save discount and update total_amount to reflect discounted price
-                await pool.query(
-                    'UPDATE orders SET loyalty_discount = $2, total_amount = $3 WHERE order_id = $1',
-                    [orderId, loyaltyDiscount, chargeAmount]
-                );
-                logger.info('Full payment discount applied', { loyaltyDiscount, chargeAmount });
+                logger.info('Full payment discount applied', {
+                    orderId,
+                    userId,
+                    loyaltyDiscount,
+                    discountPercentage: loyaltyQuote.discountPercentage,
+                    tier: loyaltyQuote.tier,
+                    chargeAmount
+                });
             }
 
             const result = await depositService.createFullPaymentIntent(
@@ -450,6 +475,8 @@ router.post('/full/:orderId',
                     partPrice,
                     deliveryFee,
                     loyaltyDiscount,
+                    loyaltyTier: loyaltyQuote.tier,
+                    loyaltyDiscountPercentage: loyaltyQuote.discountPercentage,
                     originalTotal: totalAmount,
                     total: chargeAmount
                 }
@@ -472,7 +499,6 @@ router.post('/free/:orderId',
         try {
             const userId = (req as any).user.userId;
             const { orderId } = req.params;
-            const { loyaltyDiscount } = req.body;
 
             // Get order details
             const pool = getWritePool();
@@ -495,9 +521,12 @@ router.post('/free/:orderId',
             const partPrice = parseFloat(order.part_price) || 0;
             const deliveryFee = parseFloat(order.delivery_fee) || 0;
             const totalAmount = partPrice + deliveryFee;
-            const discount = parseFloat(loyaltyDiscount) || 0;
+            const loyaltyQuote = shouldApplyLoyalty(req.body)
+                ? await LoyaltyService.calculateTierDiscount(userId, totalAmount)
+                : { discountAmount: 0, discountPercentage: 0, tier: 'bronze' };
+            const discount = loyaltyQuote.discountAmount;
 
-            // Verify discount covers the entire amount
+            // Verify the server-computed discount covers the entire amount.
             if (discount < totalAmount) {
                 return res.status(400).json({
                     success: false,
@@ -518,7 +547,14 @@ router.post('/free/:orderId',
             `, [orderId, discount]);
 
             // Log free order event
-            logger.info('Free order confirmed', { orderId, discount, totalAmount });
+            logger.info('Free order confirmed', {
+                orderId,
+                userId,
+                discount,
+                discountPercentage: loyaltyQuote.discountPercentage,
+                tier: loyaltyQuote.tier,
+                totalAmount
+            });
 
             // TODO: Award loyalty points for the order (even though it was free)
             // TODO: Notify garage of new order
@@ -530,6 +566,8 @@ router.post('/free/:orderId',
                 breakdown: {
                     originalTotal: totalAmount,
                     loyaltyDiscount: discount,
+                    loyaltyTier: loyaltyQuote.tier,
+                    loyaltyDiscountPercentage: loyaltyQuote.discountPercentage,
                     chargedAmount: 0
                 }
             });

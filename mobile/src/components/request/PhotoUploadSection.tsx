@@ -24,6 +24,8 @@ interface PhotoUploadSectionProps {
     onRemoveImage: (index: number) => void;
     /** Optional: show full-width images instead of grid */
     fullWidth?: boolean;
+    /** Optional stable prefix for test IDs on single-image instances */
+    testIDPrefix?: string;
 }
 
 function PhotoUploadSection({
@@ -33,6 +35,7 @@ function PhotoUploadSection({
     onTakePhoto,
     onRemoveImage,
     fullWidth = false,
+    testIDPrefix = 'image',
 }: PhotoUploadSectionProps) {
     const { t, isRTL } = useTranslation();
     const { colors } = useTheme();
@@ -42,9 +45,10 @@ function PhotoUploadSection({
         return (
             <>
                 {images.length > 0 ? (
-                    <View style={{ marginBottom: 16 }}>
+                    <View testID={`${testIDPrefix}-image-preview`} style={{ marginBottom: 16 }}>
                         <Image source={{ uri: images[0] }} style={styles.fullWidthImage} />
                         <TouchableOpacity
+                            testID={`remove-${testIDPrefix}-image`}
                             onPress={() => onRemoveImage(0)}
                             style={[styles.removePhotoButton, { top: 8, right: 8 }]}
                         >
@@ -54,6 +58,7 @@ function PhotoUploadSection({
                 ) : (
                     <View style={{ flexDirection: 'row', gap: 12, marginBottom: 16 }}>
                         <TouchableOpacity
+                            testID={`${testIDPrefix}-pick-image`}
                             onPress={onPickImage}
                             style={[styles.addPhotoButton, { flex: 1, backgroundColor: colors.background, borderColor: colors.border }]}
                         >
@@ -61,6 +66,7 @@ function PhotoUploadSection({
                             <Text style={[styles.addPhotoText, { color: colors.textSecondary }]}>{t('common.gallery')}</Text>
                         </TouchableOpacity>
                         <TouchableOpacity
+                            testID={`${testIDPrefix}-take-photo`}
                             onPress={onTakePhoto}
                             style={[styles.addPhotoButton, { flex: 1, backgroundColor: colors.background, borderColor: colors.border }]}
                         >
@@ -77,9 +83,10 @@ function PhotoUploadSection({
     return (
         <View style={[styles.photoGrid, { flexDirection: rtlFlexDirection(isRTL) }]}>
             {images.map((uri, index) => (
-                <View key={index} style={styles.photoWrapper}>
+                <View key={index} testID={`${testIDPrefix}-preview`} style={styles.photoWrapper}>
                     <Image source={{ uri }} style={styles.photo} />
                     <TouchableOpacity
+                        testID={`remove-${testIDPrefix}-${index}`}
                         onPress={() => onRemoveImage(index)}
                         style={styles.removePhotoButton}
                     >
@@ -90,6 +97,7 @@ function PhotoUploadSection({
 
             {images.length < maxImages && (
                 <TouchableOpacity
+                    testID={`${testIDPrefix}-pick-image`}
                     onPress={onPickImage}
                     style={[styles.addPhotoButton, { backgroundColor: colors.background, borderColor: colors.border }]}
                 >
@@ -102,6 +110,7 @@ function PhotoUploadSection({
 
             {images.length < maxImages && (
                 <TouchableOpacity
+                    testID={`${testIDPrefix}-take-photo`}
                     onPress={onTakePhoto}
                     style={[styles.addPhotoButton, { backgroundColor: colors.background, borderColor: colors.border }]}
                 >

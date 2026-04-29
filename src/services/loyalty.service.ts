@@ -29,6 +29,12 @@ interface RedemptionResult {
     message: string;
 }
 
+export interface LoyaltyDiscountQuote {
+    discountAmount: number;
+    discountPercentage: number;
+    tier: string;
+}
+
 export class LoyaltyService {
     /**
      * Get customer rewards summary
@@ -161,6 +167,54 @@ export class LoyaltyService {
     static calculateDiscountFromPoints(points: number): number {
         // 100 points = 10 QAR
         return (points / 100) * 10;
+    }
+
+    /**
+     * Calculate the loyalty tier discount for an order amount.
+     * This is the server-side source of truth for payment pricing.
+     */
+    static async calculateTierDiscount(
+        customerId: string,
+        eligibleAmount: number
+    ): Promise<LoyaltyDiscountQuote> {
+        if (!Number.isFinite(eligibleAmount) || eligibleAmount <= 0) {
+            return { discountAmount: 0, discountPercentage: 0, tier: 'bronze' };
+        }
+
+        try {
+            const result = await pool.query(
+                `SELECT 
+                    COALESCE(cr.current_tier, 'bronze') as tier,
+                    COALESCE(rt.discount_percentage, 0) as discount_percentage
+                 FROM customer_rewards cr
+                 LEFT JOIN reward_tiers rt ON rt.tier_name = cr.current_tier
+                 WHERE cr.customer_id = $1`,
+                [customerId]
+            );
+
+            if (result.rows.length === 0) {
+                await this.initializeCustomerRewards(customerId);
+                return { discountAmount: 0, discountPercentage: 0, tier: 'bronze' };
+            }
+
+            const discountPercentage = Math.max(
+                0,
+                Math.min(100, parseFloat(result.rows[0].discount_percentage) || 0)
+            );
+            const discountAmount = Math.min(
+                eligibleAmount,
+                Math.round(eligibleAmount * (discountPercentage / 100))
+            );
+
+            return {
+                discountAmount,
+                discountPercentage,
+                tier: result.rows[0].tier || 'bronze',
+            };
+        } catch (error) {
+            logger.error('Error calculating tier discount', { error: (error as Error).message });
+            throw new Error('Failed to calculate loyalty discount');
+        }
     }
 
     /**

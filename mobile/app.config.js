@@ -6,6 +6,8 @@
  */
 
 module.exports = ({ config }) => {
+    const googleMapsApiKey = process.env.EXPO_PUBLIC_GOOGLE_MAPS_API_KEY;
+
     return {
         ...config,
         name: 'QScrap',
@@ -72,12 +74,13 @@ module.exports = ({ config }) => {
                 'android.permission.SCHEDULE_EXACT_ALARM',
                 'android.permission.POST_NOTIFICATIONS',
             ],
-            config: {
-                googleMaps: {
-                    // Read from environment variable, fallback to existing key for backwards compatibility
-                    apiKey: process.env.EXPO_PUBLIC_GOOGLE_MAPS_API_KEY || 'AIzaSyBtetLMBqtW1TNNsBFWi5Xa4LTy1GEbwYw',
+            ...(googleMapsApiKey ? {
+                config: {
+                    googleMaps: {
+                        apiKey: googleMapsApiKey,
+                    },
                 },
-            },
+            } : {}),
         },
         web: {
             favicon: './assets/favicon.png',

@@ -19,7 +19,7 @@ interface LoyaltyDiscountCardProps {
     payNowAmount: number;
     discountAmount: number;
     isRTL: boolean;
-    t: (key: string) => string;
+    t: (key: string, params?: Record<string, string | number>) => string;
 }
 
 export const LoyaltyDiscountCard: React.FC<LoyaltyDiscountCardProps> = ({
@@ -42,13 +42,18 @@ export const LoyaltyDiscountCard: React.FC<LoyaltyDiscountCardProps> = ({
     }
 
     return (
-        <View style={[
+        <View testID="loyalty-card" style={[
             styles.vvipLoyaltyCard,
             freeOrder && { borderColor: '#22C55E', borderWidth: 2 }
         ]}>
             <View style={[styles.vvipLoyaltyRow, { flexDirection: rtlFlexDirection(isRTL) }]}>
                 <View style={styles.vvipLoyaltyLeft}>
-                    <Ionicons name={loyaltyData.tier === 'platinum' ? 'diamond' : loyaltyData.tier === 'gold' ? 'trophy' : 'medal'} size={28} color={loyaltyData.tier === 'platinum' ? '#E5E7EB' : loyaltyData.tier === 'gold' ? '#FFD700' : '#C0C0C0'} />
+                    <Ionicons
+                        testID={loyaltyData.tier === 'platinum' ? 'diamond' : loyaltyData.tier === 'gold' ? 'trophy' : 'medal'}
+                        name={loyaltyData.tier === 'platinum' ? 'diamond' : loyaltyData.tier === 'gold' ? 'trophy' : 'medal'}
+                        size={28}
+                        color={loyaltyData.tier === 'platinum' ? '#E5E7EB' : loyaltyData.tier === 'gold' ? '#FFD700' : '#C0C0C0'}
+                    />
                     <View>
                         <Text style={styles.vvipLoyaltyTier}>
                             {loyaltyData.tier.toUpperCase()} • {loyaltyData.discountPercentage}% {t('payment.off')}
@@ -60,6 +65,7 @@ export const LoyaltyDiscountCard: React.FC<LoyaltyDiscountCardProps> = ({
                 </View>
                 <Switch
                     testID="loyalty-switch"
+                    accessibilityRole="switch"
                     value={applyDiscount}
                     onValueChange={(value) => {
                         Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Medium);

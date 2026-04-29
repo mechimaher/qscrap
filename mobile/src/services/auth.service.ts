@@ -7,7 +7,18 @@ import { User, AuthResponse, Request, Bid, Order, Stats, Address, Product, Notif
 // SecureStore keys for biometric credentials — must match apiClient.ts
 const BIOMETRIC_PHONE = 'qscrap_biometric_phone';
 const BIOMETRIC_PASSWORD = 'qscrap_biometric_password';
+const BIOMETRIC_REFRESH_TOKEN = 'qscrap_biometric_refresh_token';
 const BIOMETRIC_ENABLED = 'qscrap_biometric_enabled';
+
+const BIOMETRIC_METADATA_OPTIONS: SecureStore.SecureStoreOptions = {
+    keychainService: 'qscrap_biometric_metadata',
+};
+
+const BIOMETRIC_SECRET_OPTIONS: SecureStore.SecureStoreOptions = {
+    keychainService: 'qscrap_biometric_session',
+    requireAuthentication: true,
+    authenticationPrompt: 'Authenticate to unlock QScrap',
+};
 
 export class AuthService {
     async login(phone_number: string, password: string): Promise<AuthResponse> {
@@ -144,51 +155,106 @@ export class AuthService {
         });
     }
 
-    async saveBiometricCredentials(phone: string, password: string): Promise<void> {
+    async checkDeletionEligibility(): Promise<{
+        canDelete: boolean;
+        blockers: Array<{
+            type: string;
+            count: number;
+            message: string;
+            action: string;
+        }>;
+    }> {
+        return apiClient.request(API_ENDPOINTS.DELETION_ELIGIBILITY);
+    }
+
+    async deleteAccount(): Promise<{ message: string }> {
+        return apiClient.request(API_ENDPOINTS.DELETE_ACCOUNT, {
+            method: 'DELETE',
+        });
+    }
+
+    async loginWithBiometric(): Promise<{ token: string; refreshToken?: string }> {
+        const session = await this.getBiometricSession();
+        if (!session?.refreshToken) {
+            throw new Error('No biometric session found');
+        }
+
         try {
-            await SecureStore.setItemAsync(BIOMETRIC_PHONE, phone);
-            await SecureStore.setItemAsync(BIOMETRIC_PASSWORD, password);
-            await SecureStore.setItemAsync(BIOMETRIC_ENABLED, 'true');
-            log('[API] Biometric credentials saved');
+            const response = await apiClient.request<{ token: string; refreshToken?: string }>(API_ENDPOINTS.REFRESH, {
+                method: 'POST',
+                body: JSON.stringify({ refreshToken: session.refreshToken }),
+            });
+
+            await apiClient.setToken(response.token);
+            const nextRefreshToken = response.refreshToken || session.refreshToken;
+            await apiClient.setRefreshToken(nextRefreshToken);
+            await SecureStore.setItemAsync(BIOMETRIC_REFRESH_TOKEN, nextRefreshToken, BIOMETRIC_SECRET_OPTIONS);
+            return response;
         } catch (error) {
-            warn('[API] Failed to save biometric credentials:', error);
+            await this.clearBiometricCredentials();
+            throw error;
         }
     }
 
-    async getBiometricCredentials(): Promise<{ phone: string; password: string } | null> {
+    async saveBiometricCredentials(phone: string, _password: string): Promise<void> {
         try {
-            const enabled = await SecureStore.getItemAsync(BIOMETRIC_ENABLED);
+            const refreshToken = await apiClient.getRefreshToken();
+            if (!refreshToken) {
+                warn('[API] Cannot enable biometric login without a refresh token');
+                return;
+            }
+
+            await SecureStore.setItemAsync(BIOMETRIC_PHONE, phone, BIOMETRIC_METADATA_OPTIONS);
+            await SecureStore.setItemAsync(BIOMETRIC_REFRESH_TOKEN, refreshToken, BIOMETRIC_SECRET_OPTIONS);
+            await SecureStore.deleteItemAsync(BIOMETRIC_PASSWORD);
+            await SecureStore.setItemAsync(BIOMETRIC_ENABLED, 'true', BIOMETRIC_METADATA_OPTIONS);
+            log('[API] Biometric session saved');
+        } catch (error) {
+            warn('[API] Failed to save biometric session:', error);
+        }
+    }
+
+    async getBiometricSession(): Promise<{ phone: string; refreshToken: string } | null> {
+        try {
+            await SecureStore.deleteItemAsync(BIOMETRIC_PASSWORD);
+            const enabled = await SecureStore.getItemAsync(BIOMETRIC_ENABLED, BIOMETRIC_METADATA_OPTIONS);
             if (enabled !== 'true') {
                 return null;
             }
 
-            const phone = await SecureStore.getItemAsync(BIOMETRIC_PHONE);
-            const password = await SecureStore.getItemAsync(BIOMETRIC_PASSWORD);
+            const phone = await SecureStore.getItemAsync(BIOMETRIC_PHONE, BIOMETRIC_METADATA_OPTIONS);
+            const refreshToken = await SecureStore.getItemAsync(BIOMETRIC_REFRESH_TOKEN, BIOMETRIC_SECRET_OPTIONS);
 
-            if (phone && password) {
-                return { phone, password };
+            if (phone && refreshToken) {
+                return { phone, refreshToken };
             }
             return null;
         } catch (error) {
-            warn('[API] Failed to get biometric credentials:', error);
+            warn('[API] Failed to get biometric session:', error);
             return null;
         }
     }
 
+    async getBiometricCredentials(): Promise<{ phone: string; password: string } | null> {
+        return null;
+    }
+
     async clearBiometricCredentials(): Promise<void> {
         try {
-            await SecureStore.deleteItemAsync(BIOMETRIC_PHONE);
+            await SecureStore.deleteItemAsync(BIOMETRIC_PHONE, BIOMETRIC_METADATA_OPTIONS);
             await SecureStore.deleteItemAsync(BIOMETRIC_PASSWORD);
-            await SecureStore.deleteItemAsync(BIOMETRIC_ENABLED);
-            log('[API] Biometric credentials cleared');
+            await SecureStore.deleteItemAsync(BIOMETRIC_REFRESH_TOKEN, BIOMETRIC_SECRET_OPTIONS);
+            await SecureStore.deleteItemAsync(BIOMETRIC_ENABLED, BIOMETRIC_METADATA_OPTIONS);
+            log('[API] Biometric session cleared');
         } catch (error) {
-            warn('[API] Failed to clear biometric credentials:', error);
+            warn('[API] Failed to clear biometric session:', error);
         }
     }
 
     async isBiometricEnabled(): Promise<boolean> {
         try {
-            const enabled = await SecureStore.getItemAsync(BIOMETRIC_ENABLED);
+            await SecureStore.deleteItemAsync(BIOMETRIC_PASSWORD);
+            const enabled = await SecureStore.getItemAsync(BIOMETRIC_ENABLED, BIOMETRIC_METADATA_OPTIONS);
             return enabled === 'true';
         } catch {
             return false;
@@ -197,7 +263,11 @@ export class AuthService {
 
     async setBiometricEnabled(enabled: boolean): Promise<void> {
         try {
-            await SecureStore.setItemAsync(BIOMETRIC_ENABLED, enabled ? 'true' : 'false');
+            if (!enabled) {
+                await this.clearBiometricCredentials();
+                return;
+            }
+            await SecureStore.setItemAsync(BIOMETRIC_ENABLED, 'true', BIOMETRIC_METADATA_OPTIONS);
         } catch (error) {
             warn('[API] Failed to set biometric enabled:', error);
         }

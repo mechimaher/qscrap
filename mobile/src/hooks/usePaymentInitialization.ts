@@ -61,27 +61,21 @@ export function usePaymentInitialization({
                 setOrderId(orderIdToUse || null);
             }
 
-            let currentDiscount = 0;
-            if (applyDiscount && loyaltyData && loyaltyData.discountPercentage > 0) {
-                currentDiscount = Math.round(totalAmount * (loyaltyData.discountPercentage / 100));
-            }
-
             if (!orderIdToUse) {
                 throw new Error('Order ID is required');
             }
 
+            const applyLoyalty = applyDiscount && loyaltyData && loyaltyData.discountPercentage > 0;
             let paymentResult;
             if (paymentType === 'full') {
-                paymentResult = await api.createFullPaymentIntent(orderIdToUse, currentDiscount);
+                paymentResult = await api.createFullPaymentIntent(orderIdToUse, applyLoyalty);
                 setPaymentAmount(paymentResult.breakdown?.total || totalAmount);
-                setDiscountAmount(currentDiscount);
             } else {
-                const partDiscount = applyDiscount && loyaltyData && loyaltyData.discountPercentage > 0
-                    ? Math.round(partPrice * (loyaltyData.discountPercentage / 100))
-                    : 0;
-                paymentResult = await api.createDeliveryFeeIntent(orderIdToUse, partDiscount);
+                paymentResult = await api.createDeliveryFeeIntent(orderIdToUse, applyLoyalty);
                 setPaymentAmount(deliveryFee);
             }
+
+            setDiscountAmount(paymentResult.breakdown?.loyaltyDiscount || 0);
 
             if (!paymentResult.intent?.clientSecret) {
                 const result = paymentResult as any;
@@ -105,7 +99,7 @@ export function usePaymentInitialization({
             setIsCreatingOrder(false);
             isInitializing.current = false;
         }
-    }, [existingOrderId, bidId, paymentType, applyDiscount, loyaltyData, totalAmount, partPrice, deliveryFee, setClientSecret, setPaymentAmount, setDiscountAmount, t, toast, navigation]);
+    }, [existingOrderId, bidId, paymentType, applyDiscount, loyaltyData, totalAmount, deliveryFee, setClientSecret, setPaymentAmount, setDiscountAmount, t, toast, navigation]);
 
     const retryPaymentIntent = useCallback(async () => {
         if (!orderId) {
@@ -119,23 +113,17 @@ export function usePaymentInitialization({
 
         try {
 
-            let currentDiscount = 0;
-            if (applyDiscount && loyaltyData && loyaltyData.discountPercentage > 0) {
-                currentDiscount = Math.round(totalAmount * (loyaltyData.discountPercentage / 100));
-            }
-
+            const applyLoyalty = applyDiscount && loyaltyData && loyaltyData.discountPercentage > 0;
             let paymentResult;
             if (paymentType === 'full') {
-                paymentResult = await api.createFullPaymentIntent(orderId, currentDiscount);
+                paymentResult = await api.createFullPaymentIntent(orderId, applyLoyalty);
                 setPaymentAmount(paymentResult.breakdown?.total || totalAmount);
-                setDiscountAmount(currentDiscount);
             } else {
-                const partDiscount = applyDiscount && loyaltyData && loyaltyData.discountPercentage > 0
-                    ? Math.round(partPrice * (loyaltyData.discountPercentage / 100))
-                    : 0;
-                paymentResult = await api.createDeliveryFeeIntent(orderId, partDiscount);
+                paymentResult = await api.createDeliveryFeeIntent(orderId, applyLoyalty);
                 setPaymentAmount(deliveryFee);
             }
+
+            setDiscountAmount(paymentResult.breakdown?.loyaltyDiscount || 0);
 
             if (!paymentResult.intent?.clientSecret) {
                 const result = paymentResult as any;
@@ -154,7 +142,7 @@ export function usePaymentInitialization({
         } finally {
             setIsCreatingOrder(false);
         }
-    }, [orderId, paymentType, applyDiscount, loyaltyData, totalAmount, partPrice, deliveryFee, setClientSecret, setPaymentAmount, setDiscountAmount, t, toast, initializePayment]);
+    }, [orderId, paymentType, applyDiscount, loyaltyData, totalAmount, deliveryFee, setClientSecret, setPaymentAmount, setDiscountAmount, t, toast, initializePayment]);
 
     return {
         orderId,

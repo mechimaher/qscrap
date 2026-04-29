@@ -70,6 +70,7 @@ function PartSpecsCard({
                     </Text>
                     <View style={[styles.quantityStepper, { flexDirection: rtlFlexDirection(isRTL) }]}>
                         <TouchableOpacity
+                            testID="quantity-decrement"
                             onPress={() => {
                                 if (quantity > 1) {
                                     Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
@@ -84,6 +85,7 @@ function PartSpecsCard({
                             <Text style={[styles.stepperValueText, { color: colors.text }]}>{quantity}</Text>
                         </View>
                         <TouchableOpacity
+                            testID="quantity-increment"
                             onPress={() => {
                                 if (quantity < 10) {
                                     Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
@@ -107,6 +109,7 @@ function PartSpecsCard({
                     {sideOptions.map((opt) => (
                         <TouchableOpacity
                             key={opt.value}
+                            testID={`side-${opt.value}`}
                             onPress={() => {
                                 Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
                                 onSideChange(opt.value);
@@ -160,6 +163,7 @@ function PartSpecsCard({
                 {conditionOptions.map((opt) => (
                     <TouchableOpacity
                         key={opt.value}
+                        testID={`condition-${opt.value}`}
                         onPress={() => {
                             Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
                             onConditionChange(opt.value);

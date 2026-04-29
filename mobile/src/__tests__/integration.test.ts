@@ -109,7 +109,7 @@ describe('Integration: Critical User Flows', () => {
                 intent: { id: 'pi_test_123', clientSecret: 'pi_test_123_secret_xxx', amount: 2500, currency: 'qar' },
                 breakdown: { partPrice: 100, deliveryFee: 25, loyaltyDiscount: 0, originalTotal: 125, codAmount: 100, total: 25 },
             });
-            const intentResult = await api.createDeliveryFeeIntent('order-1', 0);
+            const intentResult = await api.createDeliveryFeeIntent('order-1', false);
             expect(intentResult.intent.clientSecret).toBeTruthy();
             expect(intentResult.breakdown!.deliveryFee).toBe(25);
 
@@ -146,7 +146,7 @@ describe('Integration: Critical User Flows', () => {
 
             // Step 2: Confirm free order (no Stripe needed)
             mockFetch({ success: true, message: 'Free order confirmed', order_id: 'order-2' });
-            const freeResult = await api.confirmFreeOrder('order-2', 125);
+            const freeResult = await api.confirmFreeOrder('order-2', true);
             expect(freeResult.success).toBe(true);
 
             // Step 3: Order is now confirmed without payment

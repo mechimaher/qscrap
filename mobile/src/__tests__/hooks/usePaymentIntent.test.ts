@@ -96,7 +96,7 @@ describe('usePaymentIntent', () => {
         });
 
         await waitFor(() => {
-            expect(api.createFullPaymentIntent).toHaveBeenCalledWith('order-123', 0);
+            expect(api.createFullPaymentIntent).toHaveBeenCalledWith('order-123', false);
             expect(result.current.clientSecret).toBe('secret_full');
             expect(result.current.paymentAmount).toBe(100);
         });
@@ -127,7 +127,7 @@ describe('usePaymentIntent', () => {
         });
 
         await waitFor(() => {
-            expect(api.createDeliveryFeeIntent).toHaveBeenCalledWith('order-123', 0);
+            expect(api.createDeliveryFeeIntent).toHaveBeenCalledWith('order-123', false);
             expect(result.current.clientSecret).toBe('secret_delivery');
             expect(result.current.paymentAmount).toBe(20);
         });

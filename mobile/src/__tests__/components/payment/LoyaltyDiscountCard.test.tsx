@@ -60,17 +60,17 @@ describe('LoyaltyDiscountCard', () => {
     });
 
     it('should not render when no loyalty data', () => {
-        const { container } = render(<LoyaltyDiscountCard {...defaultProps} loyaltyData={null} />);
+        const { toJSON } = render(<LoyaltyDiscountCard {...defaultProps} loyaltyData={null} />);
         
-        expect(container.children.length).toBe(0);
+        expect(toJSON()).toBeNull();
     });
 
     it('should not render when discount percentage is 0', () => {
-        const { container } = render(
+        const { toJSON } = render(
             <LoyaltyDiscountCard {...defaultProps} loyaltyData={{ tier: 'bronze', discountPercentage: 0 }} />
         );
         
-        expect(container.children.length).toBe(0);
+        expect(toJSON()).toBeNull();
     });
 
     it('should render loyalty tier and discount percentage', () => {
@@ -113,7 +113,7 @@ describe('LoyaltyDiscountCard', () => {
         const setApplyDiscountMock = jest.fn();
         render(<LoyaltyDiscountCard {...defaultProps} applyDiscount={false} setApplyDiscount={setApplyDiscountMock} />);
         
-        const toggle = screen.getByRole('switch');
+        const toggle = screen.getByTestId('loyalty-switch');
         fireEvent(toggle, 'valueChange', true);
         
         expect(setApplyDiscountMock).toHaveBeenCalledWith(true);
@@ -123,7 +123,7 @@ describe('LoyaltyDiscountCard', () => {
         const { impactAsync } = require('expo-haptics');
         render(<LoyaltyDiscountCard {...defaultProps} applyDiscount={false} />);
         
-        const toggle = screen.getByRole('switch');
+        const toggle = screen.getByTestId('loyalty-switch');
         fireEvent(toggle, 'valueChange', true);
         
         expect(impactAsync).toHaveBeenCalled();

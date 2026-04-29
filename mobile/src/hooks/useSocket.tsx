@@ -222,6 +222,7 @@ export function useSocket() {
                         {
                             type: 'counter_offer',
                             bidId: data.bid_id,
+                            requestId: data.request_id || data.requestId,
                             proposedAmount: data.proposed_amount,
                         },
                         undefined,
@@ -248,6 +249,7 @@ export function useSocket() {
                         {
                             type: 'counter_offer_accepted',
                             bidId: data.bid_id,
+                            requestId: data.request_id || data.requestId,
                             agreedAmount: data.agreed_amount,
                         }
                     );
@@ -271,6 +273,7 @@ export function useSocket() {
                             {
                                 type: 'counter_offer_final',
                                 bidId: data.bid_id,
+                                requestId: data.request_id || data.requestId,
                                 isFinalRound: true,
                                 originalBidAmount: data.original_bid_amount,
                             }

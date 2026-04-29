@@ -1,9 +1,7 @@
-import { log, warn, error as logError } from '../utils/logger';
-import { handleApiError } from '../utils/errorHandler';
 // QScrap - Delivery Fee Payment Screen
 // Collects upfront delivery fee via Stripe before order confirmation
 
-import React, { useState, useEffect, useRef, useCallback, useMemo } from 'react';
+import React, { useState, useEffect, useRef, useCallback } from 'react';
 import {
     View,
     Text,
@@ -39,7 +37,6 @@ import { PaymentButton } from '../components/payment/PaymentButton';
 
 import { useLoyaltyCalculation } from '../hooks/useLoyaltyCalculation';
 import { usePaymentInitialization } from '../hooks/usePaymentInitialization';
-import { usePaymentIntent } from '../hooks/usePaymentIntent';
 import { useStripeCheckout } from '../hooks/useStripeCheckout';
 
 
@@ -123,6 +120,11 @@ function PaymentScreenContent() {
     const [cardComplete, setCardComplete] = useState(false);
     const [paymentType, setPaymentType] = useState<'delivery_only' | 'full'>('delivery_only');
     const [applyDiscount, setApplyDiscount] = useState(false);
+    const [clientSecret, setClientSecret] = useState<string | null>(null);
+    const [paymentAmount, setPaymentAmount] = useState(deliveryFee);
+    const [discountAmount, setDiscountAmount] = useState(0);
+    const hasInitialized = useRef(false);
+    const lastPaymentIntentKey = useRef<string | null>(null);
 
     // 1. Calculate Loyalty constraints
     const {
@@ -132,28 +134,6 @@ function PaymentScreenContent() {
         codAmount,
         freeOrder,
     } = useLoyaltyCalculation({ partPrice, deliveryFee, paymentType, applyDiscount });
-
-    // 2. Core Stateful data managed by Initialization Hook (Orders & Intent fallbacks)
-    const {
-        clientSecret,
-        setClientSecret,
-        paymentAmount,
-        setPaymentAmount,
-        isCreatingOrder,
-        setIsCreatingOrder,
-        discountAmount,
-        setDiscountAmount,
-    } = usePaymentIntent({
-        orderId: null, // Initialized later
-        paymentType,
-        applyDiscount,
-        payNowAmount,
-        discountOnTotal: calculateDiscount.discountOnTotal,
-        discountOnPart: calculateDiscount.discountOnPart,
-        deliveryFee,
-        t,
-        toast,
-    });
 
     const {
         orderId,
@@ -178,23 +158,31 @@ function PaymentScreenContent() {
         navigation
     });
 
-    // Replace usePaymentIntent with the initialized OrderID
-    usePaymentIntent({
-        orderId,
-        paymentType,
-        applyDiscount,
-        payNowAmount,
-        discountOnTotal: calculateDiscount.discountOnTotal,
-        discountOnPart: calculateDiscount.discountOnPart,
-        deliveryFee,
-        t,
-        toast,
-    });
-
     // 3. Initialize Payment Intent exactly once
     useEffect(() => {
+        hasInitialized.current = true;
         initializePayment();
     }, []);
+
+    // Refresh the visible intent when the customer changes payment mode or loyalty use.
+    useEffect(() => {
+        if (!hasInitialized.current || !orderId) {
+            return;
+        }
+
+        const nextKey = `${orderId}:${paymentType}:${applyDiscount}`;
+        if (lastPaymentIntentKey.current === null) {
+            lastPaymentIntentKey.current = nextKey;
+            return;
+        }
+        if (lastPaymentIntentKey.current === nextKey) {
+            return;
+        }
+
+        lastPaymentIntentKey.current = nextKey;
+        setClientSecret(null);
+        retryPaymentIntent();
+    }, [orderId, paymentType, applyDiscount, retryPaymentIntent]);
 
     // 4. Handle Stripe Checkouts — NOW SAFE because we are inside <StripeProvider>
     const { isLoading, handlePayment, handleFreeOrder } = useStripeCheckout({
@@ -207,7 +195,7 @@ function PaymentScreenContent() {
     });
 
     // Aggregate loading state
-    const isComponentLoading = isCreatingOrder || isInitLoading || isLoading;
+    const isComponentLoading = isInitLoading || isLoading;
 
 
     const handleCancel = useCallback(() => {

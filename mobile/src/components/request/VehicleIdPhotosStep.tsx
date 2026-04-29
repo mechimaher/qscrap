@@ -43,6 +43,7 @@ export default function VehicleIdPhotosStep({
                 onTakePhoto={handleTakeCarFrontPhoto}
                 onRemoveImage={() => setCarFrontImage(null)}
                 fullWidth
+                testIDPrefix="front"
             />
 
             <Text style={[styles.photoLabel, { color: colors.textSecondary, marginBottom: 8, textAlign: rtlTextAlign(isRTL) }]}>
@@ -55,6 +56,7 @@ export default function VehicleIdPhotosStep({
                 onTakePhoto={handleTakeCarRearPhoto}
                 onRemoveImage={() => setCarRearImage(null)}
                 fullWidth
+                testIDPrefix="rear"
             />
         </View>
     );

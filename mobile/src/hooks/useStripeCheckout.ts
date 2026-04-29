@@ -10,7 +10,7 @@ interface StripeCheckoutParams {
     cardComplete: boolean;
     orderId: string | null;
     navigation: any;
-    t: (key: string) => string;
+    t: (key: string, params?: Record<string, string | number>) => string;
     toast: any;
 }
 
@@ -104,7 +104,7 @@ export function useStripeCheckout({
         }
     }, [clientSecret, cardComplete, orderId, toast, t, navigation, confirmPayment]);
 
-    const handleFreeOrder = useCallback(async (calculateDiscount: any) => {
+    const handleFreeOrder = useCallback(async () => {
         if (!orderId) {
             toast.error(t('common.error'), t('payment.orderNotFound'));
             return;
@@ -114,8 +114,7 @@ export function useStripeCheckout({
         Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success);
 
         try {
-            const { discountOnTotal } = calculateDiscount;
-            await api.confirmFreeOrder(orderId, discountOnTotal);
+            await api.confirmFreeOrder(orderId, true);
 
             toast.show({
                 type: 'success',

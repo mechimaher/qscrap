@@ -39,7 +39,7 @@ export const BiometricLogin: React.FC<BiometricLoginProps> = ({
     onFail,
 }) => {
     const { t, isRTL } = useTranslation();
-    const { login } = useAuth();
+    const { refreshUser } = useAuth();
     const [hasHardware, setHasHardware] = useState(false);
     const [isEnrolled, setIsEnrolled] = useState(false);
     const [biometricType, setBiometricType] = useState<string | null>(null);
@@ -122,30 +122,17 @@ export const BiometricLogin: React.FC<BiometricLoginProps> = ({
             if (result.success) {
                 Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success);
                 
-                // Retrieve stored credentials and auto-login
-                const credentials = await api.getBiometricCredentials();
+                // Refresh the stored biometric session without storing or replaying a password.
+                const session = await api.getBiometricSession();
                 
-                if (credentials?.phone && credentials?.password) {
-                    // Auto-login with stored credentials
-                    const loginResult = await login(credentials.phone, credentials.password);
-                    
-                    if (loginResult.success) {
-                        onSuccess?.();
-                    } else {
-                        // Login failed - clear biometric credentials
-                        await api.clearBiometricCredentials();
-                        Alert.alert(
-                            t('common.error'),
-                            'Login failed. Please login manually with your password.',
-                            [{ text: t('common.ok') }]
-                        );
-                        onFail?.();
-                    }
+                if (session?.refreshToken) {
+                    await api.loginWithBiometric();
+                    await refreshUser();
+                    onSuccess?.();
                 } else {
-                    // No credentials stored
                     Alert.alert(
                         t('common.error'),
-                        'No biometric credentials found. Please login manually.',
+                        'No biometric session found. Please login manually.',
                         [{ text: t('common.ok') }]
                     );
                     onFail?.();

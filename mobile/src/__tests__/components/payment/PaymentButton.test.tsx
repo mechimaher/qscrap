@@ -82,14 +82,14 @@ describe('PaymentButton', () => {
     it('should be disabled when card is not complete', () => {
         render(<PaymentButton {...defaultProps} cardComplete={false} />);
         
-        const payButton = screen.getByText('Pay 50 QAR').parent?.parent;
+        const payButton = screen.getByTestId('payment-button');
         expect(payButton?.props.accessibilityState?.disabled).toBe(true);
     });
 
     it('should be disabled when loading', () => {
         render(<PaymentButton {...defaultProps} isLoading={true} />);
         
-        const payButton = screen.getByText('Pay 50 QAR').parent?.parent;
+        const payButton = screen.getByTestId('payment-button');
         expect(payButton?.props.accessibilityState?.disabled).toBe(true);
     });
 

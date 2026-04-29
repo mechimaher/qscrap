@@ -6,7 +6,7 @@ import { log, warn, error as logError } from '../utils/logger';
 
 import { LinkingOptions } from '@react-navigation/native';
 import * as Linking from 'expo-linking';
-import { RootStackParamList } from '../../App';
+import type { RootStackParamList } from '../../App';
 
 // URL Scheme prefix for QScrap
 const prefix = Linking.createURL('/');
@@ -34,38 +34,34 @@ export const linking: LinkingOptions<RootStackParamList> = {
             // Main authenticated screens
             Main: {
                 screens: {
-                    MainTabs: {
-                        screens: {
-                            Home: 'home',
-                            Requests: 'requests',
-                            Orders: 'orders',
-                            Profile: 'profile',
-                            Support: 'support',
-                        },
-                    },
-                    RequestDetails: {
-                        path: 'request/:requestId',
-                        parse: {
-                            requestId: (requestId: string) => requestId,
-                        },
-                    },
-                    OrderDetails: {
-                        path: 'order/:orderId',
-                        parse: {
-                            orderId: (orderId: string) => orderId,
-                        },
-                    },
-                    Tracking: {
-                        path: 'track/:orderId',
-                        parse: {
-                            orderId: (orderId: string) => orderId,
-                        },
-                    },
-                    CancellationPreview: 'cancel/:orderId',
-                    ReturnRequest: 'return/:orderId',
-                    Dispute: 'dispute/:orderId',
+                    Home: 'home',
+                    Requests: 'requests',
+                    Orders: 'orders',
+                    Profile: 'profile',
                 },
             },
+            NewRequest: 'request/new',
+            RequestDetail: {
+                path: 'request/:requestId',
+                parse: {
+                    requestId: (requestId: string) => requestId,
+                },
+            },
+            OrderDetail: {
+                path: 'order/:orderId',
+                parse: {
+                    orderId: (orderId: string) => orderId,
+                },
+            },
+            Tracking: {
+                path: 'track/:orderId',
+                parse: {
+                    orderId: (orderId: string) => orderId,
+                },
+            },
+            Notifications: 'notifications',
+            Support: 'support',
+            MyVehicles: 'vehicles',
             // Legal screens (accessible without auth)
             PrivacyPolicy: 'privacy',
             Terms: 'terms',
@@ -90,12 +86,12 @@ export const handleDeepLink = async (url: string): Promise<{ screen: string; par
         // Handle specific routes
         if (path.startsWith('request/')) {
             const requestId = path.replace('request/', '');
-            return { screen: 'RequestDetails', params: { requestId } };
+            return { screen: 'RequestDetail', params: { requestId } };
         }
 
         if (path.startsWith('order/')) {
             const orderId = path.replace('order/', '');
-            return { screen: 'OrderDetails', params: { orderId } };
+            return { screen: 'OrderDetail', params: { orderId } };
         }
 
         if (path.startsWith('track/')) {

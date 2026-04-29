@@ -1,8 +1,9 @@
 // QScrap Customer App - API Configuration
-// Production: Using api.qscrap.qa subdomain for reliable Cloudflare routing
+// Production: Both qscrap.qa and api.qscrap.qa resolve to the same Cloudflare-proxied IP.
+// Fallback matches eas.json production env so local dev and EAS builds behave identically.
 
-export const API_BASE_URL = 'https://api.qscrap.qa/api';
-export const SOCKET_URL = 'https://api.qscrap.qa';
+export const API_BASE_URL = process.env.EXPO_PUBLIC_API_URL || 'https://qscrap.qa/api';
+export const SOCKET_URL = process.env.EXPO_PUBLIC_SOCKET_URL || 'https://qscrap.qa';
 // Use main domain for uploads (images) - fixes Cloudflare mobile issues
 export const UPLOAD_BASE_URL = 'https://qscrap.qa';
 
@@ -92,7 +93,7 @@ export const API_ENDPOINTS = {
 
 // App Info
 export const APP_NAME = 'QScrap';
-export const APP_VERSION = '1.0.0';
+export const APP_VERSION = '1.1.0';
 
 // Privacy URLs (These should still point to the main site likely, but let's check)
 // Assuming privacy.html is on the main landing page qscrap.qa, not api.qscrap.qa

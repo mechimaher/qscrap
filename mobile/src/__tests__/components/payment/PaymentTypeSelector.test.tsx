@@ -4,7 +4,7 @@
  */
 
 import React from 'react';
-import { render, fireEvent } from '@testing-library/react-native';
+import { render, fireEvent, screen } from '@testing-library/react-native';
 import { PaymentTypeSelector } from '../../../components/payment/PaymentTypeSelector';
 
 // Mock expo-linear-gradient
@@ -57,13 +57,13 @@ describe('PaymentTypeSelector', () => {
     it('should display delivery fee for delivery_only option', () => {
         render(<PaymentTypeSelector {...defaultProps} />);
         
-        expect(screen.getByText('50 QAR')).toBeTruthy();
+        expect(screen.getByTestId('delivery-amount').props.children).toBe('50');
     });
 
     it('should display total amount for full payment option', () => {
         render(<PaymentTypeSelector {...defaultProps} />);
         
-        expect(screen.getByText('550 QAR')).toBeTruthy();
+        expect(screen.getByTestId('full-amount').props.children).toBe('550');
     });
 
     it('should highlight selected payment type', () => {
@@ -77,10 +77,7 @@ describe('PaymentTypeSelector', () => {
         const setPaymentTypeMock = jest.fn();
         render(<PaymentTypeSelector {...defaultProps} setPaymentType={setPaymentTypeMock} paymentType="full" />);
         
-        const deliveryOption = screen.getByText('Pay Delivery Only').parent?.parent?.parent;
-        if (deliveryOption) {
-            fireEvent.press(deliveryOption);
-        }
+        fireEvent.press(screen.getByTestId('delivery-option'));
         
         expect(setPaymentTypeMock).toHaveBeenCalledWith('delivery_only');
     });
@@ -89,10 +86,7 @@ describe('PaymentTypeSelector', () => {
         const setPaymentTypeMock = jest.fn();
         render(<PaymentTypeSelector {...defaultProps} setPaymentType={setPaymentTypeMock} paymentType="delivery_only" />);
         
-        const fullOption = screen.getByText('Pay Full Amount').parent?.parent?.parent;
-        if (fullOption) {
-            fireEvent.press(fullOption);
-        }
+        fireEvent.press(screen.getByTestId('full-option'));
         
         expect(setPaymentTypeMock).toHaveBeenCalledWith('full');
     });
@@ -101,10 +95,7 @@ describe('PaymentTypeSelector', () => {
         const setClientSecretMock = jest.fn();
         render(<PaymentTypeSelector {...defaultProps} setClientSecret={setClientSecretMock} paymentType="delivery_only" />);
         
-        const fullOption = screen.getByText('Pay Full Amount').parent?.parent?.parent;
-        if (fullOption) {
-            fireEvent.press(fullOption);
-        }
+        fireEvent.press(screen.getByTestId('full-option'));
         
         expect(setClientSecretMock).toHaveBeenCalledWith(null);
     });
@@ -113,10 +104,7 @@ describe('PaymentTypeSelector', () => {
         const { impactAsync } = require('expo-haptics');
         render(<PaymentTypeSelector {...defaultProps} paymentType="full" />);
         
-        const deliveryOption = screen.getByText('Pay Delivery Only').parent?.parent?.parent;
-        if (deliveryOption) {
-            fireEvent.press(deliveryOption);
-        }
+        fireEvent.press(screen.getByTestId('delivery-option'));
         
         expect(impactAsync).toHaveBeenCalled();
     });
@@ -125,10 +113,7 @@ describe('PaymentTypeSelector', () => {
         const setPaymentTypeMock = jest.fn();
         render(<PaymentTypeSelector {...defaultProps} setPaymentType={setPaymentTypeMock} paymentType="delivery_only" />);
         
-        const deliveryOption = screen.getByText('Pay Delivery Only').parent?.parent?.parent;
-        if (deliveryOption) {
-            fireEvent.press(deliveryOption);
-        }
+        fireEvent.press(screen.getByTestId('delivery-option'));
         
         expect(setPaymentTypeMock).not.toHaveBeenCalled();
     });

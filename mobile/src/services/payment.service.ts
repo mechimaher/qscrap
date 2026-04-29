@@ -32,7 +32,7 @@ export class PaymentService {
         return apiClient.request('/payments/methods');
     }
 
-    async createDeliveryFeeIntent(orderId: string, loyaltyDiscount?: number): Promise<{
+    async createDeliveryFeeIntent(orderId: string, applyLoyalty = false): Promise<{
             success: boolean;
             intent: {
                 id: string;
@@ -44,6 +44,8 @@ export class PaymentService {
                 partPrice: number;
                 deliveryFee: number;
                 loyaltyDiscount: number;
+                loyaltyTier?: string;
+                loyaltyDiscountPercentage?: number;
                 originalTotal: number;
                 codAmount: number;
                 total: number;
@@ -51,7 +53,7 @@ export class PaymentService {
         }> {
         return apiClient.request(API_ENDPOINTS.CREATE_DEPOSIT_INTENT(orderId), {
             method: 'POST',
-            body: JSON.stringify({ loyaltyDiscount: loyaltyDiscount || 0 }),
+            body: JSON.stringify({ applyLoyalty }),
         });
     }
 
@@ -61,7 +63,7 @@ export class PaymentService {
         });
     }
 
-    async createFullPaymentIntent(orderId: string, loyaltyDiscount?: number): Promise<{
+    async createFullPaymentIntent(orderId: string, applyLoyalty = false): Promise<{
             success: boolean;
             intent: {
                 id: string;
@@ -73,24 +75,26 @@ export class PaymentService {
                 partPrice: number;
                 deliveryFee: number;
                 loyaltyDiscount?: number;
+                loyaltyTier?: string;
+                loyaltyDiscountPercentage?: number;
                 originalTotal?: number;
                 total: number;
             };
         }> {
         return apiClient.request(API_ENDPOINTS.CREATE_FULL_PAYMENT_INTENT(orderId), {
             method: 'POST',
-            body: JSON.stringify({ loyaltyDiscount: loyaltyDiscount || 0 }),
+            body: JSON.stringify({ applyLoyalty }),
         });
     }
 
-    async confirmFreeOrder(orderId: string, loyaltyDiscount: number): Promise<{
+    async confirmFreeOrder(orderId: string, applyLoyalty = true): Promise<{
             success: boolean;
             message: string;
             order_id: string;
         }> {
         return apiClient.request(API_ENDPOINTS.CONFIRM_FREE_ORDER(orderId), {
             method: 'POST',
-            body: JSON.stringify({ loyaltyDiscount }),
+            body: JSON.stringify({ applyLoyalty }),
         });
     }
 }

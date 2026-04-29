@@ -1,4 +1,4 @@
-import { log, warn, error } from "../utils/logger";
+import { log, warn, error as logError } from "../utils/logger";
 import { API_BASE_URL, API_ENDPOINTS } from "../config/api";
 import * as SecureStore from "expo-secure-store";
 import { User } from "./types";
@@ -6,9 +6,6 @@ import { User } from "./types";
 const TOKEN_KEY = 'qscrap_token';
 const REFRESH_TOKEN_KEY = 'qscrap_refresh_token';
 const USER_KEY = 'qscrap_user';
-const BIOMETRIC_PHONE = 'qscrap_biometric_phone';
-const BIOMETRIC_PASSWORD = 'qscrap_biometric_password';
-const BIOMETRIC_ENABLED = 'qscrap_biometric_enabled';
 
 export class ApiClient {
     private token: string | null = null;

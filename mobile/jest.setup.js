@@ -81,6 +81,30 @@ jest.mock('expo-linear-gradient', () => {
     };
 });
 
+// Mock @expo/vector-icons before component imports reach ESM icon builds.
+jest.mock('@expo/vector-icons', () => {
+    const React = require('react');
+    const Icon = (props) => React.createElement('Icon', props);
+    return {
+        Ionicons: Icon,
+        MaterialIcons: Icon,
+        MaterialCommunityIcons: Icon,
+        FontAwesome: Icon,
+        AntDesign: Icon,
+        Feather: Icon,
+    };
+});
+
+// Mock Sentry native bindings before screens import instrumentation.
+jest.mock('@sentry/react-native', () => ({
+    init: jest.fn(),
+    wrap: (component) => component,
+    setUser: jest.fn(),
+    captureException: jest.fn(),
+    captureMessage: jest.fn(),
+    addBreadcrumb: jest.fn(),
+}));
+
 // Mock expo-location
 jest.mock('expo-location', () => ({
     requestForegroundPermissionsAsync: jest.fn().mockResolvedValue({ status: 'granted' }),
@@ -88,6 +112,18 @@ jest.mock('expo-location', () => ({
         coords: { latitude: 25.2854, longitude: 51.531 },
     }),
     reverseGeocodeAsync: jest.fn().mockResolvedValue([{ city: 'Doha', country: 'Qatar' }]),
+}));
+
+// Mock expo-localization
+jest.mock('expo-localization', () => ({
+    locale: 'en',
+    locales: ['en'],
+    getLocales: jest.fn(() => [{ languageCode: 'en', languageTag: 'en-US', textDirection: 'ltr' }]),
+}));
+
+// Mock expo-updates
+jest.mock('expo-updates', () => ({
+    reloadAsync: jest.fn(),
 }));
 
 // Mock expo-notifications

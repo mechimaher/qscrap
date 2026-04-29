@@ -122,6 +122,13 @@ if [ ! -d "android" ]; then
     fail "android/ directory not found after prebuild!"
 fi
 
+if grep -q "signingConfig signingConfigs.debug" android/app/build.gradle; then
+    if [ "${QS_ALLOW_DEBUG_SIGNED_RELEASE:-}" != "1" ]; then
+        fail "Release APK would be signed with the Android debug keystore. Use EAS production signing or set QS_ALLOW_DEBUG_SIGNED_RELEASE=1 for a local-only APK."
+    fi
+    warn "Building a debug-signed release APK because QS_ALLOW_DEBUG_SIGNED_RELEASE=1"
+fi
+
 # Optimize Gradle properties
 GRADLE_PROPS="android/gradle.properties"
 if [ -f "$GRADLE_PROPS" ]; then

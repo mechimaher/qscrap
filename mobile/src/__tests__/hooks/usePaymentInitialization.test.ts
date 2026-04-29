@@ -57,7 +57,7 @@ describe('usePaymentInitialization', () => {
         });
 
         await waitFor(() => {
-            expect(api.createFullPaymentIntent).toHaveBeenCalledWith('order-123', 0);
+            expect(api.createFullPaymentIntent).toHaveBeenCalledWith('order-123', false);
             expect(mockSetClientSecret).toHaveBeenCalledWith('secret_123');
             expect(mockSetPaymentAmount).toHaveBeenCalledWith(100);
             expect(mockSetDiscountAmount).toHaveBeenCalledWith(0);
@@ -85,7 +85,7 @@ describe('usePaymentInitialization', () => {
 
         await waitFor(() => {
             expect(api.acceptBid).toHaveBeenCalledWith('bid-123', 'card');
-            expect(api.createFullPaymentIntent).toHaveBeenCalledWith('new-order-456', 0);
+            expect(api.createFullPaymentIntent).toHaveBeenCalledWith('new-order-456', false);
             expect(mockSetClientSecret).toHaveBeenCalledWith('secret_456');
             expect(result.current.orderId).toBe('new-order-456');
         });
@@ -110,7 +110,7 @@ describe('usePaymentInitialization', () => {
         });
 
         await waitFor(() => {
-            expect(api.createDeliveryFeeIntent).toHaveBeenCalledWith('order-123', 0);
+            expect(api.createDeliveryFeeIntent).toHaveBeenCalledWith('order-123', false);
             expect(mockSetClientSecret).toHaveBeenCalledWith('secret_delivery');
             expect(mockSetPaymentAmount).toHaveBeenCalledWith(20);
         });
@@ -119,7 +119,7 @@ describe('usePaymentInitialization', () => {
     it('should apply loyalty discount correctly during full payment', async () => {
         (api.createFullPaymentIntent as jest.Mock).mockResolvedValue({
             intent: { clientSecret: 'secret_discounted' },
-            breakdown: { total: 90 },
+            breakdown: { total: 90, loyaltyDiscount: 10 },
         });
 
         const { result } = renderHook(() =>
@@ -136,7 +136,7 @@ describe('usePaymentInitialization', () => {
         });
 
         await waitFor(() => {
-            expect(api.createFullPaymentIntent).toHaveBeenCalledWith('order-123', 10);
+            expect(api.createFullPaymentIntent).toHaveBeenCalledWith('order-123', true);
             expect(mockSetClientSecret).toHaveBeenCalledWith('secret_discounted');
             expect(mockSetPaymentAmount).toHaveBeenCalledWith(90);
             expect(mockSetDiscountAmount).toHaveBeenCalledWith(10);

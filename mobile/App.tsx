@@ -28,6 +28,7 @@ import { ToastProvider } from './src/components/Toast';
 import OfflineBanner from './src/components/OfflineBanner';
 import { Address } from './src/services/api';
 import { BadgeCountsProvider, useBadgeCounts } from './src/hooks/useBadgeCounts';
+import { linking } from './src/navigation/linking';
 
 // Initialize Sentry — must be called before any React rendering
 Sentry.init({
@@ -36,8 +37,8 @@ Sentry.init({
   tracesSampleRate: __DEV__ ? 1.0 : 0.2,
   // Only send errors in production builds
   enabled: !__DEV__,
-  // Attach screenshots to error reports for visual context
-  attachScreenshot: true,
+  // Avoid capturing profile, address, order, or payment details in crash reports.
+  attachScreenshot: false,
   // Environment tag
   environment: __DEV__ ? 'development' : 'production',
   // Enrich errors with device context
@@ -434,7 +435,7 @@ export default Sentry.wrap(function App() {
               <SocketProvider>
                 <BadgeCountsProvider>
                   <ToastProvider>
-                    <NavigationContainer ref={navigationRef}>
+                    <NavigationContainer ref={navigationRef} linking={linking}>
                       <ThemedApp />
                     </NavigationContainer>
                   </ToastProvider>
@@ -477,16 +478,18 @@ function ThemedApp() {
         case 'counter_offer_final':
         case 'request_expired':
         case 'bid_withdrawn':
-          if (data.requestId) {
-            navigationRef.navigate('RequestDetail', { requestId: data.requestId });
+          const requestId = data.requestId || data.request_id;
+          if (requestId) {
+            navigationRef.navigate('RequestDetail', { requestId });
           }
           break;
         case 'order_update':
         case 'driver_assigned':
         case 'order_delivered':
         case 'order_cancelled':
-          if (data.orderId) {
-            navigationRef.navigate('OrderDetail', { orderId: data.orderId });
+          const orderId = data.orderId || data.order_id;
+          if (orderId) {
+            navigationRef.navigate('OrderDetail', { orderId });
           }
           break;
         case 'chat_message':
