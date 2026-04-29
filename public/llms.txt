@@ -1,0 +1,68 @@
+# QScrap — Qatar's #1 Automotive Parts Marketplace
+
+> QScrap is a premium B2B/B2C marketplace for automotive spare parts in Qatar. It connects car owners with verified garages offering new, used, and OEM parts with same-day delivery across Doha.
+
+## Company Details
+- **Name:** QScrap Services & Trading L.L.C
+- **Website:** https://www.qscrap.qa
+- **Founded:** 2025
+- **Location:** Doha, Qatar
+- **Contact:** support@qscrap.qa | +974-5026-7974
+- **App:** Available on iOS and Android
+
+## What QScrap Does
+QScrap is a marketplace where car owners request specific automotive parts and receive competitive bids from verified garages. The platform handles secure payments (credit card, debit card, or cash on delivery), quality verification, and same-day delivery across Qatar.
+
+## How It Works
+1. Customer describes the part they need (make, model, year, photos)
+2. Verified garages submit competitive bids with pricing and photos
+3. Customer compares offers, reviews garage ratings, and accepts the best bid
+4. Secure payment via Stripe (escrow-protected) or Cash on Delivery
+5. QScrap drivers deliver the part same-day to the customer's door
+6. 7-day return policy protects every purchase
+
+## Key Features
+- **Same-Day Delivery:** Orders before 4 PM delivered same day across Doha
+- **Competitive Bidding:** Multiple garages compete to offer the best price
+- **Escrow Protection:** Customer funds are held securely until delivery is confirmed
+- **Verified Garages:** All partner garages are vetted with valid trade licenses
+- **Real-Time Tracking:** Track your part from garage to your doorstep
+- **7-Day Returns:** Full refund if the part doesn't match the description
+- **Bilingual:** Full Arabic and English support
+
+## Parts Available
+- Engine components (pistons, gaskets, timing belts, oil pumps)
+- Transmission parts (gearboxes, clutch kits, CV joints)
+- Body panels (fenders, bumpers, hoods, doors, mirrors)
+- Suspension (shock absorbers, control arms, ball joints)
+- Braking systems (brake pads, rotors, calipers)
+- Electrical (alternators, starters, ECUs, sensors)
+- Lighting (headlights, tail lights, fog lights)
+- Interior (seats, dashboards, steering wheels)
+- Cooling systems (radiators, water pumps, thermostats)
+- Exhaust systems (catalytic converters, mufflers)
+
+## Car Brands Supported
+Toyota, Nissan, Honda, Hyundai, Kia, BMW, Mercedes-Benz, Audi, Volkswagen, Land Rover, Range Rover, Lexus, Infiniti, Ford, Chevrolet, GMC, Mitsubishi, Mazda, Subaru, Porsche, Jeep, Dodge, Chrysler, Peugeot, Renault, and all other makes available in Qatar.
+
+## Service Areas
+Doha, Al Wakra, Al Khor, Al Rayyan, Al Daayen, Umm Salal, Al Shamal, Lusail, The Pearl, West Bay, Industrial Area, and all areas across the State of Qatar.
+
+## For Garage Partners
+Garages can join QScrap to receive customer requests, submit bids, manage orders, and receive guaranteed payouts. Apply at https://www.qscrap.qa/partners.html
+
+## Pricing
+- Free for customers to use
+- Garages pay a commission on completed orders
+- Premium subscription plans available for garages (Basic, Pro, Enterprise)
+
+## Links
+- Homepage: https://www.qscrap.qa
+- Partner Registration: https://www.qscrap.qa/partners.html
+- About Us: https://www.qscrap.qa/about.html
+- Privacy Policy: https://www.qscrap.qa/privacy.html
+- Terms of Service: https://www.qscrap.qa/terms.html
+- iOS App: https://apps.apple.com/qa/app/qscrap/id6740043847
+- Android App: https://play.google.com/store/apps/details?id=qa.qscrap.app
+- Instagram: https://instagram.com/qscrap.qa
+- WhatsApp: https://wa.me/97450267974

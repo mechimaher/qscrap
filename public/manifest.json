@@ -1,0 +1,37 @@
+{
+  "name": "QScrap",
+  "short_name": "QScrap",
+  "description": "Qatar's #1 Automotive Parts Marketplace — New, Used & OEM Parts with Same-Day Delivery",
+  "start_url": "/",
+  "display": "standalone",
+  "background_color": "#ffffff",
+  "theme_color": "#8D1B3D",
+  "orientation": "portrait-primary",
+  "lang": "en",
+  "categories": ["shopping", "automotive", "business"],
+  "icons": [
+    {
+      "src": "/assets/images/favicon-32.png",
+      "sizes": "32x32",
+      "type": "image/png"
+    },
+    {
+      "src": "/assets/images/qscrap-logo.png",
+      "sizes": "512x512",
+      "type": "image/png",
+      "purpose": "any maskable"
+    }
+  ],
+  "related_applications": [
+    {
+      "platform": "play",
+      "url": "https://play.google.com/store/apps/details?id=qa.qscrap.app",
+      "id": "qa.qscrap.app"
+    },
+    {
+      "platform": "itunes",
+      "url": "https://apps.apple.com/qa/app/qscrap/id6740043847"
+    }
+  ],
+  "prefer_related_applications": true
+}

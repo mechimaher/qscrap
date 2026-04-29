@@ -5,9 +5,11 @@ User-agent: *
 Allow: /
 Allow: /about.html
 Allow: /partners.html
+Allow: /request.html
 Allow: /privacy.html
 Allow: /terms.html
 Allow: /refund.html
+Allow: /llms.txt
 
 # Disallow internal dashboards
 Disallow: /admin-dashboard.html
@@ -17,6 +19,8 @@ Disallow: /operations-dashboard.html
 Disallow: /garage-dashboard.html
 Disallow: /setup.html
 Disallow: /verify.html
+Disallow: /js/
+Disallow: /css/
 
 # Crawl-delay for politeness
 Crawl-delay: 1
@@ -32,4 +36,31 @@ User-agent: Twitterbot
 Allow: /
 
 User-agent: LinkedInBot
+Allow: /
+
+# AI Assistants - Welcome! Read our llms.txt
+User-agent: GPTBot
+Allow: /
+Allow: /llms.txt
+
+User-agent: Google-Extended
+Allow: /
+Allow: /llms.txt
+
+User-agent: ChatGPT-User
+Allow: /
+Allow: /llms.txt
+
+User-agent: Claude-Web
+Allow: /
+Allow: /llms.txt
+
+User-agent: Bingbot
+Allow: /
+
+User-agent: PerplexityBot
+Allow: /
+Allow: /llms.txt
+
+User-agent: Applebot
 Allow: /
