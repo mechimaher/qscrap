@@ -124,7 +124,7 @@
 
         .gmap-controls {
             padding: 16px 20px;
-            background: rgba(255, 255, 255, 0.02);
+            background: var(--bg-primary, #F8F8F8);
             display: flex;
             flex-wrap: wrap;
             gap: 12px;
@@ -140,17 +140,17 @@
         .gmap-search-input {
             width: 100%;
             padding: 12px 16px 12px 44px;
-            border: 1px solid rgba(255, 255, 255, 0.1);
+            border: 1px solid var(--border, #E5E5E5);
             border-radius: 12px;
-            background: rgba(255, 255, 255, 0.05);
+            background: var(--input-bg, #FFFFFF);
             color: var(--text-primary);
             font-size: 14px;
             transition: all 0.3s ease;
         }
 
         .gmap-search-input:focus {
-            border-color: #D4AF37;
-            box-shadow: 0 0 0 3px rgba(212, 175, 55, 0.2);
+            border-color: var(--qatar-maroon, #8D1B3D);
+            box-shadow: 0 0 0 3px rgba(141, 27, 61, 0.15);
             outline: none;
         }
 
@@ -200,8 +200,8 @@
             display: flex;
             gap: 16px;
             padding: 12px 20px;
-            background: rgba(0, 0, 0, 0.2);
-            border-top: 1px solid rgba(255, 255, 255, 0.05);
+            background: var(--bg-primary, #F8F8F8);
+            border-top: 1px solid var(--border, #E5E5E5);
         }
 
         .gmap-coord-item {
@@ -219,7 +219,7 @@
         .gmap-coord-value {
             font-family: 'SFMono-Regular', Consolas, monospace;
             font-size: 14px;
-            color: #D4AF37;
+            color: var(--qatar-maroon, #8D1B3D);
             font-weight: 600;
         }
 
@@ -275,34 +275,34 @@
             }
         }
 
-        /* Autocomplete dropdown styling */
+        /* Autocomplete dropdown styling — Light Theme */
         .pac-container {
-            background: #1a1a2e !important;
-            border: 1px solid rgba(212, 175, 55, 0.3) !important;
+            background: var(--bg-card, #ffffff) !important;
+            border: 1px solid var(--border, #e2e8f0) !important;
             border-radius: 12px !important;
             margin-top: 8px !important;
-            box-shadow: 0 8px 32px rgba(0, 0, 0, 0.5) !important;
+            box-shadow: 0 8px 32px rgba(0, 0, 0, 0.12) !important;
             font-family: 'Inter', sans-serif !important;
         }
 
         .pac-item {
             padding: 12px 16px !important;
-            border-bottom: 1px solid rgba(255, 255, 255, 0.05) !important;
-            color: var(--text-primary) !important;
+            border-bottom: 1px solid var(--border, #e2e8f0) !important;
+            color: var(--text-primary, #1A1A1A) !important;
             cursor: pointer !important;
         }
 
         .pac-item:hover {
-            background: rgba(168, 32, 80, 0.2) !important;
+            background: rgba(141, 27, 61, 0.06) !important;
         }
 
         .pac-item-query {
-            color: #D4AF37 !important;
+            color: var(--qatar-maroon, #8D1B3D) !important;
             font-weight: 600 !important;
         }
 
         .pac-icon {
-            filter: invert(1) !important;
+            /* No invert needed on light theme */
         }
 
         .pac-matched {
@@ -667,13 +667,11 @@
                 </div>
 
                 <!-- Request Filter & Sort Controls -->
-                <div class="filter-controls"
-                    style="display: flex; flex-wrap: wrap; gap: 12px; margin-bottom: 20px; padding: 16px; background: var(--bg-card); border: 1px solid var(--border); border-radius: 12px;">
+                <div class="filter-controls">
                     <!-- Urgency Filter -->
-                    <div class="filter-group" style="display: flex; align-items: center; gap: 8px;">
-                        <label style="font-size: 13px; font-weight: 600; color: var(--text-secondary);">Urgency:</label>
-                        <select id="requestUrgencyFilter" onchange="filterRequests()"
-                            style="padding: 8px 12px; border: 1px solid var(--border); border-radius: 8px; background: var(--input-bg); color: var(--text-primary); font-size: 13px;">
+                    <div class="filter-group">
+                        <label>Urgency:</label>
+                        <select id="requestUrgencyFilter" onchange="filterRequests()" class="filter-select">
                             <option value="all">All</option>
                             <option value="high">🔥 High</option>
                             <option value="medium">⚡ Medium</option>
@@ -682,11 +680,9 @@
                     </div>
 
                     <!-- Condition Filter -->
-                    <div class="filter-group" style="display: flex; align-items: center; gap: 8px;">
-                        <label
-                            style="font-size: 13px; font-weight: 600; color: var(--text-secondary);">Condition:</label>
-                        <select id="requestConditionFilter" onchange="filterRequests()"
-                            style="padding: 8px 12px; border: 1px solid var(--border); border-radius: 8px; background: var(--input-bg); color: var(--text-primary); font-size: 13px;">
+                    <div class="filter-group">
+                        <label>Condition:</label>
+                        <select id="requestConditionFilter" onchange="filterRequests()" class="filter-select">
                             <option value="all">All</option>
                             <option value="new">New Only</option>
                             <option value="used">Used Only</option>
@@ -695,10 +691,9 @@
                     </div>
 
                     <!-- Sort Options -->
-                    <div class="filter-group" style="display: flex; align-items: center; gap: 8px; margin-left: auto;">
-                        <label style="font-size: 13px; font-weight: 600; color: var(--text-secondary);">Sort:</label>
-                        <select id="requestSortOption" onchange="sortRequests()"
-                            style="padding: 8px 12px; border: 1px solid var(--border); border-radius: 8px; background: var(--input-bg); color: var(--text-primary); font-size: 13px;">
+                    <div class="filter-group" style="margin-left: auto;">
+                        <label>Sort:</label>
+                        <select id="requestSortOption" onchange="sortRequests()" class="filter-select">
                             <option value="newest">Newest First</option>
                             <option value="oldest">Oldest First</option>
                             <option value="urgency">Most Urgent</option>
@@ -708,10 +703,7 @@
                     </div>
 
                     <!-- Clear Filters Button -->
-                    <button onclick="clearRequestFilters()"
-                        style="padding: 8px 12px; border: 1px solid var(--border); border-radius: 8px; background: transparent; color: var(--text-secondary); cursor: pointer; font-size: 13px; transition: all 0.2s;"
-                        onmouseover="this.style.background='var(--danger)'; this.style.color='white'; this.style.borderColor='var(--danger)';"
-                        onmouseout="this.style.background='transparent'; this.style.color='var(--text-secondary)'; this.style.borderColor='var(--border)';">
+                    <button class="btn-clear-filters" onclick="clearRequestFilters()">
                         <i class="bi bi-x-lg"></i> Clear
                     </button>
                 </div>
@@ -725,14 +717,10 @@
                 <div class="page-header" style="flex-wrap: wrap; gap: 16px;">
                     <h1 class="page-title">My Bids</h1>
                     <div class="filter-tabs" style="display: flex; gap: 8px;">
-                        <button class="filter-tab active" data-filter="all" onclick="filterBids('all')"
-                            style="padding: 8px 16px; border: 1px solid var(--border); border-radius: 20px; background: var(--accent); color: white; cursor: pointer; font-size: 13px; transition: all 0.2s;">All</button>
-                        <button class="filter-tab" data-filter="pending" onclick="filterBids('pending')"
-                            style="padding: 8px 16px; border: 1px solid var(--border); border-radius: 20px; background: transparent; color: var(--text-secondary); cursor: pointer; font-size: 13px; transition: all 0.2s;">Pending</button>
-                        <button class="filter-tab" data-filter="accepted" onclick="filterBids('accepted')"
-                            style="padding: 8px 16px; border: 1px solid var(--border); border-radius: 20px; background: transparent; color: var(--text-secondary); cursor: pointer; font-size: 13px; transition: all 0.2s;">Accepted</button>
-                        <button class="filter-tab" data-filter="rejected" onclick="filterBids('rejected')"
-                            style="padding: 8px 16px; border: 1px solid var(--border); border-radius: 20px; background: transparent; color: var(--text-secondary); cursor: pointer; font-size: 13px; transition: all 0.2s;">Rejected</button>
+                        <button class="filter-tab active" data-filter="all" onclick="filterBids('all')">All</button>
+                        <button class="filter-tab" data-filter="pending" onclick="filterBids('pending')">Pending</button>
+                        <button class="filter-tab" data-filter="accepted" onclick="filterBids('accepted')">Accepted</button>
+                        <button class="filter-tab" data-filter="rejected" onclick="filterBids('rejected')">Rejected</button>
                     </div>
                 </div>
                 <div id="bidsList"></div>
@@ -816,14 +804,10 @@
                 <div class="page-header" style="flex-wrap: wrap; gap: 16px;">
                     <h1 class="page-title">Orders</h1>
                     <div class="filter-tabs" style="display: flex; gap: 8px;">
-                        <button class="filter-tab active" data-filter="all" onclick="filterOrders('all')"
-                            style="padding: 8px 16px; border: 1px solid var(--border); border-radius: 20px; background: var(--accent); color: white; cursor: pointer; font-size: 13px; transition: all 0.2s;">All</button>
-                        <button class="filter-tab" data-filter="active" onclick="filterOrders('active')"
-                            style="padding: 8px 16px; border: 1px solid var(--border); border-radius: 20px; background: transparent; color: var(--text-secondary); cursor: pointer; font-size: 13px; transition: all 0.2s;">Active</button>
-                        <button class="filter-tab" data-filter="completed" onclick="filterOrders('completed')"
-                            style="padding: 8px 16px; border: 1px solid var(--border); border-radius: 20px; background: transparent; color: var(--text-secondary); cursor: pointer; font-size: 13px; transition: all 0.2s;">Completed</button>
-                        <button class="filter-tab" data-filter="cancelled" onclick="filterOrders('cancelled')"
-                            style="padding: 8px 16px; border: 1px solid var(--border); border-radius: 20px; background: transparent; color: var(--text-secondary); cursor: pointer; font-size: 13px; transition: all 0.2s;">Cancelled</button>
+                        <button class="filter-tab active" data-filter="all" onclick="filterOrders('all')">All</button>
+                        <button class="filter-tab" data-filter="active" onclick="filterOrders('active')">Active</button>
+                        <button class="filter-tab" data-filter="completed" onclick="filterOrders('completed')">Completed</button>
+                        <button class="filter-tab" data-filter="cancelled" onclick="filterOrders('cancelled')">Cancelled</button>
                     </div>
                 </div>
 
@@ -1500,7 +1484,7 @@
     <script src="/lib/socket.io/socket.io.min.js"></script>
     <!-- Google Maps SDK with Places for Location Picker (Jan 27, 2026) -->
     <!-- Secure Config & Sentry Loader (Enterprise Audit Fix) -->
-    <script src="https://browser.sentry-cdn.com/7.114.0/bundle.min.js" crossorigin="anonymous"></script>
+    <!-- Sentry removed: loaded conditionally via config if sentryDsn is set -->
     <script>
         // Callback Logic (Preserved from legacy)
         window.googleMapsReady = false;
@@ -1525,19 +1509,25 @@
                 if (data.success && data.config) {
                     const config = data.config;
                     
-                    // 1. Initialize Sentry (if available)
-                    if (window.Sentry && config.sentryDsn) {
-                        try {
-                            Sentry.init({ 
-                                dsn: config.sentryDsn,
-                                environment: config.environment || 'production',
-                                tracesSampleRate: 1.0,
-                                release: 'garage-dashboard@1.0.0', // Optional: match version
-                            });
-                            console.log('[Sentry] Monitoring Active');
-                        } catch (err) {
-                            console.warn('[Sentry] Init failed', err);
-                        }
+                    // 1. Initialize Sentry (dynamically load SDK only if DSN is configured)
+                    if (config.sentryDsn) {
+                        const sentryScript = document.createElement('script');
+                        sentryScript.src = 'https://browser.sentry-cdn.com/7.114.0/bundle.min.js';
+                        sentryScript.crossOrigin = 'anonymous';
+                        sentryScript.onload = () => {
+                            try {
+                                Sentry.init({ 
+                                    dsn: config.sentryDsn,
+                                    environment: config.environment || 'production',
+                                    tracesSampleRate: 1.0,
+                                    release: 'garage-dashboard@1.0.0',
+                                });
+                                console.log('[Sentry] Monitoring Active');
+                            } catch (err) {
+                                console.warn('[Sentry] Init failed', err);
+                            }
+                        };
+                        document.head.appendChild(sentryScript);
                     }
 
                     // 2. Load Google Maps (Dynamic Injection)
@@ -1552,7 +1542,7 @@
                     }
                 }
             } catch (e) {
-                console.error('[Config] Critical Loade Failure:', e);
+                console.error('[Config] Critical Loader Failure:', e);
             }
         })();
     </script>

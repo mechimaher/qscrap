@@ -360,10 +360,19 @@ async function showDashboard() {
         loadRequests();
         loadBids();
         loadOrders();
+        // Update connection status indicator
+        const statusDot = document.querySelector('.status-indicator');
+        const statusText = document.querySelector('.header-status');
+        if (statusDot) statusDot.classList.remove('disconnected');
+        if (statusText) statusText.title = 'Connected to QScrap servers';
     });
 
     socket.on('disconnect', () => {
         // console.log('[Socket] Disconnected');
+        const statusDot = document.querySelector('.status-indicator');
+        const statusText = document.querySelector('.header-status');
+        if (statusDot) statusDot.classList.add('disconnected');
+        if (statusText) statusText.title = 'Disconnected - reconnecting...';
     });
 
     socket.on('new_request', (data) => {
@@ -611,6 +620,31 @@ async function showDashboard() {
     document.querySelectorAll('.nav-item').forEach(item => {
         item.addEventListener('click', () => switchSection(item.dataset.section));
     });
+
+    // ===== SMART AUTO-REFRESH =====
+    // Keeps KPIs fresh every 60s when tab is active, pauses when idle >5min
+    let smartRefreshInterval = setInterval(() => {
+        const isVisible = !document.hidden;
+        const isActive = (Date.now() - lastActivityTime) < 5 * 60 * 1000; // 5 min idle threshold
+        if (isVisible && isActive) {
+            loadStats();
+            loadBadgeCounts();
+        }
+    }, 60000);
+
+    // Track user activity for smart refresh
+    ['click', 'keydown', 'scroll', 'touchstart'].forEach(evt => {
+        document.addEventListener(evt, () => { lastActivityTime = Date.now(); }, { passive: true });
+    });
+
+    // Refresh data when tab becomes visible again
+    document.addEventListener('visibilitychange', () => {
+        if (!document.hidden && (Date.now() - lastActivityTime) > 30000) {
+            loadStats();
+            loadBadgeCounts();
+            lastActivityTime = Date.now();
+        }
+    });
 }
 
 async function loadStats() {
@@ -626,11 +660,21 @@ async function loadStats() {
             animateCounter('statPendingBids', data.stats.pending_bids, 800);
             animateCounter('statAcceptedBids', data.stats.accepted_bids_month, 800);
             animateCounter('statActiveOrders', data.stats.active_orders, 800);
-            animateCounter('statRevenue', data.stats.revenue_month, 1000);
+            // Revenue: format with locale thousands separator
+            const revenueEl = document.getElementById('statRevenue');
+            if (revenueEl) {
+                const target = Math.round(data.stats.revenue_month || 0);
+                animateCounter('statRevenue', target, 1000);
+            }
 
             // Update Sidebar Badges
             activeOrdersCount = data.stats.active_orders || 0;
             updateOrdersBadge();
+
+            // Store commission rate for order card display
+            if (data.profile && data.profile.commission_rate) {
+                window.garageCommissionRate = parseFloat(data.profile.commission_rate);
+            }
         }
         if (data.profile && data.profile.garage_name) {
             document.getElementById('userName').textContent = data.profile.garage_name;
@@ -758,8 +802,6 @@ function clearRequestFilters() {
 
     if (urgencyEl) urgencyEl.value = 'all';
     if (conditionEl) conditionEl.value = 'all';
-    if (sortEl) sortEl.value = 'newest';
-
     if (sortEl) sortEl.value = 'newest';
 
     loadRequests(1);
@@ -1516,6 +1558,27 @@ async function loadOrders() {
         // Handle both old array format and new wrapped format
         const orders = Array.isArray(data) ? data : (data.orders || []);
 
+        // Smart sort: action-required first, then in-progress, then terminal
+        const statusPriority = {
+            'confirmed': 0,      // Garage must: Start Preparing
+            'preparing': 1,      // Garage must: Mark Ready
+            'disputed': 2,       // Garage must: Review Dispute
+            'returning_to_garage': 3, // Garage: awaiting return
+            'ready_for_pickup': 4,    // Waiting for driver
+            'collected': 5,      // In transit
+            'in_transit': 6,     // Delivering
+            'delivered': 7,      // Awaiting customer confirm
+            'completed': 8,
+            'refunded': 9
+        };
+        orders.sort((a, b) => {
+            const pa = statusPriority[a.order_status] ?? (a.order_status?.includes('cancelled') ? 10 : 8);
+            const pb = statusPriority[b.order_status] ?? (b.order_status?.includes('cancelled') ? 10 : 8);
+            if (pa !== pb) return pa - pb;
+            // Within same priority, newest first
+            return new Date(b.created_at) - new Date(a.created_at);
+        });
+
         const statusFlow = ['confirmed', 'preparing', 'ready_for_pickup', 'collected', 'in_transit', 'delivered'];
         const statusLabels = {
             confirmed: 'Confirmed',
@@ -1566,7 +1629,7 @@ async function loadOrders() {
                                 <button class="btn-cancel" onclick="event.stopPropagation(); openCancelOrderModal('${o.order_id}')" title="Cancel this order">
                                     <i class="bi bi-x-circle"></i> Cancel
                                 </button>
-                                <button class="btn-outline-sm" onclick="event.stopPropagation(); printPackingSlip('${o.order_id}')" title="Print packing slip" style="padding: 6px 10px; font-size: 12px; border: 1px solid var(--text-muted); color: var(--text-secondary); background: transparent; border-radius: 6px; cursor: pointer; transition: all 0.2s;" onmouseover="this.style.background='var(--bg-tertiary)';" onmouseout="this.style.background='transparent';">
+                                <button class="btn-outline-sm" onclick="event.stopPropagation(); printPackingSlip('${o.order_id}')" title="Print packing slip">
                                     <i class="bi bi-printer"></i> Print
                                 </button>
                                 <button class="btn-status next" onclick="event.stopPropagation(); updateOrderStatus('${o.order_id}', '${transition.next}')">
@@ -1576,7 +1639,7 @@ async function loadOrders() {
                         `;
             } else if (o.order_status === 'ready_for_pickup') {
                 // Waiting for QScrap collection - show print button
-                actionsHtml = `<div class="order-actions" style="display: flex; align-items: center; gap: 8px;"><span style="color: var(--primary);"><i class="bi bi-hourglass-split"></i> Waiting for collection</span><button class="btn-outline-sm" onclick="event.stopPropagation(); printPackingSlip('${o.order_id}')" title="Print packing slip" style="padding: 5px 10px; font-size: 12px; border: 1px solid var(--text-muted); color: var(--text-secondary); background: transparent; border-radius: 6px; cursor: pointer;"><i class="bi bi-printer"></i> Print</button></div>`;
+                actionsHtml = `<div class="order-actions"><span style="color: var(--primary);"><i class="bi bi-hourglass-split"></i> Waiting for collection</span><button class="btn-outline-sm" onclick="event.stopPropagation(); printPackingSlip('${o.order_id}')" title="Print packing slip"><i class="bi bi-printer"></i> Print</button></div>`;
             } else if (o.order_status === 'collected') {
                 // Part picked up by driver - on the way to customer
                 actionsHtml = `<div class="order-actions"><span style="color: var(--primary);"><i class="bi bi-truck"></i> Part is on its way to customer</span></div>`;
@@ -1584,12 +1647,20 @@ async function loadOrders() {
                 // In delivery
                 actionsHtml = `<div class="order-actions"><span style="color: var(--primary);"><i class="bi bi-truck"></i> Being delivered to customer</span></div>`;
             } else if (o.order_status === 'delivered' || o.order_status === 'completed') {
-                // Completed - show payout download button
-                const payoutAmount = o.garage_payout_amount || (parseFloat(o.part_price || 0) * 0.85);
+                // Completed - show commission breakdown and payout
+                const commissionRate = window.garageCommissionRate || 0.15;
+                const partPrice = parseFloat(o.part_price || 0);
+                const commission = partPrice * commissionRate;
+                const payoutAmount = o.garage_payout_amount || (partPrice - commission);
                 actionsHtml = `
-                    <div class="order-actions" style="display: flex; flex-direction: column; gap: 8px;">
-                        <span style="color: var(--success);"><i class="bi bi-check-circle-fill"></i> Completed • Net: ${parseFloat(payoutAmount).toFixed(2)} QAR</span>
-                        <button class="btn-outline-sm" onclick="event.stopPropagation(); downloadPayoutStatement('${o.order_id}')" style="padding: 6px 12px; font-size: 12px; border: 1px solid var(--primary); color: var(--primary); background: transparent; border-radius: 6px; cursor: pointer; transition: all 0.2s;" onmouseover="this.style.background='var(--primary)'; this.style.color='white';" onmouseout="this.style.background='transparent'; this.style.color='var(--primary)';">
+                    <div class="order-actions" style="flex-direction: column; gap: 6px;">
+                        <span style="color: var(--success); font-weight: 600;">
+                            <i class="bi bi-check-circle-fill"></i> Completed • Net: ${parseFloat(payoutAmount).toFixed(2)} QAR
+                        </span>
+                        <span style="font-size: 11px; color: var(--text-muted);">
+                            ${partPrice.toFixed(0)} QAR − ${(commissionRate * 100).toFixed(0)}% commission = ${parseFloat(payoutAmount).toFixed(2)} QAR
+                        </span>
+                        <button class="btn-outline-sm" onclick="event.stopPropagation(); downloadPayoutStatement('${o.order_id}')">
                             <i class="bi bi-file-earmark-pdf"></i> Payout Statement / كشف حساب
                         </button>
                     </div>
@@ -1639,7 +1710,7 @@ async function loadOrders() {
             const thumbnail = images.length > 0 ? images[0] : null;
 
             return `
-                        <div class="order-card ${isCancelled ? 'cancelled' : ''} ${isDisputed ? 'disputed' : ''}" onclick="viewOrder('${o.order_id}')" style="cursor: pointer; transition: transform 0.2s, box-shadow 0.2s;" onmouseover="this.style.transform='translateY(-2px)'; this.style.boxShadow='0 4px 15px rgba(0,0,0,0.15)';" onmouseout="this.style.transform=''; this.style.boxShadow='';">
+                        <div class="order-card ${isCancelled ? 'cancelled' : ''} ${isDisputed ? 'disputed' : ''}" onclick="viewOrder('${o.order_id}')">
                             ${isCancelled ? '<div class="cancelled-overlay"></div>' : ''}
                             <div class="order-header">
                                 <div class="order-number">Order #${o.order_number || o.order_id.slice(0, 8)}</div>
@@ -2598,23 +2669,23 @@ let locationMarker = null;
 let placesAutocomplete = null;
 let geocoder = null;
 
-// Qatar Premium Dark Theme for Google Maps
+// Qatar Premium Light Theme for Google Maps
 const QATAR_MAP_STYLE = [
-    { elementType: 'geometry', stylers: [{ color: '#1a1a2e' }] },
-    { elementType: 'labels.text.fill', stylers: [{ color: '#8e8ea0' }] },
-    { elementType: 'labels.text.stroke', stylers: [{ color: '#1a1a2e' }] },
-    { featureType: 'administrative', elementType: 'geometry.stroke', stylers: [{ color: '#2d2d44' }] },
-    { featureType: 'road', elementType: 'geometry', stylers: [{ color: '#2d2d44' }] },
-    { featureType: 'road', elementType: 'geometry.stroke', stylers: [{ color: '#1a1a2e' }] },
-    { featureType: 'road.highway', elementType: 'geometry', stylers: [{ color: '#A82050' }] },
-    { featureType: 'road.highway', elementType: 'geometry.stroke', stylers: [{ color: '#8D1B3D' }] },
-    { featureType: 'road.highway', elementType: 'labels.text.fill', stylers: [{ color: '#D4AF37' }] },
-    { featureType: 'water', elementType: 'geometry', stylers: [{ color: '#0f0f1a' }] },
-    { featureType: 'water', elementType: 'labels.text.fill', stylers: [{ color: '#515c6d' }] },
-    { featureType: 'poi', elementType: 'geometry', stylers: [{ color: '#2d2d44' }] },
-    { featureType: 'poi', elementType: 'labels.text.fill', stylers: [{ color: '#D4AF37' }] },
-    { featureType: 'poi.park', elementType: 'geometry', stylers: [{ color: '#1e3a2e' }] },
-    { featureType: 'transit', elementType: 'geometry', stylers: [{ color: '#2d2d44' }] }
+    { elementType: 'geometry', stylers: [{ color: '#f5f5f5' }] },
+    { elementType: 'labels.text.fill', stylers: [{ color: '#616161' }] },
+    { elementType: 'labels.text.stroke', stylers: [{ color: '#f5f5f5' }] },
+    { featureType: 'administrative', elementType: 'geometry.stroke', stylers: [{ color: '#c9c9c9' }] },
+    { featureType: 'road', elementType: 'geometry', stylers: [{ color: '#ffffff' }] },
+    { featureType: 'road', elementType: 'geometry.stroke', stylers: [{ color: '#e0e0e0' }] },
+    { featureType: 'road.highway', elementType: 'geometry', stylers: [{ color: '#f0d4df' }] },
+    { featureType: 'road.highway', elementType: 'geometry.stroke', stylers: [{ color: '#d4a0b4' }] },
+    { featureType: 'road.highway', elementType: 'labels.text.fill', stylers: [{ color: '#8D1B3D' }] },
+    { featureType: 'water', elementType: 'geometry', stylers: [{ color: '#c8d7e5' }] },
+    { featureType: 'water', elementType: 'labels.text.fill', stylers: [{ color: '#9db5cc' }] },
+    { featureType: 'poi', elementType: 'geometry', stylers: [{ color: '#e8e8e8' }] },
+    { featureType: 'poi', elementType: 'labels.text.fill', stylers: [{ color: '#8D1B3D' }] },
+    { featureType: 'poi.park', elementType: 'geometry', stylers: [{ color: '#d4edda' }] },
+    { featureType: 'transit', elementType: 'geometry', stylers: [{ color: '#e5e5e5' }] }
 ];
 
 function initLocationMap(lat, lng) {
@@ -2991,6 +3062,17 @@ function switchSection(section) {
     if (section === 'reviews') loadMyReviews();
     if (section === 'profile') loadProfile();
     if (section === 'pending-actions') { loadPendingCounterOffers(); loadPendingDisputes(); }
+
+    // Close mobile sidebar after navigation
+    const sidebar = document.querySelector('.sidebar');
+    const overlay = document.getElementById('appOverlay');
+    if (sidebar && sidebar.classList.contains('active')) {
+        sidebar.classList.remove('active');
+        if (overlay) overlay.classList.remove('is-visible');
+    }
+
+    // Scroll to top of content
+    window.scrollTo({ top: 0, behavior: 'smooth' });
 }
 
 // Ignore/Skip request - now persists to database (per-garage) with 5-second undo
