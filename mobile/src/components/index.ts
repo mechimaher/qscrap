@@ -3,6 +3,7 @@
 
 export { ErrorBoundary } from './ErrorBoundary';
 export { SkeletonCard, SkeletonList } from './SkeletonLoader';
+export { LoadingList, LoadingStats, ListItemSkeleton, StatCardSkeleton, NotificationSkeleton, ProfileHeaderSkeleton } from './SkeletonLoading';
 export { Button } from './Button';
 export { Input } from './Input';
 export { Card } from './Card';

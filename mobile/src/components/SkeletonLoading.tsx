@@ -1,4 +1,6 @@
-// QScrap Skeleton Loading Components - Premium Loading States
+// QScrap Skeleton Loading Components - Screen-specific shimmer compositions
+// Note: These use Colors.dark.surface because they render before ThemeContext is
+// available. The SkeletonLoader primitive in SkeletonLoader.tsx uses useTheme().
 import React, { useEffect, useRef } from 'react';
 import { View, StyleSheet, Animated, Dimensions } from 'react-native';
 import { LinearGradient } from 'expo-linear-gradient';
