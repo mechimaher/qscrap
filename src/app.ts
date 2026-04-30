@@ -185,9 +185,6 @@ app.get('/locations/al-wakra', servePage('locations/al-wakra'));
 app.get('/locations/al-khor', servePage('locations/al-khor'));
 app.get('/locations/salwa-road', servePage('locations/salwa-road'));
 
-// Driver app landing
-app.get('/driver-app', servePage('driver-app/index'));
-
 // 404 Page
 app.get('/404', servePage('404'));
 

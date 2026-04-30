@@ -84,3 +84,29 @@ customer-mobile/
 # Python cache
 __pycache__/
 *.pyc
+
+# Driver PWA (driver is mobile-only now)
+public/driver-app/
+
+# Raw media assets (not part of web build)
+scrap garages real pictures and videos/
+footer icons/
+
+# Debug / one-off files
+vps_*.txt
+test_output*.txt
+current_files.txt
+target_files.txt
+check_vps.py
+deploy_fix.py
+*_wallets.sql
+fix_*.sql
+
+# Old audit & report artifacts
+BRAIN.*
+*-REPORT.md
+*-PLAN.md
+*-CHECKLIST.md
+*-AUDIT-*.md
+*-STRATEGY-*.md
+*-build-manifest.txt
