@@ -45,6 +45,8 @@ test-output.txt
 
 # Archive (session logs, audit reports)
 audit/session-logs/
+audit-output/
+license-report.json
 
 # Credentials & Sensitive Docs (CRITICAL for public repos)
 VPS_CREDENTIALS.md
