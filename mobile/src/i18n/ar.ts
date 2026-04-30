@@ -118,6 +118,7 @@ export const ar = {
         networkError: 'خطأ في الاتصال. يرجى التحقق من الإنترنت.',
         saveChanges: 'حفظ التغييرات',
         yourDriver: 'سائقك',
+        goBack: 'رجوع',
         unexpectedError: 'حدث خطأ غير متوقع',
         invalidDate: 'تاريخ غير صالح',
         invalidTime: 'وقت غير صالح',
@@ -1129,6 +1130,8 @@ export const ar = {
         codAmount: 'المبلغ عند الاستلام',
         pay: 'ادفع {{amount}} ر.ق',
         off: 'خصم',
+        configError: 'خطأ في إعداد الدفع',
+        stripeNotConfigured: 'لم يتم إعداد الدفع عبر Stripe. يرجى التواصل مع الدعم.',
     },
 
     // =============================================

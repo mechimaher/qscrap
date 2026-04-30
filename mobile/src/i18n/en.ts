@@ -117,6 +117,7 @@ export const en = {
         networkError: 'Network error. Please check your connection.',
         saveChanges: 'Save Changes',
         yourDriver: 'Your Driver',
+        goBack: 'Go Back',
         unexpectedError: 'An unexpected error occurred',
         invalidDate: 'Invalid date',
         invalidTime: 'Invalid time',
@@ -1146,6 +1147,8 @@ export const en = {
         codAmount: 'COD Amount',
         pay: 'Pay {{amount}} QAR',
         off: 'OFF',
+        configError: 'Payment Configuration Error',
+        stripeNotConfigured: 'Stripe payment is not configured. Please contact support.',
     },
 
     // =============================================

@@ -1,6 +1,7 @@
 import { log, warn, error as logError } from '../utils/logger';
 import { handleApiError } from '../utils/errorHandler';
 // QScrap Chat Screen - Real-time messaging with Driver/Garage - Full i18n Support
+// Uses the app-wide SocketProvider for stable, authenticated WebSocket connection
 import React, { useState, useEffect, useRef, useCallback } from 'react';
 import { LoadingList } from '../components/SkeletonLoading';
 import {
@@ -20,7 +21,6 @@ import { SafeAreaView } from 'react-native-safe-area-context';
 import { LinearGradient } from 'expo-linear-gradient';
 import * as Haptics from 'expo-haptics';
 import { useNavigation, useRoute } from '@react-navigation/native';
-import { io, Socket } from 'socket.io-client';
 import { SOCKET_URL } from '../config/api';
 import { api } from '../services/api';
 import { Colors, Spacing, BorderRadius, FontSizes, Shadows } from '../constants/theme';
@@ -30,6 +30,7 @@ import { rtlFlexDirection, rtlTextAlign } from '../utils/rtl';
 import { useToast } from '../components/Toast';
 import QuickReplies from '../components/QuickReplies';
 import { Ionicons } from '@expo/vector-icons';
+import { useSocketContext } from '../hooks/useSocket';
 
 interface Message {
     message_id: string;
@@ -57,19 +58,19 @@ export default function ChatScreen() {
     const { t, isRTL } = useTranslation();
     const toast = useToast();
 
+    // Use the app-wide stable socket connection (no duplicate sockets!)
+    const { isConnected, joinChatRoom, leaveChatRoom, onEvent } = useSocketContext();
+
     const flatListRef = useRef<FlatList>(null);
-    const socket = useRef<Socket | null>(null);
-    const pollingInterval = useRef<ReturnType<typeof setInterval> | null>(null);
 
     const [messages, setMessages] = useState<Message[]>([]);
     const [newMessage, setNewMessage] = useState('');
     const [isLoading, setIsLoading] = useState(true);
     const [isSending, setIsSending] = useState(false);
-    const [isConnected, setIsConnected] = useState(false);
     const [userId, setUserId] = useState<string>('');
 
     // Play notification feedback for incoming messages (using haptics + vibration)
-    const playMessageNotification = () => {
+    const playMessageNotification = useCallback(() => {
         try {
             // Strong haptic feedback for notification feel
             Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success);
@@ -78,23 +79,55 @@ export default function ChatScreen() {
         } catch (error) {
             log('Notification feedback error:', error);
         }
-    };
-
-    // Load messages and connect socket
-    useEffect(() => {
-        loadMessages();
-        connectSocket();
-
-        return () => {
-            socket.current?.disconnect();
-            if (pollingInterval.current) {
-                clearInterval(pollingInterval.current);
-                pollingInterval.current = null;
-            }
-        };
     }, []);
 
-    const loadMessages = async (silent = false) => {
+    // Load messages on mount
+    useEffect(() => {
+        loadMessages();
+    }, []);
+
+    // Join/leave chat room for real-time updates via the shared socket
+    useEffect(() => {
+        // Join the chat room so we receive `new_message` events
+        joinChatRoom(orderId);
+        log('[Chat] Joined chat room via SocketProvider for order:', orderId);
+
+        return () => {
+            leaveChatRoom(orderId);
+            log('[Chat] Left chat room for order:', orderId);
+        };
+    }, [orderId, joinChatRoom, leaveChatRoom]);
+
+    // Listen for new_message events on the shared socket
+    useEffect(() => {
+        if (!userId) return; // Wait until we know who we are
+
+        const cleanup = onEvent('new_message', (data: Message) => {
+            if (data.order_id !== orderId) return;
+
+            setMessages(prev => {
+                // Prevent duplicates (e.g. from optimistic update)
+                if (prev.some(m => m.message_id === data.message_id)) return prev;
+                return [...prev, data];
+            });
+
+            // Only play sound for messages from others (not self)
+            if (data.sender_id !== userId) {
+                playMessageNotification();
+            } else {
+                Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
+            }
+
+            // Scroll to bottom
+            setTimeout(() => {
+                flatListRef.current?.scrollToEnd({ animated: true });
+            }, 100);
+        });
+
+        return cleanup;
+    }, [orderId, userId, onEvent, playMessageNotification]);
+
+    const loadMessages = async () => {
         try {
             const user = await api.getUser();
             setUserId(user?.user_id || '');
@@ -108,87 +141,12 @@ export default function ChatScreen() {
 
             if (response.ok) {
                 const data = await response.json();
-                const newMessages = data.messages || [];
-                setMessages(prev => {
-                    // Only update if message count changed (avoids unnecessary re-renders)
-                    if (prev.length !== newMessages.length) {
-                        return newMessages;
-                    }
-                    return prev;
-                });
+                setMessages(data.messages || []);
             }
         } catch (error) {
-            if (!silent) {
-                handleApiError(error, toast, t('errors.loadFailed'));
-            }
+            handleApiError(error, toast, t('errors.loadFailed'));
         } finally {
-            if (!silent) {
-                setIsLoading(false);
-            }
-        }
-    };
-
-    const connectSocket = async () => {
-        try {
-            const token = await api.getToken();
-
-            socket.current = io(SOCKET_URL, {
-                auth: { token },
-                transports: ['websocket'],
-            });
-
-            socket.current.on('connect', () => {
-                setIsConnected(true);
-                // Stop polling when socket reconnects
-                if (pollingInterval.current) {
-                    clearInterval(pollingInterval.current);
-                    pollingInterval.current = null;
-                    log('[Chat] Socket reconnected, stopped polling fallback');
-                }
-                // Join order-specific chat room
-                socket.current?.emit('join_order_chat', { order_id: orderId });
-                // Also join general order room for messages
-                socket.current?.emit('join_room', `order_${orderId}`);
-            });
-
-            socket.current.on('disconnect', () => {
-                setIsConnected(false);
-                // Start polling fallback when socket disconnects
-                if (!pollingInterval.current) {
-                    log('[Chat] Socket disconnected, starting polling fallback (5s)');
-                    pollingInterval.current = setInterval(() => {
-                        loadMessages(true);
-                    }, 5000);
-                }
-            });
-
-            // Listen for new messages
-            socket.current.on('new_message', (data: Message) => {
-                if (data.order_id === orderId) {
-                    setMessages(prev => [...prev, data]);
-
-                    // Only play sound for messages from others (not self)
-                    if (data.sender_id !== userId) {
-                        Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success);
-                        playMessageNotification();
-                    } else {
-                        Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
-                    }
-
-                    // Scroll to bottom
-                    setTimeout(() => {
-                        flatListRef.current?.scrollToEnd({ animated: true });
-                    }, 100);
-                }
-            });
-
-            // Listen for typing indicator
-            socket.current.on('typing', (data: { order_id: string; sender_name: string }) => {
-                // Could show typing indicator here
-            });
-
-        } catch (error) {
-            log('Socket connection error:', error);
+            setIsLoading(false);
         }
     };
 
@@ -199,7 +157,7 @@ export default function ChatScreen() {
         Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
 
         try {
-            // Send via API
+            // Send via API (backend will emit socket event to room)
             const response = await fetch(`${SOCKET_URL}/api/chat/messages`, {
                 method: 'POST',
                 headers: {
@@ -214,7 +172,7 @@ export default function ChatScreen() {
 
             if (response.ok) {
                 setNewMessage('');
-                // Message will come back via socket
+                // Message will come back via socket's `new_message` event
             } else {
                 throw new Error('Failed to send');
             }

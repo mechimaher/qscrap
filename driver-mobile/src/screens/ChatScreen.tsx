@@ -79,7 +79,11 @@ export default function ChatScreen() {
             if (data.order_id === orderId && data.sender_type !== 'driver') {
                 Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Medium);
                 Vibration.vibrate(100);
-                setMessages((prev) => [...prev, data]);
+                setMessages((prev) => {
+                    // Prevent duplicates
+                    if (prev.some(m => m.message_id === data.message_id)) return prev;
+                    return [...prev, data];
+                });
                 // Clear typing indicator when message received
                 setIsOtherTyping(false);
             }

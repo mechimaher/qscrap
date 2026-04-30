@@ -29,6 +29,8 @@ export const KEYS = {
      * Used for: payment processing
      * Configure via: EXPO_PUBLIC_STRIPE_PUBLISHABLE_KEY in .env
      * Note: Use test key (pk_test_) for development, live key (pk_live_) for production
+     * Fallback: Hardcoded test key — publishable keys are NOT secrets
      */
-    STRIPE_PUBLISHABLE_KEY: process.env.EXPO_PUBLIC_STRIPE_PUBLISHABLE_KEY ?? '',
+    STRIPE_PUBLISHABLE_KEY: process.env.EXPO_PUBLIC_STRIPE_PUBLISHABLE_KEY
+        || 'pk_test_51St6AI39lYR0XT69rqWSeL7KgzTodXnECkPed1CAsZ7KsqhJOB4W3VD6QvhWyUhrVsTfADxh33p6DIJOTH30q4dK00dnPzwcBt',
 } as const;

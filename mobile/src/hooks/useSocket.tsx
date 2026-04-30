@@ -503,6 +503,29 @@ export function useSocket() {
         }
     }, []);
 
+    // Join a chat room for real-time message delivery
+    const joinChatRoom = useCallback((orderId: string) => {
+        if (socket.current?.connected) {
+            socket.current.emit('join_order_chat', { order_id: orderId });
+            socket.current.emit('join_room', `order_${orderId}`);
+            log('[Socket] Joined chat room for order:', orderId);
+        }
+    }, []);
+
+    // Leave a chat room
+    const leaveChatRoom = useCallback((orderId: string) => {
+        if (socket.current?.connected) {
+            socket.current.emit('leave_order_chat', { order_id: orderId });
+            log('[Socket] Left chat room for order:', orderId);
+        }
+    }, []);
+
+    // Subscribe to a specific socket event (returns cleanup function)
+    const onEvent = useCallback((event: string, handler: (...args: any[]) => void) => {
+        socket.current?.on(event, handler);
+        return () => { socket.current?.off(event, handler); };
+    }, []);
+
     // Clear bid notifications for a request
     const clearBidsForRequest = useCallback((requestId: string) => {
         setNewBids(prev => prev.filter(bid => bid.request_id !== requestId));
@@ -570,6 +593,9 @@ export function useSocket() {
         disconnect,
         trackOrder,
         stopTrackingOrder,
+        joinChatRoom,
+        leaveChatRoom,
+        onEvent,
         clearBidsForRequest,
         clearOrderUpdate,
         dismissBid,
@@ -587,6 +613,9 @@ interface SocketContextType {
     orderUpdates: OrderStatusUpdate[];
     trackOrder: (orderId: string) => void;
     stopTrackingOrder: (orderId: string) => void;
+    joinChatRoom: (orderId: string) => void;
+    leaveChatRoom: (orderId: string) => void;
+    onEvent: (event: string, handler: (...args: any[]) => void) => () => void;
     clearBidsForRequest: (requestId: string) => void;
     clearOrderUpdate: (orderId: string) => void;
     dismissBid: (bidId: string) => void;
