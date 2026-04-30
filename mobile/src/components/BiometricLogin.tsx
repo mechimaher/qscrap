@@ -20,6 +20,7 @@ import { useTranslation } from '../contexts/LanguageContext';
 import { useAuth } from '../contexts/AuthContext';
 import { api } from '../services/api';
 import { rtlFlexDirection } from '../utils/rtl';
+import { error as logError } from '../utils/logger';
 
 // Try to import expo-local-authentication (may not be installed yet)
 let LocalAuthentication: any = null;
@@ -76,7 +77,7 @@ export const BiometricLogin: React.FC<BiometricLoginProps> = ({
                 setBiometricType('Biometric');
             }
         } catch (error) {
-            console.error('[BiometricLogin] Error checking support:', error);
+            logError('[BiometricLogin] Error checking support:', error);
         }
     };
 
@@ -143,7 +144,7 @@ export const BiometricLogin: React.FC<BiometricLoginProps> = ({
             }
         } catch (error: any) {
             Haptics.notificationAsync(Haptics.NotificationFeedbackType.Error);
-            console.error('[BiometricLogin] Auth error:', error);
+            logError('[BiometricLogin] Auth error:', error);
             
             // Don't show error for user cancellation
             if (error.code !== 'ESystem' || error.message !== 'User cancel') {

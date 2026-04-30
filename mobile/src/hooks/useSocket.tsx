@@ -2,11 +2,12 @@ import { log, warn, error as logError } from '../utils/logger';
 // QScrap Socket Service - Real-time Updates for Bids, Orders, Tracking
 import { useEffect, useRef, useState, useCallback } from 'react';
 import { io, Socket } from 'socket.io-client';
-import { AppState, AppStateStatus } from 'react-native';
+import { AppState, AppStateStatus, Vibration } from 'react-native';
 import * as Haptics from 'expo-haptics';
 import { SOCKET_URL } from '../config/api';
 import { api, Bid, Order } from '../services/api';
 import { t } from '../utils/i18nHelper';
+import { scheduleLocalNotification } from '../services/notifications';
 
 // Event Types
 interface BidNotification {
@@ -119,36 +120,32 @@ export function useSocket() {
                 Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success);
 
                 // Strong vibration so customer notices even with phone on desk
-                import('react-native').then(({ Vibration }) => {
-                    Vibration.vibrate([0, 400, 200, 400]);
-                });
+                Vibration.vibrate([0, 400, 200, 400]);
 
                 // Schedule rich local notification for background/locked phone
-                import('../services/notifications').then(({ scheduleLocalNotification }) => {
-                    const conditionLabel = data.part_condition
-                        ?.replace('used_', 'Used ')
-                        ?.replace('_', ' ')
-                        ?.replace(/\b\w/g, c => c.toUpperCase()) || 'Used';
+                const conditionLabel = data.part_condition
+                    ?.replace('used_', 'Used ')
+                    ?.replace('_', ' ')
+                    ?.replace(/\b\w/g, c => c.toUpperCase()) || 'Used';
 
-                    const currency = t('common.currency');
-                    const body = data.warranty_days
-                        ? t('notifications.push.newBidBodyWarranty', { garage: data.garage_name, condition: conditionLabel, days: data.warranty_days })
-                        : t('notifications.push.newBidBody', { garage: data.garage_name, condition: conditionLabel });
+                const currency = t('common.currency');
+                const body = data.warranty_days
+                    ? t('notifications.push.newBidBodyWarranty', { garage: data.garage_name, condition: conditionLabel, days: data.warranty_days })
+                    : t('notifications.push.newBidBody', { garage: data.garage_name, condition: conditionLabel });
 
-                    scheduleLocalNotification(
-                        `${t('notifications.push.newBidTitle', { amount: data.bid_amount, currency })}`,
-                        body,
-                        {
-                            type: 'new_bid',
-                            bidId: data.bid_id,
-                            requestId: data.request_id,
-                            garageName: data.garage_name,
-                            bidAmount: data.bid_amount,
-                        },
-                        undefined,
-                        'bids'
-                    );
-                });
+                scheduleLocalNotification(
+                    `${t('notifications.push.newBidTitle', { amount: data.bid_amount, currency })}`,
+                    body,
+                    {
+                        type: 'new_bid',
+                        bidId: data.bid_id,
+                        requestId: data.request_id,
+                        garageName: data.garage_name,
+                        bidAmount: data.bid_amount,
+                    },
+                    undefined,
+                    'bids'
+                );
 
                 // Add to queue, sorted by amount (lowest first)
                 setNewBids(prev => {
@@ -171,25 +168,21 @@ export function useSocket() {
                     Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success);
 
                     // Strong vibration for bid price change
-                    import('react-native').then(({ Vibration }) => {
-                        Vibration.vibrate([0, 300, 150, 300]);
-                    });
+                    Vibration.vibrate([0, 300, 150, 300]);
 
-                    import('../services/notifications').then(({ scheduleLocalNotification }) => {
-                        const currency = t('common.currency');
-                        scheduleLocalNotification(
-                            `${t('notifications.push.bidUpdatedTitle')}`,
-                            t('notifications.push.bidUpdatedBody', { amount: data.bid_amount ?? 0, currency }),
-                            {
-                                type: 'bid_updated',
-                                bidId: data.bid_id,
-                                requestId: data.request_id,
-                                bidAmount: data.bid_amount,
-                            },
-                            undefined,
-                            'bids'
-                        );
-                    });
+                    const currency = t('common.currency');
+                    scheduleLocalNotification(
+                        `${t('notifications.push.bidUpdatedTitle')}`,
+                        t('notifications.push.bidUpdatedBody', { amount: data.bid_amount ?? 0, currency }),
+                        {
+                            type: 'bid_updated',
+                            bidId: data.bid_id,
+                            requestId: data.request_id,
+                            bidAmount: data.bid_amount,
+                        },
+                        undefined,
+                        'bids'
+                    );
 
                     setNewBids(prev =>
                         prev.map(bid =>
@@ -210,25 +203,21 @@ export function useSocket() {
                 Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success);
 
                 // Strong vibration for counter-offer
-                import('react-native').then(({ Vibration }) => {
-                    Vibration.vibrate([0, 400, 200, 400]);
-                });
+                Vibration.vibrate([0, 400, 200, 400]);
 
-                import('../services/notifications').then(({ scheduleLocalNotification }) => {
-                    const currency = t('common.currency');
-                    scheduleLocalNotification(
-                        `${t('notifications.push.counterOfferTitle')}`,
-                        data.notification || t('notifications.push.counterOfferBody', { amount: data.proposed_amount, currency }),
-                        {
-                            type: 'counter_offer',
-                            bidId: data.bid_id,
-                            requestId: data.request_id || data.requestId,
-                            proposedAmount: data.proposed_amount,
-                        },
-                        undefined,
-                        'bids'
-                    );
-                });
+                const currency = t('common.currency');
+                scheduleLocalNotification(
+                    `${t('notifications.push.counterOfferTitle')}`,
+                    data.notification || t('notifications.push.counterOfferBody', { amount: data.proposed_amount, currency }),
+                    {
+                        type: 'counter_offer',
+                        bidId: data.bid_id,
+                        requestId: data.request_id || data.requestId,
+                        proposedAmount: data.proposed_amount,
+                    },
+                    undefined,
+                    'bids'
+                );
             });
 
             // Counter-offer accepted by garage
@@ -237,23 +226,19 @@ export function useSocket() {
                 Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success);
 
                 // Vibration for accepted counter-offer
-                import('react-native').then(({ Vibration }) => {
-                    Vibration.vibrate([0, 300, 150, 300]);
-                });
+                Vibration.vibrate([0, 300, 150, 300]);
 
-                import('../services/notifications').then(({ scheduleLocalNotification }) => {
-                    const currency = t('common.currency');
-                    scheduleLocalNotification(
-                        `${t('notifications.push.offerAcceptedTitle')}`,
-                        data.notification || t('notifications.push.offerAcceptedBody', { amount: data.agreed_amount, currency }),
-                        {
-                            type: 'counter_offer_accepted',
-                            bidId: data.bid_id,
-                            requestId: data.request_id || data.requestId,
-                            agreedAmount: data.agreed_amount,
-                        }
-                    );
-                });
+                const currency = t('common.currency');
+                scheduleLocalNotification(
+                    `${t('notifications.push.offerAcceptedTitle')}`,
+                    data.notification || t('notifications.push.offerAcceptedBody', { amount: data.agreed_amount, currency }),
+                    {
+                        type: 'counter_offer_accepted',
+                        bidId: data.bid_id,
+                        requestId: data.request_id || data.requestId,
+                        agreedAmount: data.agreed_amount,
+                    }
+                );
             });
 
             // Counter-offer rejected by garage
@@ -265,20 +250,18 @@ export function useSocket() {
                     Haptics.notificationAsync(Haptics.NotificationFeedbackType.Error);
 
                     // Show rich notification guiding customer to accept or decline
-                    import('../services/notifications').then(({ scheduleLocalNotification }) => {
-                        const currency = t('common.currency');
-                        scheduleLocalNotification(
-                            `${t('notifications.push.finalOfferTitle')}`,
-                            data.notification || t('notifications.push.finalOfferBody', { amount: data.original_bid_amount, currency }),
-                            {
-                                type: 'counter_offer_final',
-                                bidId: data.bid_id,
-                                requestId: data.request_id || data.requestId,
-                                isFinalRound: true,
-                                originalBidAmount: data.original_bid_amount,
-                            }
-                        );
-                    });
+                    const currency = t('common.currency');
+                    scheduleLocalNotification(
+                        `${t('notifications.push.finalOfferTitle')}`,
+                        data.notification || t('notifications.push.finalOfferBody', { amount: data.original_bid_amount, currency }),
+                        {
+                            type: 'counter_offer_final',
+                            bidId: data.bid_id,
+                            requestId: data.request_id || data.requestId,
+                            isFinalRound: true,
+                            originalBidAmount: data.original_bid_amount,
+                        }
+                    );
                 } else {
                     Haptics.notificationAsync(Haptics.NotificationFeedbackType.Warning);
                 }
@@ -324,19 +307,17 @@ export function useSocket() {
 
                 const statusInfo = statusMessages[data.new_status];
                 if (statusInfo) {
-                    import('../services/notifications').then(({ scheduleLocalNotification }) => {
-                        scheduleLocalNotification(
-                            `QScrap | ${statusInfo.title}`,
-                            statusInfo.body,
-                            {
-                                type: 'order_update',
-                                orderId: data.order_id,
-                                orderNumber: data.order_number,
-                                status: data.new_status,
-                                garageName: data.garage_name,
-                            }
-                        );
-                    });
+                    scheduleLocalNotification(
+                        `QScrap | ${statusInfo.title}`,
+                        statusInfo.body,
+                        {
+                            type: 'order_update',
+                            orderId: data.order_id,
+                            orderNumber: data.order_number,
+                            status: data.new_status,
+                            garageName: data.garage_name,
+                        }
+                    );
                 }
 
                 setOrderUpdates(prev => {
@@ -357,20 +338,18 @@ export function useSocket() {
                 log('[Socket] Driver assigned:', data.driver?.name);
                 Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success);
 
-                import('../services/notifications').then(({ scheduleLocalNotification }) => {
-                    scheduleLocalNotification(
-                        `${t('notifications.push.driverAssignedTitle')}`,
-                        data.driver?.name
-                            ? t('notifications.push.driverAssignedBodyDriver', { driver: data.driver.name })
-                            : t('notifications.push.driverAssignedBody'),
-                        {
-                            type: 'driver_assigned',
-                            orderId: data.order_id,
-                            orderNumber: data.order_number,
-                            driverName: data.driver?.name,
-                        }
-                    );
-                });
+                scheduleLocalNotification(
+                    `${t('notifications.push.driverAssignedTitle')}`,
+                    data.driver?.name
+                        ? t('notifications.push.driverAssignedBodyDriver', { driver: data.driver.name })
+                        : t('notifications.push.driverAssignedBody'),
+                    {
+                        type: 'driver_assigned',
+                        orderId: data.order_id,
+                        orderNumber: data.order_number,
+                        driverName: data.driver?.name,
+                    }
+                );
             });
 
             // === TRACKING EVENTS ===
@@ -385,17 +364,15 @@ export function useSocket() {
                 log('[Socket] Order delivered:', data.order_number);
                 Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success);
 
-                import('../services/notifications').then(({ scheduleLocalNotification }) => {
-                    scheduleLocalNotification(
-                        `${t('notifications.push.packageDeliveredTitle')}`,
-                        t('notifications.push.packageDeliveredBody', { orderNumber: data.order_number }),
-                        {
-                            type: 'order_delivered',
-                            orderId: data.order_id,
-                            orderNumber: data.order_number,
-                        }
-                    );
-                });
+                scheduleLocalNotification(
+                    `${t('notifications.push.packageDeliveredTitle')}`,
+                    t('notifications.push.packageDeliveredBody', { orderNumber: data.order_number }),
+                    {
+                        type: 'order_delivered',
+                        orderId: data.order_id,
+                        orderNumber: data.order_number,
+                    }
+                );
             });
 
             // === ADDITIONAL CRITICAL EVENTS ===
@@ -405,18 +382,16 @@ export function useSocket() {
                 log('[Socket] Request expired:', data.request_id);
                 Haptics.notificationAsync(Haptics.NotificationFeedbackType.Warning);
 
-                import('../services/notifications').then(({ scheduleLocalNotification }) => {
-                    scheduleLocalNotification(
-                        `${t('notifications.push.requestExpiredTitle')}`,
-                        data.part_description
-                            ? t('notifications.push.requestExpiredBodyPart', { part: data.part_description })
-                            : t('notifications.push.requestExpiredBody'),
-                        {
-                            type: 'request_expired',
-                            requestId: data.request_id,
-                        }
-                    );
-                });
+                scheduleLocalNotification(
+                    `${t('notifications.push.requestExpiredTitle')}`,
+                    data.part_description
+                        ? t('notifications.push.requestExpiredBodyPart', { part: data.part_description })
+                        : t('notifications.push.requestExpiredBody'),
+                    {
+                        type: 'request_expired',
+                        requestId: data.request_id,
+                    }
+                );
             });
 
             // Garage withdrew their bid
@@ -424,16 +399,14 @@ export function useSocket() {
                 log('[Socket] Bid withdrawn:', data.request_id);
                 Haptics.notificationAsync(Haptics.NotificationFeedbackType.Warning);
 
-                import('../services/notifications').then(({ scheduleLocalNotification }) => {
-                    scheduleLocalNotification(
-                        `${t('notifications.push.bidWithdrawnTitle')}`,
-                        data.message || t('notifications.push.bidWithdrawnBody'),
-                        {
-                            type: 'bid_withdrawn',
-                            requestId: data.request_id,
-                        }
-                    );
-                });
+                scheduleLocalNotification(
+                    `${t('notifications.push.bidWithdrawnTitle')}`,
+                    data.message || t('notifications.push.bidWithdrawnBody'),
+                    {
+                        type: 'bid_withdrawn',
+                        requestId: data.request_id,
+                    }
+                );
             });
 
             // Support team replied to your ticket
@@ -441,16 +414,14 @@ export function useSocket() {
                 log('[Socket] Support reply:', data.ticket_id);
                 Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success);
 
-                import('../services/notifications').then(({ scheduleLocalNotification }) => {
-                    scheduleLocalNotification(
-                        `${t('notifications.push.supportReplyTitle')}`,
-                        data.message?.content || t('notifications.push.supportReplyBody'),
-                        {
-                            type: 'support_reply',
-                            ticketId: data.ticket_id,
-                        }
-                    );
-                });
+                scheduleLocalNotification(
+                    `${t('notifications.push.supportReplyTitle')}`,
+                    data.message?.content || t('notifications.push.supportReplyBody'),
+                    {
+                        type: 'support_reply',
+                        ticketId: data.ticket_id,
+                    }
+                );
             });
 
             // Order was cancelled
@@ -458,22 +429,20 @@ export function useSocket() {
                 log('[Socket] Order cancelled:', data.order_id);
                 Haptics.notificationAsync(Haptics.NotificationFeedbackType.Error);
 
-                import('../services/notifications').then(({ scheduleLocalNotification }) => {
-                    const cancelledBy = data.cancelled_by === 'garage'
-                        ? t('notifications.push.theGarage')
-                        : t('notifications.push.yourOrder');
-                    scheduleLocalNotification(
-                        `${t('notifications.push.orderCancelledTitle')}`,
-                        data.reason
-                            ? t('notifications.push.orderCancelledBodyReason', { cancelledBy, reason: data.reason })
-                            : t('notifications.push.orderCancelledBody', { orderNumber: data.order_number || 'N/A' }),
-                        {
-                            type: 'order_cancelled',
-                            orderId: data.order_id,
-                            orderNumber: data.order_number,
-                        }
-                    );
-                });
+                const cancelledBy = data.cancelled_by === 'garage'
+                    ? t('notifications.push.theGarage')
+                    : t('notifications.push.yourOrder');
+                scheduleLocalNotification(
+                    `${t('notifications.push.orderCancelledTitle')}`,
+                    data.reason
+                        ? t('notifications.push.orderCancelledBodyReason', { cancelledBy, reason: data.reason })
+                        : t('notifications.push.orderCancelledBody', { orderNumber: data.order_number || 'N/A' }),
+                    {
+                        type: 'order_cancelled',
+                        orderId: data.order_id,
+                        orderNumber: data.order_number,
+                    }
+                );
             });
 
             // Chat message notification (when not in chat screen)
@@ -488,26 +457,22 @@ export function useSocket() {
                 Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success);
 
                 // Vibrate so user notices even with phone on desk
-                import('react-native').then(({ Vibration }) => {
-                    Vibration.vibrate([0, 200, 100, 200]);
-                });
+                Vibration.vibrate([0, 200, 100, 200]);
 
-                import('../services/notifications').then(({ scheduleLocalNotification }) => {
-                    const senderLabel = data.sender_type === 'driver'
-                        ? `${t('notifications.push.chatDriverLabel')}`
-                        : `${t('notifications.push.chatGarageLabel')}`;
-                    scheduleLocalNotification(
-                        senderLabel,
-                        data.message || t('notifications.push.chatDefaultBody'),
-                        {
-                            type: 'chat_message',
-                            orderId: data.order_id,
-                            orderNumber: data.order_number,
-                        },
-                        undefined,
-                        'messages'
-                    );
-                });
+                const senderLabel = data.sender_type === 'driver'
+                    ? `${t('notifications.push.chatDriverLabel')}`
+                    : `${t('notifications.push.chatGarageLabel')}`;
+                scheduleLocalNotification(
+                    senderLabel,
+                    data.message || t('notifications.push.chatDefaultBody'),
+                    {
+                        type: 'chat_message',
+                        orderId: data.order_id,
+                        orderNumber: data.order_number,
+                    },
+                    undefined,
+                    'messages'
+                );
             });
 
         } catch (error) {

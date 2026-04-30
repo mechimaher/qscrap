@@ -64,11 +64,6 @@ export const getFeatureFlagsForRole = (userRole: string, isB2B: boolean = false)
         flags.B2B_PO_MANAGEMENT = true;
     }
 
-    // Garage/seller role gets additional features
-    if (userRole === 'garage') {
-        flags.SELLER_VERIFICATION = true;
-    }
-
     return flags;
 };
 
