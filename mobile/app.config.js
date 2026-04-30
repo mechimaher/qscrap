@@ -6,7 +6,10 @@
  */
 
 module.exports = ({ config }) => {
-    const googleMapsApiKey = process.env.EXPO_PUBLIC_GOOGLE_MAPS_API_KEY;
+    // Google Maps API keys are NOT secrets — they ship inside every APK.
+    // Restrict by package name + SHA-1 fingerprint in Google Cloud Console.
+    const googleMapsApiKey = process.env.EXPO_PUBLIC_GOOGLE_MAPS_API_KEY
+        || 'AIzaSyBtetLMBqtW1TNNsBFWi5Xa4LTy1GEbwYw';
 
     return {
         ...config,
