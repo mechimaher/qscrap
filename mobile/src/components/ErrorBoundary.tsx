@@ -98,7 +98,7 @@ export class ErrorBoundary extends Component<Props, State> {
         logError('ErrorBoundary caught an error:', error, errorInfo);
         this.setState({ errorInfo });
 
-        // Note: Sentry.wrap() in App.tsx automatically captures uncaught errors.
+        // Error capture is handled by the centralized logError utility.
     }
 
     handleRestart = () => {

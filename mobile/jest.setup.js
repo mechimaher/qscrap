@@ -95,15 +95,6 @@ jest.mock('@expo/vector-icons', () => {
     };
 });
 
-// Mock Sentry native bindings before screens import instrumentation.
-jest.mock('@sentry/react-native', () => ({
-    init: jest.fn(),
-    wrap: (component) => component,
-    setUser: jest.fn(),
-    captureException: jest.fn(),
-    captureMessage: jest.fn(),
-    addBreadcrumb: jest.fn(),
-}));
 
 // Mock expo-location
 jest.mock('expo-location', () => ({
