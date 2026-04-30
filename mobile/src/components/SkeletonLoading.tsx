@@ -160,7 +160,7 @@ const styles = StyleSheet.create({
         marginBottom: Spacing.md,
     },
     listItemLeft: {
-        marginRight: Spacing.md,
+        marginEnd: Spacing.md,
     },
     listItemCircle: {
         width: 50,
@@ -200,7 +200,7 @@ const styles = StyleSheet.create({
         width: 48,
         height: 48,
         borderRadius: 24,
-        marginRight: Spacing.md,
+        marginEnd: Spacing.md,
     },
     notificationContent: {
         flex: 1,

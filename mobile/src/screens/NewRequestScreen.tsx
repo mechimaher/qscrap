@@ -178,7 +178,7 @@ export default function NewRequestScreen() {
                         onPress={() => navigation.goBack()}
                         style={styles.closeButton}
                     >
-                        <Ionicons name="arrow-back" size={22} color={colors.text} />
+                        <Ionicons name={isRTL ? "arrow-forward" : "arrow-back"} size={22} color={colors.text} />
                     </TouchableOpacity>
                     <View style={styles.headerCenter}>
                         <Text style={[styles.headerTitle, { color: colors.text }]}>{t('newRequest.title')}</Text>
@@ -295,14 +295,14 @@ export default function NewRequestScreen() {
                                     ? [Colors.primary, '#B31D4A']
                                     : ['#9CA3AF', '#6B7280']
                             }
-                            style={styles.submitGradient}
+                            style={[styles.submitGradient, { flexDirection: isRTL ? 'row-reverse' : 'row' }]}
                         >
                             {isSubmitting ? (
                                 <ActivityIndicator color="#fff" />
                             ) : (
                                 <>
                                     <Text style={styles.submitText}>{t('newRequest.submitRequest')}</Text>
-                                    <Ionicons name="arrow-forward" size={20} color="#fff" />
+                                    <Ionicons name={isRTL ? "arrow-back" : "arrow-forward"} size={20} color="#fff" />
                                 </>
                             )}
                         </LinearGradient>

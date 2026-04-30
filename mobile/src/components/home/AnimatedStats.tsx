@@ -216,7 +216,7 @@ const styles = StyleSheet.create({
         alignItems: 'center',
     },
     wideCardLeft: { flexDirection: 'row', alignItems: 'center' },
-    wideCardEmoji: { fontSize: 28, marginRight: Spacing.sm },
+    wideCardEmoji: { fontSize: 28, marginEnd: Spacing.sm },
     wideCardLabel: { fontSize: FontSizes.xs },
     wideCardBadge: {
         backgroundColor: Colors.primary + '15',

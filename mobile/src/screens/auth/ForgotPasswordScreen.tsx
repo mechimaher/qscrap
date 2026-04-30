@@ -289,7 +289,7 @@ const styles = StyleSheet.create({
         flex: 1,
         color: '#fff',
         fontSize: FontSizes.sm,
-        marginLeft: Spacing.sm,
+        marginStart: Spacing.sm,
     },
     inputContainer: {
         marginBottom: Spacing.lg,
@@ -340,7 +340,7 @@ const styles = StyleSheet.create({
     securityNoticeText: {
         color: 'rgba(255,255,255,0.7)',
         fontSize: FontSizes.sm,
-        marginLeft: Spacing.sm,
+        marginStart: Spacing.sm,
         textAlign: 'center',
         flex: 1,
     },

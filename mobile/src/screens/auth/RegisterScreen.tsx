@@ -354,7 +354,7 @@ const styles = StyleSheet.create({
     },
     errorIcon: {
         fontSize: 16,
-        marginRight: Spacing.sm,
+        marginEnd: Spacing.sm,
     },
     errorText: {
         color: '#EF4444',
@@ -446,6 +446,6 @@ const styles = StyleSheet.create({
         fontSize: FontSizes.md,
         fontWeight: '700',
         color: '#ffffff',
-        marginLeft: Spacing.xs,
+        marginStart: Spacing.xs,
     },
 });

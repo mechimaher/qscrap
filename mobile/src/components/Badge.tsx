@@ -106,7 +106,7 @@ const styles = StyleSheet.create({
         alignSelf: 'flex-start',
     },
     iconContainer: {
-        marginRight: Spacing.xs,
+        marginEnd: Spacing.xs,
     },
     text: {
         fontWeight: '600',

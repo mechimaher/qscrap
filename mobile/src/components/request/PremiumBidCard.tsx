@@ -196,8 +196,8 @@ const PremiumBidCard = ({
                     <Text style={[styles.garageName, { color: colors.text, textAlign: rtlTextAlign(isRTL) }]}>{bid.garage_name}</Text>
                     {bid.rating_average && (
                         <View style={[styles.ratingRow, { flexDirection: rtlFlexDirection(isRTL) }]}>
-                            <Ionicons name="star" size={14} color="#F59E0B" style={{ marginRight: 4 }} />
-                            <Text style={styles.ratingText}>
+                            <Ionicons name="star" size={14} color="#F59E0B" style={isRTL ? { marginLeft: 4 } : { marginRight: 4 }} />
+                            <Text style={[styles.ratingText, { color: colors.textSecondary }]}>
                                 {bid.rating_average.toFixed(1)} ({bid.rating_count})
                             </Text>
                         </View>
@@ -211,7 +211,7 @@ const PremiumBidCard = ({
                 <View style={[styles.priceSection, { alignItems: isRTL ? 'flex-start' : 'flex-end' }]}>
                     {hasNegotiatedPrice ? (
                         <>
-                            <Text style={styles.originalPrice}>{originalBidAmount} {t('common.qar')}</Text>
+                            <Text style={[styles.originalPrice, { color: colors.textMuted }]}>{originalBidAmount} {t('common.qar')}</Text>
                             <Text style={styles.currentPriceLabel}>
                                 {isNegotiationAgreed ? t('bidCard.agreed') : t('bidCard.offered')}
                             </Text>
@@ -227,12 +227,12 @@ const PremiumBidCard = ({
                         </>
                     ) : (
                         <>
-                            <Text style={styles.priceLabel}>{isAccepted ? t('bidCard.final') : t('bidCard.price')}</Text>
+                            <Text style={[styles.priceLabel, { color: colors.textMuted }]}>{isAccepted ? t('bidCard.final') : t('bidCard.price')}</Text>
                             <Text style={[styles.priceAmount, isBestDeal && { color: '#22C55E' }]}>
                                 {bid.bid_amount} {t('common.qar')}
                             </Text>
                             {!isAccepted && (
-                                <Text style={[styles.deliveryFeeText, { textAlign: isRTL ? 'left' : 'right' }]}>
+                                <Text style={[styles.deliveryFeeText, { color: colors.textMuted, textAlign: isRTL ? 'left' : 'right' }]}>
                                     + {t('order.deliveryFee')} {t('order.calculatedAtCheckout')}
                                 </Text>
                             )}
@@ -325,13 +325,13 @@ const PremiumBidCard = ({
 
             {/* Notes */}
             {bid.notes && (
-                <Text style={[styles.bidNotes, { textAlign: rtlTextAlign(isRTL) }]}>"{bid.notes}"</Text>
+                <Text style={[styles.bidNotes, { color: colors.textSecondary, textAlign: rtlTextAlign(isRTL) }]}>"{bid.notes}"</Text>
             )}
 
             {/* Bid Images */}
             {bid.image_urls && bid.image_urls.length > 0 && (
                 <View style={styles.bidImagesSection}>
-                    <Text style={[styles.bidImagesLabel, { textAlign: rtlTextAlign(isRTL) }]}>{t('bidCard.garagePartPhotos')}</Text>
+                    <Text style={[styles.bidImagesLabel, { color: colors.text, textAlign: rtlTextAlign(isRTL) }]}>{t('bidCard.garagePartPhotos')}</Text>
                     <ScrollView horizontal showsHorizontalScrollIndicator={false} style={{ transform: isRTL ? [{ scaleX: -1 }] : [] }}>
                         <View style={{ flexDirection: 'row', transform: isRTL ? [{ scaleX: -1 }] : [] }}>
                             {bid.image_urls.map((url, idx) => {
@@ -553,7 +553,7 @@ const styles = StyleSheet.create({
     garageInfo: { flex: 1 },
     garageName: { fontSize: FontSizes.lg, fontWeight: '700' },
     ratingRow: { flexDirection: 'row', alignItems: 'center', marginTop: 4 },
-    ratingStar: { fontSize: 14, marginRight: 4 },
+    ratingStar: { fontSize: 14, marginEnd: 4 },
     ratingText: { fontSize: FontSizes.sm, color: '#525252' },
     roundsText: { fontSize: FontSizes.xs, color: Colors.primary, fontWeight: '600', marginTop: 4 },
     priceSection: { alignItems: 'flex-end' },
@@ -617,7 +617,7 @@ const styles = StyleSheet.create({
 
     bidImagesSection: { marginTop: Spacing.md, paddingTop: Spacing.md, borderTopWidth: 1, borderTopColor: '#F0F0F0' },
     bidImagesLabel: { fontSize: FontSizes.sm, fontWeight: '600', marginBottom: Spacing.sm },
-    bidImage: { width: 120, height: 120, borderRadius: BorderRadius.lg, marginRight: Spacing.sm },
+    bidImage: { width: 120, height: 120, borderRadius: BorderRadius.lg, marginEnd: Spacing.sm },
 
     // Condition Photos Section
     conditionSection: {
@@ -643,7 +643,7 @@ const styles = StyleSheet.create({
         height: 120,
         borderRadius: BorderRadius.lg,
         overflow: 'hidden',
-        marginRight: Spacing.sm,
+        marginEnd: Spacing.sm,
         position: 'relative',
     },
     conditionPhoto: { width: '100%', height: '100%' },

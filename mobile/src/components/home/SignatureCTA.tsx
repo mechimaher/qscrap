@@ -182,7 +182,7 @@ const styles = StyleSheet.create({
         height: 6,
         borderRadius: 3,
         backgroundColor: '#22C55E',
-        marginRight: Spacing.xs,
+        marginStart: Spacing.xs,
     },
     ctaFooterText: { fontSize: 10, color: 'rgba(255,255,255,0.8)' },
     supplierBadges: {

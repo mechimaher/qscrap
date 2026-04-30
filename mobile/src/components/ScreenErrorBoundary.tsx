@@ -194,7 +194,7 @@ const styles = StyleSheet.create({
         marginBottom: Spacing.lg,
     },
     retryIcon: {
-        marginRight: Spacing.sm,
+        marginEnd: Spacing.sm,
     },
     retryText: {
         color: '#FFF',

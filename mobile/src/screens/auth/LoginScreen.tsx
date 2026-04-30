@@ -430,7 +430,7 @@ const styles = StyleSheet.create({
     },
     errorIcon: {
         fontSize: 16,
-        marginRight: Spacing.sm,
+        marginEnd: Spacing.sm,
     },
     errorText: {
         fontSize: FontSizes.sm,
@@ -507,7 +507,7 @@ const styles = StyleSheet.create({
         fontSize: FontSizes.md,
         fontWeight: '700',
         color: '#fff',
-        marginLeft: Spacing.xs,
+        marginStart: Spacing.xs,
     },
     footer: {
         marginTop: Spacing.xl,

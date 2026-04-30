@@ -15,6 +15,7 @@ import { Ionicons } from '@expo/vector-icons';
 import { LinearGradient } from 'expo-linear-gradient';
 import * as Haptics from 'expo-haptics';
 import { useTranslation } from '../contexts/LanguageContext';
+import { useTheme } from '../contexts/ThemeContext';
 import { rtlTextAlign, rtlFlexDirection } from '../utils/rtl';
 
 interface SearchableDropdownProps {
@@ -35,6 +36,7 @@ export default function SearchableDropdown({
     disabled = false,
 }: SearchableDropdownProps) {
     const { t, isRTL } = useTranslation();
+    const { colors } = useTheme();
     const [visible, setVisible] = useState(false);
     const [search, setSearch] = useState('');
     const [filteredItems, setFilteredItems] = useState(items);
@@ -72,18 +74,18 @@ export default function SearchableDropdown({
 
     return (
         <View style={styles.container}>
-            {label && <Text style={styles.label}>{label}</Text>}
+            {label && <Text style={[styles.label, { color: colors.textSecondary }]}>{label}</Text>}
 
             <TouchableOpacity
-                style={[styles.selector, disabled && styles.disabled, { flexDirection: rtlFlexDirection(isRTL) }]}
+                style={[styles.selector, { backgroundColor: colors.inputBackground, borderColor: colors.inputBorder }, disabled && styles.disabled, { flexDirection: rtlFlexDirection(isRTL) }]}
                 onPress={() => !disabled && setVisible(true)}
                 activeOpacity={0.7}
                 disabled={disabled}
             >
-                <Text style={[styles.valueText, !value && styles.placeholderText, { textAlign: rtlTextAlign(isRTL) }]}>
+                <Text style={[styles.valueText, { color: colors.text }, !value && styles.placeholderText, { textAlign: rtlTextAlign(isRTL) }]}>
                     {value || placeholder}
                 </Text>
-                <Text style={[styles.arrowIcon, isRTL ? { marginRight: Spacing.sm, marginLeft: 0 } : { marginLeft: Spacing.sm }]}>▼</Text>
+                <Text style={[styles.arrowIcon, { color: colors.textMuted }, isRTL ? { marginRight: Spacing.sm, marginLeft: 0 } : { marginLeft: Spacing.sm }]}>▼</Text>
             </TouchableOpacity>
 
             <Modal
@@ -207,7 +209,7 @@ const styles = StyleSheet.create({
     arrowIcon: {
         fontSize: 12,
         color: '#6B7280',
-        marginLeft: Spacing.sm,
+        marginStart: Spacing.sm,
     },
     modalOverlay: {
         flex: 1,
@@ -251,7 +253,7 @@ const styles = StyleSheet.create({
         borderWidth: 1,
         borderColor: '#E8E8E8',
     },
-    searchIcon: { fontSize: 16, marginRight: Spacing.sm },
+    searchIcon: { fontSize: 16, marginEnd: Spacing.sm },
     searchInput: {
         flex: 1,
         color: '#1a1a2e',

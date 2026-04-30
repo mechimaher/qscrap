@@ -82,7 +82,7 @@ export default function PartDetailsStep({
                     numberOfLines={4}
                     textAlignVertical="top"
                 />
-                <Text style={[styles.charCount, { color: colors.textMuted }]}>
+                <Text style={[styles.charCount, { color: colors.textMuted, textAlign: isRTL ? 'left' : 'right' }]}>
                     {partDescription.length}/500
                 </Text>
             </View>
@@ -141,6 +141,6 @@ const styles = StyleSheet.create({
     charCount: {
         fontSize: FontSizes.xs,
         marginTop: Spacing.xs,
-        textAlign: 'right',
+        textAlign: 'right' as const, // Always align char count to end (numeric)
     },
 });

@@ -67,7 +67,7 @@ const styles = StyleSheet.create({
         borderWidth: 1,
         borderColor: Colors.secondary + '50',
     },
-    proTipIconWrapper: { marginRight: Spacing.sm },
+    proTipIconWrapper: { marginEnd: Spacing.sm },
     proTipIcon: { fontSize: 22 },
     proTipContent: { flex: 1 },
     proTipTitle: { fontSize: FontSizes.xs, fontWeight: '600', color: Colors.secondary, marginBottom: 1 },

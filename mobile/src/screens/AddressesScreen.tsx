@@ -393,7 +393,7 @@ export default function AddressBookScreen() {
                 {/* Header */}
                 <View style={[styles.flowHeader, { backgroundColor: colors.surface, flexDirection: rtlFlexDirection(isRTL) }]}>
                     <TouchableOpacity onPress={() => setFlowStep('map')} style={styles.flowBackBtn}>
-                        <Ionicons name="arrow-back" size={20} color={Colors.primary} />
+                        <Ionicons name={isRTL ? "arrow-forward" : "arrow-back"} size={20} color={Colors.primary} />
                     </TouchableOpacity>
                     <Text style={[styles.flowTitle, { color: colors.text }]}>{t('profile.confirmAddress')}</Text>
                     <View style={{ width: 40 }} />
@@ -509,7 +509,7 @@ export default function AddressBookScreen() {
             {/* Header */}
             <View style={[styles.header, { backgroundColor: colors.surface, borderColor: colors.border, flexDirection: rtlFlexDirection(isRTL) }]}>
                 <TouchableOpacity onPress={() => navigation.goBack()} style={[styles.backButton, { backgroundColor: colors.background }]}>
-                    <Ionicons name="arrow-back" size={20} color={Colors.primary} /> <Text style={styles.backText}>{t('common.back')}</Text>
+                    <Ionicons name={isRTL ? "arrow-forward" : "arrow-back"} size={20} color={Colors.primary} /> <Text style={styles.backText}>{t('common.back')}</Text>
                 </TouchableOpacity>
                 <Text style={[styles.title, { color: colors.text }]}>
                     {isSelectionMode ? t('profile.selectAddress') : t('profile.addressBook')}
@@ -533,7 +533,7 @@ export default function AddressBookScreen() {
                     ListEmptyComponent={
                         <View style={styles.emptyContainer}>
                             <Ionicons name="location-outline" size={48} color="#9CA3AF" />
-                            <Text style={styles.emptyText}>{t('profile.noAddressesSaved')}</Text>
+                            <Text style={[styles.emptyText, { color: colors.textMuted }]}>{t('profile.noAddressesSaved')}</Text>
                             <TouchableOpacity onPress={handleStartAdd} style={styles.emptyButton}>
                                 <Text style={styles.emptyButtonText}>+ {t('profile.addFirstAddress')}</Text>
                             </TouchableOpacity>
@@ -599,11 +599,11 @@ const styles = StyleSheet.create({
         backgroundColor: Colors.primary + '15',
         justifyContent: 'center',
         alignItems: 'center',
-        marginRight: Spacing.md,
+        marginEnd: Spacing.md,
     },
     cardIconText: { fontSize: 22 },
     cardHeader: { flexDirection: 'row', alignItems: 'center', marginBottom: 4 },
-    label: { fontSize: FontSizes.md, fontWeight: '700', marginRight: Spacing.sm },
+    label: { fontSize: FontSizes.md, fontWeight: '700', marginEnd: Spacing.sm },
     defaultBadge: {
         fontSize: 10,
         color: Colors.primary,
@@ -686,7 +686,7 @@ const styles = StyleSheet.create({
         paddingHorizontal: Spacing.md,
         paddingVertical: Spacing.sm,
         borderRadius: BorderRadius.lg,
-        marginRight: Spacing.sm,
+        marginEnd: Spacing.sm,
         borderWidth: 1,
     },
     zoneChipText: { fontWeight: '600', fontSize: FontSizes.sm },

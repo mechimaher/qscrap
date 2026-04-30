@@ -10,6 +10,7 @@ import {
 import * as Haptics from 'expo-haptics';
 import { Colors, Spacing, BorderRadius, FontSizes, Shadows } from '../constants/theme';
 import { useTranslation } from '../contexts/LanguageContext';
+import { useTheme } from '../contexts/ThemeContext';
 import { Ionicons } from '@expo/vector-icons';
 
 interface QuickReply {
@@ -81,7 +82,8 @@ export const QuickReplies: React.FC<QuickRepliesProps> = ({
     recipientType,
     onSelectReply,
 }) => {
-    const { t } = useTranslation();
+    const { t, isRTL } = useTranslation();
+    const { colors } = useTheme();
     const [selectedCategory, setSelectedCategory] = useState<string | null>(null);
 
     // Get appropriate replies based on recipient
@@ -116,7 +118,7 @@ export const QuickReplies: React.FC<QuickRepliesProps> = ({
     ];
 
     return (
-        <View style={styles.container}>
+        <View style={[styles.container, { backgroundColor: colors.surface, borderTopColor: colors.border }]}>
             {/* Category Tabs */}
             <ScrollView
                 horizontal
@@ -136,7 +138,7 @@ export const QuickReplies: React.FC<QuickRepliesProps> = ({
                             setSelectedCategory(cat.key);
                         }}
                     >
-                        <Ionicons name={cat.icon} size={14} color={selectedCategory === cat.key ? Colors.primary : '#525252'} style={{ marginRight: 4 }} />
+                        <Ionicons name={cat.icon} size={14} color={selectedCategory === cat.key ? Colors.primary : colors.textSecondary} style={isRTL ? { marginLeft: 4 } : { marginRight: 4 }} />
                         <Text style={[
                             styles.categoryLabel,
                             selectedCategory === cat.key && styles.categoryLabelActive,
@@ -159,13 +161,13 @@ export const QuickReplies: React.FC<QuickRepliesProps> = ({
                         key={reply.id}
                         style={[
                             styles.replyChip,
-                            { borderColor: CATEGORY_COLORS[reply.category] + '40' }
+                            { backgroundColor: colors.surface, borderColor: CATEGORY_COLORS[reply.category] + '40' }
                         ]}
                         onPress={() => handleSelect(reply)}
                         activeOpacity={0.7}
                     >
-                        <Ionicons name={reply.emoji as any} size={16} color={CATEGORY_COLORS[reply.category]} style={{ marginRight: Spacing.xs }} />
-                        <Text style={styles.replyText} numberOfLines={1}>
+                        <Ionicons name={reply.emoji as any} size={16} color={CATEGORY_COLORS[reply.category]} style={isRTL ? { marginLeft: Spacing.xs } : { marginRight: Spacing.xs }} />
+                        <Text style={[styles.replyText, { color: colors.text }]} numberOfLines={1}>
                             {reply.text}
                         </Text>
                     </TouchableOpacity>
@@ -197,14 +199,14 @@ const styles = StyleSheet.create({
         paddingVertical: Spacing.xs,
         borderRadius: BorderRadius.full,
         backgroundColor: '#F5F5F5',
-        marginRight: Spacing.xs,
+        marginEnd: Spacing.xs,
     },
     categoryTabActive: {
         backgroundColor: Colors.primary + '15',
     },
     categoryEmoji: {
         fontSize: 14,
-        marginRight: 4,
+        marginEnd: 4,
     },
     categoryLabel: {
         fontSize: FontSizes.xs,
@@ -231,12 +233,12 @@ const styles = StyleSheet.create({
         paddingVertical: Spacing.sm,
         borderRadius: BorderRadius.full,
         borderWidth: 1.5,
-        marginRight: Spacing.sm,
+        marginEnd: Spacing.sm,
         ...Shadows.sm,
     },
     replyEmoji: {
         fontSize: 16,
-        marginRight: Spacing.xs,
+        marginEnd: Spacing.xs,
     },
     replyText: {
         fontSize: FontSizes.sm,

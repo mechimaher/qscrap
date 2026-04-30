@@ -283,7 +283,7 @@ export default function OrderDetailScreen() {
             <SafeAreaView style={[styles.container, { backgroundColor: colors.background }]} edges={['top']}>
                 <View style={[styles.header, { backgroundColor: colors.surface, flexDirection: rtlFlexDirection(isRTL) }]}>
                     <TouchableOpacity onPress={() => navigation.goBack()} style={styles.backButton}>
-                        <Ionicons name="arrow-back" size={20} color={Colors.primary} /> <Text style={styles.backText}>{t('common.back')}</Text>
+                        <Ionicons name={isRTL ? "arrow-forward" : "arrow-back"} size={20} color={Colors.primary} /> <Text style={styles.backText}>{t('common.back')}</Text>
                     </TouchableOpacity>
                     <Text style={[styles.headerTitle, { color: colors.text }]}>{t('order.details')}</Text>
                     <View style={{ width: 60 }} />
@@ -309,7 +309,7 @@ export default function OrderDetailScreen() {
             {/* Header */}
             <View style={[styles.header, { backgroundColor: colors.surface, flexDirection: rtlFlexDirection(isRTL) }]}>
                 <TouchableOpacity onPress={() => navigation.goBack()} style={[styles.backButton, { backgroundColor: colors.background }]}>
-                    <Ionicons name="arrow-back" size={20} color={Colors.primary} /> <Text style={styles.backText}>{t('common.back')}</Text>
+                    <Ionicons name={isRTL ? "arrow-forward" : "arrow-back"} size={20} color={Colors.primary} /> <Text style={styles.backText}>{t('common.back')}</Text>
                 </TouchableOpacity>
                 <Text style={[styles.headerTitle, { color: colors.text }]}>{t('order.details')}</Text>
                 <View style={{ width: 60 }} />
@@ -322,8 +322,8 @@ export default function OrderDetailScreen() {
                 {/* Live Tracking Button */}
                 {isInTransit && (
                     <TouchableOpacity style={styles.trackButton} onPress={handleTrackLive}>
-                        <LinearGradient colors={['#3B82F6', '#1D4ED8']} style={styles.trackGradient}>
-                            <Ionicons name="map" size={24} color="#fff" style={{ marginRight: Spacing.sm }} />
+                        <LinearGradient colors={['#3B82F6', '#1D4ED8']} style={[styles.trackGradient, { flexDirection: isRTL ? 'row-reverse' : 'row' }]}>
+                            <Ionicons name="map" size={24} color="#fff" style={isRTL ? { marginLeft: Spacing.sm } : { marginRight: Spacing.sm }} />
                             <Text style={styles.trackText}>{t('order.openLiveMap')}</Text>
                         </LinearGradient>
                     </TouchableOpacity>
@@ -424,12 +424,12 @@ export default function OrderDetailScreen() {
                                 onPress={handleDownloadInvoice}
                                 disabled={isDownloadingInvoice}
                             >
-                                <LinearGradient colors={['#8D1B3D', '#6B1530']} style={styles.invoiceGradient}>
+                                <LinearGradient colors={['#8D1B3D', '#6B1530']} style={[styles.invoiceGradient, { flexDirection: isRTL ? 'row-reverse' : 'row' }]}>
                                     {isDownloadingInvoice ? (
                                         <ActivityIndicator color="#fff" size="small" />
                                     ) : (
                                         <>
-                                            <Ionicons name="document-text" size={20} color="#fff" style={{ marginRight: Spacing.sm }} />
+                                            <Ionicons name="document-text" size={20} color="#fff" style={isRTL ? { marginLeft: Spacing.sm } : { marginRight: Spacing.sm }} />
                                             <Text style={styles.invoiceText}>{t('order.downloadInvoice')}</Text>
                                         </>
                                     )}
@@ -456,9 +456,9 @@ export default function OrderDetailScreen() {
                                     colors={['#8D1B3D', '#C9A227']}
                                     start={{ x: 0, y: 0 }}
                                     end={{ x: 1, y: 0 }}
-                                    style={styles.reorderGradient}
+                                    style={[styles.reorderGradient, { flexDirection: isRTL ? 'row-reverse' : 'row' }]}
                                 >
-                                    <Ionicons name="refresh" size={20} color="#fff" style={{ marginRight: Spacing.sm }} />
+                                    <Ionicons name="refresh" size={20} color="#fff" style={isRTL ? { marginLeft: Spacing.sm } : { marginRight: Spacing.sm }} />
                                     <Text style={styles.reorderText}>{t('order.orderAgain')}</Text>
                                 </LinearGradient>
                             </TouchableOpacity>
@@ -471,7 +471,7 @@ export default function OrderDetailScreen() {
                     <View style={[styles.addressCard, { backgroundColor: colors.surface }]}>
                         <Text style={[styles.sectionTitle, { color: colors.text, textAlign: rtlTextAlign(isRTL) }]}>{t('common.deliveryAddress')}</Text>
                         <View style={[styles.addressRow, { flexDirection: rtlFlexDirection(isRTL) }]}>
-                            <Ionicons name="location" size={20} color={colors.textSecondary} style={{ marginRight: Spacing.sm }} />
+                            <Ionicons name="location" size={20} color={colors.textSecondary} style={isRTL ? { marginLeft: Spacing.sm } : { marginRight: Spacing.sm }} />
                             <Text style={[styles.addressText, { color: colors.text, textAlign: rtlTextAlign(isRTL) }]}>{order.delivery_address}</Text>
                         </View>
                     </View>
@@ -504,12 +504,12 @@ export default function OrderDetailScreen() {
                         onPress={handleConfirmDelivery}
                         disabled={isConfirming}
                     >
-                        <LinearGradient colors={['#06B6D4', '#0891B2']} style={styles.confirmGradient}>
+                        <LinearGradient colors={['#06B6D4', '#0891B2']} style={[styles.confirmGradient, { flexDirection: isRTL ? 'row-reverse' : 'row' }]}>
                             {isConfirming ? (
                                 <ActivityIndicator color="#fff" />
                             ) : (
                                 <>
-                                    <Ionicons name="checkmark-circle" size={20} color="#fff" style={{ marginRight: Spacing.sm }} />
+                                    <Ionicons name="checkmark-circle" size={20} color="#fff" style={isRTL ? { marginLeft: Spacing.sm } : { marginRight: Spacing.sm }} />
                                     <Text style={styles.confirmText}>{t('order.confirmReceived')}</Text>
                                 </>
                             )}
@@ -533,8 +533,8 @@ export default function OrderDetailScreen() {
                             });
                         }}
                     >
-                        <LinearGradient colors={['#F59E0B', '#D97706']} style={styles.confirmGradient}>
-                            <Ionicons name="card" size={20} color="#fff" style={{ marginRight: Spacing.sm }} />
+                        <LinearGradient colors={['#F59E0B', '#D97706']} style={[styles.confirmGradient, { flexDirection: isRTL ? 'row-reverse' : 'row' }]}>
+                            <Ionicons name="card" size={20} color="#fff" style={isRTL ? { marginLeft: Spacing.sm } : { marginRight: Spacing.sm }} />
                             <Text style={styles.confirmText}>{t('payment.payNow')}</Text>
                         </LinearGradient>
                     </TouchableOpacity>
@@ -646,7 +646,7 @@ const styles = StyleSheet.create({
     // Track button
     trackButton: { marginHorizontal: Spacing.lg, marginBottom: Spacing.lg, borderRadius: BorderRadius.xl, overflow: 'hidden', ...Shadows.md },
     trackGradient: { flexDirection: 'row', alignItems: 'center', justifyContent: 'center', paddingVertical: Spacing.lg },
-    trackIcon: { fontSize: 24, marginRight: Spacing.sm },
+    trackIcon: { fontSize: 24, marginEnd: Spacing.sm },
     trackText: { fontSize: FontSizes.lg, fontWeight: '800', color: '#fff' },
 
     // Details - Enhanced Order Summary Card
@@ -673,23 +673,23 @@ const styles = StyleSheet.create({
     },
     detailRow: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', marginBottom: Spacing.md, paddingVertical: Spacing.sm },
     detailLabel: { fontSize: FontSizes.md, color: Colors.light.textMuted, fontWeight: '500' },
-    detailValue: { fontSize: FontSizes.md, fontWeight: '700', color: Colors.light.text, textAlign: 'right' },
+    detailValue: { fontSize: FontSizes.md, fontWeight: '700', color: Colors.light.text },
     divider: { height: 1, backgroundColor: Colors.light.borderLight, marginVertical: Spacing.md },
     totalLabel: { fontSize: FontSizes.lg, fontWeight: '700' },
     totalValue: { fontSize: FontSizes.xl, fontWeight: '800' },
     invoiceButton: { marginTop: Spacing.lg, borderRadius: BorderRadius.xl, overflow: 'hidden', ...Shadows.md },
     invoiceGradient: { flexDirection: 'row', alignItems: 'center', justifyContent: 'center', paddingVertical: Spacing.md },
-    invoiceIcon: { fontSize: 20, marginRight: Spacing.sm },
+    invoiceIcon: { fontSize: 20, marginEnd: Spacing.sm },
     invoiceText: { fontSize: FontSizes.md, fontWeight: '700', color: '#fff' },
     reorderButton: { marginTop: Spacing.md, borderRadius: BorderRadius.xl, overflow: 'hidden', ...Shadows.md },
     reorderGradient: { flexDirection: 'row', alignItems: 'center', justifyContent: 'center', paddingVertical: Spacing.md },
-    reorderIcon: { fontSize: 20, marginRight: Spacing.sm },
+    reorderIcon: { fontSize: 20, marginEnd: Spacing.sm },
     reorderText: { fontSize: FontSizes.md, fontWeight: '700', color: '#fff' },
 
     // Address
     addressCard: { marginHorizontal: Spacing.lg, marginBottom: Spacing.lg, borderRadius: BorderRadius.xl, padding: Spacing.lg, ...Shadows.sm },
     addressRow: { flexDirection: 'row', alignItems: 'flex-start' },
-    addressIcon: { fontSize: 20, marginRight: Spacing.sm },
+    addressIcon: { fontSize: 20, marginEnd: Spacing.sm },
     addressText: { fontSize: FontSizes.md, flex: 1, lineHeight: 22 },
 
     // Continue Payment
@@ -698,7 +698,7 @@ const styles = StyleSheet.create({
     // Confirm
     confirmButton: { marginHorizontal: Spacing.lg, marginBottom: Spacing.lg, borderRadius: BorderRadius.xl, overflow: 'hidden', ...Shadows.md },
     confirmGradient: { flexDirection: 'row', paddingVertical: Spacing.lg, alignItems: 'center', justifyContent: 'center' },
-    confirmIcon: { fontSize: 20, marginRight: Spacing.sm },
+    confirmIcon: { fontSize: 20, marginEnd: Spacing.sm },
     confirmText: { fontSize: FontSizes.lg, fontWeight: '800', color: '#fff' },
 
     metaInfo: { alignItems: 'center', marginTop: Spacing.md },
@@ -744,6 +744,6 @@ const styles = StyleSheet.create({
         alignItems: 'center',
         justifyContent: 'center'
     },
-    cancelOrderIcon: { fontSize: 18, color: '#EF4444', marginRight: Spacing.sm, fontWeight: '700' },
+    cancelOrderIcon: { fontSize: 18, color: '#EF4444', marginEnd: Spacing.sm, fontWeight: '700' },
     cancelOrderText: { fontSize: FontSizes.md, fontWeight: '700', color: '#EF4444' },
 });

@@ -194,14 +194,14 @@ const styles = StyleSheet.create({
     },
     headerIcon: {
         fontSize: 20,
-        marginRight: Spacing.sm,
+        marginEnd: Spacing.sm,
     },
     headerTitle: {
         fontSize: FontSizes.md,
         fontWeight: '700',
     },
     countBadge: {
-        marginLeft: Spacing.sm,
+        marginStart: Spacing.sm,
         paddingHorizontal: 8,
         paddingVertical: 2,
         borderRadius: 10,
@@ -227,7 +227,7 @@ const styles = StyleSheet.create({
         borderRadius: BorderRadius.lg,
         borderWidth: 2,
         alignItems: 'center',
-        marginRight: Spacing.sm,
+        marginEnd: Spacing.sm,
     },
     vehicleEmoji: {
         fontSize: 28,

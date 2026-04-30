@@ -160,7 +160,7 @@ export const StatusTimeline: React.FC<StatusTimelineProps> = ({
                             )}
 
                             {/* Step node */}
-                            <View style={styles.stepContent}>
+                            <View style={[styles.stepContent, { flexDirection: isRTL ? 'row-reverse' : 'row' }]}>
                                 <Animated.View
                                     style={[
                                         styles.nodeContainer,
@@ -196,7 +196,7 @@ export const StatusTimeline: React.FC<StatusTimelineProps> = ({
                                 </Animated.View>
 
                                 {/* Step label */}
-                                <View style={styles.labelContainer}>
+                                <View style={[styles.labelContainer, isRTL ? { marginRight: Spacing.md, marginLeft: 0 } : {}]}>
                                     <Text
                                         style={[
                                             styles.stepLabel,
@@ -235,14 +235,14 @@ const styles = StyleSheet.create({
         marginBottom: Spacing.lg,
     },
     timeline: {
-        paddingLeft: Spacing.xs,
+        paddingStart: Spacing.xs,
     },
     stepRow: {
         marginBottom: 0,
     },
     connectorContainer: {
         position: 'absolute',
-        left: 15,
+        start: 15,
         top: -20,
         width: 2,
         height: 20,
@@ -303,7 +303,7 @@ const styles = StyleSheet.create({
     },
     labelContainer: {
         flex: 1,
-        marginLeft: Spacing.md,
+        marginStart: Spacing.md,
     },
     stepLabel: {
         fontSize: 14,

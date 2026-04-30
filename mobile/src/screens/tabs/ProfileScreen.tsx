@@ -424,7 +424,7 @@ const styles = StyleSheet.create({
         backgroundColor: '#F5F5F5',
         justifyContent: 'center',
         alignItems: 'center',
-        marginRight: Spacing.md,
+        marginEnd: Spacing.md,
     },
     menuIconBgDanger: {
         backgroundColor: '#FEE2E2',
@@ -445,7 +445,7 @@ const styles = StyleSheet.create({
         paddingHorizontal: Spacing.sm,
         paddingVertical: 2,
         borderRadius: BorderRadius.full,
-        marginRight: Spacing.sm,
+        marginEnd: Spacing.sm,
     },
     menuBadgeText: {
         fontSize: FontSizes.xs,

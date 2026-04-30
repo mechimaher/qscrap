@@ -28,7 +28,7 @@ export const LiveETACard: React.FC<LiveETACardProps> = ({
     driverStatus,
     driverName,
 }) => {
-    const { t } = useTranslation();
+    const { t, isRTL } = useTranslation();
     const [countdown, setCountdown] = useState<number>(0);
     const [displayMinutes, setDisplayMinutes] = useState<number>(0);
     const [displaySeconds, setDisplaySeconds] = useState<number>(0);
@@ -183,7 +183,7 @@ export const LiveETACard: React.FC<LiveETACardProps> = ({
             end={{ x: 1, y: 1 }}
         >
             {/* Main ETA Display */}
-            <View style={styles.mainContent}>
+            <View style={[styles.mainContent, { flexDirection: isRTL ? 'row-reverse' : 'row' }]}>
                 <View style={styles.etaSection}>
                     <Text style={styles.statusText}>{getStatusText()}</Text>
 
@@ -208,8 +208,8 @@ export const LiveETACard: React.FC<LiveETACardProps> = ({
                     </View>
 
                     {distance && (
-                        <View style={styles.distanceRow}>
-                            <Ionicons name="location" size={12} color="rgba(255,255,255,0.8)" style={{ marginRight: 4 }} />
+                        <View style={[styles.distanceRow, { flexDirection: isRTL ? 'row-reverse' : 'row' }]}>
+                            <Ionicons name="location" size={12} color="rgba(255,255,255,0.8)" style={isRTL ? { marginLeft: 4 } : { marginRight: 4 }} />
                             <Text style={styles.distanceText}>{t('tracking.etaDistanceAway', { distance })}</Text>
                         </View>
                     )}
@@ -293,8 +293,8 @@ const styles = StyleSheet.create({
     countdownUnit: {
         fontSize: 16,
         color: 'rgba(255,255,255,0.7)',
-        marginLeft: 4,
-        marginRight: 8,
+        marginStart: 4,
+        marginEnd: 8,
     },
     countdownSeparator: {
         fontSize: 32,
@@ -318,7 +318,7 @@ const styles = StyleSheet.create({
     },
     distanceIcon: {
         fontSize: 12,
-        marginRight: 4,
+        marginEnd: 4,
     },
     distanceText: {
         fontSize: 13,

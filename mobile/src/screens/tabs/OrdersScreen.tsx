@@ -257,8 +257,8 @@ const PremiumOrderCard = ({
                         </View>
 
                         {/* Car Info Chip */}
-                        <View style={[styles.carChip, { backgroundColor: colors.background }]}>
-                            <Ionicons name="car-sport" size={16} color={colors.textSecondary} style={{ marginRight: Spacing.sm }} />
+                        <View style={[styles.carChip, { backgroundColor: colors.background, flexDirection: isRTL ? 'row-reverse' : 'row' }]}>
+                            <Ionicons name="car-sport" size={16} color={colors.textSecondary} style={isRTL ? { marginLeft: Spacing.sm } : { marginRight: Spacing.sm }} />
                             <Text style={[styles.carText, { color: colors.textSecondary, textAlign: rtlTextAlign(isRTL) }]}>
                                 {item.car_make} {item.car_model} ({item.car_year})
                             </Text>
@@ -304,11 +304,11 @@ const PremiumOrderCard = ({
                                     colors={['#22C55E', '#16A34A']}
                                     start={{ x: 0, y: 0 }}
                                     end={{ x: 1, y: 0 }}
-                                    style={styles.trackGradient}
+                                    style={[styles.trackGradient, { flexDirection: isRTL ? 'row-reverse' : 'row' }]}
                                 >
                                     <Animated.View style={[styles.liveDot, { opacity: pulseOpacity }]} />
                                     <Text style={styles.trackText}>{t('orders.trackLiveDelivery')}</Text>
-                                    <Ionicons name="chevron-forward" size={18} color="#fff" />
+                                    <Ionicons name={isRTL ? "chevron-back" : "chevron-forward"} size={18} color="#fff" />
                                 </LinearGradient>
                             </TouchableOpacity>
                         )}
@@ -534,7 +534,7 @@ const styles = StyleSheet.create({
         height: 8,
         borderRadius: 4,
         backgroundColor: '#22C55E',
-        marginRight: Spacing.xs,
+        marginEnd: Spacing.xs,
     },
     activeBadgeText: {
         fontSize: FontSizes.xs,
@@ -590,7 +590,7 @@ const styles = StyleSheet.create({
         flexDirection: 'row',
         alignItems: 'center',
         flex: 1,
-        marginRight: Spacing.md,
+        marginEnd: Spacing.md,
     },
     orderIconBg: {
         width: 44,
@@ -598,7 +598,7 @@ const styles = StyleSheet.create({
         borderRadius: 22,
         justifyContent: 'center',
         alignItems: 'center',
-        marginRight: Spacing.md,
+        marginEnd: Spacing.md,
         flexShrink: 0,
     },
     orderIcon: { fontSize: 22 },
@@ -619,7 +619,7 @@ const styles = StyleSheet.create({
         borderRadius: BorderRadius.md,
         marginBottom: Spacing.md,
     },
-    carEmoji: { fontSize: 16, marginRight: Spacing.sm },
+    carEmoji: { fontSize: 16, marginEnd: Spacing.sm },
     carText: { fontSize: FontSizes.sm },
     divider: { height: 1, marginBottom: Spacing.md },
     cardFooter: {
@@ -657,7 +657,7 @@ const styles = StyleSheet.create({
         height: 8,
         borderRadius: 4,
         backgroundColor: '#fff',
-        marginRight: Spacing.sm,
+        marginEnd: Spacing.sm,
     },
     trackText: { flex: 1, color: '#fff', fontWeight: '700', fontSize: FontSizes.sm },
     trackArrow: { color: '#fff', fontSize: FontSizes.lg },

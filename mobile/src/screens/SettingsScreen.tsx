@@ -243,8 +243,8 @@ export default function SettingsScreen() {
                 <Text style={[styles.settingTitle, { color: colors.text, textAlign: rtlTextAlign(isRTL) }]}>{title}</Text>
             </View>
             <View style={[styles.actionValue, { flexDirection: rtlFlexDirection(isRTL) }]}>
-                {value && <Text style={[styles.valueText, isRTL ? { marginLeft: Spacing.sm, marginRight: 0 } : {}]}>{value}</Text>}
-                <Text style={styles.chevron}>{rtlChevron(isRTL)}</Text>
+                {value && <Text style={[styles.valueText, { color: colors.textMuted }, isRTL ? { marginLeft: Spacing.sm, marginRight: 0 } : {}]}>{value}</Text>}
+                <Text style={[styles.chevron, { color: colors.textMuted }]}>{rtlChevron(isRTL)}</Text>
             </View>
         </TouchableOpacity>
     );
@@ -253,8 +253,8 @@ export default function SettingsScreen() {
         <SafeAreaView style={[styles.container, { backgroundColor: colors.background }]} edges={['top']}>
             {/* Header */}
             <View style={[styles.header, { backgroundColor: colors.surface, borderBottomColor: colors.border, flexDirection: rtlFlexDirection(isRTL) }]}>
-                <TouchableOpacity onPress={() => navigation.goBack()} style={styles.backButton} accessibilityRole="button" accessibilityLabel={t('common.back')}>
-                    <Ionicons name="arrow-back" size={20} color={Colors.primary} /> <Text style={styles.backText}>{t('common.back')}</Text>
+                <TouchableOpacity onPress={() => navigation.goBack()} style={[styles.backButton, { backgroundColor: colors.surfaceSecondary }]} accessibilityRole="button" accessibilityLabel={t('common.back')}>
+                    <Ionicons name={isRTL ? "arrow-forward" : "arrow-back"} size={20} color={Colors.primary} /> <Text style={styles.backText}>{t('common.back')}</Text>
                 </TouchableOpacity>
                 <Text style={[styles.headerTitle, { color: colors.text }]}>{t('settings.title')}</Text>
                 <View style={{ width: 60 }} />
@@ -401,7 +401,7 @@ const styles = StyleSheet.create({
         fontSize: FontSizes.sm,
         fontWeight: '700',
         marginBottom: Spacing.md,
-        marginLeft: Spacing.sm,
+        marginStart: Spacing.sm,
         textTransform: 'uppercase',
         letterSpacing: 0.5,
     },
@@ -411,7 +411,7 @@ const styles = StyleSheet.create({
         padding: Spacing.md,
         borderRadius: BorderRadius.lg,
     },
-    settingIcon: { fontSize: 22, marginRight: Spacing.md },
+    settingIcon: { fontSize: 22, marginEnd: Spacing.md },
     settingInfo: { flex: 1 },
     settingTitle: { fontSize: FontSizes.md, fontWeight: '600' },
     settingSubtitle: {
@@ -422,7 +422,7 @@ const styles = StyleSheet.create({
     valueText: {
         fontSize: FontSizes.md,
         color: '#737373',
-        marginRight: Spacing.sm,
+        marginEnd: Spacing.sm,
     },
     chevron: { fontSize: 24, color: '#737373' },
 });

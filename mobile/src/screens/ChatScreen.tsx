@@ -194,14 +194,14 @@ export default function ChatScreen() {
         return (
             <View style={[
                 styles.messageBubble,
-                isMe ? styles.myMessage : styles.theirMessage,
+                isMe ? styles.myMessage : [styles.theirMessage, { backgroundColor: colors.surface }],
                 isMe ? (isRTL ? { alignSelf: 'flex-start' } : { alignSelf: 'flex-end' }) :
                     (isRTL ? { alignSelf: 'flex-end' } : { alignSelf: 'flex-start' })
             ]}>
                 {!isMe && (
                     <Text style={[styles.senderName, { textAlign: rtlTextAlign(isRTL) }]}>{item.sender_name}</Text>
                 )}
-                <Text style={[styles.messageText, isMe && styles.myMessageText, { textAlign: rtlTextAlign(isRTL) }]}>
+                <Text style={[styles.messageText, isMe ? styles.myMessageText : { color: colors.text }, { textAlign: rtlTextAlign(isRTL) }]}>
                     {item.message.split(/(https?:\/\/[^\s]+)/g).map((part, index) => {
                         if (part.match(/https?:\/\/[^\s]+/)) {
                             return (
@@ -220,7 +220,7 @@ export default function ChatScreen() {
                         return <Text key={index}>{part}</Text>;
                     })}
                 </Text>
-                <Text style={[styles.messageTime, isMe && styles.myMessageTime, { textAlign: rtlTextAlign(isRTL) }]}>
+                <Text style={[styles.messageTime, isMe ? styles.myMessageTime : { color: colors.textMuted }, { textAlign: rtlTextAlign(isRTL) }]}>
                     {formatTime(item.created_at)}
                     {isMe && item.is_read && ' ✓✓'}
                 </Text>
@@ -236,8 +236,8 @@ export default function ChatScreen() {
         <SafeAreaView style={[styles.container, { backgroundColor: colors.background }]} edges={['top']}>
             {/* Header */}
             <View style={[styles.header, { backgroundColor: colors.surface, borderBottomColor: colors.border, flexDirection: rtlFlexDirection(isRTL) }]}>
-                <TouchableOpacity onPress={() => navigation.goBack()} style={styles.backButton} accessibilityRole="button" accessibilityLabel={t('common.back')}>
-                    <Ionicons name="arrow-back" size={20} color={Colors.primary} />
+                <TouchableOpacity onPress={() => navigation.goBack()} style={[styles.backButton, { backgroundColor: colors.surfaceSecondary }]} accessibilityRole="button" accessibilityLabel={t('common.back')}>
+                    <Ionicons name={isRTL ? "arrow-forward" : "arrow-back"} size={20} color={Colors.primary} />
                 </TouchableOpacity>
                 <View style={[styles.headerInfo, isRTL && { marginLeft: 0, marginRight: Spacing.md }]}>
                     <Text style={[styles.headerTitle, { color: colors.text, textAlign: rtlTextAlign(isRTL) }]}>{recipientName}</Text>
@@ -288,11 +288,11 @@ export default function ChatScreen() {
                 />
 
                 {/* Input Area */}
-                <View style={[styles.inputContainer, { flexDirection: rtlFlexDirection(isRTL) }]}>
+                <View style={[styles.inputContainer, { backgroundColor: colors.surface, borderTopColor: colors.border, flexDirection: rtlFlexDirection(isRTL) }]}>
                     <TextInput
-                        style={[styles.textInput, { textAlign: rtlTextAlign(isRTL) }, isRTL && { marginRight: 0, marginLeft: Spacing.sm }]}
+                        style={[styles.textInput, { backgroundColor: colors.inputBackground, color: colors.inputText, borderColor: colors.inputBorder, textAlign: rtlTextAlign(isRTL) }, isRTL && { marginRight: 0, marginLeft: Spacing.sm }]}
                         placeholder={t('chat.typeMessage')}
-                        placeholderTextColor="#999"
+                        placeholderTextColor={colors.placeholder}
                         value={newMessage}
                         onChangeText={setNewMessage}
                         multiline
@@ -354,7 +354,7 @@ const styles = StyleSheet.create({
     },
     headerInfo: {
         flex: 1,
-        marginLeft: Spacing.md,
+        marginStart: Spacing.md,
     },
     headerTitle: {
         fontSize: FontSizes.lg,
@@ -486,7 +486,7 @@ const styles = StyleSheet.create({
         fontSize: FontSizes.md,
         color: '#1a1a1a',
         maxHeight: 100,
-        marginRight: Spacing.sm,
+        marginEnd: Spacing.sm,
         borderWidth: 1,
         borderColor: '#E8E8E8',
     },

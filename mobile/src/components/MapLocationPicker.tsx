@@ -21,6 +21,7 @@ import { Colors, Spacing, BorderRadius, FontSizes } from '../constants/theme';
 import { Ionicons } from '@expo/vector-icons';
 import { useTheme } from '../contexts/ThemeContext';
 import { useTranslation } from '../contexts/LanguageContext';
+import { rtlFlexDirection, rtlTextAlign } from '../utils/rtl';
 import { KEYS } from '../config/keys';
 
 interface MapLocationPickerProps {
@@ -67,7 +68,7 @@ export const MapLocationPicker: React.FC<MapLocationPickerProps> = ({
     initialLocation,
 }) => {
     const { colors } = useTheme();
-    const { t, language } = useTranslation();
+    const { t, language, isRTL } = useTranslation();
     const mapRef = useRef<MapView>(null);
     const searchInputRef = useRef<TextInput>(null);
     const slideAnim = useRef(new Animated.Value(0)).current;
@@ -262,16 +263,16 @@ export const MapLocationPicker: React.FC<MapLocationPickerProps> = ({
 
     const renderPrediction = ({ item }: { item: PlacePrediction }) => (
         <TouchableOpacity
-            style={[styles.predictionItem, { backgroundColor: colors.surface, borderColor: colors.border }]}
+            style={[styles.predictionItem, { backgroundColor: colors.surface, borderColor: colors.border, flexDirection: isRTL ? 'row-reverse' : 'row' }]}
             onPress={() => getPlaceDetails(item.place_id)}
             activeOpacity={0.7}
         >
             <Ionicons name="location" size={18} color={Colors.primary} />
             <View style={{ flex: 1 }}>
-                <Text style={[styles.predictionMain, { color: colors.text }]} numberOfLines={1}>
+                <Text style={[styles.predictionMain, { color: colors.text, textAlign: rtlTextAlign(isRTL) }]} numberOfLines={1}>
                     {item.structured_formatting.main_text}
                 </Text>
-                <Text style={[styles.predictionSecondary, { color: colors.textSecondary }]} numberOfLines={1}>
+                <Text style={[styles.predictionSecondary, { color: colors.textSecondary, textAlign: rtlTextAlign(isRTL) }]} numberOfLines={1}>
                     {item.structured_formatting.secondary_text}
                 </Text>
             </View>
@@ -320,11 +321,11 @@ export const MapLocationPicker: React.FC<MapLocationPickerProps> = ({
 
             {/* Search Bar - Google Places Autocomplete */}
             <View style={[styles.searchContainer, { backgroundColor: colors.background }]}>
-                <View style={[styles.searchInputWrapper, { backgroundColor: colors.surface, borderColor: colors.border }]}>
+                <View style={[styles.searchInputWrapper, { backgroundColor: colors.surface, borderColor: colors.border, flexDirection: isRTL ? 'row-reverse' : 'row' }]}>
                     <Ionicons name="search" size={18} color="#9CA3AF" />
                     <TextInput
                         ref={searchInputRef}
-                        style={[styles.searchInput, { color: colors.text }]}
+                        style={[styles.searchInput, { color: colors.text, textAlign: rtlTextAlign(isRTL) }]}
                         placeholder={t('home.mapPicker.searchPlaceholder')}
                         placeholderTextColor={colors.textMuted}
                         value={searchQuery}
@@ -374,16 +375,16 @@ export const MapLocationPicker: React.FC<MapLocationPickerProps> = ({
 
             {/* Address Preview Card */}
             <View style={[styles.addressCard, { backgroundColor: colors.background }]}>
-                <View style={styles.addressHeader}>
+                <View style={[styles.addressHeader, { flexDirection: isRTL ? 'row-reverse' : 'row' }]}>
                     <Ionicons name="location" size={24} color={Colors.primary} />
                     <View style={{ flex: 1 }}>
-                        <Text style={[styles.addressLabel, { color: colors.textSecondary }]}>
+                        <Text style={[styles.addressLabel, { color: colors.textSecondary, textAlign: rtlTextAlign(isRTL) }]}>
                             {t('home.mapPicker.selectedLocation')}
                         </Text>
                         {isLoading ? (
                             <ActivityIndicator size="small" color={Colors.primary} />
                         ) : (
-                            <Text style={[styles.addressText, { color: colors.text }]} numberOfLines={2}>
+                            <Text style={[styles.addressText, { color: colors.text, textAlign: rtlTextAlign(isRTL) }]} numberOfLines={2}>
                                 {address}
                             </Text>
                         )}
@@ -423,7 +424,7 @@ export const MapLocationPicker: React.FC<MapLocationPickerProps> = ({
             </TouchableOpacity>
 
             {/* Action Buttons */}
-            <View style={[styles.actionsContainer, { backgroundColor: colors.background }]}>
+            <View style={[styles.actionsContainer, { backgroundColor: colors.background, flexDirection: isRTL ? 'row-reverse' : 'row' }]}>
                 <TouchableOpacity
                     style={[styles.cancelBtn, { borderColor: colors.border }]}
                     onPress={onCancel}

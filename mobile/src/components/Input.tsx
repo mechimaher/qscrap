@@ -94,7 +94,7 @@ export const Input: React.FC<InputProps> = ({
 
     const labelStyle = {
         position: 'absolute' as const,
-        left: icon ? 48 : Spacing.lg,
+        start: icon ? 48 : Spacing.lg,
         top: labelAnim.interpolate({
             inputRange: [0, 1],
             outputRange: [16, -8],
@@ -163,8 +163,9 @@ export const Input: React.FC<InputProps> = ({
                         styles.input,
                         {
                             color: colors.text,
-                            paddingLeft: icon ? 48 : Spacing.lg,
-                            paddingRight: (rightIcon || isPassword) ? 48 : Spacing.lg,
+                            paddingStart: icon ? 48 : Spacing.lg,
+                            paddingEnd: (rightIcon || isPassword) ? 48 : Spacing.lg,
+                            textAlign: undefined, // Let RN handle RTL text alignment natively
                         },
                     ]}
                     placeholderTextColor={colors.textMuted}
@@ -237,7 +238,7 @@ const styles = StyleSheet.create({
     },
     leftIcon: {
         position: 'absolute',
-        left: Spacing.lg,
+        start: Spacing.lg,
         zIndex: 1,
     },
     input: {
@@ -247,7 +248,7 @@ const styles = StyleSheet.create({
     },
     rightIconContainer: {
         position: 'absolute',
-        right: Spacing.lg,
+        end: Spacing.lg,
         flexDirection: 'row',
         alignItems: 'center',
     },
@@ -268,7 +269,7 @@ const styles = StyleSheet.create({
     },
     characterCount: {
         fontSize: FontSize.xs,
-        marginLeft: Spacing.sm,
+        marginStart: Spacing.sm,
     },
 });
 

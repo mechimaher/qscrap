@@ -117,7 +117,7 @@ const HeroRequestCard = ({
 
     return (
         <LinearGradient
-            colors={isActive ? ['#1a1a2e', '#16213e', '#0f0f23'] : ['#f8f9fa', '#e9ecef', '#dee2e6']}
+            colors={isActive ? ['#1a1a2e', '#16213e', '#0f0f23'] : [colors.surface, colors.surfaceSecondary || colors.surface, colors.background]}
             style={styles.heroCard}
         >
             {/* Status Badge */}
@@ -127,7 +127,7 @@ const HeroRequestCard = ({
                     { backgroundColor: statusConfig.bg },
                     isActive && { opacity: pulseOpacity }
                 ]}>
-                    <Ionicons name={statusConfig.icon} size={12} color={statusConfig.color} style={{ marginRight: Spacing.xs }} />
+                    <Ionicons name={statusConfig.icon} size={12} color={statusConfig.color} style={isRTL ? { marginLeft: Spacing.xs } : { marginRight: Spacing.xs }} />
                     <Text style={[styles.heroStatusText, { color: statusConfig.color }]}>
                         {statusConfig.label}
                     </Text>
@@ -154,7 +154,7 @@ const HeroRequestCard = ({
             <View style={[styles.heroCarInfo, { flexDirection: rtlFlexDirection(isRTL) }]}>
                 <Ionicons name="car-sport" size={48} color={isActive ? '#C9A227' : Colors.primary} style={isRTL ? { marginLeft: Spacing.md, marginRight: 0 } : { marginRight: Spacing.md, marginLeft: 0 }} />
                 <View style={styles.heroCarDetails}>
-                    <Text style={[styles.heroCarName, !isActive && { color: '#1a1a1a' }, { textAlign: rtlTextAlign(isRTL) }]}>
+                    <Text style={[styles.heroCarName, !isActive && { color: colors.text }, { textAlign: rtlTextAlign(isRTL) }]}>
                         {request.car_make} {request.car_model}
                     </Text>
                     <Text style={[styles.heroCarYear, !isActive && { color: Colors.primary }, { textAlign: rtlTextAlign(isRTL) }]}>
@@ -164,26 +164,26 @@ const HeroRequestCard = ({
             </View>
 
             {/* Divider */}
-            <View style={[styles.heroDivider, !isActive && { backgroundColor: '#dee2e6' }]} />
+            <View style={[styles.heroDivider, !isActive && { backgroundColor: colors.border }]} />
 
             {/* Part Category & Description */}
             <View style={styles.heroSection}>
-                <Text style={[styles.heroLabel, !isActive && { color: '#525252' }, { textAlign: rtlTextAlign(isRTL) }]}>
+                <Text style={[styles.heroLabel, !isActive && { color: colors.textSecondary }, { textAlign: rtlTextAlign(isRTL) }]}>
                     {t('requestDetail.partNeeded')}
                 </Text>
                 {request.part_category ? (
                     <>
-                        <Text style={[styles.heroPartDescription, !isActive && { color: '#1a1a1a' }, { textAlign: rtlTextAlign(isRTL) }]}>
+                        <Text style={[styles.heroPartDescription, !isActive && { color: colors.text }, { textAlign: rtlTextAlign(isRTL) }]}>
                             {request.part_category}{(request as any).part_subcategory ? ` > ${(request as any).part_subcategory}` : ''}
                         </Text>
                         {request.part_description && request.part_description !== request.part_category && (
-                            <Text style={[styles.heroPartNotes, !isActive && { color: '#525252' }, { textAlign: rtlTextAlign(isRTL) }]}>
+                            <Text style={[styles.heroPartNotes, !isActive && { color: colors.textSecondary }, { textAlign: rtlTextAlign(isRTL) }]}>
                                 {request.part_description}
                             </Text>
                         )}
                     </>
                 ) : (
-                    <Text style={[styles.heroPartDescription, !isActive && { color: '#1a1a1a' }, { textAlign: rtlTextAlign(isRTL) }]}>
+                    <Text style={[styles.heroPartDescription, !isActive && { color: colors.text }, { textAlign: rtlTextAlign(isRTL) }]}>
                         {request.part_description}
                     </Text>
                 )}
@@ -194,16 +194,16 @@ const HeroRequestCard = ({
                 <View style={[styles.heroMetaRow, { flexDirection: rtlFlexDirection(isRTL) }]}>
                     {request.part_number && (
                         <View style={styles.heroMetaItem}>
-                            <Text style={[styles.heroMetaLabel, !isActive && { color: '#737373' }, { textAlign: rtlTextAlign(isRTL) }]}>{t('requestDetail.partNumber')}</Text>
-                            <Text style={[styles.heroMetaValue, !isActive && { color: '#1a1a1a' }, { textAlign: rtlTextAlign(isRTL) }]}>
+                            <Text style={[styles.heroMetaLabel, !isActive && { color: colors.textMuted || colors.textSecondary }, { textAlign: rtlTextAlign(isRTL) }]}>{t('requestDetail.partNumber')}</Text>
+                            <Text style={[styles.heroMetaValue, !isActive && { color: colors.text }, { textAlign: rtlTextAlign(isRTL) }]}>
                                 {request.part_number}
                             </Text>
                         </View>
                     )}
                     {request.vin_number && (
                         <View style={styles.heroMetaItem}>
-                            <Text style={[styles.heroMetaLabel, !isActive && { color: '#737373' }, { textAlign: rtlTextAlign(isRTL) }]}>{t('common.vin')}</Text>
-                            <Text style={[styles.heroMetaValue, !isActive && { color: '#1a1a1a' }, { textAlign: rtlTextAlign(isRTL) }]}>
+                            <Text style={[styles.heroMetaLabel, !isActive && { color: colors.textMuted || colors.textSecondary }, { textAlign: rtlTextAlign(isRTL) }]}>{t('common.vin')}</Text>
+                            <Text style={[styles.heroMetaValue, !isActive && { color: colors.text }, { textAlign: rtlTextAlign(isRTL) }]}>
                                 {request.vin_number}
                             </Text>
                         </View>
@@ -237,12 +237,12 @@ const HeroRequestCard = ({
             {/* Vehicle ID Photos */}
             {((request as any).car_front_image_url || (request as any).car_rear_image_url) && (
                 <>
-                    <Text style={[styles.heroLabel, !isActive && { color: '#525252' }, { textAlign: rtlTextAlign(isRTL) }]}>
+                    <Text style={[styles.heroLabel, !isActive && { color: colors.textSecondary }, { textAlign: rtlTextAlign(isRTL) }]}>
                         {t('newRequest.vehicleIdPhotos')}
                     </Text>
                     <ScrollView horizontal showsHorizontalScrollIndicator={false} style={styles.heroImages}>
                         {(request as any).car_front_image_url && (
-                            <View style={{ marginRight: 12 }}>
+                            <View style={{ marginEnd: 12 }}>
                                 <TouchableOpacity
                                     onPress={() => {
                                         const url = (request as any).car_front_image_url;
@@ -312,7 +312,7 @@ const styles = StyleSheet.create({
         paddingVertical: Spacing.xs,
         borderRadius: BorderRadius.full,
     },
-    heroStatusIcon: { fontSize: 12, marginRight: Spacing.xs },
+    heroStatusIcon: { fontSize: 12, marginEnd: Spacing.xs },
     heroStatusText: { fontSize: FontSizes.sm, fontWeight: '700' },
     countdownBadge: {
         flexDirection: 'row',
@@ -321,10 +321,10 @@ const styles = StyleSheet.create({
         paddingVertical: Spacing.xs,
         borderRadius: BorderRadius.full,
     },
-    countdownIcon: { fontSize: 12, marginRight: 4 },
+    countdownIcon: { fontSize: 12, marginEnd: 4 },
     countdownText: { fontSize: FontSizes.sm, fontWeight: '700' },
     heroCarInfo: { flexDirection: 'row', alignItems: 'center' },
-    heroCarEmoji: { fontSize: 48, marginRight: Spacing.md },
+    heroCarEmoji: { fontSize: 48, marginEnd: Spacing.md },
     heroCarDetails: { flex: 1 },
     heroCarName: { fontSize: FontSizes.xxl, fontWeight: '800', color: '#fff' },
     heroCarYear: { fontSize: FontSizes.lg, color: '#C9A227', fontWeight: '600' },
@@ -344,7 +344,7 @@ const styles = StyleSheet.create({
     heroMetaLabel: { fontSize: FontSizes.xs, color: 'rgba(255,255,255,0.5)', marginBottom: 2 },
     heroMetaValue: { fontSize: FontSizes.md, color: '#fff', fontFamily: 'monospace' },
     heroImages: { marginTop: Spacing.lg },
-    heroImage: { width: 80, height: 80, borderRadius: BorderRadius.md, marginRight: Spacing.sm },
+    heroImage: { width: 80, height: 80, borderRadius: BorderRadius.md, marginEnd: Spacing.sm },
     vehiclePhotoLabel: {
         position: 'absolute',
         bottom: 0,

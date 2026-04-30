@@ -33,7 +33,7 @@ export const BidComparisonModal: React.FC<BidComparisonModalProps> = ({
     onAccept,
     onClose,
 }) => {
-    const { t } = useTranslation();
+    const { t, isRTL } = useTranslation();
     const [sortBy, setSortBy] = useState<SortKey>('price');
 
     const handleSort = (key: SortKey) => {
@@ -152,8 +152,8 @@ export const BidComparisonModal: React.FC<BidComparisonModalProps> = ({
                                     {/* Rating */}
                                     <View style={styles.bidColumn}>
                                         <Text style={styles.columnLabel}>{t('bidComparison.rating')}</Text>
-                                        <View style={styles.ratingRow}>
-                                            <Ionicons name="star" size={14} color="#F59E0B" style={{ marginRight: 4 }} />
+                                        <View style={[styles.ratingRow, { flexDirection: isRTL ? 'row-reverse' : 'row' }]}>
+                                            <Ionicons name="star" size={14} color="#F59E0B" style={isRTL ? { marginLeft: 4 } : { marginRight: 4 }} />
                                             <Text style={[
                                                 styles.ratingText,
                                                 isBestRating && styles.ratingTextBest
@@ -317,7 +317,7 @@ const styles = StyleSheet.create({
     },
     ratingStar: {
         fontSize: FontSizes.sm,
-        marginRight: 4,
+        marginEnd: 4,
     },
     ratingText: {
         fontSize: FontSizes.md,

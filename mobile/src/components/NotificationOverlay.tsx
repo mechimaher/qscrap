@@ -33,7 +33,7 @@ interface BidNotification {
 export default function NotificationOverlay() {
     const navigation = useNavigation<NativeStackNavigationProp<RootStackParamList>>();
     const { newBids, dismissBid, clearBidsForRequest } = useSocketContext();
-    const { t } = useTranslation();
+    const { t, isRTL } = useTranslation();
     const [currentBid, setCurrentBid] = useState<BidNotification | null>(null);
     const [shownBidIds, setShownBidIds] = useState<Set<string>>(new Set());
 
@@ -177,12 +177,12 @@ export default function NotificationOverlay() {
             <Animated.View style={[styles.glowBorder, { opacity: glowOpacity }]} />
 
             <TouchableOpacity
-                style={styles.notification}
+                style={[styles.notification, { flexDirection: isRTL ? 'row-reverse' : 'row' }]}
                 onPress={handlePress}
                 activeOpacity={0.9}
             >
                 {/* Animated Icon */}
-                <View style={styles.iconContainer}>
+                <View style={[styles.iconContainer, isRTL ? { marginLeft: Spacing.md, marginRight: 0 } : { marginRight: Spacing.md }]}>
                     <Ionicons name="cash-outline" size={30} color={Colors.primary} />
                 </View>
 
@@ -190,10 +190,10 @@ export default function NotificationOverlay() {
                 <View style={styles.content}>
                     <Text style={styles.title}>{t('notifications.newBidReceived')}</Text>
                     <Text style={styles.garageName}>{currentBid.garage_name}</Text>
-                    <View style={styles.priceRow}>
+                    <View style={[styles.priceRow, { flexDirection: isRTL ? 'row-reverse' : 'row' }]}>
                         <Text style={styles.price}>{currentBid.bid_amount} {t('common.currency')}</Text>
                         {currentBid.warranty_days > 0 && (
-                            <Text style={styles.warranty}>
+                            <Text style={[styles.warranty, isRTL ? { marginRight: Spacing.sm } : { marginLeft: Spacing.sm }]}>
                                 • {t('notifications.warrantyDays', { days: currentBid.warranty_days })}
                             </Text>
                         )}
@@ -253,7 +253,7 @@ const styles = StyleSheet.create({
         backgroundColor: Colors.primary + '30',
         justifyContent: 'center',
         alignItems: 'center',
-        marginRight: Spacing.md,
+        marginEnd: Spacing.md,
     },
     icon: {
         fontSize: 30,
@@ -270,7 +270,7 @@ const styles = StyleSheet.create({
     garageName: {
         fontSize: FontSizes.lg,
         fontWeight: '700',
-        color: '#1a1a1a',
+        color: '#FFFFFF',
     },
     priceRow: {
         flexDirection: 'row',
@@ -284,8 +284,8 @@ const styles = StyleSheet.create({
     },
     warranty: {
         fontSize: FontSizes.sm,
-        color: '#525252',
-        marginLeft: Spacing.sm,
+        color: '#A1A1AA',
+        marginStart: Spacing.sm,
     },
     dismissButton: {
         width: 32,
@@ -296,7 +296,7 @@ const styles = StyleSheet.create({
         alignItems: 'center',
     },
     dismissText: {
-        color: '#737373',
+        color: '#A1A1AA',
         fontSize: 16,
         fontWeight: '700',
     },

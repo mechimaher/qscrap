@@ -629,7 +629,7 @@ const styles = StyleSheet.create({
         backgroundColor: '#E3F2FD',
         alignItems: 'center',
         justifyContent: 'center',
-        marginRight: Spacing.md,
+        marginEnd: Spacing.md,
     },
     iconBgPrimary: {
         backgroundColor: Colors.secondary + '30',

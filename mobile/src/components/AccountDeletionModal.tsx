@@ -161,7 +161,7 @@ export default function AccountDeletionModal({ visible, onClose, onNavigate }: P
                         }]}
                     >
                         <View style={[styles.blockerInfo, { flexDirection: rtlFlexDirection(isRTL) }]}>
-                            <Ionicons name={getBlockerIcon(blocker.type) as any} size={24} color={Colors.primary} style={{ marginRight: Spacing.sm }} />
+                            <Ionicons name={getBlockerIcon(blocker.type) as any} size={24} color={Colors.primary} style={isRTL ? { marginLeft: Spacing.sm } : { marginRight: Spacing.sm }} />
                             <View style={styles.blockerTextContainer}>
                                 <Text style={[styles.blockerMessage, { color: colors.text, textAlign: rtlTextAlign(isRTL) }]}>
                                     {t(`deletion.${blocker.type}`, { count: blocker.count }) || blocker.message}
@@ -339,7 +339,7 @@ const styles = StyleSheet.create({
     },
     blockerIcon: {
         fontSize: 24,
-        marginRight: Spacing.sm,
+        marginEnd: Spacing.sm,
     },
     blockerTextContainer: {
         flex: 1,
@@ -353,7 +353,7 @@ const styles = StyleSheet.create({
         paddingHorizontal: Spacing.md,
         paddingVertical: Spacing.xs,
         borderRadius: BorderRadius.md,
-        marginLeft: Spacing.sm,
+        marginStart: Spacing.sm,
     },
     actionButtonText: {
         color: Colors.primary,

@@ -152,13 +152,13 @@ const styles = StyleSheet.create({
     title: {
         fontSize: FontSize.xxl,
         fontWeight: '700',
-        color: '#1a1a1a',
+        color: '#FFFFFF',
         textAlign: 'center',
         marginBottom: Spacing.md,
     },
     message: {
         fontSize: FontSize.md,
-        color: '#525252',
+        color: '#A1A1AA',
         textAlign: 'center',
         lineHeight: 22,
         marginBottom: Spacing.xl,
@@ -178,7 +178,7 @@ const styles = StyleSheet.create({
     },
     stackTrace: {
         fontSize: FontSize.xs,
-        color: '#737373',
+        color: '#A1A1AA',
         fontFamily: 'monospace',
         marginTop: Spacing.sm,
     },
@@ -200,7 +200,7 @@ const styles = StyleSheet.create({
     },
     helpText: {
         fontSize: FontSize.sm,
-        color: '#737373',
+        color: '#A1A1AA',
         textAlign: 'center',
     },
 });

@@ -262,9 +262,9 @@ const ActiveRequestCard = ({
 
                         <View style={styles.cardContent}>
                             {/* Header with Status */}
-                            <View style={styles.cardHeader}>
-                                <View style={styles.carInfo}>
-                                    <Ionicons name="car-sport" size={28} color="#6B7280" style={{ marginRight: Spacing.md }} />
+                            <View style={[styles.cardHeader, { flexDirection: isRTL ? 'row-reverse' : 'row' }]}>
+                                <View style={[styles.carInfo, { flexDirection: isRTL ? 'row-reverse' : 'row' }]}>
+                                    <Ionicons name="car-sport" size={28} color="#6B7280" style={isRTL ? { marginLeft: Spacing.md } : { marginRight: Spacing.md }} />
                                     <View style={{ flex: 1 }}>
                                         <Text style={[styles.carName, { color: colors.text, textAlign: rtlTextAlign(isRTL) }]} numberOfLines={1}>
                                             {item.car_make || 'Unknown'} {item.car_model || ''}
@@ -316,7 +316,7 @@ const ActiveRequestCard = ({
 
                             {/* Bid Preview - Show best price when 2+ bids */}
                             {item.bid_count >= 2 && item.lowest_bid_price && (
-                                <View style={styles.bidPreviewContainer}>
+                                <View style={[styles.bidPreviewContainer, { flexDirection: isRTL ? 'row-reverse' : 'row' }]}>
                                     <Text style={[styles.bidPreviewLabel, { textAlign: rtlTextAlign(isRTL) }]}>{t('common.bestPrice')}:</Text>
                                     <Text style={styles.bidPreviewPrice}>{item.lowest_bid_price} {t('common.currency')}</Text>
                                 </View>
@@ -324,14 +324,14 @@ const ActiveRequestCard = ({
 
                             {/* Active Card: Time Remaining & New Bids */}
                             {isActive && (
-                                <View style={styles.activeIndicators}>
+                                <View style={[styles.activeIndicators, { flexDirection: isRTL ? 'row-reverse' : 'row' }]}>
                                     {/* Countdown Timer */}
                                     {timeRemaining && (
                                         <View style={[
                                             styles.timerBadge,
                                             { backgroundColor: getUrgencyColor(timeRemaining.urgency) + '15' }
                                         ]}>
-                                            <Ionicons name="time-outline" size={12} color={getUrgencyColor(timeRemaining.urgency)} style={{ marginRight: 4 }} />
+                                            <Ionicons name="time-outline" size={12} color={getUrgencyColor(timeRemaining.urgency)} style={isRTL ? { marginLeft: 4 } : { marginRight: 4 }} />
                                             <Text style={[
                                                 styles.timerText,
                                                 { color: getUrgencyColor(timeRemaining.urgency) }
@@ -344,7 +344,7 @@ const ActiveRequestCard = ({
                                     {/* New Bids Badge */}
                                     {hasNewBids && (
                                         <View style={styles.newBidsBadge}>
-                                            <Ionicons name="flame" size={12} color="#D97706" style={{ marginRight: 4 }} />
+                                            <Ionicons name="flame" size={12} color="#D97706" style={isRTL ? { marginLeft: 4 } : { marginRight: 4 }} />
                                             <Text style={styles.newBidsText}>
                                                 {t('requests.bidsCount', { count: item.bid_count })}
                                             </Text>
@@ -356,7 +356,7 @@ const ActiveRequestCard = ({
                             <View style={[styles.cardDivider, { backgroundColor: colors.border }]} />
 
                             {/* Footer with Best Bid & Date */}
-                            <View style={styles.cardFooter}>
+                            <View style={[styles.cardFooter, { flexDirection: isRTL ? 'row-reverse' : 'row' }]}>
                                 <View style={styles.bidInfo}>
                                     {item.lowest_bid_price ? (
                                         <View style={styles.bestBid}>
@@ -386,7 +386,7 @@ const ActiveRequestCard = ({
 
                             {/* Persistent Swipe Hint for deletable cards */}
                             {item.status !== 'accepted' && (
-                                <View style={styles.swipeHintContainer}>
+                                <View style={[styles.swipeHintContainer, { flexDirection: isRTL ? 'row-reverse' : 'row' }]}>
                                     <Animated.Text style={[
                                         styles.swipeArrow,
                                         {
@@ -398,7 +398,7 @@ const ActiveRequestCard = ({
                                             }],
                                         }
                                     ]}>
-                                        <Ionicons name="arrow-back" size={16} color="#EF4444" />
+                                        <Ionicons name={isRTL ? "arrow-forward" : "arrow-back"} size={16} color="#EF4444" />
                                     </Animated.Text>
                                     <Text style={styles.swipeHintText}>{t('requests.swipeToCancel')}</Text>
                                 </View>
@@ -664,12 +664,12 @@ const styles = StyleSheet.create({
         flexDirection: 'row',
         alignItems: 'center',
         flex: 1,
-        marginRight: Spacing.md, // Space for badges
-        paddingRight: Spacing.sm,
+        marginEnd: Spacing.md, // Space for badges
+        paddingEnd: Spacing.sm,
     },
     carEmoji: {
         fontSize: 32,
-        marginRight: Spacing.md,
+        marginEnd: Spacing.md,
         flexShrink: 0, // Prevent emoji from shrinking
     },
     carName: {
@@ -764,7 +764,7 @@ const styles = StyleSheet.create({
     },
     timerIcon: {
         fontSize: 12,
-        marginRight: 4,
+        marginEnd: 4,
     },
     timerText: {
         fontSize: FontSizes.xs,
@@ -780,7 +780,7 @@ const styles = StyleSheet.create({
     },
     fireIcon: {
         fontSize: 12,
-        marginRight: 4,
+        marginEnd: 4,
     },
     newBidsText: {
         fontSize: FontSizes.xs,
@@ -825,7 +825,7 @@ const styles = StyleSheet.create({
         backgroundColor: Colors.primary + '15',
         justifyContent: 'center',
         alignItems: 'center',
-        marginRight: Spacing.sm,
+        marginEnd: Spacing.sm,
     },
     bidIcon: {
         fontSize: 14,
@@ -886,7 +886,7 @@ const styles = StyleSheet.create({
     },
     // Delete action
     deleteAction: {
-        marginLeft: -Spacing.md,
+        marginStart: -Spacing.md,
         marginVertical: Spacing.xs,
         borderRadius: BorderRadius.lg,
         overflow: 'hidden',
@@ -922,7 +922,7 @@ const styles = StyleSheet.create({
         fontSize: 14,
         color: '#EF4444',
         fontWeight: '600',
-        marginRight: 4,
+        marginEnd: 4,
     },
     swipeHintText: {
         fontSize: FontSizes.xs,

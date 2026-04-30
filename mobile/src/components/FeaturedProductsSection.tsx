@@ -74,7 +74,7 @@ export default function FeaturedProductsSection({ onProductPress }: FeaturedProd
     }
 
     const getImageUrl = (url: string) => {
-        if (!url) return 'https://placehold.co/300x200?text=No+Image';
+        if (!url) return undefined;
         return url.startsWith('http') ? url : `${UPLOAD_BASE_URL}${url}`;
     };
 
@@ -86,7 +86,7 @@ export default function FeaturedProductsSection({ onProductPress }: FeaturedProd
         >
             {/* Product Image */}
             <Image
-                source={{ uri: getImageUrl(item.image_urls?.[0]) }}
+                source={getImageUrl(item.image_urls?.[0]) ? { uri: getImageUrl(item.image_urls?.[0]) } : undefined}
                 style={[styles.image, { backgroundColor: colors.border }]}
                 contentFit="cover"
                 transition={200}
@@ -175,7 +175,7 @@ const styles = StyleSheet.create({
     },
     card: {
         width: CARD_WIDTH,
-        marginRight: CARD_MARGIN * 2,
+        marginEnd: CARD_MARGIN * 2,
         backgroundColor: '#fff',
         borderRadius: BorderRadius.xl,
         overflow: 'hidden',

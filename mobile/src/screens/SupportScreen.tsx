@@ -217,7 +217,7 @@ export default function SupportScreen() {
                     )}
                 </View>
                 <View style={[styles.ticketAction, { flexDirection: rtlFlexDirection(isRTL) }]}>
-                    <Ionicons name="logo-whatsapp" size={14} color={Colors.primary} style={{ marginRight: Spacing.xs }} />
+                    <Ionicons name="logo-whatsapp" size={14} color={Colors.primary} style={isRTL ? { marginLeft: Spacing.xs } : { marginRight: Spacing.xs }} />
                     <Text style={[styles.ticketActionText, { color: Colors.primary }]}>
                         {t('support.followUpWhatsApp')}
                     </Text>
@@ -304,7 +304,7 @@ export default function SupportScreen() {
             {/* Header */}
             <View style={[styles.header, { backgroundColor: colors.surface, borderBottomColor: colors.border, flexDirection: rtlFlexDirection(isRTL) }]}>
                 <TouchableOpacity onPress={() => navigation.goBack()} style={[styles.backButton, { backgroundColor: colors.background }]}>
-                    <Ionicons name="arrow-back" size={20} color={Colors.primary} /> <Text style={styles.backText}>{t('common.back')}</Text>
+                    <Ionicons name={isRTL ? "arrow-forward" : "arrow-back"} size={20} color={Colors.primary} /> <Text style={styles.backText}>{t('common.back')}</Text>
                 </TouchableOpacity>
                 <Text style={[styles.headerTitle, { color: colors.text }]}>{t('support.title')}</Text>
                 <View style={{ width: 60 }} />
@@ -335,11 +335,11 @@ export default function SupportScreen() {
                         <Text style={[styles.heroSubtitle, { textAlign: 'center' }]}>{t('support.whatsappSubtitle')}</Text>
 
                         <TouchableOpacity
-                            style={styles.mainChatButton}
+                            style={[styles.mainChatButton, { flexDirection: isRTL ? 'row-reverse' : 'row' }]}
                             onPress={() => openWhatsApp('support.startChatPrefix')}
                             activeOpacity={0.9}
                         >
-                            <Ionicons name="chatbubble-outline" size={20} color="#25D366" style={{ marginRight: Spacing.sm }} />
+                            <Ionicons name="chatbubble-outline" size={20} color="#25D366" style={isRTL ? { marginLeft: Spacing.sm } : { marginRight: Spacing.sm }} />
                             <Text style={styles.mainChatText}>{t('support.startChat')}</Text>
                         </TouchableOpacity>
                     </LinearGradient>
@@ -357,8 +357,8 @@ export default function SupportScreen() {
                 </View>
 
                 {/* Business Hours Info */}
-                <View style={[styles.infoCard, { backgroundColor: colors.surface, borderColor: colors.border }]}>
-                    <Ionicons name="time-outline" size={32} color={Colors.primary} style={{ marginRight: Spacing.md }} />
+                <View style={[styles.infoCard, { backgroundColor: colors.surface, borderColor: colors.border, flexDirection: isRTL ? 'row-reverse' : 'row' }]}>
+                    <Ionicons name="time-outline" size={32} color={Colors.primary} style={isRTL ? { marginLeft: Spacing.md } : { marginRight: Spacing.md }} />
                     <View style={styles.infoTextContainer}>
                         <Text style={[styles.infoTitle, { color: colors.text, textAlign: rtlTextAlign(isRTL) }]}>
                             {t('support.businessHours')}
@@ -370,8 +370,8 @@ export default function SupportScreen() {
                 </View>
 
                 {/* Response Time Promise */}
-                <View style={[styles.infoCard, { backgroundColor: colors.surface, borderColor: colors.border }]}>
-                    <Ionicons name="flash-outline" size={32} color={Colors.primary} style={{ marginRight: Spacing.md }} />
+                <View style={[styles.infoCard, { backgroundColor: colors.surface, borderColor: colors.border, flexDirection: isRTL ? 'row-reverse' : 'row' }]}>
+                    <Ionicons name="flash-outline" size={32} color={Colors.primary} style={isRTL ? { marginLeft: Spacing.md } : { marginRight: Spacing.md }} />
                     <View style={styles.infoTextContainer}>
                         <Text style={[styles.infoTitle, { color: colors.text, textAlign: rtlTextAlign(isRTL) }]}>
                             {t('support.fastResponse')}
@@ -443,7 +443,7 @@ const styles = StyleSheet.create({
     },
     mainChatIcon: {
         fontSize: 20,
-        marginRight: Spacing.sm,
+        marginEnd: Spacing.sm,
     },
     mainChatText: {
         fontSize: FontSizes.md,
@@ -518,7 +518,7 @@ const styles = StyleSheet.create({
         fontSize: FontSizes.md,
         fontWeight: '600',
         flex: 1,
-        marginRight: Spacing.sm,
+        marginEnd: Spacing.sm,
     },
     statusBadge: {
         paddingHorizontal: Spacing.sm,
@@ -540,7 +540,7 @@ const styles = StyleSheet.create({
     },
     ticketCategory: {
         fontSize: FontSizes.xs,
-        marginLeft: Spacing.xs,
+        marginStart: Spacing.xs,
     },
     ticketAction: {
         flexDirection: 'row',
@@ -551,7 +551,7 @@ const styles = StyleSheet.create({
     },
     whatsappIcon: {
         fontSize: 14,
-        marginRight: Spacing.xs,
+        marginEnd: Spacing.xs,
     },
     ticketActionText: {
         fontSize: FontSizes.sm,
@@ -588,7 +588,7 @@ const styles = StyleSheet.create({
         backgroundColor: '#F5F5F5',
         alignItems: 'center',
         justifyContent: 'center',
-        marginRight: Spacing.md,
+        marginEnd: Spacing.md,
     },
     optionIcon: {
         fontSize: 24,
@@ -623,7 +623,7 @@ const styles = StyleSheet.create({
     },
     infoIcon: {
         fontSize: 32,
-        marginRight: Spacing.md,
+        marginEnd: Spacing.md,
     },
     infoTextContainer: {
         flex: 1,

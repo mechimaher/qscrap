@@ -93,6 +93,7 @@ export default function TrackingScreen() {
     const mapRef = useRef<any>(null);
     const socket = useRef<Socket | null>(null);
     const pulseAnim = useRef(new Animated.Value(1)).current;
+    const lastRouteTime = useRef(0);
 
     // Draggable bottom sheet - SIMPLE: Fixed height, starts almost hidden
     const SHEET_HEIGHT = height * 0.75; // Fixed sheet height
@@ -179,6 +180,7 @@ export default function TrackingScreen() {
     } | null>(null);
     const [newChatMessage, setNewChatMessage] = useState<{ text: string; from: string } | null>(null);
     const [routeCoordinates, setRouteCoordinates] = useState<RouteCoordinate[]>([]);
+    const [countdown, setCountdown] = useState<{ min: number; sec: number } | null>(null);
 
     // Driver visible immediately after order is collected (no QC gate)
     const canShowDriver = !!(orderDetails?.order_status &&
@@ -195,6 +197,19 @@ export default function TrackingScreen() {
         pulse.start();
         return () => pulse.stop();
     }, []);
+
+    // Live countdown timer — ticks every second between API refreshes
+    useEffect(() => {
+        if (etaMinutes === null || etaMinutes <= 0) { setCountdown(null); return; }
+        let remaining = etaMinutes * 60;
+        setCountdown({ min: Math.floor(remaining / 60), sec: remaining % 60 });
+        const timer = setInterval(() => {
+            remaining = Math.max(0, remaining - 1);
+            setCountdown({ min: Math.floor(remaining / 60), sec: remaining % 60 });
+            if (remaining <= 0) clearInterval(timer);
+        }, 1000);
+        return () => clearInterval(timer);
+    }, [etaMinutes]);
 
     // Connect to socket for real-time updates
     useEffect(() => {
@@ -226,8 +241,10 @@ export default function TrackingScreen() {
                             updated_at: data.timestamp,
                         });
 
-                        // Fetch route via Google Directions for accurate ETA & polyline
-                        if (customerLocation) {
+                        // Fetch route via Google Directions (throttled to 1 per 15s)
+                        const now = Date.now();
+                        if (customerLocation && now - lastRouteTime.current > 15000) {
+                            lastRouteTime.current = now;
                             fetchRoute(
                                 { lat, lng },
                                 { lat: customerLocation.latitude, lng: customerLocation.longitude }
@@ -353,6 +370,10 @@ export default function TrackingScreen() {
                 if (leg.duration?.text) setEta(leg.duration.text);
                 if (leg.distance?.text) setDistance(leg.distance.text);
 
+                // Extract numeric ETA minutes for countdown
+                const durationSec = (leg.duration_in_traffic?.value || leg.duration?.value || 0);
+                if (durationSec > 0) setEtaMinutes(Math.ceil(durationSec / 60));
+
                 // Decode polyline for accurate road route
                 const points = decodePolyline(route.overview_polyline.points);
                 setRouteCoordinates(points);
@@ -383,11 +404,8 @@ export default function TrackingScreen() {
                             longitude: location.coords.longitude,
                         });
 
-                        // Update customer location on map if we have real GPS
-                        setCustomerLocation({
-                            latitude: location.coords.latitude,
-                            longitude: location.coords.longitude,
-                        });
+                        // customerLocation stays at the order delivery address
+                        // (customer's blue dot is shown via showsUserLocation)
                     }
                 );
             } catch (error) {
@@ -520,7 +538,7 @@ export default function TrackingScreen() {
                     >
                         <Animated.View style={[styles.driverMarker, { transform: [{ scale: pulseAnim }] }]}>
                             <View style={styles.driverMarkerPulse} />
-                            <View style={styles.driverMarkerInner}>
+                            <View style={[styles.driverMarkerInner, { transform: [{ rotate: `${driverLocation.heading || 0}deg` }] }]}>
                                 <Ionicons name="car-sport" size={24} color="#fff" />
                             </View>
                         </Animated.View>
@@ -570,7 +588,7 @@ export default function TrackingScreen() {
             {/* Chat Notification Banner */}
             {newChatMessage && (
                 <TouchableOpacity
-                    style={styles.chatBanner}
+                    style={[styles.chatBanner, { backgroundColor: colors.surface }]}
                     onPress={() => {
                         setNewChatMessage(null);
                         navigation.navigate('Chat', {
@@ -581,11 +599,11 @@ export default function TrackingScreen() {
                         });
                     }}
                 >
-                    <View style={styles.chatBannerContent}>
-                        <Ionicons name="chatbubble" size={18} color="#fff" style={{ marginRight: 6 }} />
+                    <View style={[styles.chatBannerContent, { flexDirection: isRTL ? 'row-reverse' : 'row' }]}>
+                        <Ionicons name="chatbubble" size={18} color="#fff" style={isRTL ? { marginLeft: 6 } : { marginRight: 6 }} />
                         <View style={styles.chatBannerText}>
-                            <Text style={styles.chatBannerFrom}>{newChatMessage.from}</Text>
-                            <Text style={styles.chatBannerMessage} numberOfLines={1}>{newChatMessage.text}</Text>
+                            <Text style={[styles.chatBannerFrom, { color: colors.text }]}>{newChatMessage.from}</Text>
+                            <Text style={[styles.chatBannerMessage, { color: colors.textSecondary }]} numberOfLines={1}>{newChatMessage.text}</Text>
                         </View>
                         <Text style={styles.chatBannerAction}>{t('tracking.view')} <Ionicons name={isRTL ? 'chevron-back' : 'chevron-forward'} size={12} color="#fff" /></Text>
                     </View>
@@ -595,17 +613,17 @@ export default function TrackingScreen() {
             {/* Header */}
             <SafeAreaView style={styles.header} edges={['top']}>
                 <View style={[styles.headerContent, { flexDirection: rtlFlexDirection(isRTL) }]}>
-                    <TouchableOpacity onPress={() => navigation.goBack()} style={styles.backButton}>
-                        <Ionicons name={isRTL ? 'arrow-forward' : 'arrow-back'} size={24} color="#1a1a1a" />
+                    <TouchableOpacity onPress={() => navigation.goBack()} style={[styles.backButton, { backgroundColor: colors.surface }]}>
+                        <Ionicons name={isRTL ? 'arrow-forward' : 'arrow-back'} size={24} color={colors.text} />
                     </TouchableOpacity>
-                    <View style={styles.headerInfo}>
-                        <Text style={[styles.headerTitle, { textAlign: rtlTextAlign(isRTL) }]}>{t('tracking.liveTracking')}</Text>
+                    <View style={[styles.headerInfo, isRTL ? { marginRight: Spacing.md, marginLeft: 0 } : {}]}>
+                        <Text style={[styles.headerTitle, { color: colors.text, textAlign: rtlTextAlign(isRTL) }]}>{t('tracking.liveTracking')}</Text>
                         <Text style={[styles.orderNumber, { textAlign: rtlTextAlign(isRTL) }]}>{t('tracking.orderNumber', { number: orderNumber })}</Text>
                     </View>
                     <View style={styles.headerActions}>
                         <View style={[styles.connectionDot, isConnected && styles.connectionDotActive]} />
                         <TouchableOpacity
-                            style={styles.supportButton}
+                            style={[styles.supportButton, { backgroundColor: colors.surface }]}
                             onPress={() => {
                                 Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Medium);
                                 navigation.navigate('Support' as any, {
@@ -622,11 +640,11 @@ export default function TrackingScreen() {
 
             {/* Map Controls - Only show driver controls if QC passed */}
             {canShowDriver && (
-                <View style={styles.mapControls}>
-                    <TouchableOpacity style={styles.mapButton} onPress={centerOnDriver}>
+                <View style={[styles.mapControls, isRTL ? { left: Spacing.lg, right: undefined } : {}]}>
+                    <TouchableOpacity style={[styles.mapButton, { backgroundColor: colors.surface }]} onPress={centerOnDriver}>
                         <Ionicons name="car-sport-outline" size={22} color={Colors.primary} />
                     </TouchableOpacity>
-                    <TouchableOpacity style={styles.mapButton} onPress={fitAllMarkers}>
+                    <TouchableOpacity style={[styles.mapButton, { backgroundColor: colors.surface }]} onPress={fitAllMarkers}>
                         <Ionicons name="scan-outline" size={22} color={Colors.primary} />
                     </TouchableOpacity>
                 </View>
@@ -636,21 +654,26 @@ export default function TrackingScreen() {
             <Animated.View
                 style={[
                     styles.bottomSheet,
-                    { transform: [{ translateY: bottomSheetY }] }
+                    { backgroundColor: colors.surface, transform: [{ translateY: bottomSheetY }] }
                 ]}
                 {...panResponder.panHandlers}
             >
-                <View style={styles.handle} />
+                <View style={[styles.handle, { backgroundColor: colors.border }]} />
 
                 {/* ETA Card */}
                 <LinearGradient
                     colors={Colors.gradients.primaryDark}
-                    style={styles.etaCard}
+                    style={[styles.etaCard, { flexDirection: isRTL ? 'row-reverse' : 'row' }]}
                 >
                     <View style={styles.etaContent}>
                         <Text style={[styles.etaLabel, { textAlign: rtlTextAlign(isRTL) }]}>{t('tracking.estimatedArrival')}</Text>
                         <View style={[styles.etaRow, { flexDirection: rtlFlexDirection(isRTL) }]}>
-                            {eta ? (
+                            {countdown ? (
+                                <>
+                                    <Text style={styles.etaTime}>{countdown.min}:{String(countdown.sec).padStart(2, '0')}</Text>
+                                    {distance && <Text style={styles.etaDistance}>• {distance} {t('tracking.away')}</Text>}
+                                </>
+                            ) : eta ? (
                                 <>
                                     <Text style={styles.etaTime}>{eta}</Text>
                                     {distance && <Text style={styles.etaDistance}>• {distance} {t('tracking.away')}</Text>}
@@ -667,16 +690,16 @@ export default function TrackingScreen() {
 
                 {/* Driver Info */}
                 {driverInfo && (
-                    <View style={styles.driverCard}>
-                        <View style={styles.driverAvatar}>
+                    <View style={[styles.driverCard, { backgroundColor: colors.surfaceSecondary || colors.surface, flexDirection: isRTL ? 'row-reverse' : 'row' }]}>
+                        <View style={[styles.driverAvatar, { backgroundColor: colors.surface }]}>
                             <Ionicons name="person" size={24} color={Colors.primary} />
                         </View>
-                        <View style={styles.driverDetails}>
-                            <Text style={styles.driverName}>{driverInfo.name}</Text>
-                            <Text style={styles.driverVehicle}>{driverInfo.vehicle}</Text>
+                        <View style={[styles.driverDetails, isRTL ? { marginRight: Spacing.md, marginLeft: 0, alignItems: 'flex-end' } : {}]}>
+                            <Text style={[styles.driverName, { color: colors.text }]}>{driverInfo.name}</Text>
+                            <Text style={[styles.driverVehicle, { color: colors.textSecondary }]}>{driverInfo.vehicle}</Text>
                         </View>
                         <TouchableOpacity
-                            style={styles.callDriverButton}
+                            style={[styles.callDriverButton, isRTL ? { marginLeft: Spacing.sm, marginRight: 0 } : {}]}
                             onPress={() => {
                                 if (driverInfo?.phone) {
                                     Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Medium);
@@ -707,7 +730,7 @@ export default function TrackingScreen() {
 
                 {/* Premium Order Details Card */}
                 {orderDetails && (
-                    <View style={styles.orderCard}>
+                    <View style={[styles.orderCard, { backgroundColor: colors.surfaceSecondary || colors.surface, borderColor: colors.border }]}>
                         {/* Status Timeline - 4 Steps including Completed */}
                         <View style={styles.statusTimeline}>
                             {['prepared', 'in_transit', 'delivered', 'completed'].map((step, index) => {
@@ -755,10 +778,10 @@ export default function TrackingScreen() {
                         <View style={styles.orderInfoRow}>
                             <View style={styles.garageSection}>
                                 <Text style={[styles.orderLabel, { textAlign: rtlTextAlign(isRTL) }]}>{t('tracking.from')}</Text>
-                                <Text style={styles.garageName}>{orderDetails.garage_name}</Text>
+                                <Text style={[styles.garageName, { color: colors.text }]}>{orderDetails.garage_name}</Text>
                             </View>
                             <View style={styles.partSection}>
-                                <Text style={styles.partName} numberOfLines={2}>
+                                <Text style={[styles.partName, { color: colors.textSecondary }]} numberOfLines={2}>
                                     {orderDetails.part_description}
                                 </Text>
                                 <View style={styles.partBadges}>
@@ -781,12 +804,12 @@ export default function TrackingScreen() {
                         {/* Pricing */}
                         <View style={styles.pricingSection}>
                             <View style={[styles.priceRow, { flexDirection: rtlFlexDirection(isRTL) }]}>
-                                <Text style={styles.priceLabel}>{t('order.partPrice')}</Text>
-                                <Text style={styles.priceValue}>{orderDetails.part_price.toFixed(0)} {t('common.currency')}</Text>
+                                <Text style={[styles.priceLabel, { color: colors.textMuted || colors.textSecondary }]}>{t('order.partPrice')}</Text>
+                                <Text style={[styles.priceValue, { color: colors.textSecondary }]}>{orderDetails.part_price.toFixed(0)} {t('common.currency')}</Text>
                             </View>
                             <View style={[styles.priceRow, { flexDirection: rtlFlexDirection(isRTL) }]}>
-                                <Text style={styles.priceLabel}>{t('order.deliveryFee')}</Text>
-                                <Text style={styles.priceValue}>{orderDetails.delivery_fee.toFixed(0)} {t('common.currency')}</Text>
+                                <Text style={[styles.priceLabel, { color: colors.textMuted || colors.textSecondary }]}>{t('order.deliveryFee')}</Text>
+                                <Text style={[styles.priceValue, { color: colors.textSecondary }]}>{orderDetails.delivery_fee.toFixed(0)} {t('common.currency')}</Text>
                             </View>
                             {orderDetails.loyalty_discount > 0 && (
                                 <View style={[styles.priceRow, { flexDirection: rtlFlexDirection(isRTL) }]}>
@@ -796,7 +819,7 @@ export default function TrackingScreen() {
                             )}
                             <View style={styles.priceDivider} />
                             <View style={[styles.priceRow, { flexDirection: rtlFlexDirection(isRTL) }]}>
-                                <Text style={styles.totalLabel}>{t('common.total')}</Text>
+                                <Text style={[styles.totalLabel, { color: colors.text }]}>{t('common.total')}</Text>
                                 <Text style={styles.totalValue}>{orderDetails.total_amount.toFixed(0)} {t('common.currency')}</Text>
                             </View>
                         </View>
@@ -809,9 +832,9 @@ export default function TrackingScreen() {
                         colors={Colors.gradients.premium}
                         start={{ x: 0, y: 0 }}
                         end={{ x: 1, y: 0 }}
-                        style={styles.shareLocationGradient}
+                        style={[styles.shareLocationGradient, { flexDirection: isRTL ? 'row-reverse' : 'row' }]}
                     >
-                        <Ionicons name="location" size={24} color="#fff" style={{ marginRight: 8 }} />
+                        <Ionicons name="location" size={24} color="#fff" style={isRTL ? { marginLeft: 8 } : { marginRight: 8 }} />
                         <View style={styles.shareLocationText}>
                             <Text style={styles.shareLocationTitle}>{t('tracking.shareLocation')}</Text>
                             <Text style={styles.shareLocationSubtitle}>{t('tracking.shareLocationHint')}</Text>
@@ -870,7 +893,7 @@ const styles = StyleSheet.create({
         ...Shadows.md,
     },
     backIcon: { fontSize: 24, color: Colors.light.text },
-    headerInfo: { flex: 1, marginLeft: Spacing.md },
+    headerInfo: { flex: 1, marginStart: Spacing.md },
     headerTitle: { fontSize: FontSizes.lg, fontWeight: '700', color: Colors.light.text },
     orderNumber: { fontSize: FontSizes.sm, color: Colors.primary },
     connectionDot: {
@@ -1018,9 +1041,9 @@ const styles = StyleSheet.create({
     etaLabel: { fontSize: FontSizes.sm, color: 'rgba(255,255,255,0.7)' },
     etaRow: { flexDirection: 'row', alignItems: 'baseline', marginTop: Spacing.xs },
     etaTime: { fontSize: FontSizes.xxxl, fontWeight: '800', color: '#fff' },
-    etaDistance: { fontSize: FontSizes.md, color: 'rgba(255,255,255,0.8)', marginLeft: Spacing.sm },
+    etaDistance: { fontSize: FontSizes.md, color: 'rgba(255,255,255,0.8)', marginStart: Spacing.sm },
     etaCalculating: { fontSize: FontSizes.lg, color: 'rgba(255,255,255,0.6)' },
-    etaIcon: { marginLeft: Spacing.md },
+    etaIcon: { marginStart: Spacing.md },
     driverCard: {
         flexDirection: 'row',
         alignItems: 'center',
@@ -1038,7 +1061,7 @@ const styles = StyleSheet.create({
         alignItems: 'center',
     },
     driverAvatarIcon: { fontSize: 24 },
-    driverDetails: { flex: 1, marginLeft: Spacing.md },
+    driverDetails: { flex: 1, marginStart: Spacing.md },
     driverName: { fontSize: FontSizes.lg, fontWeight: '600', color: Colors.light.text },
     driverVehicle: { fontSize: FontSizes.sm, color: Colors.light.textSecondary },
     callDriverButton: {
@@ -1048,7 +1071,7 @@ const styles = StyleSheet.create({
         backgroundColor: Colors.primary,
         justifyContent: 'center',
         alignItems: 'center',
-        marginRight: Spacing.sm,
+        marginEnd: Spacing.sm,
     },
     callDriverIcon: { fontSize: 20 },
     messageDriverButton: {
@@ -1212,7 +1235,7 @@ const styles = StyleSheet.create({
         alignItems: 'flex-start',
         marginBottom: Spacing.md,
     },
-    addressIcon: { fontSize: 24, marginRight: Spacing.sm },
+    addressIcon: { fontSize: 24, marginEnd: Spacing.sm },
     addressContent: { flex: 1 },
     addressLabel: { fontSize: FontSizes.sm, color: Colors.light.textSecondary },
     addressText: { fontSize: FontSizes.md, color: Colors.light.text, marginTop: Spacing.xs },
@@ -1225,7 +1248,7 @@ const styles = StyleSheet.create({
         height: 8,
         borderRadius: 4,
         backgroundColor: Colors.primary,
-        marginRight: Spacing.sm,
+        marginEnd: Spacing.sm,
     },
     statusText: { fontSize: FontSizes.sm, color: Colors.primary, fontWeight: '600' },
     // QC Overlay Styles
@@ -1272,7 +1295,7 @@ const styles = StyleSheet.create({
     },
     chatBannerIcon: {
         fontSize: 28,
-        marginRight: Spacing.md,
+        marginEnd: Spacing.md,
     },
     chatBannerText: {
         flex: 1,
@@ -1315,7 +1338,7 @@ const styles = StyleSheet.create({
     },
     shareLocationIcon: {
         fontSize: 28,
-        marginRight: Spacing.md,
+        marginEnd: Spacing.md,
     },
     shareLocationText: {
         flex: 1,

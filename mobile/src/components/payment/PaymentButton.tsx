@@ -30,7 +30,7 @@ export const PaymentButton: React.FC<PaymentButtonProps> = ({
         : payNowAmount.toFixed(2);
 
     return (
-        <View style={[styles.footer, { backgroundColor: colors.surface }]}>
+        <View style={[styles.footer, { backgroundColor: colors.surface, borderTopColor: colors.border }]}>
             {freeOrder ? (
                 /* FREE ORDER - Special Celebration Button */
                 <TouchableOpacity
@@ -79,7 +79,7 @@ export const PaymentButton: React.FC<PaymentButtonProps> = ({
                 </TouchableOpacity>
             )}
 
-            <Text style={styles.secureText}>
+            <Text style={[styles.secureText, { color: colors.textSecondary }]}>
                 {freeOrder ? t('payment.loyaltyAtWork') : t('payment.securedByStripe')}
             </Text>
         </View>
@@ -95,7 +95,7 @@ const styles = StyleSheet.create({
         padding: Spacing.lg,
         paddingBottom: Spacing.xl,
         borderTopWidth: 1,
-        borderTopColor: '#E5E5E5',
+        borderTopColor: 'transparent',
     },
     payButton: {
         borderRadius: BorderRadius.lg,

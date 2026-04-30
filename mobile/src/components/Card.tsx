@@ -172,13 +172,13 @@ const styles = StyleSheet.create({
         borderRadius: 20,
         alignItems: 'center',
         justifyContent: 'center',
-        marginRight: Spacing.md,
+        marginEnd: Spacing.md,
     },
     headerText: {
         flex: 1,
     },
     headerRight: {
-        marginLeft: Spacing.md,
+        marginStart: Spacing.md,
     },
     title: {
         fontSize: FontSize.lg,

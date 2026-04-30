@@ -4,8 +4,10 @@ import { View, Text, StyleSheet, Animated } from 'react-native';
 import { Colors, Spacing, BorderRadius, FontSizes, Shadows } from '../../constants/theme';
 import { Ionicons } from '@expo/vector-icons';
 import { getTimelineSteps } from './statusConfig';
+import { useTranslation } from '../../contexts/LanguageContext';
 
 const VisualTimeline = ({ status, colors, t }: { status: string; colors: any; t: any }) => {
+    const { isRTL } = useTranslation();
     const { steps, currentStep } = getTimelineSteps(status, t);
     const lineAnims = useRef(steps.map(() => new Animated.Value(0))).current;
 
@@ -32,7 +34,7 @@ const VisualTimeline = ({ status, colors, t }: { status: string; colors: any; t:
                 const isLast = index === steps.length - 1;
 
                 return (
-                    <View key={step.key} style={styles.timelineStep}>
+                    <View key={step.key} style={[styles.timelineStep, { flexDirection: isRTL ? 'row-reverse' : 'row' }]}>
                         <View style={styles.timelineLeft}>
                             <View style={[
                                 styles.timelineDot,
@@ -60,7 +62,7 @@ const VisualTimeline = ({ status, colors, t }: { status: string; colors: any; t:
                                 </View>
                             )}
                         </View>
-                        <View style={styles.timelineContent}>
+                        <View style={[styles.timelineContent, isRTL ? { paddingRight: Spacing.md, paddingLeft: 0 } : { paddingLeft: Spacing.md }]}>
                             <Text style={[
                                 styles.timelineLabel,
                                 { color: colors.text },
@@ -69,7 +71,7 @@ const VisualTimeline = ({ status, colors, t }: { status: string; colors: any; t:
                                 {step.label}
                             </Text>
                             {isCurrent && (
-                                <View style={styles.currentBadge}>
+                                <View style={[styles.currentBadge, isRTL ? { marginRight: Spacing.sm, marginLeft: 0 } : { marginLeft: Spacing.sm }]}>
                                     <Text style={styles.currentBadgeText}>{t('common.current')}</Text>
                                 </View>
                             )}
@@ -93,10 +95,10 @@ const styles = StyleSheet.create({
     timelineLineContainer: { flex: 1, width: 3, alignSelf: 'center', marginVertical: 4, position: 'relative' },
     timelineLineBg: { position: 'absolute', top: 0, bottom: 0, left: 0, right: 0, backgroundColor: '#E8E8E8', borderRadius: 1.5 },
     timelineLineFill: { position: 'absolute', top: 0, left: 0, right: 0, backgroundColor: '#22C55E', borderRadius: 1.5 },
-    timelineContent: { flex: 1, paddingLeft: Spacing.md, paddingBottom: Spacing.lg, flexDirection: 'row', alignItems: 'center' },
+    timelineContent: { flex: 1, paddingStart: Spacing.md, paddingBottom: Spacing.lg, flexDirection: 'row', alignItems: 'center' },
     timelineLabel: { fontSize: FontSizes.md, color: '#737373' },
-    timelineLabelActive: { fontWeight: '600', color: '#1a1a1a' },
-    currentBadge: { marginLeft: Spacing.sm, backgroundColor: Colors.primary + '20', paddingHorizontal: Spacing.sm, paddingVertical: 2, borderRadius: BorderRadius.md },
+    timelineLabelActive: { fontWeight: '600' },
+    currentBadge: { marginStart: Spacing.sm, backgroundColor: Colors.primary + '20', paddingHorizontal: Spacing.sm, paddingVertical: 2, borderRadius: BorderRadius.md },
     currentBadgeText: { fontSize: FontSizes.xs, color: Colors.primary, fontWeight: '600' },
 });
 

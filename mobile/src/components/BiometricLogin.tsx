@@ -216,7 +216,7 @@ const styles = StyleSheet.create({
         borderRadius: BorderRadius.lg,
         justifyContent: 'center',
         alignItems: 'center',
-        marginRight: Spacing.md,
+        marginEnd: Spacing.md,
     },
     textContainer: {
         flex: 1,

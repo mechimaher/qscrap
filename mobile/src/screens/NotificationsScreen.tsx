@@ -152,12 +152,12 @@ export default function NotificationsScreen() {
             style={[
                 styles.notificationCard,
                 { backgroundColor: colors.surface, borderColor: colors.border, flexDirection: rtlFlexDirection(isRTL) },
-                !item.is_read && styles.unreadCard
+                !item.is_read && [styles.unreadCard, isRTL && { borderLeftWidth: 0, borderRightWidth: 3, borderRightColor: Colors.primary }]
             ]}
             onPress={() => handleNotificationPress(item)}
             activeOpacity={0.7}
         >
-            <View style={[styles.iconContainer, !item.is_read && styles.unreadIcon, isRTL && { marginRight: 0, marginLeft: Spacing.md }]}>
+            <View style={[styles.iconContainer, { backgroundColor: colors.background }, !item.is_read && styles.unreadIcon, isRTL && { marginRight: 0, marginLeft: Spacing.md }]}>
                 <Ionicons name={getNotificationIcon(item.type)} size={22} color={!item.is_read ? Colors.primary : '#737373'} />
             </View>
             <View style={styles.content}>
@@ -176,7 +176,7 @@ export default function NotificationsScreen() {
             {/* Header */}
             <View style={[styles.header, { backgroundColor: colors.surface, borderBottomColor: colors.border, flexDirection: rtlFlexDirection(isRTL) }]}>
                 <TouchableOpacity onPress={() => navigation.goBack()} style={[styles.backButton, { backgroundColor: colors.background }]} accessibilityRole="button" accessibilityLabel={t('common.back')}>
-                    <Ionicons name="arrow-back" size={20} color={Colors.primary} /> <Text style={styles.backText}>{t('common.back')}</Text>
+                    <Ionicons name={isRTL ? "arrow-forward" : "arrow-back"} size={20} color={Colors.primary} /> <Text style={styles.backText}>{t('common.back')}</Text>
                 </TouchableOpacity>
                 <Text style={[styles.headerTitle, { color: colors.text }]}>{t('notifications.title')}</Text>
                 <View style={[styles.headerActions, { flexDirection: rtlFlexDirection(isRTL) }]}>
@@ -243,7 +243,7 @@ const styles = StyleSheet.create({
         padding: Spacing.sm,
         backgroundColor: Colors.primary + '15',
         borderRadius: BorderRadius.md,
-        marginRight: Spacing.xs,
+        marginEnd: Spacing.xs,
     },
     markAllText: { color: Colors.primary, fontSize: FontSizes.sm, fontWeight: '600' },
     headerActions: {
@@ -280,7 +280,7 @@ const styles = StyleSheet.create({
         backgroundColor: '#F5F5F5',
         justifyContent: 'center',
         alignItems: 'center',
-        marginRight: Spacing.md,
+        marginEnd: Spacing.md,
     },
     unreadIcon: {
         backgroundColor: Colors.primary + '15',

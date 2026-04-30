@@ -47,7 +47,7 @@ export const LoyaltyDiscountCard: React.FC<LoyaltyDiscountCardProps> = ({
             freeOrder && { borderColor: '#22C55E', borderWidth: 2 }
         ]}>
             <View style={[styles.vvipLoyaltyRow, { flexDirection: rtlFlexDirection(isRTL) }]}>
-                <View style={styles.vvipLoyaltyLeft}>
+                <View style={[styles.vvipLoyaltyLeft, { flexDirection: isRTL ? 'row-reverse' : 'row' }]}>
                     <Ionicons
                         testID={loyaltyData.tier === 'platinum' ? 'diamond' : loyaltyData.tier === 'gold' ? 'trophy' : 'medal'}
                         name={loyaltyData.tier === 'platinum' ? 'diamond' : loyaltyData.tier === 'gold' ? 'trophy' : 'medal'}
@@ -86,11 +86,11 @@ export const LoyaltyDiscountCard: React.FC<LoyaltyDiscountCardProps> = ({
             )}
 
             {applyDiscount && (paymentType === 'full' ? calculateDiscount.discountOnTotal : calculateDiscount.discountOnPart) > 0 && !freeOrder && (
-                <View style={styles.vvipDiscountSummary}>
+                <View style={[styles.vvipDiscountSummary, { flexDirection: isRTL ? 'row-reverse' : 'row' }]}>
                     <Text style={styles.vvipDiscountLabel}>
                         {paymentType === 'full' ? t('payment.youPay') : t('payment.codAmount')}
                     </Text>
-                    <View style={{ alignItems: 'flex-end' }}>
+                    <View style={{ alignItems: isRTL ? 'flex-start' : 'flex-end' }}>
                         <Text style={styles.vvipDiscountOld}>
                             {(paymentType === 'full' ? totalAmount : partPrice).toFixed(0)} {t('common.currency')}
                         </Text>

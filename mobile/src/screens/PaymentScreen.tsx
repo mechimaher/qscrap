@@ -239,7 +239,7 @@ function PaymentScreenContent() {
                     </Text>
                     <TouchableOpacity
                         onPress={retryPaymentIntent}
-                        style={[styles.retryButton, { backgroundColor: Colors.primary }]}
+                        style={[styles.retryButton, { backgroundColor: Colors.primary, flexDirection: isRTL ? 'row-reverse' : 'row' }]}
                     >
                         <Ionicons name="refresh-outline" size={20} color="#fff" />
                         <Text style={styles.retryButtonText}>{t('common.retry')}</Text>
@@ -260,9 +260,9 @@ function PaymentScreenContent() {
     return (
         <SafeAreaView style={[styles.container, { backgroundColor: colors.background }]}>
             {/* Header */}
-            <View style={[styles.header, { backgroundColor: colors.surface }]}>
+            <View style={[styles.header, { backgroundColor: colors.surface, borderBottomColor: colors.border, flexDirection: isRTL ? 'row-reverse' : 'row' }]}>
                 <TouchableOpacity onPress={handleCancel} style={styles.backButton}>
-                    <Text style={styles.backText}>{isRTL ? '→' : '←'} {t('common.cancel')}</Text>
+                    <Ionicons name={isRTL ? 'arrow-forward' : 'arrow-back'} size={18} color={Colors.primary} />
                 </TouchableOpacity>
                 <Text style={[styles.headerTitle, { color: colors.text }]}>
                     {paymentType === 'full' ? t('payment.payFullAmount') : t('payment.payDeliveryFee')}
@@ -380,7 +380,7 @@ const styles = StyleSheet.create({
         justifyContent: 'space-between',
         padding: Spacing.lg,
         borderBottomWidth: 1,
-        borderBottomColor: '#E5E5E5',
+        borderBottomColor: 'transparent',
     },
     backButton: {
         padding: Spacing.sm,

@@ -194,7 +194,7 @@ export default function VerifyOTPResetScreen() {
                             onPress={() => navigation.goBack()}
                             style={styles.backButton}
                         >
-                            <Ionicons name="arrow-back" size={20} color="#fff" />
+                            <Ionicons name={isRTL ? "arrow-forward" : "arrow-back"} size={20} color="#fff" />
                         </TouchableOpacity>
                     </View>
 
@@ -399,7 +399,7 @@ const styles = StyleSheet.create({
     securityNoticeText: {
         color: 'rgba(255,255,255,0.7)',
         fontSize: FontSizes.sm,
-        marginLeft: Spacing.sm,
+        marginStart: Spacing.sm,
         textAlign: 'center',
         flex: 1,
     },

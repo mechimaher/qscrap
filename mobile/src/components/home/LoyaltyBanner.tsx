@@ -63,7 +63,7 @@ const LoyaltyBanner = ({ navigation }: { navigation: any }) => {
                     colors={tierConfig.bg as any}
                     start={{ x: 0, y: 0 }}
                     end={{ x: 1, y: 1 }}
-                    style={styles.bannerGradient}
+                    style={[styles.bannerGradient, { flexDirection: isRTL ? 'row-reverse' : 'row' }]}
                 >
                     {/* Shimmer effect */}
                     <Animated.View style={{
@@ -76,7 +76,7 @@ const LoyaltyBanner = ({ navigation }: { navigation: any }) => {
                         transform: [{ translateX: shimmerTranslate }, { skewX: '-20deg' }],
                     }} />
 
-                    <View style={styles.tierIconContainer}>
+                    <View style={[styles.tierIconContainer, isRTL ? { marginLeft: Spacing.md, marginRight: 0 } : {}]}>
                         <Ionicons name={tierConfig.icon} size={22} color={tierConfig.color} />
                     </View>
 
@@ -113,7 +113,7 @@ const styles = StyleSheet.create({
         backgroundColor: 'rgba(255,255,255,0.8)',
         alignItems: 'center',
         justifyContent: 'center',
-        marginRight: Spacing.md,
+        marginEnd: Spacing.md,
     },
     tierLabel: {
         fontSize: FontSizes.sm,

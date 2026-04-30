@@ -306,7 +306,7 @@ export default function CounterOfferScreen() {
                 style={[styles.historyItem, isCustomer ? styles.customerOffer : styles.garageOffer, isRTL ? (isCustomer ? { borderLeftWidth: 0, borderRightWidth: 3, marginLeft: 0, marginRight: Spacing.xl, borderRightColor: Colors.primary } : { borderLeftWidth: 0, borderRightWidth: 3, marginRight: 0, marginLeft: Spacing.xl, borderRightColor: '#D1D5DB' }) : {}]}
             >
                 <View style={[styles.historyHeader, { flexDirection: rtlFlexDirection(isRTL) }]}>
-                    <Text style={styles.historyRound}>{t('offers.round')} {item.round_number}</Text>
+                    <Text style={[styles.historyRound, { color: colors.textMuted }]}>{t('offers.round')} {item.round_number}</Text>
                     <Text style={[
                         styles.historyStatus,
                         item.status === 'accepted' && styles.statusAccepted,
@@ -316,14 +316,14 @@ export default function CounterOfferScreen() {
                         {item.status.toUpperCase()}
                     </Text>
                 </View>
-                <Text style={[styles.historyBy, { textAlign: rtlTextAlign(isRTL) }]}>
+                <Text style={[styles.historyBy, { color: colors.textSecondary, textAlign: rtlTextAlign(isRTL) }]}>
                     {isCustomer ? t('offers.you') : garageName}
                 </Text>
-                <Text style={[styles.historyAmount, { textAlign: rtlTextAlign(isRTL) }]}>{item.proposed_amount} {t('common.currency')}</Text>
+                <Text style={[styles.historyAmount, { color: colors.text, textAlign: rtlTextAlign(isRTL) }]}>{item.proposed_amount} {t('common.currency')}</Text>
                 {item.message && (
                     <Text style={[styles.historyMessage, { textAlign: rtlTextAlign(isRTL) }]}>"{item.message}"</Text>
                 )}
-                <Text style={[styles.historyDate, { textAlign: rtlTextAlign(isRTL) }]}>
+                <Text style={[styles.historyDate, { color: colors.textMuted, textAlign: rtlTextAlign(isRTL) }]}>
                     {new Date(item.created_at).toLocaleString()}
                 </Text>
             </View>
@@ -345,8 +345,8 @@ export default function CounterOfferScreen() {
         <SafeAreaView style={[styles.container, { backgroundColor: colors.background }]} edges={['top']}>
             {/* Header */}
             <View style={[styles.header, { backgroundColor: colors.surface, borderBottomColor: colors.border, flexDirection: rtlFlexDirection(isRTL) }]}>
-                <TouchableOpacity onPress={() => navigation.goBack()} style={styles.backButton}>
-                    <Ionicons name="arrow-back" size={20} color={Colors.primary} /> <Text style={styles.backText}>{t('common.back')}</Text>
+                <TouchableOpacity onPress={() => navigation.goBack()} style={[styles.backButton, { backgroundColor: colors.surfaceSecondary }]}>
+                    <Ionicons name={isRTL ? "arrow-forward" : "arrow-back"} size={20} color={Colors.primary} /> <Text style={styles.backText}>{t('common.back')}</Text>
                 </TouchableOpacity>
                 <Text style={[styles.headerTitle, { color: colors.text }]}>{t('offers.negotiatePrice')}</Text>
                 <View style={{ width: 60 }} />
@@ -361,13 +361,13 @@ export default function CounterOfferScreen() {
                     {/* Current Bid Info */}
                     <View style={[styles.bidCard, { backgroundColor: colors.surface }]}>
                         <Text style={[styles.garageName, { color: colors.text, textAlign: rtlTextAlign(isRTL) }]}>{garageName}</Text>
-                        <Text style={[styles.partName, { textAlign: rtlTextAlign(isRTL) }]}>{partDescription}</Text>
-                        <View style={[styles.priceRow, { flexDirection: rtlFlexDirection(isRTL) }]}>
-                            <Text style={styles.priceLabel}>{t('offers.currentBid')}</Text>
+                        <Text style={[styles.partName, { color: colors.textSecondary, textAlign: rtlTextAlign(isRTL) }]}>{partDescription}</Text>
+                        <View style={[styles.priceRow, { borderTopColor: colors.border, flexDirection: rtlFlexDirection(isRTL) }]}>
+                            <Text style={[styles.priceLabel, { color: colors.textSecondary }]}>{t('offers.currentBid')}</Text>
                             <Text style={styles.priceAmount}>{currentAmount} {t('common.currency')}</Text>
                         </View>
                         <View style={styles.roundsInfo}>
-                            <Text style={styles.roundsText}>
+                            <Text style={[styles.roundsText, { color: colors.textSecondary }]}>
                                 {t('offers.roundCount', { current: currentRound, max: MAX_ROUNDS })}
                             </Text>
                             <View style={styles.roundsDots}>
@@ -431,25 +431,25 @@ export default function CounterOfferScreen() {
                             <Text style={[styles.formTitle, { color: colors.text, textAlign: rtlTextAlign(isRTL) }]}>{t('offers.makeCounter')}</Text>
 
                             <View style={styles.inputGroup}>
-                                <Text style={[styles.inputLabel, { textAlign: rtlTextAlign(isRTL) }]}>{t('offers.yourOffer')} ({t('common.currency')})</Text>
+                                <Text style={[styles.inputLabel, { color: colors.textSecondary, textAlign: rtlTextAlign(isRTL) }]}>{t('offers.yourOffer')} ({t('common.currency')})</Text>
                                 <TextInput
                                     style={[styles.amountInput, { backgroundColor: colors.primary + '10', color: colors.primary, borderColor: colors.primary, textAlign: 'center' }]}
                                     value={proposedAmount}
                                     onChangeText={setProposedAmount}
                                     placeholder={t('offers.enterAmount')}
-                                    placeholderTextColor="#999"
+                                    placeholderTextColor={colors.placeholder}
                                     keyboardType="numeric"
                                 />
                             </View>
 
                             <View style={styles.inputGroup}>
-                                <Text style={[styles.inputLabel, { textAlign: rtlTextAlign(isRTL) }]}>{t('offers.messageOptional')}</Text>
+                                <Text style={[styles.inputLabel, { color: colors.textSecondary, textAlign: rtlTextAlign(isRTL) }]}>{t('offers.messageOptional')}</Text>
                                 <TextInput
                                     style={[styles.input, styles.messageInput, { backgroundColor: colors.background, color: colors.text, borderColor: colors.border, textAlign: rtlTextAlign(isRTL) }]}
                                     value={message}
                                     onChangeText={setMessage}
                                     placeholder={t('offers.explainOffer')}
-                                    placeholderTextColor="#999"
+                                    placeholderTextColor={colors.placeholder}
                                     multiline
                                     maxLength={200}
                                 />
@@ -476,10 +476,10 @@ export default function CounterOfferScreen() {
 
                     {/* Maximum Rounds Reached */}
                     {currentRound >= MAX_ROUNDS && !pendingOffer && (
-                        <View style={styles.maxRoundsCard}>
-                            <Ionicons name="flag" size={40} color="#525252" />
-                            <Text style={styles.maxRoundsTitle}>{t('offers.negotiationComplete')}</Text>
-                            <Text style={[styles.maxRoundsText, { textAlign: 'center' }]}>
+                        <View style={[styles.maxRoundsCard, { backgroundColor: colors.surface }]}>
+                            <Ionicons name="flag" size={40} color={colors.textSecondary} />
+                            <Text style={[styles.maxRoundsTitle, { color: colors.text }]}>{t('offers.negotiationComplete')}</Text>
+                            <Text style={[styles.maxRoundsText, { color: colors.textSecondary, textAlign: 'center' }]}>
                                 {t('offers.maxRoundsReached')}
                             </Text>
                         </View>
@@ -488,7 +488,7 @@ export default function CounterOfferScreen() {
                     {/* Negotiation History */}
                     {history.length > 0 && (
                         <View style={styles.historySection}>
-                            <Text style={[styles.historyTitle, { textAlign: rtlTextAlign(isRTL) }]}>{t('offers.historyTitle')}</Text>
+                            <Text style={[styles.historyTitle, { color: colors.text, textAlign: rtlTextAlign(isRTL) }]}>{t('offers.historyTitle')}</Text>
                             {history.map(renderHistoryItem)}
                         </View>
                     )}
@@ -669,13 +669,13 @@ const styles = StyleSheet.create({
     },
     customerOffer: {
         backgroundColor: Colors.primary + '10',
-        marginLeft: Spacing.xl,
+        marginStart: Spacing.xl,
         borderLeftWidth: 3,
         borderLeftColor: Colors.primary,
     },
     garageOffer: {
         backgroundColor: '#F8F9FA',
-        marginRight: Spacing.xl,
+        marginEnd: Spacing.xl,
         borderLeftWidth: 3,
         borderLeftColor: '#D1D5DB',
     },

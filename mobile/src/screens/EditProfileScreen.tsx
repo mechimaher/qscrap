@@ -179,7 +179,7 @@ export default function EditProfileScreen() {
             {/* Header */}
             <View style={[styles.header, { backgroundColor: colors.surface, borderBottomColor: colors.border, flexDirection: rtlFlexDirection(isRTL) }]}>
                 <TouchableOpacity onPress={() => navigation.goBack()} style={[styles.backButton, { backgroundColor: colors.background }]} accessibilityRole="button" accessibilityLabel={t('common.back')}>
-                    <Ionicons name="arrow-back" size={20} color={Colors.primary} /> <Text style={styles.backText}>{t('common.back')}</Text>
+                    <Ionicons name={isRTL ? "arrow-forward" : "arrow-back"} size={20} color={Colors.primary} /> <Text style={styles.backText}>{t('common.back')}</Text>
                 </TouchableOpacity>
                 <Text style={[styles.headerTitle, { color: colors.text }]}>{t('profile.editProfile')}</Text>
                 <View style={{ width: 60 }} />
@@ -187,7 +187,7 @@ export default function EditProfileScreen() {
 
             <ScrollView style={styles.scrollView} showsVerticalScrollIndicator={false}>
                 {/* Simple Avatar - Display Only */}
-                <View style={styles.avatarSection}>
+                <View style={[styles.avatarSection, { backgroundColor: colors.surface }]}>
                     <View style={styles.avatar}>
                         <Text style={styles.avatarText}>
                             {fullName.charAt(0).toUpperCase() || '?'}
@@ -200,39 +200,39 @@ export default function EditProfileScreen() {
                     <Text style={[styles.sectionTitle, { color: colors.text, textAlign: rtlTextAlign(isRTL) }]}>{t('profile.personalInfo')}</Text>
 
                     <View style={styles.inputGroup}>
-                        <Text style={[styles.label, { textAlign: rtlTextAlign(isRTL) }]}>{t('profile.fullName')}</Text>
+                        <Text style={[styles.label, { color: colors.textSecondary, textAlign: rtlTextAlign(isRTL) }]}>{t('profile.fullName')}</Text>
                         <TextInput
-                            style={[styles.input, { textAlign: rtlTextAlign(isRTL) }]}
+                            style={[styles.input, { backgroundColor: colors.inputBackground, color: colors.inputText, borderColor: colors.inputBorder, textAlign: rtlTextAlign(isRTL) }]}
                             value={fullName}
                             onChangeText={setFullName}
                             placeholder={t('profile.enterFullName')}
-                            placeholderTextColor="#999"
+                            placeholderTextColor={colors.placeholder}
                             accessibilityLabel={t('profile.fullName')}
                         />
                     </View>
 
                     <View style={styles.inputGroup}>
-                        <Text style={[styles.label, { textAlign: rtlTextAlign(isRTL) }]}>{t('profile.phoneNumber')}</Text>
+                        <Text style={[styles.label, { color: colors.textSecondary, textAlign: rtlTextAlign(isRTL) }]}>{t('profile.phoneNumber')}</Text>
                         <TextInput
-                            style={[styles.input, styles.inputDisabled, { textAlign: rtlTextAlign(isRTL) }]}
+                            style={[styles.input, styles.inputDisabled, { backgroundColor: colors.inputBackground, color: colors.inputText, borderColor: colors.inputBorder, textAlign: rtlTextAlign(isRTL) }]}
                             value={phoneNumber}
                             editable={false}
                             placeholder={t('profile.phoneNumber')}
-                            placeholderTextColor="#999"
+                            placeholderTextColor={colors.placeholder}
                             accessibilityLabel={t('profile.phoneNumber')}
                             accessibilityState={{ disabled: true }}
                         />
-                        <Text style={[styles.inputHint, { textAlign: rtlTextAlign(isRTL) }]}>{t('profile.contactSupport')}</Text>
+                        <Text style={[styles.inputHint, { color: colors.textMuted, textAlign: rtlTextAlign(isRTL) }]}>{t('profile.contactSupport')}</Text>
                     </View>
 
                     <View style={styles.inputGroup}>
-                        <Text style={[styles.label, { textAlign: rtlTextAlign(isRTL) }]}>{t('profile.emailOptional')}</Text>
+                        <Text style={[styles.label, { color: colors.textSecondary, textAlign: rtlTextAlign(isRTL) }]}>{t('profile.emailOptional')}</Text>
                         <TextInput
-                            style={[styles.input, { textAlign: rtlTextAlign(isRTL) }]}
+                            style={[styles.input, { backgroundColor: colors.inputBackground, color: colors.inputText, borderColor: colors.inputBorder, textAlign: rtlTextAlign(isRTL) }]}
                             value={email}
                             onChangeText={setEmail}
                             placeholder={t('profile.enterEmail')}
-                            placeholderTextColor="#999"
+                            placeholderTextColor={colors.placeholder}
                             keyboardType="email-address"
                             autoCapitalize="none"
                             accessibilityLabel={t('profile.emailOptional')}
@@ -265,37 +265,37 @@ export default function EditProfileScreen() {
                     <Text style={[styles.sectionTitle, { color: colors.text, textAlign: rtlTextAlign(isRTL) }]}>{t('profile.changePassword')}</Text>
 
                     <View style={styles.inputGroup}>
-                        <Text style={[styles.label, { textAlign: rtlTextAlign(isRTL) }]}>{t('profile.currentPassword')}</Text>
+                        <Text style={[styles.label, { color: colors.textSecondary, textAlign: rtlTextAlign(isRTL) }]}>{t('profile.currentPassword')}</Text>
                         <TextInput
-                            style={[styles.input, { textAlign: rtlTextAlign(isRTL) }]}
+                            style={[styles.input, { backgroundColor: colors.inputBackground, color: colors.inputText, borderColor: colors.inputBorder, textAlign: rtlTextAlign(isRTL) }]}
                             value={currentPassword}
                             onChangeText={setCurrentPassword}
                             placeholder={t('profile.enterCurrentPassword')}
-                            placeholderTextColor="#999"
+                            placeholderTextColor={colors.placeholder}
                             secureTextEntry
                         />
                     </View>
 
                     <View style={styles.inputGroup}>
-                        <Text style={[styles.label, { textAlign: rtlTextAlign(isRTL) }]}>{t('profile.newPassword')}</Text>
+                        <Text style={[styles.label, { color: colors.textSecondary, textAlign: rtlTextAlign(isRTL) }]}>{t('profile.newPassword')}</Text>
                         <TextInput
-                            style={[styles.input, { textAlign: rtlTextAlign(isRTL) }]}
+                            style={[styles.input, { backgroundColor: colors.inputBackground, color: colors.inputText, borderColor: colors.inputBorder, textAlign: rtlTextAlign(isRTL) }]}
                             value={newPassword}
                             onChangeText={setNewPassword}
                             placeholder={t('profile.enterNewPassword')}
-                            placeholderTextColor="#999"
+                            placeholderTextColor={colors.placeholder}
                             secureTextEntry
                         />
                     </View>
 
                     <View style={styles.inputGroup}>
-                        <Text style={[styles.label, { textAlign: rtlTextAlign(isRTL) }]}>{t('profile.confirmNewPassword')}</Text>
+                        <Text style={[styles.label, { color: colors.textSecondary, textAlign: rtlTextAlign(isRTL) }]}>{t('profile.confirmNewPassword')}</Text>
                         <TextInput
-                            style={[styles.input, { textAlign: rtlTextAlign(isRTL) }]}
+                            style={[styles.input, { backgroundColor: colors.inputBackground, color: colors.inputText, borderColor: colors.inputBorder, textAlign: rtlTextAlign(isRTL) }]}
                             value={confirmPassword}
                             onChangeText={setConfirmPassword}
                             placeholder={t('profile.confirmNewPassword')}
-                            placeholderTextColor="#999"
+                            placeholderTextColor={colors.placeholder}
                             secureTextEntry
                         />
                     </View>
