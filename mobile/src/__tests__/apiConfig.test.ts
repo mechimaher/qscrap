@@ -8,11 +8,11 @@ import { API_BASE_URL, SOCKET_URL, API_ENDPOINTS, APP_NAME, APP_VERSION } from '
 describe('API Configuration', () => {
     describe('Base URLs', () => {
         it('should use production API base URL', () => {
-            expect(API_BASE_URL).toBe('https://api.qscrap.qa/api');
+            expect(API_BASE_URL).toBe('https://qscrap.qa/api');
         });
 
         it('should use production Socket URL', () => {
-            expect(SOCKET_URL).toBe('https://api.qscrap.qa');
+            expect(SOCKET_URL).toBe('https://qscrap.qa');
         });
 
         it('should have correct app metadata', () => {
