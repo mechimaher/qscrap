@@ -1,7 +1,9 @@
 /**
  * Validation Utilities for QScrap Mobile App
- * Provides form validation with clear error messages.
+ * Provides form validation with i18n-aware error messages.
  */
+
+import { t } from './i18nHelper';
 
 // Qatar phone number regex (starts with +974 or 974 or just the number)
 const QATAR_PHONE_REGEX = /^(\+974|974)?[3-7]\d{7}$/;
@@ -22,7 +24,7 @@ export interface ValidationResult {
  */
 export const validateRequired = (value: string | undefined | null, fieldName: string = 'This field'): ValidationResult => {
     if (!value || value.trim() === '') {
-        return { isValid: false, error: `${fieldName} is required` };
+        return { isValid: false, error: t('errors.fieldRequired', { field: fieldName }) };
     }
     return { isValid: true };
 };
@@ -32,7 +34,7 @@ export const validateRequired = (value: string | undefined | null, fieldName: st
  */
 export const validateMinLength = (value: string, minLength: number, fieldName: string = 'This field'): ValidationResult => {
     if (value.length < minLength) {
-        return { isValid: false, error: `${fieldName} must be at least ${minLength} characters` };
+        return { isValid: false, error: t('errors.minLength', { field: fieldName, min: minLength }) };
     }
     return { isValid: true };
 };
@@ -42,7 +44,7 @@ export const validateMinLength = (value: string, minLength: number, fieldName: s
  */
 export const validateMaxLength = (value: string, maxLength: number, fieldName: string = 'This field'): ValidationResult => {
     if (value.length > maxLength) {
-        return { isValid: false, error: `${fieldName} must be at most ${maxLength} characters` };
+        return { isValid: false, error: t('errors.maxLength', { field: fieldName, max: maxLength }) };
     }
     return { isValid: true };
 };
@@ -55,11 +57,11 @@ export const validatePhoneNumber = (phone: string): ValidationResult => {
     const cleaned = phone.replace(/\s|-/g, '');
 
     if (!cleaned) {
-        return { isValid: false, error: 'Phone number is required' };
+        return { isValid: false, error: t('errors.phoneRequired') };
     }
 
     if (!QATAR_PHONE_REGEX.test(cleaned)) {
-        return { isValid: false, error: 'Please enter a valid Qatar phone number' };
+        return { isValid: false, error: t('errors.invalidPhoneQatar') };
     }
 
     return { isValid: true };
@@ -70,11 +72,11 @@ export const validatePhoneNumber = (phone: string): ValidationResult => {
  */
 export const validateEmail = (email: string): ValidationResult => {
     if (!email) {
-        return { isValid: false, error: 'Email is required' };
+        return { isValid: false, error: t('errors.emailRequired') };
     }
 
     if (!EMAIL_REGEX.test(email)) {
-        return { isValid: false, error: 'Please enter a valid email address' };
+        return { isValid: false, error: t('errors.invalidEmail') };
     }
 
     return { isValid: true };
@@ -85,11 +87,11 @@ export const validateEmail = (email: string): ValidationResult => {
  */
 export const validatePassword = (password: string): ValidationResult & { strength: 'weak' | 'medium' | 'strong' } => {
     if (!password) {
-        return { isValid: false, error: 'Password is required', strength: 'weak' };
+        return { isValid: false, error: t('errors.passwordRequired'), strength: 'weak' };
     }
 
     if (password.length < 6) {
-        return { isValid: false, error: 'Password must be at least 6 characters', strength: 'weak' };
+        return { isValid: false, error: t('errors.passwordShort'), strength: 'weak' };
     }
 
     // Check password strength
@@ -113,11 +115,11 @@ export const validatePassword = (password: string): ValidationResult & { strengt
  */
 export const validatePasswordConfirm = (password: string, confirmPassword: string): ValidationResult => {
     if (!confirmPassword) {
-        return { isValid: false, error: 'Please confirm your password' };
+        return { isValid: false, error: t('errors.confirmRequired') };
     }
 
     if (password !== confirmPassword) {
-        return { isValid: false, error: 'Passwords do not match' };
+        return { isValid: false, error: t('errors.passwordMismatch') };
     }
 
     return { isValid: true };
@@ -135,11 +137,11 @@ export const validateVIN = (vin: string): ValidationResult => {
     const cleaned = vin.toUpperCase().trim();
 
     if (cleaned.length !== 17) {
-        return { isValid: false, error: 'VIN must be exactly 17 characters' };
+        return { isValid: false, error: t('errors.vinLength') };
     }
 
     if (!VIN_REGEX.test(cleaned)) {
-        return { isValid: false, error: 'VIN contains invalid characters' };
+        return { isValid: false, error: t('errors.vinInvalid') };
     }
 
     return { isValid: true };
@@ -153,11 +155,11 @@ export const validateYear = (year: string | number): ValidationResult => {
     const currentYear = new Date().getFullYear();
 
     if (isNaN(yearNum)) {
-        return { isValid: false, error: 'Please enter a valid year' };
+        return { isValid: false, error: t('errors.yearInvalid') };
     }
 
     if (yearNum < 1900 || yearNum > currentYear + 1) {
-        return { isValid: false, error: `Year must be between 1900 and ${currentYear + 1}` };
+        return { isValid: false, error: t('errors.yearRange', { min: 1900, max: currentYear + 1 }) };
     }
 
     return { isValid: true };
@@ -170,15 +172,15 @@ export const validateAmount = (amount: string | number, min: number = 0, max?: n
     const amountNum = typeof amount === 'string' ? parseFloat(amount) : amount;
 
     if (isNaN(amountNum)) {
-        return { isValid: false, error: 'Please enter a valid amount' };
+        return { isValid: false, error: t('errors.amountInvalid') };
     }
 
     if (amountNum < min) {
-        return { isValid: false, error: `Amount must be at least ${min}` };
+        return { isValid: false, error: t('errors.amountMin', { min }) };
     }
 
     if (max !== undefined && amountNum > max) {
-        return { isValid: false, error: `Amount must not exceed ${max}` };
+        return { isValid: false, error: t('errors.amountMax', { max }) };
     }
 
     return { isValid: true };
