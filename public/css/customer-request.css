@@ -29,11 +29,11 @@ body {
 
 /* ===== AUTH SCREEN ===== */
 .crq-auth-wrap {
-    min-height: calc(100vh - 72px);
+    min-height: 100vh;
     display: flex;
     align-items: center;
     justify-content: center;
-    padding: 32px 20px;
+    padding: 100px 20px 32px;  /* 100px top clears the fixed nav (72px + breathing room) */
     background: linear-gradient(145deg, #8D1B3D 0%, #6B1530 60%, #1A1A1A 100%);
 }
 
