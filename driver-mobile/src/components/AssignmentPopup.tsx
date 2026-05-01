@@ -406,7 +406,7 @@ const styles = StyleSheet.create({
         marginTop: 2,
     },
     arrowContainer: {
-        paddingLeft: 14,
+        paddingStart: 14,
         paddingVertical: 4,
     },
     arrow: {

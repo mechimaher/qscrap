@@ -35,7 +35,7 @@ const styles = StyleSheet.create({
         width: 12,
         height: 12,
         borderRadius: 6,
-        marginRight: 12,
+        marginEnd: 12,
     },
     content: {
         flex: 1,

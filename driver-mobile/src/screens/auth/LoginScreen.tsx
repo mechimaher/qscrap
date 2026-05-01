@@ -369,7 +369,7 @@ const styles = StyleSheet.create({
         fontSize: 20,
     },
     countryCodeContainer: {
-        paddingRight: 8,
+        paddingEnd: 8,
         borderRightWidth: 1,
         borderRightColor: 'rgba(255,255,255,0.2)',
     },

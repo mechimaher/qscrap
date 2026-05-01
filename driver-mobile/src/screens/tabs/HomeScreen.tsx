@@ -380,7 +380,7 @@ export default function HomeScreen() {
                             {getStatusText()}
                         </Text>
                         {driver?.status !== 'busy' && (
-                            <View style={{ marginLeft: 8 }}>
+                            <View style={{ marginStart: 8 }}>
                                 <Ionicons
                                     name={isAvailable ? "radio-button-on" : "radio-button-off"}
                                     size={24}
@@ -648,7 +648,7 @@ const styles = StyleSheet.create({
     },
     locationInfo: {
         flex: 1,
-        marginLeft: 12,
+        marginStart: 12,
     },
     locationLabel: {
         fontSize: 12,
@@ -742,7 +742,7 @@ const styles = StyleSheet.create({
         fontSize: 13,
     },
     locationArrow: {
-        paddingLeft: 22,
+        paddingStart: 22,
         paddingVertical: 2,
     },
     actionButton: {

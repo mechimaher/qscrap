@@ -623,7 +623,7 @@ export default function ProfileScreen() {
                                 style={[styles.modalButton, styles.cancelButton]}
                                 onPress={() => setIsEditModalVisible(false)}
                             >
-                                <Text style={styles.cancelButtonText}>{t('cancel')}</Text>
+                                <Text style={[styles.cancelButtonText, { color: colors.textSecondary }]}>{t('cancel')}</Text>
                             </TouchableOpacity>
                             <TouchableOpacity
                                 style={[styles.modalButton, styles.saveButton]}
@@ -799,7 +799,7 @@ const styles = StyleSheet.create({
         backgroundColor: '#F5F5F5',
         justifyContent: 'center',
         alignItems: 'center',
-        marginRight: Spacing.md,
+        marginEnd: Spacing.md,
     },
     menuIconBgDanger: {
         backgroundColor: '#FEE2E2',
@@ -815,7 +815,7 @@ const styles = StyleSheet.create({
     menuValue: {
         fontSize: 14,
         fontWeight: '600',
-        marginRight: 8,
+        marginEnd: 8,
     },
     menuArrow: {
         fontSize: 22,
@@ -823,7 +823,7 @@ const styles = StyleSheet.create({
     },
     menuDivider: {
         height: 1,
-        marginLeft: 68,
+        marginStart: 68,
     },
     toggle: {
         width: 44,

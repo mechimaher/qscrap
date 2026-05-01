@@ -339,7 +339,7 @@ const styles = StyleSheet.create({
     locationLine: {
         width: 2,
         height: 16,
-        marginLeft: 4,
+        marginStart: 4,
         marginVertical: 2,
     },
     locationContent: {

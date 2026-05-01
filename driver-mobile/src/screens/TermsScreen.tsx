@@ -233,7 +233,7 @@ export default function TermsScreen() {
                                     name="information-circle"
                                     size={18}
                                     color={section.highlight.type === 'gold' ? Colors.secondary : Colors.primary}
-                                    style={{ marginRight: Spacing.sm, marginTop: 2 }}
+                                    style={{ marginEnd: Spacing.sm, marginTop: 2 }}
                                 />
                                 <Text style={[styles.highlightText, { color: colors.text, flex: 1 }]}>
                                     {section.highlight.text}
@@ -317,7 +317,7 @@ const styles = StyleSheet.create({
     sectionTitle: { fontSize: width < 380 ? FontSizes.lg : 18, fontWeight: '700' },
     sectionText: { fontSize: FontSizes.md, lineHeight: 24, marginBottom: Spacing.sm },
     listItem: { flexDirection: 'row', alignItems: 'flex-start', marginBottom: Spacing.sm },
-    listIcon: { marginRight: Spacing.sm, marginTop: 3 },
+    listIcon: { marginEnd: Spacing.sm, marginTop: 3 },
     listText: { flex: 1, fontSize: FontSizes.md, lineHeight: 22 },
     footnote: { fontSize: FontSizes.sm, fontStyle: 'italic', marginTop: Spacing.sm, lineHeight: 20 },
     highlightBox: { flexDirection: 'row', borderLeftWidth: 4, borderRadius: BorderRadius.sm, padding: Spacing.md, marginTop: Spacing.md },

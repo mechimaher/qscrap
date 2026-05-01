@@ -94,7 +94,7 @@ const styles = StyleSheet.create({
         color: '#fff',
         fontSize: FontSizes.lg,
         fontWeight: '600',
-        marginLeft: Spacing.sm,
+        marginStart: Spacing.sm,
     },
     hintText: {
         fontSize: FontSizes.sm,

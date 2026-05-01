@@ -186,7 +186,7 @@ const styles = StyleSheet.create({
     },
     cardHeaderText: {
         flex: 1,
-        marginLeft: Spacing.md,
+        marginStart: Spacing.md,
     },
     cardFooter: {
         flexDirection: 'row',

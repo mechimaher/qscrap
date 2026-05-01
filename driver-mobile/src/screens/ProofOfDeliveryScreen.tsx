@@ -297,7 +297,7 @@ export default function ProofOfDeliveryScreen() {
                     <Image source={{ uri: photoUri }} style={styles.previewImage} />
                     <View style={styles.row}>
                         <TouchableOpacity
-                            style={styles.btnOutline}
+                            style={[styles.btnOutline, { borderColor: colors.border }]}
                             onPress={retakePhoto}
                         >
                             <Text style={[styles.btnTextOutline, { color: colors.text }]}>{t('retake')}</Text>

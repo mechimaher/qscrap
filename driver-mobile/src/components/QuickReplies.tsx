@@ -8,6 +8,7 @@ import {
 } from 'react-native';
 import * as Haptics from 'expo-haptics';
 import { Colors, Spacing, BorderRadius, FontSize } from '../constants/theme';
+import { useTheme } from '../contexts/ThemeContext';
 import { Ionicons } from '@expo/vector-icons';
 
 interface QuickReply {
@@ -46,6 +47,7 @@ export const QuickReplies: React.FC<QuickRepliesProps> = ({
     onSelectReply,
     recipientType = 'customer',
 }) => {
+    const { colors } = useTheme();
     const replies = recipientType === 'customer'
         ? [...DRIVER_QUICK_REPLIES, ...CUSTOMER_SPECIFIC]
         : DRIVER_QUICK_REPLIES;
@@ -56,8 +58,8 @@ export const QuickReplies: React.FC<QuickRepliesProps> = ({
     };
 
     return (
-        <View style={styles.container}>
-            <Text style={styles.label}>Quick Replies</Text>
+        <View style={[styles.container, { backgroundColor: colors.surface, borderTopColor: colors.border }]}>
+            <Text style={[styles.label, { color: colors.textMuted }]}>Quick Replies</Text>
             <ScrollView
                 horizontal
                 showsHorizontalScrollIndicator={false}
@@ -91,7 +93,7 @@ const styles = StyleSheet.create({
     label: {
         fontSize: FontSize.xs,
         color: '#999',
-        marginLeft: Spacing.md,
+        marginStart: Spacing.md,
         marginBottom: Spacing.xs,
         fontWeight: '500',
     },

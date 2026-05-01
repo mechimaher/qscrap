@@ -173,7 +173,7 @@ const styles = StyleSheet.create({
         fontSize: 13,
     },
     locationArrow: {
-        paddingLeft: 22,
+        paddingStart: 22,
         paddingVertical: 2,
     },
     actionButton: {

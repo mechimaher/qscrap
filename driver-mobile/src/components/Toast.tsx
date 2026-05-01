@@ -207,7 +207,7 @@ const styles = StyleSheet.create({
         backgroundColor: 'rgba(255,255,255,0.2)',
         alignItems: 'center',
         justifyContent: 'center',
-        marginRight: Spacing.md,
+        marginEnd: Spacing.md,
     },
     icon: {
         fontSize: 18,
@@ -228,7 +228,7 @@ const styles = StyleSheet.create({
         marginTop: 2,
     },
     actionButton: {
-        marginLeft: Spacing.md,
+        marginStart: Spacing.md,
         paddingHorizontal: Spacing.md,
         paddingVertical: Spacing.sm,
         backgroundColor: 'rgba(255,255,255,0.2)',
@@ -240,7 +240,7 @@ const styles = StyleSheet.create({
         fontWeight: '600',
     },
     closeButton: {
-        marginLeft: Spacing.sm,
+        marginStart: Spacing.sm,
         padding: Spacing.xs,
     },
     closeIcon: {

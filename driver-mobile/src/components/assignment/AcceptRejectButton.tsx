@@ -125,7 +125,7 @@ const styles = StyleSheet.create({
         color: '#fff',
         fontSize: FontSizes.lg,
         fontWeight: '600',
-        marginLeft: Spacing.sm,
+        marginStart: Spacing.sm,
     },
     smallText: {
         fontSize: FontSizes.md,

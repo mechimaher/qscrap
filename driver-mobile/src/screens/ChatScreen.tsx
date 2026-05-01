@@ -395,7 +395,7 @@ const styles = StyleSheet.create({
         paddingVertical: 8,
         borderRadius: 20,
         gap: 6,
-        marginRight: 8,
+        marginEnd: 8,
     },
     quickReplyText: { fontSize: 13 },
 

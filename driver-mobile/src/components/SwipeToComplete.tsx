@@ -315,7 +315,7 @@ const styles = StyleSheet.create({
         textAlign: 'center',
         fontSize: 16,
         fontWeight: '600',
-        marginLeft: BUTTON_SIZE,
+        marginStart: BUTTON_SIZE,
     },
     buttonContainer: {
         position: 'absolute',
@@ -361,7 +361,7 @@ const styles = StyleSheet.create({
         textAlign: 'center',
         fontSize: 14,
         fontWeight: '600',
-        marginLeft: 40,
+        marginStart: 40,
     },
     inlineButton: {
         position: 'absolute',

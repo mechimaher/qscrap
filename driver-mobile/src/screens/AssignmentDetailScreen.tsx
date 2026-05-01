@@ -201,7 +201,7 @@ export default function AssignmentDetailScreen() {
                 <View style={styles.headerCenter}>
                     <Text style={styles.orderNumber}>#{assignment.order_number}</Text>
                     <View style={styles.statusBadge}>
-                        {statusConfig?.icon && <Ionicons name={statusConfig.icon as any} size={14} color="#fff" style={{ marginRight: 4 }} />}
+                        {statusConfig?.icon && <Ionicons name={statusConfig.icon as any} size={14} color="#fff" style={{ marginEnd: 4 }} />}
                         <Text style={styles.statusText}>
                             {statusConfig?.label}
                         </Text>
@@ -403,7 +403,7 @@ export default function AssignmentDetailScreen() {
                                             ? assignment.signature_url
                                             : `${SOCKET_URL}${assignment.signature_url}`
                                     }}
-                                    style={styles.signatureImage}
+                                    style={[styles.signatureImage, { backgroundColor: colors.surface, borderColor: colors.border }]}
                                     resizeMode="contain"
                                 />
                             </>
