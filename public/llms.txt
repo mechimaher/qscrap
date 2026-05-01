@@ -1,4 +1,5 @@
 # QScrap — Qatar's #1 Automotive Parts Marketplace
+# For extended context, see: https://www.qscrap.qa/llms-full.txt
 
 > QScrap is a premium B2B/B2C marketplace for automotive spare parts in Qatar. It connects car owners with verified garages offering new, used, and OEM parts with same-day delivery across Doha.
 

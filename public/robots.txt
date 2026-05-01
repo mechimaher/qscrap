@@ -10,6 +10,7 @@ Allow: /privacy.html
 Allow: /terms.html
 Allow: /refund.html
 Allow: /llms.txt
+Allow: /llms-full.txt
 
 # Disallow internal dashboards
 Disallow: /admin-dashboard.html
@@ -19,8 +20,6 @@ Disallow: /operations-dashboard.html
 Disallow: /garage-dashboard.html
 Disallow: /setup.html
 Disallow: /verify.html
-Disallow: /js/
-Disallow: /css/
 
 # Crawl-delay for politeness
 Crawl-delay: 1
