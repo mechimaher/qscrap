@@ -56,7 +56,8 @@ body {
 }
 
 .nav.scrolled {
-    box-shadow: var(--shadow-md);
+    box-shadow: 0 1px 16px rgba(0, 0, 0, 0.08);
+    border-bottom: 1px solid rgba(0, 0, 0, 0.04);
 }
 
 .nav-container {
@@ -238,6 +239,13 @@ body {
 
 .hero-title span {
     color: var(--gold);
+}
+
+.hero-title .highlight {
+    background: linear-gradient(135deg, #C9A227 0%, #E8D48B 50%, #C9A227 100%);
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+    background-clip: text;
 }
 
 .hero-subtitle {
@@ -438,6 +446,18 @@ body {
 .step-card {
     text-align: center;
     position: relative;
+    transition: transform 0.3s ease, box-shadow 0.3s ease;
+    padding: 24px 16px;
+    border-radius: var(--radius-xl);
+}
+
+.step-card:hover {
+    transform: translateY(-4px);
+    box-shadow: 0 12px 28px rgba(141, 27, 61, 0.08);
+}
+
+.step-card:hover .step-icon {
+    transform: scale(1.08);
 }
 
 .step-card::after {
@@ -521,6 +541,14 @@ body {
 .value-card:hover::before {
     transform: scaleX(1);
 }
+
+/* Stagger reveal for premium cascade effect */
+.value-card:nth-child(1) { transition-delay: 0ms; }
+.value-card:nth-child(2) { transition-delay: 60ms; }
+.value-card:nth-child(3) { transition-delay: 120ms; }
+.value-card:nth-child(4) { transition-delay: 180ms; }
+.value-card:nth-child(5) { transition-delay: 240ms; }
+.value-card:nth-child(6) { transition-delay: 300ms; }
 
 .value-icon {
     width: 72px;

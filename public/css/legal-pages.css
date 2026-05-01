@@ -129,6 +129,7 @@ body {
     text-align: center;
     position: relative;
     overflow: hidden;
+    border-top: 3px solid var(--gold);
 }
 
 .hero::before {

@@ -10,6 +10,8 @@
     --qatar-maroon-dark: #6B1530;
     --qatar-maroon-light: #F5E6EB;
     --qatar-maroon-lighter: #FBF3F6;
+    --maroon-50: #FDF2F5;
+    --maroon-100: #FADEE6;
 
     --gold: #C9A227;
     --gold-dark: #A68520;
@@ -53,6 +55,10 @@
     --info: var(--qatar-maroon);
     --info-light: var(--qatar-maroon-light);
     --info-dark: var(--qatar-maroon-dark);
+
+    /* ===== Glass Effects ===== */
+    --glass-white: rgba(255, 255, 255, 0.82);
+    --glass-dark: rgba(0, 0, 0, 0.6);
 
     /* ===== Layout Backgrounds ===== */
     --bg-page: var(--mist);

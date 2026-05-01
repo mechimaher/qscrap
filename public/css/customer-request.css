@@ -272,7 +272,7 @@ body {
     display: none;
     max-width: 880px;
     margin: 0 auto;
-    padding: 40px 24px 80px;
+    padding: 100px 24px 80px;  /* 100px top clears fixed nav */
 }
 
 .crq-app.visible {

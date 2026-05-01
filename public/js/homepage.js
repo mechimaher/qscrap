@@ -610,7 +610,7 @@ const vvipWidget = {
     init() {
         this.container = document.getElementById('vvipWidgetContainer');
         if (!this.container) {
-            console.warn('[VVIP Widget] Container not found - widget disabled');
+            // Widget container not found - silently disable
             return;
         }
 
@@ -631,7 +631,7 @@ const vvipWidget = {
             .map(([name, _]) => name);
 
         if (missingWidgets.length > 0) {
-            console.error('[VVIP Widget] Missing widgets:', missingWidgets);
+            // Missing widgets - silently disable
             return;
         }
 
@@ -682,7 +682,7 @@ const vvipWidget = {
             this.destroy();
         });
 
-        console.log('[VVIP Widget] Initialized with intelligent sequencing');
+        // VVIP Widget ready
     },
 
     handleScroll() {
