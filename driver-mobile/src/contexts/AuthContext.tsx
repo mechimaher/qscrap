@@ -1,5 +1,5 @@
 import React, { createContext, useContext, useState, useEffect, ReactNode } from 'react';
-import * as Sentry from '@sentry/react-native';
+
 import { api, Driver } from '../services/api';
 import { locationService } from '../services/LocationService';
 import { clearActiveOrders } from '../services/socket';
@@ -45,7 +45,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
 
                 if (savedDriver) {
                     setDriver(savedDriver);
-                    Sentry.setUser({ id: savedDriver.driver_id, username: savedDriver.full_name });
+                    log('[Auth] Restored cached driver:', savedDriver.driver_id);
 
                     // Start location tracking (non-blocking)
                     locationService.startTracking().catch(e =>
@@ -115,7 +115,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
 
             return { success: true };
         } catch (error: any) {
-            Sentry.captureException(error, { tags: { action: 'login' } });
+            logError('[Auth] Login error:', error);
             return { success: false, error: error.message || 'Login failed' };
         }
     };
@@ -139,7 +139,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
             await api.serverLogout();
 
             await api.clearToken();
-            Sentry.setUser(null);
+
             setDriver(null);
         } catch (error) {
             logError('[Auth] Logout error:', error);
